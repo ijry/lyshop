@@ -10,6 +10,7 @@ import (
 	"github.com/ijry/lyshop/core/db"
 	"github.com/ijry/lyshop/core/middleware"
 	"github.com/ijry/lyshop/core/plugin"
+	imapi "github.com/ijry/lyshop/plugins/im/api"
 )
 
 // Init loads config then initializes DB and Redis.
@@ -55,6 +56,9 @@ func Run() error {
 	if err := plugin.Load(config.Global.Plugins.Enabled, db.DB, front, adminAuth); err != nil {
 		return fmt.Errorf("load plugins: %w", err)
 	}
+
+	// WebSocket IM endpoint (registered after plugins so Hub is running)
+	imapi.RegisterWSRoute(r)
 
 	addr := fmt.Sprintf(":%d", config.Global.Server.Port)
 	return r.Run(addr)

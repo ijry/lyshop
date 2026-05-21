@@ -1,0 +1,21 @@
+{
+  "name": "im",
+  "title": "IM客服",
+  "version": "1.0.0",
+  "description": "实时客服聊天，WebSocket，多坐席，离线消息",
+  "author": "lyshop",
+  "depends": [],
+  "menus": [
+    {
+      "title": "客服中心",
+      "icon": "message-circle",
+      "path": "/im",
+      "sort": 50,
+      "children": [
+        { "title": "客服会话", "path": "/im/sessions", "permission": "im:view" },
+        { "title": "自动回复", "path": "/im/auto-reply", "permission": "im:view" }
+      ]
+    }
+  ],
+  "permissions": ["im:view", "im:reply"]
+}
