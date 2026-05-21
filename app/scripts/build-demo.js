@@ -28,11 +28,12 @@ console.log('[demo] Output dir:', outputDir)
 const originalManifest = fs.readFileSync(manifestPath, 'utf-8')
 const manifest = JSON.parse(originalManifest)
 
-// 2. Patch: hash router, relative base
+// 2. Patch: hash router, relative base, relative publicPath
 if (!manifest.h5) manifest.h5 = {}
 if (!manifest.h5.router) manifest.h5.router = {}
 manifest.h5.router.mode = 'hash'
 manifest.h5.router.base = './'
+manifest.h5.publicPath = './'
 
 fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8')
 console.log('[demo] Patched manifest.json → hash router, base="./"')
