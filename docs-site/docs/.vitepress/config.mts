@@ -1,6 +1,7 @@
 import { defineConfig } from "vitepress";
 
 export default defineConfig({
+  base: "/lyshop/",
   lang: "zh-CN",
   title: "LYShop 文档中心",
   description: "LYShop 项目官网与技术文档",

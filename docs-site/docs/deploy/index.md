@@ -61,6 +61,13 @@ npm run docs:build
 
 生成目录为 `docs-site/docs/.vitepress/dist`，可作为静态站点发布。
 
+若部署到 GitHub Pages 项目页（例如 `https://ijry.github.io/lyshop/`），需在
+`docs-site/docs/.vitepress/config.mts` 中配置：
+
+```ts
+base: "/lyshop/"
+```
+
 ## Nginx 托管示例
 
 ```nginx
