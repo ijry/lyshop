@@ -33,6 +33,10 @@
       "style": { "navigationBarTitleText": "限时秒杀" }
     },
     {
+      "path": "pages/im/chat",
+      "style": { "navigationBarTitleText": "在线客服", "navigationBarBackgroundColor": "#ffffff" }
+    },
+    {
       "path": "pages/login/index",
       "style": { "navigationBarTitleText": "登录" }
     }
