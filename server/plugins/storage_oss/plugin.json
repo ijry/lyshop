@@ -1,0 +1,10 @@
+{
+  "name": "storage_oss",
+  "title": "OSS 存储",
+  "version": "1.0.0",
+  "description": "文件存储到 oss",
+  "author": "lyshop",
+  "depends": [],
+  "menus": [],
+  "permissions": []
+}

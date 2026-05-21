@@ -1,0 +1,10 @@
+{
+  "name": "storage_local",
+  "title": "本地存储",
+  "version": "1.0.0",
+  "description": "文件存储到本机服务器 uploads/ 目录",
+  "author": "lyshop",
+  "depends": [],
+  "menus": [],
+  "permissions": []
+}

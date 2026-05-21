@@ -2,14 +2,17 @@ package app
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	apiauth "github.com/ijry/lyshop/api/auth"
 	"github.com/ijry/lyshop/config"
 	"github.com/ijry/lyshop/core/cache"
 	"github.com/ijry/lyshop/core/db"
+	driverStorage "github.com/ijry/lyshop/core/driver/storage"
 	"github.com/ijry/lyshop/core/middleware"
 	"github.com/ijry/lyshop/core/plugin"
+	"github.com/ijry/lyshop/core/response"
 	imapi "github.com/ijry/lyshop/plugins/im/api"
 )
 
@@ -51,6 +54,28 @@ func Run() error {
 		menus := plugin.EnabledMenus(config.Global.Plugins.Enabled)
 		c.JSON(200, menus)
 	})
+
+	// Universal file upload endpoint
+	adminAuth.POST("/upload", func(c *gin.Context) {
+		fh, err := c.FormFile("file")
+		if err != nil {
+			response.Fail(c, 400, "请选择文件")
+			return
+		}
+		driver, err := driverStorage.Get()
+		if err != nil {
+			response.Fail(c, 500, err.Error())
+			return
+		}
+		result, err := driver.Upload(c.Request.Context(), fh)
+		if err != nil {
+			response.Fail(c, 500, err.Error())
+			return
+		}
+		response.OK(c, result)
+	})
+	// Ping
+	r.GET("/ping", func(c *gin.Context) { c.JSON(http.StatusOK, gin.H{"pong": true}) })
 
 	// Load enabled plugins
 	if err := plugin.Load(config.Global.Plugins.Enabled, db.DB, front, adminAuth); err != nil {

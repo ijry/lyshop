@@ -1,0 +1,10 @@
+{
+  "name": "storage_cos",
+  "title": "COS 存储",
+  "version": "1.0.0",
+  "description": "文件存储到 cos",
+  "author": "lyshop",
+  "depends": [],
+  "menus": [],
+  "permissions": []
+}
