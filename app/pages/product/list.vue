@@ -1,52 +1,47 @@
 <template>
-  <view class="bg-gray-50 min-h-screen">
-    <u-navbar title="商品列表" :placeholder="true" />
-
+  <view class="min-h-screen bg-gray-50">
     <!-- Search -->
-    <view class="px-3 py-2">
+    <view class="px-20rpx py-16rpx bg-white">
       <u-search v-model="keyword" placeholder="搜索商品" @search="onSearch" @clear="onSearch" />
     </view>
 
     <!-- Category tabs -->
-    <scroll-view scroll-x class="bg-white border-b border-gray-100">
-      <view class="flex px-3 py-2 gap-3">
-        <view
-          v-for="c in categories" :key="c.id"
+    <scroll-view scroll-x class="bg-white border-b-1 border-gray-100">
+      <view class="flex px-20rpx py-16rpx gap-16rpx">
+        <view v-for="c in categories" :key="c.id"
           @click="categoryID = c.id; loadProducts()"
-          :class="categoryID === c.id ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-600'"
-          class="px-3 py-1 rounded-full text-sm whitespace-nowrap"
-        >{{ c.name }}</view>
+          :class="categoryID === c.id
+            ? 'bg-blue-700 text-white'
+            : 'bg-gray-100 text-gray-600'"
+          class="px-24rpx py-10rpx rounded-full text-26rpx whitespace-nowrap flex-shrink-0">
+          {{ c.name }}
+        </view>
       </view>
     </scroll-view>
 
     <!-- Product grid -->
-    <view class="p-3">
-      <view v-if="loading" class="text-center py-8">
+    <view class="p-20rpx">
+      <view v-if="loading" class="flex justify-center py-80rpx">
         <u-loading-icon text="加载中..." />
       </view>
-      <view v-else class="grid grid-cols-2 gap-3">
-        <view
-          v-for="p in products" :key="p.id"
+      <view v-else class="flex flex-wrap">
+        <view v-for="p in products" :key="p.id"
           @click="toDetail(p.id)"
-          class="bg-white rounded-xl overflow-hidden shadow-sm"
-        >
-          <image
-            :src="p.cover || '/static/placeholder.png'"
-            mode="aspectFill"
-            class="w-full"
-            style="height: 160px;"
-          />
-          <view class="p-3">
-            <text class="text-slate-800 text-sm font-medium line-clamp-2">{{ p.title }}</text>
-            <view class="flex items-center justify-between mt-2">
-              <text class="text-blue-700 font-bold text-base">¥{{ p.price }}</text>
-              <text class="text-gray-400 text-xs">销量 {{ p.sales }}</text>
+          class="w-1/2 p-8rpx">
+          <view class="bg-white rounded-20rpx overflow-hidden shadow-sm">
+            <image :src="p.cover" mode="aspectFill" class="w-full h-320rpx" />
+            <view class="p-20rpx">
+              <text class="text-26rpx text-gray-800 font-500 line-clamp-2">{{ p.title }}</text>
+              <view class="flex items-center justify-between mt-16rpx">
+                <text class="text-30rpx text-blue-700 font-700">¥{{ p.price }}</text>
+                <text class="text-22rpx text-gray-400">销量 {{ p.sales }}</text>
+              </view>
             </view>
           </view>
         </view>
       </view>
-      <view v-if="!loading && !products.length" class="text-center py-12 text-gray-400">
-        <text>暂无商品</text>
+      <view v-if="!loading && !products.length" class="text-center py-120rpx text-gray-400 text-28rpx">
+        暂无商品
       </view>
     </view>
   </view>
