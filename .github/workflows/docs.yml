@@ -40,7 +40,7 @@ jobs:
 
       - name: Install app dependencies
         working-directory: app
-        run: npm ci
+        run: npm install --legacy-peer-deps
 
       - name: Build H5 demo (mock data)
         working-directory: app

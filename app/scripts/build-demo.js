@@ -38,10 +38,10 @@ fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), 'utf-8')
 console.log('[demo] Patched manifest.json → hash router, base="./"')
 
 try {
-  // 3. Build
+  // 3. Build using local uni CLI from node_modules
   const isWin = process.platform === 'win32'
-  const npx = isWin ? 'npx.cmd' : 'npx'
-  execSync(`${npx} cross-env VITE_MOCK=true ${npx} uni build`, {
+  const uniCmd = path.join(appDir, 'node_modules', '.bin', isWin ? 'uni.cmd' : 'uni')
+  execSync(`${uniCmd} build`, {
     cwd: appDir,
     stdio: 'inherit',
     env: { ...process.env, VITE_MOCK: 'true' },
