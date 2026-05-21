@@ -5,11 +5,13 @@ on:
     branches: [master]
     paths:
       - "docs-site/**"
+      - "app/**"
       - ".github/workflows/docs.yml"
   pull_request:
     branches: [master]
     paths:
       - "docs-site/**"
+      - "app/**"
       - ".github/workflows/docs.yml"
   workflow_dispatch:
 
@@ -25,9 +27,6 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: docs-site
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,10 +38,20 @@ jobs:
           cache: "npm"
           cache-dependency-path: docs-site/package-lock.json
 
-      - name: Install dependencies
+      - name: Install app dependencies
+        working-directory: app
+        run: npm ci
+
+      - name: Build H5 demo (mock data)
+        working-directory: app
+        run: node scripts/build-demo.js
+
+      - name: Install docs dependencies
+        working-directory: docs-site
         run: npm ci
 
       - name: Build docs
+        working-directory: docs-site
         run: npm run docs:build
 
       - name: Setup Pages
