@@ -76,6 +76,7 @@ docker compose up -d --build
 - 部署文档：`docs-site/docs/deploy/index.md`
 - 接口文档：`docs-site/docs/api/index.md`
 - 二次开发：`docs-site/docs/dev/secondary-development.md`
+- 在线文档：`https://ijry.github.io/lyshop/`
 
 ## 后续建议
 

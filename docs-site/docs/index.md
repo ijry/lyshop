@@ -28,6 +28,7 @@ features:
 - [部署文档](/deploy/)
 - [接口文档](/api/)
 - [二次开发](/dev/secondary-development)
+- 在线访问：`https://ijry.github.io/lyshop/`
 
 ## 项目架构
 
