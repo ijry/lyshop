@@ -1,0 +1,10 @@
+{
+  "name": "wechat_pay",
+  "title": "微信支付",
+  "version": "1.0.0",
+  "description": "微信支付驱动（JSAPI/H5/App）",
+  "author": "lyshop",
+  "depends": [],
+  "menus": [],
+  "permissions": []
+}

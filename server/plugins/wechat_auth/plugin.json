@@ -1,0 +1,10 @@
+{
+  "name": "wechat_auth",
+  "title": "微信登录",
+  "version": "1.0.0",
+  "description": "微信登录驱动（小程序 code2session / H5 OAuth2）",
+  "author": "lyshop",
+  "depends": [],
+  "menus": [],
+  "permissions": []
+}

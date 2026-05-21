@@ -1,0 +1,10 @@
+{
+  "name": "alipay",
+  "title": "支付宝支付",
+  "version": "1.0.0",
+  "description": "支付宝支付驱动（APP/H5/PC）",
+  "author": "lyshop",
+  "depends": [],
+  "menus": [],
+  "permissions": []
+}

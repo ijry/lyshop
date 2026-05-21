@@ -11,6 +11,10 @@ import (
 	_ "github.com/ijry/lyshop/plugins/order"
 	_ "github.com/ijry/lyshop/plugins/wms"
 	_ "github.com/ijry/lyshop/plugins/marketing"
+	_ "github.com/ijry/lyshop/plugins/wechat_pay"
+	_ "github.com/ijry/lyshop/plugins/alipay"
+	_ "github.com/ijry/lyshop/plugins/sms"
+	_ "github.com/ijry/lyshop/plugins/wechat_auth"
 )
 
 func main() {
