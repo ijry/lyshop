@@ -1,0 +1,22 @@
+# Go
+server/bin/
+server/*.exe
+server/lyshop-server
+
+# Config (contains secrets)
+config.yaml
+
+# Data volumes
+data/
+
+# Node
+admin/node_modules/
+admin/dist/
+app/node_modules/
+app/dist/
+app/unpackage/
+
+# IDE
+.idea/
+.vscode/
+*.swp

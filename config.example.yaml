@@ -1,0 +1,21 @@
+server:
+  port: 8080
+  mode: debug   # debug | release
+
+database:
+  dsn: "root:password@tcp(mysql:3306)/lyshop?charset=utf8mb4&parseTime=True&loc=Local"
+  max_open: 100
+  max_idle: 10
+
+redis:
+  addr: "redis:6379"
+  password: ""
+  db: 0
+
+jwt:
+  secret: "change-this-to-a-random-string"
+  expire_hours: 168   # 7 days
+
+plugins:
+  enabled:
+    - storage_local
