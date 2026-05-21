@@ -25,6 +25,14 @@
       "style": { "navigationBarTitleText": "我的订单" }
     },
     {
+      "path": "pages/marketing/coupon",
+      "style": { "navigationBarTitleText": "我的优惠券" }
+    },
+    {
+      "path": "pages/marketing/seckill",
+      "style": { "navigationBarTitleText": "限时秒杀" }
+    },
+    {
       "path": "pages/login/index",
       "style": { "navigationBarTitleText": "登录" }
     }
