@@ -1,8 +1,8 @@
-// uview-plus theme variables
+// uview-plus theme variables (must import theme.scss FIRST)
+@import 'uview-plus/theme.scss';
+
+// Custom overrides
 $u-primary: #1e40af;
 $u-primary-dark: #1e3a8a;
 $u-primary-disabled: #93c5fd;
 $u-primary-light: #eff6ff;
-
-// Import uview-plus styles
-@import 'uview-plus/index.scss';
