@@ -1,0 +1,123 @@
+package api
+
+import (
+	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"github.com/ijry/lyshop/core/response"
+	productmodel "github.com/ijry/lyshop/plugins/product/model"
+	productsvc "github.com/ijry/lyshop/plugins/product/service"
+)
+
+func RegisterAdminRoutes(g *gin.RouterGroup) {
+	g.GET("/categories", adminListCategories)
+	g.POST("/categories", adminCreateCategory)
+	g.PUT("/categories/:id", adminUpdateCategory)
+	g.DELETE("/categories/:id", adminDeleteCategory)
+
+	g.GET("/products", adminListProducts)
+	g.GET("/products/:id", adminGetProduct)
+	g.POST("/products", adminCreateProduct)
+	g.PUT("/products/:id", adminUpdateProduct)
+	g.DELETE("/products/:id", adminDeleteProduct)
+}
+
+func adminListCategories(c *gin.Context) {
+	list, err := productsvc.ListCategories(c.Request.Context())
+	if err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, list)
+}
+
+func adminCreateCategory(c *gin.Context) {
+	var cat productmodel.ProductCategory
+	if err := c.ShouldBindJSON(&cat); err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	if err := productsvc.CreateCategory(c.Request.Context(), &cat); err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, cat)
+}
+
+func adminUpdateCategory(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	var updates map[string]any
+	c.ShouldBindJSON(&updates)
+	if err := productsvc.UpdateCategory(c.Request.Context(), id, updates); err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, nil)
+}
+
+func adminDeleteCategory(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err := productsvc.DeleteCategory(c.Request.Context(), id); err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, nil)
+}
+
+func adminListProducts(c *gin.Context) {
+	var q productsvc.ProductListQuery
+	c.ShouldBindQuery(&q)
+	list, total, err := productsvc.ListProducts(c.Request.Context(), q)
+	if err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, response.PageData{List: list, Total: total, Page: q.Page, Size: q.Size})
+}
+
+func adminGetProduct(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	detail, err := productsvc.GetProduct(c.Request.Context(), id)
+	if err != nil {
+		response.Fail(c, 10002, err.Error())
+		return
+	}
+	response.OK(c, detail)
+}
+
+func adminCreateProduct(c *gin.Context) {
+	var req struct {
+		Product productmodel.Product      `json:"product"`
+		SKUs    []productmodel.ProductSku `json:"skus"`
+		Images  []productmodel.ProductImage `json:"images"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	if err := productsvc.CreateProduct(c.Request.Context(), &req.Product, req.SKUs, req.Images); err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, req.Product)
+}
+
+func adminUpdateProduct(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	var updates map[string]any
+	c.ShouldBindJSON(&updates)
+	if err := productsvc.UpdateProduct(c.Request.Context(), id, updates); err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, nil)
+}
+
+func adminDeleteProduct(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err := productsvc.DeleteProduct(c.Request.Context(), id); err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, nil)
+}

@@ -7,8 +7,7 @@ import (
 	"github.com/ijry/lyshop/core/app"
 
 	// Blank-import enabled plugins so their init() registers them.
-	// Add one line per plugin as you build Phase 2+:
-	// _ "github.com/ijry/lyshop/plugins/product"
+	_ "github.com/ijry/lyshop/plugins/product"
 )
 
 func main() {

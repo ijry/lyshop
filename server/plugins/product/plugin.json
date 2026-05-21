@@ -1,0 +1,21 @@
+{
+  "name": "product",
+  "title": "商品插件",
+  "version": "1.0.0",
+  "description": "商品管理、分类、SKU、库存",
+  "author": "lyshop",
+  "depends": [],
+  "menus": [
+    {
+      "title": "商品管理",
+      "icon": "box",
+      "path": "/product",
+      "sort": 10,
+      "children": [
+        { "title": "商品列表", "path": "/product/list", "permission": "product:view" },
+        { "title": "商品分类", "path": "/product/category", "permission": "product:view" }
+      ]
+    }
+  ],
+  "permissions": ["product:view", "product:create", "product:edit", "product:delete"]
+}
