@@ -20,3 +20,4 @@ app/unpackage/
 .idea/
 .vscode/
 *.swp
+.claude/
