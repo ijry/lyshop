@@ -24,6 +24,7 @@
     "@dcloudio/vite-plugin-uni": "3.0.0-alpha-5010120260519001",
     "@vitejs/plugin-vue": "^4.0.0",
     "cross-env": "^7.0.3",
+    "sass": "^1.77.0",
     "typescript": "^5.0.0",
     "vite": "^4.0.0"
   }
