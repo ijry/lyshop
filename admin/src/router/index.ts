@@ -23,6 +23,13 @@ const router = createRouter({
         { path: 'marketing/coupon',   name: '优惠券管理', component: () => import('@/views/marketing/CouponList.vue') },
         // System
         { path: 'system/config', name: '支付短信配置', component: () => import('@/views/system/PaymentConfig.vue') },
+        // IM
+        { path: 'im/sessions',  name: '客服会话', component: () => import('@/views/im/SessionList.vue') },
+        // AI
+        { path: 'ai/tasks',     name: 'AI生图',   component: () => import('@/views/ai/ImageGen.vue') },
+        { path: 'ai/models',    name: 'AI模型配置', component: () => import('@/views/ai/ImageGen.vue') },
+        // Decor
+        { path: 'decor/index',  name: '首页装修', component: () => import('@/views/decor/DecorEditor.vue') },
       ]
     }
   ]
