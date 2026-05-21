@@ -9,6 +9,7 @@ import (
 	// Blank-import enabled plugins so their init() registers them.
 	_ "github.com/ijry/lyshop/plugins/product"
 	_ "github.com/ijry/lyshop/plugins/order"
+	_ "github.com/ijry/lyshop/plugins/wms"
 )
 
 func main() {

@@ -1,0 +1,23 @@
+{
+  "name": "wms",
+  "title": "仓储插件",
+  "version": "1.0.0",
+  "description": "仓库管理、库存、入库、出库、盘点",
+  "author": "lyshop",
+  "depends": ["product"],
+  "menus": [
+    {
+      "title": "仓储管理",
+      "icon": "warehouse",
+      "path": "/wms",
+      "sort": 30,
+      "children": [
+        { "title": "库存列表", "path": "/wms/stock",     "permission": "wms:view" },
+        { "title": "仓库管理", "path": "/wms/warehouse", "permission": "wms:view" },
+        { "title": "入库管理", "path": "/wms/inbound",   "permission": "wms:view" },
+        { "title": "出库管理", "path": "/wms/outbound",  "permission": "wms:view" }
+      ]
+    }
+  ],
+  "permissions": ["wms:view", "wms:edit"]
+}
