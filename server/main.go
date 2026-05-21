@@ -12,6 +12,7 @@ import (
 	_ "github.com/ijry/lyshop/plugins/wms"
 	_ "github.com/ijry/lyshop/plugins/marketing"
 	_ "github.com/ijry/lyshop/plugins/im"
+	_ "github.com/ijry/lyshop/plugins/ai_image"
 	_ "github.com/ijry/lyshop/plugins/wechat_pay"
 	_ "github.com/ijry/lyshop/plugins/alipay"
 	_ "github.com/ijry/lyshop/plugins/sms"
