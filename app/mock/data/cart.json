@@ -1,0 +1,22 @@
+[
+  {
+    "sku_id": 1,
+    "qty": 1,
+    "product": {
+      "id": 1, "title": "旗舰智能手机 Pro Max", "cover": "https://picsum.photos/200/200?random=30", "price": 4999.00
+    },
+    "sku": {
+      "id": 1, "product_id": 1, "attrs": "[{\"name\":\"颜色\",\"value\":\"星空黑\"},{\"name\":\"存储\",\"value\":\"256GB\"}]", "price": 4999.00, "stock": 200
+    }
+  },
+  {
+    "sku_id": 5,
+    "qty": 2,
+    "product": {
+      "id": 3, "title": "真无线降噪耳机", "cover": "https://picsum.photos/200/200?random=31", "price": 899.00
+    },
+    "sku": {
+      "id": 5, "product_id": 3, "attrs": "[{\"name\":\"颜色\",\"value\":\"白色\"}]", "price": 899.00, "stock": 3000
+    }
+  }
+]

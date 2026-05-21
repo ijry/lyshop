@@ -6,8 +6,8 @@ server/lyshop-server
 # Config (contains secrets)
 config.yaml
 
-# Data volumes
-data/
+# Data volumes (root level only)
+/data/
 
 # Node
 admin/node_modules/

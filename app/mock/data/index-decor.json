@@ -1,0 +1,39 @@
+{
+  "components": [
+    {
+      "type": "banner",
+      "id": "demo_banner",
+      "props": {
+        "images": [
+          { "url": "https://picsum.photos/750/350?random=1", "link": "" },
+          { "url": "https://picsum.photos/750/350?random=2", "link": "" },
+          { "url": "https://picsum.photos/750/350?random=3", "link": "" }
+        ],
+        "height": 350
+      }
+    },
+    {
+      "type": "category_nav",
+      "id": "demo_nav",
+      "props": {
+        "items": [
+          { "title": "手机", "icon": "", "link": "/pages/product/list?category_id=1" },
+          { "title": "电脑", "icon": "", "link": "/pages/product/list?category_id=2" },
+          { "title": "家电", "icon": "", "link": "/pages/product/list?category_id=3" },
+          { "title": "服饰", "icon": "", "link": "/pages/product/list?category_id=4" },
+          { "title": "美妆", "icon": "", "link": "/pages/product/list?category_id=5" }
+        ]
+      }
+    },
+    {
+      "type": "notice",
+      "id": "demo_notice",
+      "props": { "text": "欢迎使用 LYShop 演示版！所有数据均为模拟数据。" }
+    },
+    {
+      "type": "product_grid",
+      "id": "demo_grid",
+      "props": { "source": "hot", "limit": 6, "columns": 2 }
+    }
+  ]
+}
