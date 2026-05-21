@@ -1,0 +1,20 @@
+{
+  "name": "order",
+  "title": "订单插件",
+  "version": "1.0.0",
+  "description": "购物车、订单、支付、售后",
+  "author": "lyshop",
+  "depends": ["product"],
+  "menus": [
+    {
+      "title": "订单管理",
+      "icon": "shopping-cart",
+      "path": "/order",
+      "sort": 20,
+      "children": [
+        { "title": "订单列表", "path": "/order/list", "permission": "order:view" }
+      ]
+    }
+  ],
+  "permissions": ["order:view", "order:ship", "order:refund"]
+}
