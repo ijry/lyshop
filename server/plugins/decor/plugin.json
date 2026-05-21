@@ -1,0 +1,20 @@
+{
+  "name": "decor",
+  "title": "店铺装修",
+  "version": "1.0.0",
+  "description": "可视化拖拽装修店铺首页，JSON配置驱动前台渲染",
+  "author": "lyshop",
+  "depends": [],
+  "menus": [
+    {
+      "title": "店铺装修",
+      "icon": "layout",
+      "path": "/decor",
+      "sort": 70,
+      "children": [
+        { "title": "首页装修", "path": "/decor/index", "permission": "decor:edit" }
+      ]
+    }
+  ],
+  "permissions": ["decor:view", "decor:edit"]
+}
