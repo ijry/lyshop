@@ -12,14 +12,14 @@
     "build:mp-weixin:demo": "cross-env VITE_MOCK=true uni build -p mp-weixin"
   },
   "dependencies": {
-    "@dcloudio/uni-app": "3.0.0-4020920250429001",
+    "@dcloudio/uni-app": "3.0.0-alpha-5010120260519001",
     "pinia": "^2.1.0",
     "uview-plus": "3.1.31"
   },
   "devDependencies": {
     "@dcloudio/types": "*",
-    "@dcloudio/uni-h5": "3.0.0-4020920250429001",
-    "@dcloudio/uni-mp-weixin": "3.0.0-4020920250429001",
+    "@dcloudio/uni-h5": "3.0.0-alpha-5010120260519001",
+    "@dcloudio/uni-mp-weixin": "3.0.0-alpha-5010120260519001",
     "@vitejs/plugin-vue": "^4.0.0",
     "cross-env": "^7.0.3",
     "typescript": "^5.0.0",
