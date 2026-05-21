@@ -44,7 +44,7 @@ try {
   execSync(`${uniCmd} build`, {
     cwd: appDir,
     stdio: 'inherit',
-    env: { ...process.env, VITE_MOCK: 'true' },
+    env: { ...process.env, VITE_MOCK: 'true', UNI_INPUT_DIR: appDir },
   })
   console.log('[demo] H5 build complete')
 
