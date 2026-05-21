@@ -19,6 +19,10 @@ const router = createRouter({
         { path: 'order/list', name: '订单列表', component: () => import('@/views/order/OrderList.vue') },
         // WMS
         { path: 'wms/stock', name: '库存管理', component: () => import('@/views/wms/StockList.vue') },
+        // Marketing
+        { path: 'marketing/coupon',   name: '优惠券管理', component: () => import('@/views/marketing/CouponList.vue') },
+        // System
+        { path: 'system/config', name: '支付短信配置', component: () => import('@/views/system/PaymentConfig.vue') },
       ]
     }
   ]
