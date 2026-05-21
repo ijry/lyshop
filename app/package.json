@@ -3,9 +3,13 @@
   "version": "1.0.0",
   "scripts": {
     "dev:h5": "uni",
+    "dev:h5:demo": "cross-env VITE_MOCK=true uni",
     "build:h5": "uni build",
+    "build:h5:demo": "cross-env VITE_MOCK=true uni build",
     "dev:mp-weixin": "uni -p mp-weixin",
-    "build:mp-weixin": "uni build -p mp-weixin"
+    "dev:mp-weixin:demo": "cross-env VITE_MOCK=true uni -p mp-weixin",
+    "build:mp-weixin": "uni build -p mp-weixin",
+    "build:mp-weixin:demo": "cross-env VITE_MOCK=true uni build -p mp-weixin"
   },
   "dependencies": {
     "@dcloudio/uni-app": "3.0.0-4020920250429001",
@@ -17,6 +21,7 @@
     "@dcloudio/uni-h5": "3.0.0-4020920250429001",
     "@dcloudio/uni-mp-weixin": "3.0.0-4020920250429001",
     "@vitejs/plugin-vue": "^4.0.0",
+    "cross-env": "^7.0.3",
     "typescript": "^5.0.0",
     "vite": "^4.0.0"
   }
