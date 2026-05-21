@@ -185,7 +185,8 @@ onUnmounted(() => {
   right: 24px;
   bottom: 24px;
   z-index: 1000;
-  width: 390px;
+  width: 375px;
+  height: 750px;
   background: #000;
   border-radius: 40px;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(255,255,255,0.1) inset;
@@ -257,7 +258,7 @@ onUnmounted(() => {
 /* Screen */
 .demo-phone-screen {
   flex: 1;
-  height: 680px;
+  min-height: 0;
   background: #fff;
   margin: 0 8px;
   border-radius: 4px;
@@ -296,10 +297,10 @@ onUnmounted(() => {
     right: 8px;
     bottom: 8px;
     width: 320px;
+    height: 620px;
     border-radius: 32px;
   }
   .demo-phone-screen {
-    height: 540px;
     margin: 0 6px;
   }
 }
