@@ -1,0 +1,21 @@
+{
+  "name": "marketing",
+  "title": "营销插件",
+  "version": "1.0.0",
+  "description": "优惠券、秒杀、满减、积分",
+  "author": "lyshop",
+  "depends": ["product", "order"],
+  "menus": [
+    {
+      "title": "营销管理",
+      "icon": "tag",
+      "path": "/marketing",
+      "sort": 40,
+      "children": [
+        { "title": "优惠券管理", "path": "/marketing/coupon",   "permission": "marketing:view" },
+        { "title": "活动管理",   "path": "/marketing/activity", "permission": "marketing:view" }
+      ]
+    }
+  ],
+  "permissions": ["marketing:view", "marketing:edit"]
+}

@@ -10,6 +10,7 @@ import (
 	_ "github.com/ijry/lyshop/plugins/product"
 	_ "github.com/ijry/lyshop/plugins/order"
 	_ "github.com/ijry/lyshop/plugins/wms"
+	_ "github.com/ijry/lyshop/plugins/marketing"
 )
 
 func main() {
