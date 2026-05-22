@@ -18,6 +18,8 @@ app/unpackage/
 docs-site/node_modules/
 docs-site/docs/.vitepress/dist/
 docs-site/docs/.vitepress/cache/
+web/node_modules/
+web/dist/
 
 # IDE
 .idea/
