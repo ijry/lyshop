@@ -3,10 +3,7 @@
     <view class="w-full" style="max-width: 680rpx;">
       <!-- Logo -->
       <view class="flex flex-col items-center mb-80rpx">
-        <view class="w-120rpx h-120rpx rounded-full bg-blue-700 flex items-center justify-center mb-24rpx">
-          <text class="text-white text-40rpx font-700">L</text>
-        </view>
-        <text class="text-36rpx font-700 text-gray-800">LYShop</text>
+        <image src="/static/lyshop-wordmark.svg" mode="aspectFit" class="w-320rpx h-120rpx mb-16rpx" />
         <text class="text-26rpx text-gray-400 mt-8rpx">开源插件化商城</text>
       </view>
 

@@ -3,7 +3,10 @@
     <!-- Header -->
     <view class="bg-white px-30rpx pt-60rpx pb-30rpx">
       <view class="flex items-center justify-between">
-        <text class="text-36rpx font-700 text-gray-800">lyshop</text>
+        <view class="flex items-center gap-12rpx">
+          <image src="/static/lyshop-mark.svg" mode="aspectFit" class="w-48rpx h-48rpx" />
+          <text class="text-36rpx font-700 text-gray-800">LYShop</text>
+        </view>
         <view class="flex items-center gap-20rpx">
           <u-icon name="search" size="22" color="#666" @click="uni.switchTab({url:'/pages/product/list'})" />
           <u-icon name="chat" size="22" color="#666" @click="uni.navigateTo({url:'/pages/im/chat'})" />

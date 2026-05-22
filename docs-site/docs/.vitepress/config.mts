@@ -7,6 +7,7 @@ export default defineConfig({
   description: "LYShop 零云商城 - 开源插件化商城系统，基于 Go + Vue3 + uni-app，支持多端（PC/H5/小程序/App），插件化架构，AI生图，IM客服，Docker一键部署，免费开源电商解决方案",
 
   head: [
+    ["link", { rel: "icon", href: "/lyshop/lyshop-mark.svg", type: "image/svg+xml" }],
     ["meta", { name: "keywords", content: "lyshop,零云商城,开源商城,Go商城,Vue3商城,uni-app商城,插件化商城,多端商城,小程序商城,H5商城,电商系统,开源电商,免费商城系统,商城源码,Go电商,微信商城,商城开源项目" }],
     ["meta", { name: "author", content: "ijry" }],
     ["meta", { property: "og:title", content: "LYShop 零云商城 - 开源插件化多端商城系统" }],
@@ -20,7 +21,7 @@ export default defineConfig({
   },
 
   themeConfig: {
-    logo: "/logo.svg",
+    logo: "/lyshop-mark.svg",
     nav: [
       { text: "首页", link: "/" },
       { text: "功能介绍", link: "/guide/features" },

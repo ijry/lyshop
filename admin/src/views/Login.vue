@@ -1,7 +1,9 @@
 <template>
   <div class="min-h-screen bg-slate-100 flex items-center justify-center">
     <div class="bg-white rounded-2xl shadow-sm p-10 w-96">
-      <h1 class="text-2xl font-bold text-slate-800 mb-8 text-center">lyshop 管理后台</h1>
+      <div class="flex flex-col items-center mb-8">
+        <img src="/lyshop-wordmark.svg" alt="LYShop" class="h-16 w-auto" />
+      </div>
       <form @submit.prevent="handleLogin" class="space-y-4">
         <input
           v-model="form.username"

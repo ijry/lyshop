@@ -1,5 +1,7 @@
 # LYShop
 
+![LYShop Logo](./assets/brand/lyshop-wordmark.svg)
+
 LYShop 是一个面向电商场景的全栈项目，包含后端服务、管理后台、移动端应用与插件化业务能力。
 
 ## 项目简介
@@ -51,14 +53,6 @@ npm run dev
 cd app
 npm install
 npm run dev:h5
-```
-
-### 4. 启动文档站
-
-```bash
-cd docs-site
-npm install
-npm run docs:dev
 ```
 
 ## Docker 部署

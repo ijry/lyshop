@@ -2,8 +2,9 @@
   <div class="flex h-screen bg-slate-50">
     <!-- Sidebar -->
     <aside class="w-64 bg-slate-900 text-slate-100 flex flex-col shrink-0">
-      <div class="h-16 flex items-center px-6 border-b border-slate-800">
-        <span class="text-lg font-bold text-white">lyshop</span>
+      <div class="h-16 flex items-center px-6 gap-3 border-b border-slate-800">
+        <img src="/lyshop-mark.svg" alt="LYShop" class="h-9 w-9 shrink-0" />
+        <span class="text-lg font-bold text-white tracking-wide">LYShop</span>
       </div>
       <nav class="flex-1 overflow-y-auto py-4 space-y-1 px-3">
         <router-link
