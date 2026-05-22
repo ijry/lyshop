@@ -56,6 +56,9 @@ export default defineConfig({
         }
       ]
     },
+    socialLinks: [
+      { icon: "github", link: "https://github.com/ijry/lyshop" }
+    ],
     footer: {
       message: "Released under the MIT License.",
       copyright: "Copyright © 2026 LYShop"
