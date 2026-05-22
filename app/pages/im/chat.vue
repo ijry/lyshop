@@ -1,48 +1,57 @@
 <template>
-  <view class="bg-gray-50 min-h-screen flex flex-col" style="height: 100vh;">
+  <view class="bg-gray-50 flex flex-col" style="height: 100vh;">
     <u-navbar title="在线客服" :placeholder="true" />
 
     <!-- Messages -->
-    <scroll-view scroll-y class="flex-1 px-3 py-2" :scroll-top="scrollTop" scroll-with-animation>
-      <view class="space-y-3 pb-4">
-        <view v-for="m in messages" :key="m.id"
-          :class="m.sender_type === 2 ? 'flex-row-reverse' : ''"
-          class="flex gap-2 items-end">
-          <!-- Avatar -->
-          <view :class="m.sender_type === 2 ? 'bg-blue-700' : 'bg-gray-300'"
-            class="w-8 h-8 rounded-full shrink-0 flex items-center justify-center">
-            <text class="text-white text-xs">{{ m.sender_type === 2 ? '客' : '我' }}</text>
+    <scroll-view scroll-y class="flex-1 px-20rpx py-16rpx" :scroll-top="scrollTop" scroll-with-animation>
+      <view class="pb-20rpx">
+        <!-- Welcome -->
+        <view v-if="!messages.length" class="text-center py-80rpx">
+          <view class="w-120rpx h-120rpx rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-20rpx">
+            <u-icon name="chat" size="40" color="#1e40af" />
           </view>
-          <!-- Bubble -->
-          <view :class="m.sender_type === 2 ? 'bg-blue-700 text-white' : 'bg-white text-slate-800'"
-            class="max-w-56 px-4 py-2 rounded-2xl shadow-sm text-sm">
-            <text>{{ m.content }}</text>
-          </view>
+          <text class="text-gray-400 text-28rpx">您好！有什么可以帮您的？</text>
         </view>
 
-        <view v-if="!messages.length" class="text-center py-8">
-          <text class="text-gray-400 text-sm">您好！有什么可以帮您的？</text>
+        <view v-for="m in messages" :key="m.id" class="mb-20rpx">
+          <!-- Message row -->
+          <view :class="m.sender_type === 1 ? 'flex-row-reverse' : ''"
+            class="flex items-end gap-12rpx">
+            <!-- Avatar -->
+            <view :class="m.sender_type === 2 ? 'bg-blue-700' : 'bg-gray-300'"
+              class="w-64rpx h-64rpx rounded-full flex-shrink-0 flex items-center justify-center">
+              <text class="text-white text-22rpx">{{ m.sender_type === 2 ? '客' : '我' }}</text>
+            </view>
+            <!-- Bubble -->
+            <view :class="m.sender_type === 1
+              ? 'bg-blue-700 text-white rounded-tl-24rpx rounded-tr-8rpx rounded-bl-24rpx rounded-br-24rpx'
+              : 'bg-white text-gray-800 rounded-tl-8rpx rounded-tr-24rpx rounded-bl-24rpx rounded-br-24rpx'"
+              class="max-w-450rpx px-28rpx py-18rpx text-28rpx leading-40rpx"
+              style="box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.06); word-break: break-all;">
+              {{ m.content }}
+            </view>
+          </view>
         </view>
       </view>
     </scroll-view>
 
     <!-- Input bar -->
-    <view class="bg-white border-t border-gray-100 px-3 py-3 flex gap-2 items-center">
-      <input
-        v-model="inputText"
-        placeholder="输入消息..."
-        class="flex-1 bg-gray-100 rounded-full px-4 py-2 text-sm"
-        @confirm="sendMsg"
-        confirm-type="send"
-      />
-      <u-button type="primary" size="mini" text="发送" @click="sendMsg" :disabled="!inputText.trim()" />
+    <view class="bg-white border-t-1 border-gray-100 px-20rpx py-16rpx flex items-center gap-16rpx"
+      :style="{paddingBottom: 'calc(16rpx + env(safe-area-inset-bottom))'}">
+      <view class="flex-1">
+        <u-input v-model="inputText" placeholder="输入消息..." border="surround" shape="circle"
+          @confirm="sendMsg" confirmType="send" />
+      </view>
+      <u-button type="primary" text="发送" size="small" shape="circle"
+        :disabled="!inputText.trim()" @click="sendMsg"
+        :custom-style="{width: '120rpx'}" />
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
-import { get, post } from '@/utils/request'
+import { get } from '@/utils/request'
 
 const messages = ref<any[]>([])
 const inputText = ref('')
@@ -53,21 +62,16 @@ let ws: any = null
 let heartbeat: any = null
 
 onMounted(async () => {
-  // Get or create session
   const session = await get<any>('/api/v1/im/session')
   if (session) {
     sessionID.value = session.id
-    // Load history
     const data = await get<any>('/api/v1/im/messages', { session_id: session.id, size: 50 })
     messages.value = (data?.list || []).reverse()
     scrollToBottom()
   }
 
-  // Connect WebSocket
   const token = uni.getStorageSync('user_token')
-  if (token) {
-    connectWS(token)
-  }
+  if (token) connectWS(token)
 })
 
 function connectWS(token: string) {
@@ -90,19 +94,16 @@ function connectWS(token: string) {
     } catch {}
   })
 
-  // Heartbeat
   heartbeat = setInterval(() => {
     ws?.send({ data: JSON.stringify({ type: 'ping' }) })
   }, 30000)
 }
 
 function scrollToBottom() {
-  nextTick(() => {
-    scrollTop.value = 999999
-  })
+  nextTick(() => { scrollTop.value = 999999 })
 }
 
-async function sendMsg() {
+function sendMsg() {
   const text = inputText.value.trim()
   if (!text) return
 
@@ -118,9 +119,6 @@ async function sendMsg() {
         payload: { msg_type: 'text', content: text }
       })
     })
-  } else {
-    // Fallback: HTTP (if WS not available)
-    await post('/api/v1/im/message', { session_id: sessionID.value, content: text })
   }
 }
 

@@ -1,56 +1,80 @@
 <template>
-  <view class="bg-gray-50 min-h-screen pb-24">
+  <view class="min-h-screen bg-gray-50 pb-140rpx">
     <u-navbar title="确认订单" :placeholder="true" />
 
     <!-- Address -->
-    <view class="bg-white mx-3 mt-3 rounded-xl p-4 shadow-sm">
-      <text class="text-sm font-medium text-slate-700 block mb-2">收货地址</text>
-      <view v-if="!address" class="text-center py-2">
-        <u-button size="small" text="添加收货地址" @click="showAddressForm = true" />
+    <view class="bg-white mx-20rpx mt-20rpx rounded-20rpx p-30rpx"
+      style="box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);">
+      <view class="flex items-center justify-between mb-16rpx">
+        <text class="text-28rpx font-600 text-gray-800">收货地址</text>
+        <u-icon name="arrow-right" size="16" color="#999" />
+      </view>
+      <view v-if="!address" class="text-center py-20rpx">
+        <u-button size="small" text="添加收货地址" @click="showAddressForm = true" type="primary" plain shape="circle" />
       </view>
       <view v-else>
-        <text class="text-slate-800 font-medium">{{ address.name }}  {{ address.phone }}</text>
-        <text class="text-gray-500 text-sm block mt-1">
-          {{ address.province }}{{ address.city }}{{ address.district }}{{ address.detail }}
+        <view class="flex items-center gap-16rpx">
+          <text class="text-28rpx font-600 text-gray-800">{{ address.name }}</text>
+          <text class="text-26rpx text-gray-500">{{ address.phone }}</text>
+        </view>
+        <text class="text-24rpx text-gray-400 mt-8rpx block">
+          {{ address.province }}{{ address.city }}{{ address.district }} {{ address.detail }}
         </text>
       </view>
     </view>
 
     <!-- Payment method -->
-    <view class="bg-white mx-3 mt-3 rounded-xl p-4 shadow-sm">
-      <text class="text-sm font-medium text-slate-700 block mb-3">支付方式</text>
-      <view class="flex gap-3">
+    <view class="bg-white mx-20rpx mt-20rpx rounded-20rpx p-30rpx"
+      style="box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);">
+      <text class="text-28rpx font-600 text-gray-800 block mb-20rpx">支付方式</text>
+      <view class="flex gap-20rpx">
         <view v-for="m in payMethods" :key="m.value"
           @click="payMethod = m.value"
-          :class="payMethod === m.value ? 'border-blue-700 text-blue-700 bg-blue-50' : 'border-gray-200 text-gray-600'"
-          class="flex-1 border rounded-xl py-3 text-center text-sm">
+          :class="payMethod === m.value
+            ? 'border-blue-700 text-blue-700 bg-blue-50'
+            : 'border-gray-200 text-gray-600'"
+          class="flex-1 border-1 rounded-16rpx py-24rpx text-center text-26rpx">
           {{ m.label }}
         </view>
       </view>
     </view>
 
     <!-- Remark -->
-    <view class="bg-white mx-3 mt-3 rounded-xl p-4 shadow-sm">
+    <view class="bg-white mx-20rpx mt-20rpx rounded-20rpx p-30rpx"
+      style="box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);">
       <u-input v-model="remark" placeholder="备注（选填）" border="none" />
     </view>
 
     <!-- Bottom bar -->
-    <view class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-3 flex items-center justify-between">
-      <text class="text-gray-500 text-sm">应付：<text class="text-blue-700 font-bold text-lg">¥--</text></text>
-      <u-button type="primary" text="提交订单" :loading="submitting" @click="submit" />
+    <view class="fixed bottom-0 left-0 right-0 z-100 bg-white border-t-1 border-gray-100 px-30rpx py-20rpx flex items-center justify-between"
+      :style="{paddingBottom: 'calc(20rpx + env(safe-area-inset-bottom))'}">
+      <view class="flex items-baseline">
+        <text class="text-26rpx text-gray-500">应付：</text>
+        <text class="text-36rpx text-red-500 font-700">¥--</text>
+      </view>
+      <u-button type="primary" text="提交订单" :loading="submitting" @click="submit"
+        shape="circle" :custom-style="{width: '240rpx'}" />
     </view>
 
-    <!-- Quick address form -->
-    <u-popup :show="showAddressForm" mode="bottom" round @close="showAddressForm=false">
-      <view class="p-5">
-        <text class="text-lg font-semibold text-slate-800 block mb-4">添加地址</text>
-        <u-form :model="addrForm" class="space-y-3">
-          <u-form-item label="姓名"><u-input v-model="addrForm.name" /></u-form-item>
-          <u-form-item label="电话"><u-input v-model="addrForm.phone" type="number" /></u-form-item>
-          <u-form-item label="省市区"><u-input v-model="addrForm.province" placeholder="省" /><u-input v-model="addrForm.city" placeholder="市" /><u-input v-model="addrForm.district" placeholder="区" /></u-form-item>
-          <u-form-item label="详细地址"><u-input v-model="addrForm.detail" /></u-form-item>
-        </u-form>
-        <u-button type="primary" text="保存" class="mt-4" @click="saveAddress" />
+    <!-- Address popup -->
+    <u-popup :show="showAddressForm" mode="bottom" round="20" @close="showAddressForm=false">
+      <view class="p-40rpx">
+        <text class="text-32rpx font-600 text-gray-800 block mb-30rpx">添加收货地址</text>
+        <view class="mb-24rpx">
+          <u-input v-model="addrForm.name" placeholder="收货人姓名" border="surround" shape="circle" />
+        </view>
+        <view class="mb-24rpx">
+          <u-input v-model="addrForm.phone" placeholder="手机号" type="number" border="surround" shape="circle" />
+        </view>
+        <view class="flex gap-16rpx mb-24rpx">
+          <view class="flex-1"><u-input v-model="addrForm.province" placeholder="省" border="surround" shape="circle" /></view>
+          <view class="flex-1"><u-input v-model="addrForm.city" placeholder="市" border="surround" shape="circle" /></view>
+          <view class="flex-1"><u-input v-model="addrForm.district" placeholder="区" border="surround" shape="circle" /></view>
+        </view>
+        <view class="mb-30rpx">
+          <u-input v-model="addrForm.detail" placeholder="详细地址" border="surround" shape="circle" />
+        </view>
+        <u-button type="primary" text="保存地址" @click="saveAddress" shape="circle" />
       </view>
     </u-popup>
   </view>
@@ -93,14 +117,14 @@ async function submit() {
   if (!address.value) { uni.showToast({ title: '请添加收货地址', icon: 'none' }); return }
   submitting.value = true
   try {
-    const order = await post<any>('/api/v1/orders', {
+    await post<any>('/api/v1/orders', {
       address_id: address.value.id,
       payment_method: payMethod.value,
       sku_ids: skuIds,
       remark: remark.value
     })
     uni.showToast({ title: '下单成功', icon: 'success' })
-    setTimeout(() => uni.navigateTo({ url: `/pages/order/list` }), 1000)
+    setTimeout(() => uni.switchTab({ url: '/pages/order/list' }), 1000)
   } catch {} finally {
     submitting.value = false
   }

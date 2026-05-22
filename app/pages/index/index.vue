@@ -1,12 +1,25 @@
 <template>
-  <view class="bg-gray-50 min-h-screen">
-    <u-navbar title="lyshop" :placeholder="true" />
+  <view class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <view class="bg-white px-30rpx pt-60rpx pb-30rpx">
+      <view class="flex items-center justify-between">
+        <text class="text-36rpx font-700 text-gray-800">lyshop</text>
+        <view class="flex items-center gap-20rpx">
+          <u-icon name="search" size="22" color="#666" @click="uni.switchTab({url:'/pages/product/list'})" />
+          <u-icon name="chat" size="22" color="#666" @click="uni.navigateTo({url:'/pages/im/chat'})" />
+        </view>
+      </view>
+    </view>
+
+    <!-- Decor render -->
     <DecorRender :components="components" />
-    <!-- Float customer service button -->
-    <view class="fixed bottom-20 right-4 z-50">
-      <view @click="uni.navigateTo({url:'/pages/im/chat'})"
-        class="w-12 h-12 bg-blue-700 rounded-full flex items-center justify-center shadow-lg">
-        <text class="text-white text-xs">客服</text>
+
+    <!-- Float customer service -->
+    <view class="fixed right-30rpx bottom-180rpx z-50"
+      @click="uni.navigateTo({url:'/pages/im/chat'})">
+      <view class="w-96rpx h-96rpx rounded-full bg-blue-700 flex items-center justify-center"
+        style="box-shadow: 0 4rpx 20rpx rgba(30,64,175,0.4);">
+        <u-icon name="chat" size="22" color="#fff" />
       </view>
     </view>
   </view>
@@ -25,7 +38,6 @@ onMounted(async () => {
     try { components.value = JSON.parse(data.components) } catch {}
   }
   if (!components.value.length) {
-    // Default components when no decoration configured
     components.value = [
       { type: 'banner', id: 'default_banner', props: { images: [], height: 300 } },
       { type: 'product_grid', id: 'default_grid', props: { source: 'hot', limit: 10, columns: 2 } }

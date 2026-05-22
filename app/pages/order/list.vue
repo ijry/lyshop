@@ -1,26 +1,33 @@
 <template>
-  <view class="bg-gray-50 min-h-screen">
-    <u-navbar title="我的订单" :placeholder="true" />
-
+  <view class="min-h-screen bg-gray-50">
     <!-- Status tabs -->
-    <u-tabs :list="tabs" :current="activeTab" @click="onTab" />
+    <view class="bg-white">
+      <u-tabs :list="tabs" :current="activeTab" @click="(item:any) => onTab(item.index)" />
+    </view>
 
-    <view class="p-3">
-      <view v-if="!orders.length" class="text-center py-12 text-gray-400">
-        <text>暂无订单</text>
+    <view class="p-20rpx">
+      <view v-if="!orders.length" class="flex flex-col items-center py-120rpx">
+        <u-icon name="order" size="60" color="#ccc" />
+        <text class="text-gray-400 text-28rpx mt-20rpx">暂无订单</text>
       </view>
-      <view v-for="o in orders" :key="o.id" class="bg-white rounded-xl p-4 mb-3 shadow-sm">
-        <view class="flex justify-between mb-2">
-          <text class="text-xs text-gray-400 font-mono">{{ o.order_no }}</text>
-          <text :class="statusColor(o.status)" class="text-xs font-medium">{{ statusLabel(o.status) }}</text>
+
+      <view v-for="o in orders" :key="o.id"
+        class="bg-white rounded-20rpx p-30rpx mb-20rpx"
+        style="box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);">
+        <!-- Header -->
+        <view class="flex items-center justify-between mb-20rpx">
+          <text class="text-22rpx text-gray-400 font-mono">{{ o.order_no }}</text>
+          <text :class="statusColor(o.status)" class="text-24rpx font-500">{{ statusLabel(o.status) }}</text>
         </view>
-        <view class="flex justify-between items-center">
-          <text class="text-gray-600 text-sm">{{ o.created_at?.slice(0, 10) }}</text>
-          <text class="text-slate-800 font-bold">¥{{ o.total_amount }}</text>
+        <!-- Amount + date -->
+        <view class="flex items-center justify-between">
+          <text class="text-24rpx text-gray-500">{{ o.created_at?.slice(0, 10) }}</text>
+          <text class="text-30rpx text-gray-800 font-700">¥{{ o.total_amount }}</text>
         </view>
-        <view class="flex justify-end gap-2 mt-3">
-          <u-button v-if="o.status === 1" size="mini" type="primary" text="去付款" @click="toPay(o)" />
-          <u-button v-if="o.status === 4" size="mini" type="success" text="评价" plain />
+        <!-- Actions -->
+        <view class="flex justify-end gap-16rpx mt-24rpx" v-if="o.status === 1 || o.status === 4">
+          <u-button v-if="o.status === 1" size="mini" type="primary" text="去付款" shape="circle" @click="toPay(o)" />
+          <u-button v-if="o.status === 4" size="mini" type="success" text="评价" shape="circle" plain />
         </view>
       </view>
     </view>
@@ -44,7 +51,7 @@ const statusLabels: Record<number, string> = {
   1: '待付款', 2: '待发货', 3: '待收货', 4: '已完成', 5: '售后'
 }
 const statusColors: Record<number, string> = {
-  1: 'text-yellow-500', 2: 'text-blue-500',
+  1: 'text-orange-500', 2: 'text-blue-500',
   3: 'text-purple-500', 4: 'text-green-500', 5: 'text-red-500'
 }
 const statusLabel = (s: number) => statusLabels[s] || ''
@@ -61,8 +68,8 @@ function onTab(index: number) {
   loadOrders()
 }
 
-function toPay(order: any) {
-  uni.showToast({ title: '支付功能将在 Phase 3 实现', icon: 'none' })
+function toPay(_order: any) {
+  uni.showToast({ title: '支付功能开发中', icon: 'none' })
 }
 
 onMounted(loadOrders)

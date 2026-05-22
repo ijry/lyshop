@@ -1,19 +1,29 @@
 <template>
-  <view class="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-6">
-    <view class="w-full" style="max-width: 360px;">
-      <text class="text-2xl font-bold text-slate-800 block text-center mb-8">登录</text>
+  <view class="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-40rpx">
+    <view class="w-full" style="max-width: 680rpx;">
+      <!-- Logo -->
+      <view class="flex flex-col items-center mb-80rpx">
+        <view class="w-120rpx h-120rpx rounded-full bg-blue-700 flex items-center justify-center mb-24rpx">
+          <text class="text-white text-40rpx font-700">L</text>
+        </view>
+        <text class="text-36rpx font-700 text-gray-800">LYShop</text>
+        <text class="text-26rpx text-gray-400 mt-8rpx">开源插件化商城</text>
+      </view>
 
-      <view class="bg-white rounded-2xl p-6 shadow-sm">
-        <view class="mb-4">
+      <!-- Form -->
+      <view class="bg-white rounded-24rpx p-40rpx" style="box-shadow: 0 4rpx 24rpx rgba(0,0,0,0.06);">
+        <view class="mb-30rpx">
           <u-input
             v-model="form.phone"
             placeholder="请输入手机号"
             type="number"
             :maxlength="11"
             border="surround"
+            shape="circle"
+            prefixIcon="phone"
           />
         </view>
-        <view class="mb-6 flex gap-2">
+        <view class="flex items-center gap-16rpx mb-40rpx">
           <view class="flex-1">
             <u-input
               v-model="form.code"
@@ -21,6 +31,8 @@
               type="number"
               :maxlength="6"
               border="surround"
+              shape="circle"
+              prefixIcon="lock"
             />
           </view>
           <u-button
@@ -30,6 +42,7 @@
             @click="sendCode"
             type="primary"
             plain
+            shape="circle"
           />
         </view>
         <u-button
@@ -37,7 +50,13 @@
           :loading="loading"
           text="登 录"
           @click="handleLogin"
+          shape="circle"
+          :custom-style="{height: '88rpx', fontSize: '30rpx'}"
         />
+      </view>
+
+      <view class="mt-40rpx text-center">
+        <text class="text-24rpx text-gray-400">演示模式：输入任意手机号即可体验</text>
       </view>
     </view>
   </view>
@@ -45,7 +64,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { get, post } from '@/utils/request'
+import { post } from '@/utils/request'
 
 const form = ref({ phone: '', code: '' })
 const loading = ref(false)
