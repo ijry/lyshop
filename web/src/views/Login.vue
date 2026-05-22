@@ -3,7 +3,7 @@
     <div class="w-full max-w-md mx-auto px-6">
       <!-- Logo -->
       <div class="text-center mb-10">
-        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-700 to-blue-500 flex-center mx-auto mb-4 shadow-lg shadow-blue-700/20">
+        <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-600 to-red-500 flex-center mx-auto mb-4 shadow-lg shadow-red-600/20">
           <span class="text-white text-2xl font-bold">L</span>
         </div>
         <h1 class="text-2xl font-bold text-gray-900">登录 LYShop</h1>

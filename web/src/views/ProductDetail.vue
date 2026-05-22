@@ -9,8 +9,8 @@
         <div class="flex gap-2 overflow-x-auto">
           <div v-for="(img, i) in images" :key="i"
             @click="mainImage = img"
-            :class="mainImage === img ? 'ring-2 ring-blue-700' : 'ring-1 ring-gray-200'"
-            class="w-16 h-16 rounded-lg overflow-hidden shrink-0 cursor-pointer hover:ring-blue-300 transition-all">
+            :class="mainImage === img ? 'ring-2 ring-red-600' : 'ring-1 ring-gray-200'"
+            class="w-16 h-16 rounded-lg overflow-hidden shrink-0 cursor-pointer hover:ring-red-300 transition-all">
             <img :src="img" class="w-full h-full object-cover" />
           </div>
         </div>
@@ -43,7 +43,7 @@
           <div class="flex flex-wrap gap-2">
             <button v-for="sku in skus" :key="sku.id" @click="selectSku(sku)"
               :class="selectedSku?.id === sku.id
-                ? 'border-blue-700 bg-blue-50 text-blue-700'
+                ? 'border-red-600 bg-red-50 text-red-600'
                 : 'border-gray-200 text-gray-600 hover:border-gray-300'"
               class="px-4 py-2 border rounded-lg text-sm transition-colors">
               {{ parseAttrs(sku.attrs) }}

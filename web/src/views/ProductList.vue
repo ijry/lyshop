@@ -9,7 +9,7 @@
             <button v-for="c in categories" :key="c.id"
               @click="categoryID = c.id; loadProducts()"
               :class="categoryID === c.id
-                ? 'bg-blue-50 text-blue-700 font-medium'
+                ? 'bg-red-50 text-red-600 font-medium'
                 : 'text-gray-600 hover:bg-gray-50'"
               class="text-left text-sm px-3 py-2 rounded-lg transition-colors">
               {{ c.name }}
@@ -32,7 +32,7 @@
 
         <!-- Loading -->
         <div v-if="loading" class="flex-center py-20">
-          <div class="w-6 h-6 border-2 border-blue-700 border-t-transparent rounded-full animate-spin" />
+          <div class="w-6 h-6 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
         </div>
 
         <!-- Products grid -->

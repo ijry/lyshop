@@ -57,7 +57,7 @@ const statusValues = [0, 1, 2, 3, 4]
 const statusLabels: Record<number, string> = { 1: '待付款', 2: '待发货', 3: '待收货', 4: '已完成', 5: '售后' }
 const statusColors: Record<number, string> = {
   1: 'bg-orange-50 text-orange-600',
-  2: 'bg-blue-50 text-blue-600',
+  2: 'bg-red-50 text-red-600',
   3: 'bg-purple-50 text-purple-600',
   4: 'bg-green-50 text-green-600',
   5: 'bg-red-50 text-red-500',

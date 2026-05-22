@@ -6,7 +6,7 @@
         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
     </div>
     <div class="p-4">
-      <h3 class="text-sm font-medium text-gray-800 line-clamp-2 leading-5 mb-2 group-hover:text-blue-700 transition-colors">
+      <h3 class="text-sm font-medium text-gray-800 line-clamp-2 leading-5 mb-2 group-hover:text-red-600 transition-colors">
         {{ product.title }}
       </h3>
       <p v-if="product.subtitle" class="text-xs text-gray-400 mb-3 line-clamp-1">{{ product.subtitle }}</p>

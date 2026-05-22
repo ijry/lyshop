@@ -3,17 +3,17 @@
     <div class="max-w-7xl mx-auto px-6 h-16 flex-between">
       <!-- Logo -->
       <router-link to="/" class="flex items-center gap-2.5 group">
-        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-700 to-blue-500 flex-center">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-red-600 to-red-500 flex-center">
           <span class="text-white text-sm font-bold">L</span>
         </div>
-        <span class="text-lg font-bold text-gray-900 group-hover:text-blue-700 transition-colors">LYShop</span>
+        <span class="text-lg font-bold text-gray-900 group-hover:text-red-600 transition-colors">LYShop</span>
       </router-link>
 
       <!-- Nav -->
       <nav class="hidden md:flex items-center gap-8">
         <router-link v-for="nav in navs" :key="nav.path" :to="nav.path"
-          class="text-sm text-gray-600 hover:text-blue-700 transition-colors relative py-1"
-          active-class="!text-blue-700 font-medium after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-blue-700 after:rounded-full">
+          class="text-sm text-gray-600 hover:text-red-600 transition-colors relative py-1"
+          active-class="!text-red-600 font-medium after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-red-600 after:rounded-full">
           {{ nav.name }}
         </router-link>
       </nav>
@@ -39,9 +39,9 @@
 
         <!-- User -->
         <template v-if="auth.isLoggedIn">
-          <div class="w-8 h-8 rounded-full bg-blue-100 flex-center cursor-pointer hover:bg-blue-200 transition-colors"
+          <div class="w-8 h-8 rounded-full bg-red-100 flex-center cursor-pointer hover:bg-red-200 transition-colors"
             @click="$router.push('/orders')">
-            <div class="i-carbon-user text-blue-700" />
+            <div class="i-carbon-user text-red-600" />
           </div>
         </template>
         <router-link v-else to="/login" class="btn-primary text-xs !px-4 !py-2">登录</router-link>
