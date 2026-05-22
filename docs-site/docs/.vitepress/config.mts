@@ -3,8 +3,21 @@ import { defineConfig } from "vitepress";
 export default defineConfig({
   base: "/lyshop/",
   lang: "zh-CN",
-  title: "LYShop 文档中心",
-  description: "LYShop 项目官网与技术文档",
+  title: "LYShop 零云商城",
+  description: "LYShop 零云商城 - 开源插件化商城系统，基于 Go + Vue3 + uni-app，支持多端（PC/H5/小程序/App），插件化架构，AI生图，IM客服，Docker一键部署，免费开源电商解决方案",
+
+  head: [
+    ["meta", { name: "keywords", content: "lyshop,零云商城,开源商城,Go商城,Vue3商城,uni-app商城,插件化商城,多端商城,小程序商城,H5商城,电商系统,开源电商,免费商城系统,商城源码,Go电商,微信商城,商城开源项目" }],
+    ["meta", { name: "author", content: "ijry" }],
+    ["meta", { property: "og:title", content: "LYShop 零云商城 - 开源插件化多端商城系统" }],
+    ["meta", { property: "og:description", content: "基于 Go + Vue3 + uni-app 的开源插件化商城，支持PC/H5/小程序/App多端，AI生图，IM客服，Docker一键部署" }],
+    ["meta", { property: "og:type", content: "website" }],
+    ["meta", { property: "og:url", content: "https://ijry.github.io/lyshop/" }],
+  ],
+
+  sitemap: {
+    hostname: "https://ijry.github.io/lyshop",
+  },
 
   themeConfig: {
     logo: "/logo.svg",
