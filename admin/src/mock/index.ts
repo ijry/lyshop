@@ -1,0 +1,133 @@
+// Admin mock data — routes keyed by "METHOD /admin/api/..."
+// Reuses product/order JSON from app mock where applicable
+
+import products from '../../../app/mock/data/products.json'
+import categories from '../../../app/mock/data/categories.json'
+import orders from '../../../app/mock/data/orders.json'
+
+const routes: Record<string, any> = {
+  // Auth
+  'POST /admin/api/auth/login': { token: 'demo_admin_token' },
+
+  // Menus (dynamically generated from enabled plugins)
+  'GET /admin/api/menus': [
+    { title: '商品管理', icon: 'box', path: '/product', sort: 10, children: [
+      { title: '商品列表', path: '/product/list' },
+      { title: '商品分类', path: '/product/category' },
+    ]},
+    { title: '订单管理', icon: 'shopping-cart', path: '/order', sort: 20, children: [
+      { title: '订单列表', path: '/order/list' },
+    ]},
+    { title: '仓储管理', icon: 'warehouse', path: '/wms', sort: 30, children: [
+      { title: '库存列表', path: '/wms/stock' },
+    ]},
+    { title: '营销管理', icon: 'tag', path: '/marketing', sort: 40, children: [
+      { title: '优惠券管理', path: '/marketing/coupon' },
+    ]},
+    { title: '客服中心', icon: 'message-circle', path: '/im', sort: 50, children: [
+      { title: '客服会话', path: '/im/sessions' },
+    ]},
+    { title: 'AI 工具', icon: 'cpu', path: '/ai', sort: 60, children: [
+      { title: 'AI 生图', path: '/ai/tasks' },
+    ]},
+    { title: '店铺装修', icon: 'layout', path: '/decor', sort: 70, children: [
+      { title: '首页装修', path: '/decor/index' },
+    ]},
+  ],
+
+  // Dashboard
+  'GET /admin/api/dashboard': {
+    today_orders: 56,
+    today_sales: 28960.50,
+    pending_refunds: 3,
+    online_sessions: 2,
+  },
+
+  // Products
+  'GET /admin/api/products': products,
+  'GET /admin/api/products/': products.list[0],
+  'POST /admin/api/products': { id: 100 },
+  'GET /admin/api/categories': categories,
+  'POST /admin/api/categories': { id: 10 },
+
+  // Orders
+  'GET /admin/api/orders': orders,
+
+  // WMS
+  'GET /admin/api/wms/warehouses': [
+    { id: 1, name: '主仓库', address: '上海市浦东新区', contact: '张三', phone: '13800001111', status: 1 },
+    { id: 2, name: '华南仓', address: '广州市天河区', contact: '李四', phone: '13800002222', status: 1 },
+  ],
+  'GET /admin/api/wms/stocks': {
+    list: [
+      { id: 1, warehouse_id: 1, sku_id: 1, qty: 200, safe_qty: 50 },
+      { id: 2, warehouse_id: 1, sku_id: 2, qty: 100, safe_qty: 30 },
+      { id: 3, warehouse_id: 2, sku_id: 3, qty: 3000, safe_qty: 100 },
+    ],
+    total: 3, page: 1, size: 20,
+  },
+
+  // Marketing
+  'GET /admin/api/marketing/coupons': {
+    list: [
+      { id: 1, name: '新人满100减20', type: 1, min_amount: 100, discount: 20, total_count: 1000, per_limit: 1, status: 1 },
+      { id: 2, name: '全场9折券', type: 2, min_amount: 0, discount: 0.9, total_count: 500, per_limit: 1, status: 1 },
+      { id: 3, name: '无门槛5元券', type: 3, min_amount: 0, discount: 5, total_count: 0, per_limit: 3, status: 1 },
+    ],
+    total: 3, page: 1, size: 20,
+  },
+
+  // IM
+  'GET /admin/api/im/sessions': [
+    { id: 1, user_id: 1001, staff_id: 1, status: 2, last_msg: '这款耳机降噪效果怎么样？', unread_count: 1, updated_at: '2026-05-22T10:30:00Z' },
+    { id: 2, user_id: 1002, staff_id: 0, status: 1, last_msg: '你好，我想退货', unread_count: 3, updated_at: '2026-05-22T09:15:00Z' },
+  ],
+  'GET /admin/api/im/sessions/': { list: [
+    { id: 1, session_id: 1, sender_type: 1, content: '你好，我想问一下这款耳机', type: 'text', created_at: '2026-05-22T10:28:00Z' },
+    { id: 2, session_id: 1, sender_type: 2, content: '您好！请问有什么可以帮您？', type: 'text', created_at: '2026-05-22T10:29:00Z' },
+    { id: 3, session_id: 1, sender_type: 1, content: '这款耳机降噪效果怎么样？', type: 'text', created_at: '2026-05-22T10:30:00Z' },
+  ], total: 3 },
+
+  // AI
+  'GET /admin/api/ai/models': [
+    { id: 1, name: '通义万象', driver: 'tongyi', endpoint: '', is_default: 1, status: 1 },
+    { id: 2, name: 'DALL-E 3', driver: 'openai', endpoint: 'https://api.openai.com', is_default: 0, status: 1 },
+  ],
+  'GET /admin/api/ai/tasks': {
+    list: [
+      { id: 1, model_id: 1, scene: 'carousel', prompt: '白色简约风手提包', status: 2, result_urls: '["https://picsum.photos/750/750?random=90"]', created_at: '2026-05-22T08:00:00Z' },
+    ],
+    total: 1, page: 1, size: 20,
+  },
+  'POST /admin/api/ai/generate': { id: 99, status: 1, model_id: 1, prompt: 'demo', result_urls: null },
+  'GET /admin/api/ai/tasks/': { id: 99, status: 2, model_id: 1, prompt: 'demo', result_urls: '["https://picsum.photos/750/750?random=91","https://picsum.photos/750/750?random=92"]' },
+
+  // Decor
+  'GET /admin/api/decor/': {
+    id: 1, page_key: 'index', merchant_id: 0,
+    components: JSON.stringify([
+      { type: 'banner', id: 'c1', props: { images: [{ url: 'https://picsum.photos/750/350?random=1' }], height: 350 } },
+      { type: 'product_grid', id: 'c2', props: { source: 'hot', limit: 6, columns: 2 } },
+    ]),
+  },
+
+  // Upload
+  'POST /admin/api/upload': { path: 'demo/mock.jpg', url: 'https://picsum.photos/400/400?random=50', size: 12345, mime: 'image/jpeg' },
+
+  // System config
+  'GET /admin/api/system/sms/config': { provider: 'aliyun', access_key: 'demo***', sign_name: 'LYShop' },
+}
+
+export function matchMock(method: string, url: string): { matched: boolean; data?: any } {
+  const key = `${method.toUpperCase()} ${url}`
+  if (key in routes) return { matched: true, data: routes[key] }
+  for (const pattern of Object.keys(routes)) {
+    if (key.startsWith(pattern) && pattern.endsWith('/')) {
+      return { matched: true, data: routes[pattern] }
+    }
+  }
+  if (['POST', 'PUT', 'DELETE'].includes(method.toUpperCase())) {
+    return { matched: true, data: null }
+  }
+  return { matched: false }
+}

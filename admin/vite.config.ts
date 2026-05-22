@@ -9,6 +9,7 @@ export default defineConfig({
   },
   server: {
     port: 9527,
+    fs: { allow: ['..'] },
     proxy: {
       '/admin/api': { target: 'http://localhost:8080', changeOrigin: true },
       '/api':       { target: 'http://localhost:8080', changeOrigin: true }

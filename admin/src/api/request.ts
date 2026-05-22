@@ -1,5 +1,7 @@
 import axios from 'axios'
 
+const MOCK_ENABLED = import.meta.env.VITE_MOCK === 'true'
+
 const request = axios.create({
   baseURL: '/admin/api',
   timeout: 30000,
@@ -19,5 +21,28 @@ request.interceptors.response.use(
   },
   err => Promise.reject(err)
 )
+
+// Mock interceptor: intercept all requests when VITE_MOCK=true
+if (MOCK_ENABLED) {
+  request.interceptors.request.use(async (config) => {
+    const { matchMock } = await import('@/mock/index')
+    const method = (config.method || 'GET').toUpperCase()
+    const url = (config.baseURL || '') + (config.url || '')
+    const result = matchMock(method, url)
+
+    if (result.matched) {
+      await new Promise(r => setTimeout(r, 100 + Math.random() * 200))
+      config.adapter = () =>
+        Promise.resolve({
+          data: { code: 0, msg: 'success', data: result.data },
+          status: 200,
+          statusText: 'OK',
+          headers: {},
+          config,
+        })
+    }
+    return config
+  })
+}
 
 export default request

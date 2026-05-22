@@ -24,18 +24,29 @@
           {{ loading ? '登录中...' : '登 录' }}
         </button>
       </form>
+      <p v-if="isMock" class="text-center text-xs text-gray-400 mt-4">
+        演示模式：账号密码已自动填充，直接点击登录
+      </p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 
+const isMock = import.meta.env.VITE_MOCK === 'true'
 const auth = useAuthStore()
 const form = ref({ username: '', password: '' })
 const error = ref('')
 const loading = ref(false)
+
+onMounted(() => {
+  if (isMock) {
+    form.value.username = 'admin'
+    form.value.password = 'admin123'
+  }
+})
 
 async function handleLogin() {
   error.value = ''

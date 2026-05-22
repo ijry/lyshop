@@ -1,7 +1,9 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory, createWebHashHistory } from 'vue-router'
+
+const isMock = import.meta.env.VITE_MOCK === 'true'
 
 const router = createRouter({
-  history: createWebHistory('/admin'),
+  history: isMock ? createWebHashHistory() : createWebHistory('/admin'),
   routes: [
     { path: '/login', component: () => import('@/views/Login.vue') },
     {
