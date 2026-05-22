@@ -31,9 +31,9 @@ const features = [
   { icon: '🏷️', title: '营销活动', desc: '优惠券、限时秒杀、满减、积分，Redis 原子扣减', color: '#eab308' },
   { icon: '💬', title: 'IM 客服', desc: 'WebSocket 实时通信、多坐席、离线消息、自动回复', color: '#22c55e' },
   { icon: '🏭', title: '仓储管理', desc: '多仓库、入出库单、调拨盘点、库存流水追溯', color: '#06b6d4' },
-  { icon: '🎨', title: 'AI 生图', desc: '通义万象 / 文心 / DALL-E 多模型聚合生成商品图', color: '#8b5cf6' },
+  { icon: '🎨', title: 'AI 生图', desc: '通义万象 / 文心 / DALL-E 多模型聚合生成商品图', color: '#ef4444' },
   { icon: '🖌️', title: '店铺装修', desc: '可视化拖拽编辑器，9 种组件，JSON 驱动渲染', color: '#ec4899' },
-  { icon: '🔌', title: '驱动抽象层', desc: '支付 / 短信 / OAuth / 存储 / AI 统一接口', color: '#6366f1' },
+  { icon: '🔌', title: '驱动抽象层', desc: '支付 / 短信 / OAuth / 存储 / AI 统一接口', color: '#dc2626' },
 ]
 
 const techStack = [
@@ -224,19 +224,19 @@ const platforms = [
 /* Hero */
 .hero { position: relative; overflow: hidden; padding: 100px 24px 80px; text-align: center; }
 .hero-bg { position: absolute; inset: 0; background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); z-index: 0; }
-.hero-bg::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 30% 40%, rgba(99,102,241,0.15) 0%, transparent 50%), radial-gradient(circle at 70% 60%, rgba(236,72,153,0.1) 0%, transparent 50%); }
+.hero-bg::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 30% 40%, rgba(220,38,38,0.15) 0%, transparent 50%), radial-gradient(circle at 70% 60%, rgba(236,72,153,0.1) 0%, transparent 50%); }
 .hero-content { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; }
 .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.08); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.1); border-radius: 999px; padding: 6px 18px; margin-bottom: 32px; font-size: 13px; color: rgba(255,255,255,0.7); }
 .hero-badge-dot { width: 6px; height: 6px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 .hero-title { font-size: 56px; font-weight: 800; line-height: 1.15; color: #fff; margin-bottom: 24px; letter-spacing: -1px; }
-.hero-title-brand { background: linear-gradient(135deg, #818cf8, #c084fc, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.hero-title-brand { background: linear-gradient(135deg, #f87171, #ef4444, #fca5a5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 .hero-subtitle { font-size: 18px; line-height: 1.7; color: rgba(255,255,255,0.6); margin-bottom: 40px; }
 .hero-subtitle strong { color: rgba(255,255,255,0.9); }
 .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 60px; }
 .hero-btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 28px; border-radius: 12px; font-size: 15px; font-weight: 600; text-decoration: none; transition: all 0.2s; cursor: pointer; }
-.hero-btn-primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; box-shadow: 0 4px 20px rgba(99,102,241,0.4); }
-.hero-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(99,102,241,0.5); }
+.hero-btn-primary { background: linear-gradient(135deg, #dc2626, #ef4444); color: #fff; box-shadow: 0 4px 20px rgba(220,38,38,0.4); }
+.hero-btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(220,38,38,0.5); }
 .hero-btn-outline { background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(4px); }
 .hero-btn-outline:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.3); }
 .hero-btn-ghost { background: transparent; color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.12); }
@@ -253,7 +253,7 @@ const platforms = [
 .section-alt { background: #f8fafc; }
 .container { max-width: 1100px; margin: 0 auto; }
 .section-header { text-align: center; margin-bottom: 48px; }
-.section-tag { display: inline-block; font-size: 13px; font-weight: 600; color: #6366f1; background: #eef2ff; padding: 4px 14px; border-radius: 999px; margin-bottom: 16px; }
+.section-tag { display: inline-block; font-size: 13px; font-weight: 600; color: #dc2626; background: #fef2f2; padding: 4px 14px; border-radius: 999px; margin-bottom: 16px; }
 .section-title { font-size: 32px; font-weight: 800; color: #0f172a; margin-bottom: 12px; letter-spacing: -0.5px; }
 .section-desc { font-size: 16px; color: #64748b; max-width: 600px; margin: 0 auto; line-height: 1.6; }
 
@@ -275,7 +275,7 @@ const platforms = [
 .platform-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.06); }
 .platform-icon { font-size: 36px; margin-bottom: 12px; }
 .platform-name { font-size: 15px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
-.platform-tech { font-size: 11px; color: #6366f1; background: #eef2ff; padding: 2px 10px; border-radius: 999px; display: inline-block; margin-bottom: 8px; }
+.platform-tech { font-size: 11px; color: #dc2626; background: #fef2f2; padding: 2px 10px; border-radius: 999px; display: inline-block; margin-bottom: 8px; }
 .platform-desc { font-size: 12px; color: #94a3b8; line-height: 1.5; }
 
 /* Tech */
@@ -291,11 +291,11 @@ const platforms = [
 .arch-row { display: flex; gap: 12px; justify-content: center; }
 .arch-arrow { text-align: center; font-size: 20px; color: #94a3b8; padding: 8px 0; }
 .arch-box { padding: 16px 24px; border-radius: 12px; font-size: 14px; font-weight: 600; text-align: center; }
-.arch-client { background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe; flex: 1; }
+.arch-client { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; flex: 1; }
 .arch-server { background: #0f172a; color: #fff; flex: 1; padding: 20px 24px; }
 .arch-inner { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; justify-content: center; }
 .arch-inner span { background: rgba(255,255,255,0.12); padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; }
-.arch-driver span { background: rgba(99,102,241,0.25); }
+.arch-driver span { background: rgba(220,38,38,0.25); }
 .arch-infra { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; flex: 1; }
 
 /* CTA */

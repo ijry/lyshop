@@ -1,0 +1,19 @@
+/* VitePress theme override — red color scheme */
+:root {
+  --vp-c-brand-1: #dc2626;
+  --vp-c-brand-2: #ef4444;
+  --vp-c-brand-3: #f87171;
+  --vp-c-brand-soft: rgba(220, 38, 38, 0.14);
+  --vp-button-brand-bg: #dc2626;
+  --vp-button-brand-hover-bg: #b91c1c;
+  --vp-button-brand-active-bg: #991b1b;
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: linear-gradient(135deg, #dc2626, #ef4444);
+}
+
+.dark {
+  --vp-c-brand-1: #ef4444;
+  --vp-c-brand-2: #f87171;
+  --vp-c-brand-3: #fca5a5;
+  --vp-c-brand-soft: rgba(239, 68, 68, 0.16);
+}

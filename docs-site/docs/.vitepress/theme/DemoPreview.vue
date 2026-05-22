@@ -161,11 +161,11 @@ onUnmounted(() => {
   align-items: center;
   gap: 6px;
   padding: 12px 18px;
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
   color: #fff;
   border-radius: 999px;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(30, 64, 175, 0.4);
+  box-shadow: 0 4px 20px rgba(220, 38, 38, 0.4);
   transition: transform 0.2s, box-shadow 0.2s;
   user-select: none;
   font-size: 14px;
@@ -173,7 +173,7 @@ onUnmounted(() => {
 }
 .demo-fab:hover {
   transform: scale(1.05);
-  box-shadow: 0 6px 28px rgba(30, 64, 175, 0.5);
+  box-shadow: 0 6px 28px rgba(220, 38, 38, 0.5);
 }
 .demo-fab-text {
   line-height: 1;
