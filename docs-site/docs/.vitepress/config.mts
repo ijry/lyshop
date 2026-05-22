@@ -13,7 +13,14 @@ export default defineConfig({
       { text: "功能介绍", link: "/guide/features" },
       { text: "部署文档", link: "/deploy/" },
       { text: "接口文档", link: "/api/" },
-      { text: "二次开发", link: "/dev/secondary-development" }
+      { text: "二次开发", link: "/dev/secondary-development" },
+      {
+        text: "在线演示",
+        items: [
+          { text: "PC 商城演示", link: "/web-demo/index.html", target: "_blank" },
+          { text: "H5 移动端演示（右下角浮窗）", link: "/" }
+        ]
+      }
     ],
     sidebar: {
       "/guide/": [

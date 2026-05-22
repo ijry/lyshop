@@ -6,12 +6,14 @@ on:
     paths:
       - "docs-site/**"
       - "app/**"
+      - "web/**"
       - ".github/workflows/docs.yml"
   pull_request:
     branches: [master]
     paths:
       - "docs-site/**"
       - "app/**"
+      - "web/**"
       - ".github/workflows/docs.yml"
   workflow_dispatch:
 
@@ -45,6 +47,14 @@ jobs:
       - name: Build H5 demo (mock data)
         working-directory: app
         run: node scripts/build-demo.js
+
+      - name: Install web dependencies
+        working-directory: web
+        run: npm install
+
+      - name: Build PC demo (mock data)
+        working-directory: web
+        run: npx cross-env VITE_MOCK=true npx vite build --base /lyshop/web-demo/ --outDir ../docs-site/docs/public/web-demo
 
       - name: Install docs dependencies
         working-directory: docs-site
