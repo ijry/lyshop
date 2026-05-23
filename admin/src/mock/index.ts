@@ -13,13 +13,13 @@ const routes: Record<string, any> = {
   'GET /admin/api/menus': [
     { title: '商品管理', icon: 'box', path: '/product', sort: 10, children: [
       { title: '商品列表', path: '/product/list' },
-      { title: '商品分类', path: '/product/category' },
+      { title: '新增商品', path: '/product/form' },
     ]},
     { title: '订单管理', icon: 'shopping-cart', path: '/order', sort: 20, children: [
       { title: '订单列表', path: '/order/list' },
     ]},
     { title: '仓储管理', icon: 'warehouse', path: '/wms', sort: 30, children: [
-      { title: '库存列表', path: '/wms/stock' },
+      { title: '库存管理', path: '/wms/stock' },
     ]},
     { title: '营销管理', icon: 'tag', path: '/marketing', sort: 40, children: [
       { title: '优惠券管理', path: '/marketing/coupon' },
@@ -29,9 +29,13 @@ const routes: Record<string, any> = {
     ]},
     { title: 'AI 工具', icon: 'cpu', path: '/ai', sort: 60, children: [
       { title: 'AI 生图', path: '/ai/tasks' },
+      { title: '模型配置', path: '/ai/models' },
     ]},
     { title: '店铺装修', icon: 'layout', path: '/decor', sort: 70, children: [
       { title: '首页装修', path: '/decor/index' },
+    ]},
+    { title: '系统设置', icon: 'settings', path: '/system', sort: 90, children: [
+      { title: '支付短信配置', path: '/system/config' },
     ]},
   ],
 
