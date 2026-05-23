@@ -36,6 +36,8 @@ const routes: Record<string, any> = {
     ]},
     { title: '系统设置', icon: 'settings', path: '/system', sort: 90, children: [
       { title: '支付短信配置', path: '/system/config' },
+      { title: '管理员管理', path: '/system/admins' },
+      { title: '角色管理', path: '/system/roles' },
     ]},
   ],
 
@@ -120,6 +122,32 @@ const routes: Record<string, any> = {
 
   // System config
   'GET /admin/api/system/sms/config': { provider: 'aliyun', access_key: 'demo***', sign_name: 'LYShop' },
+
+  // RBAC: Admins
+  'GET /admin/api/admins': [
+    { id: 1, username: 'admin', role_id: 1, status: 1, created_at: '2026-01-01T00:00:00Z' },
+    { id: 2, username: 'kefu01', role_id: 2, status: 1, created_at: '2026-03-15T10:00:00Z' },
+    { id: 3, username: 'operator', role_id: 3, status: 1, created_at: '2026-04-01T08:00:00Z' },
+  ],
+
+  // RBAC: Roles
+  'GET /admin/api/roles': [
+    { id: 1, name: '超级管理员', permissions: '["*"]' },
+    { id: 2, name: '客服', permissions: '["im:view","im:reply"]' },
+    { id: 3, name: '运营', permissions: '["product:view","product:create","product:edit","order:view","marketing:view","marketing:edit"]' },
+  ],
+
+  // RBAC: All available permissions
+  'GET /admin/api/permissions': [
+    'system:admin', 'system:config',
+    'product:view', 'product:create', 'product:edit', 'product:delete',
+    'order:view', 'order:ship', 'order:refund',
+    'wms:view', 'wms:edit',
+    'marketing:view', 'marketing:edit',
+    'im:view', 'im:reply',
+    'ai:view', 'ai:generate', 'ai:config',
+    'decor:view', 'decor:edit',
+  ],
 }
 
 export function matchMock(method: string, url: string): { matched: boolean; data?: any } {

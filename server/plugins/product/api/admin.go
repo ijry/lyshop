@@ -4,22 +4,23 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/ijry/lyshop/core/middleware"
 	"github.com/ijry/lyshop/core/response"
 	productmodel "github.com/ijry/lyshop/plugins/product/model"
 	productsvc "github.com/ijry/lyshop/plugins/product/service"
 )
 
 func RegisterAdminRoutes(g *gin.RouterGroup) {
-	g.GET("/categories", adminListCategories)
-	g.POST("/categories", adminCreateCategory)
-	g.PUT("/categories/:id", adminUpdateCategory)
-	g.DELETE("/categories/:id", adminDeleteCategory)
+	g.GET("/categories", middleware.RequirePermission("product:view"), adminListCategories)
+	g.POST("/categories", middleware.RequirePermission("product:create"), adminCreateCategory)
+	g.PUT("/categories/:id", middleware.RequirePermission("product:edit"), adminUpdateCategory)
+	g.DELETE("/categories/:id", middleware.RequirePermission("product:delete"), adminDeleteCategory)
 
-	g.GET("/products", adminListProducts)
-	g.GET("/products/:id", adminGetProduct)
-	g.POST("/products", adminCreateProduct)
-	g.PUT("/products/:id", adminUpdateProduct)
-	g.DELETE("/products/:id", adminDeleteProduct)
+	g.GET("/products", middleware.RequirePermission("product:view"), adminListProducts)
+	g.GET("/products/:id", middleware.RequirePermission("product:view"), adminGetProduct)
+	g.POST("/products", middleware.RequirePermission("product:create"), adminCreateProduct)
+	g.PUT("/products/:id", middleware.RequirePermission("product:edit"), adminUpdateProduct)
+	g.DELETE("/products/:id", middleware.RequirePermission("product:delete"), adminDeleteProduct)
 }
 
 func adminListCategories(c *gin.Context) {

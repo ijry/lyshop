@@ -4,17 +4,18 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/ijry/lyshop/core/middleware"
 	"github.com/ijry/lyshop/core/response"
 	aimodel "github.com/ijry/lyshop/plugins/ai_image/model"
 	aisvc "github.com/ijry/lyshop/plugins/ai_image/service"
 )
 
 func RegisterAdminRoutes(g *gin.RouterGroup) {
-	g.GET("/ai/models", listModels)
-	g.POST("/ai/models", createModel)
-	g.POST("/ai/generate", generate)
-	g.GET("/ai/tasks/:id", getTask)
-	g.GET("/ai/tasks", listTasks)
+	g.GET("/ai/models", middleware.RequirePermission("ai:view"), listModels)
+	g.POST("/ai/models", middleware.RequirePermission("ai:config"), createModel)
+	g.POST("/ai/generate", middleware.RequirePermission("ai:generate"), generate)
+	g.GET("/ai/tasks/:id", middleware.RequirePermission("ai:view"), getTask)
+	g.GET("/ai/tasks", middleware.RequirePermission("ai:view"), listTasks)
 }
 
 func listModels(c *gin.Context) {

@@ -4,13 +4,14 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/ijry/lyshop/core/middleware"
 	"github.com/ijry/lyshop/core/response"
 	ordersvc "github.com/ijry/lyshop/plugins/order/service"
 )
 
 func RegisterAdminRoutes(g *gin.RouterGroup) {
-	g.GET("/orders", adminListOrders)
-	g.PUT("/orders/:id/ship", adminShipOrder)
+	g.GET("/orders", middleware.RequirePermission("order:view"), adminListOrders)
+	g.PUT("/orders/:id/ship", middleware.RequirePermission("order:ship"), adminShipOrder)
 }
 
 func adminListOrders(c *gin.Context) {

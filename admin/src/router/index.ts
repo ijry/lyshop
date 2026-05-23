@@ -25,6 +25,8 @@ const router = createRouter({
         { path: 'marketing/coupon',   name: '优惠券管理', component: () => import('@/views/marketing/CouponList.vue') },
         // System
         { path: 'system/config', name: '支付短信配置', component: () => import('@/views/system/PaymentConfig.vue') },
+        { path: 'system/admins', name: '管理员管理', component: () => import('@/views/system/AdminList.vue') },
+        { path: 'system/roles',  name: '角色管理', component: () => import('@/views/system/RoleList.vue') },
         // IM
         { path: 'im/sessions',  name: '客服会话', component: () => import('@/views/im/SessionList.vue') },
         // AI

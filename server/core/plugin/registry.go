@@ -36,18 +36,74 @@ func Find(name string) Plugin {
 	return nil
 }
 
-// EnabledMenus returns the merged menu tree for the enabled plugin list.
-func EnabledMenus(enabled []string) []MenuItem {
-	enabledSet := make(map[string]bool, len(enabled))
-	for _, n := range enabled {
-		enabledSet[n] = true
+// EnabledMenus returns the merged menu tree for the enabled plugin list,
+// filtered by the admin's permissions. Pass nil perms to return all menus.
+func EnabledMenus(enabled []string, perms []string) []MenuItem {
+	hasPerm := func(p string) bool {
+		if perms == nil {
+			return true
+		}
+		for _, pp := range perms {
+			if pp == "*" || pp == p {
+				return true
+			}
+		}
+		return p == "" // no permission required = always visible
 	}
+
 	var menus []MenuItem
 	for _, name := range enabled {
 		p := Find(name)
-		if p != nil {
-			menus = append(menus, p.Meta().Menus...)
+		if p == nil {
+			continue
+		}
+		for _, menu := range p.Meta().Menus {
+			filtered := filterMenu(menu, hasPerm)
+			if filtered != nil {
+				menus = append(menus, *filtered)
+			}
 		}
 	}
 	return menus
+}
+
+func filterMenu(m MenuItem, hasPerm func(string) bool) *MenuItem {
+	// If this item has a permission requirement and user lacks it, skip
+	if m.Permission != "" && !hasPerm(m.Permission) {
+		return nil
+	}
+	// Filter children
+	var children []MenuItem
+	for _, child := range m.Children {
+		fc := filterMenu(child, hasPerm)
+		if fc != nil {
+			children = append(children, *fc)
+		}
+	}
+	// If all children were filtered out and this is a parent-only item, skip
+	if len(m.Children) > 0 && len(children) == 0 {
+		return nil
+	}
+	result := m
+	result.Children = children
+	return &result
+}
+
+// AllPermissions returns a deduplicated list of all permissions declared by enabled plugins.
+func AllPermissions(enabled []string) []string {
+	seen := map[string]bool{}
+	var perms []string
+	for _, name := range enabled {
+		p := Find(name)
+		if p == nil {
+			continue
+		}
+		for _, perm := range p.Meta().Permissions {
+			if !seen[perm] {
+				seen[perm] = true
+				perms = append(perms, perm)
+			}
+		}
+	}
+	return perms
 }

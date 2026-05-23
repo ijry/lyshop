@@ -76,3 +76,37 @@ func RequireAdmin(c *gin.Context) {
 	}
 	c.Next()
 }
+
+// RequirePermission returns a middleware that checks if the admin has the given permission.
+// "*" in perms acts as a superadmin wildcard (all permissions granted).
+func RequirePermission(perm string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		perms, exists := c.Get("perms")
+		if !exists {
+			c.AbortWithStatusJSON(http.StatusOK, response.Err(403, "无权限"))
+			return
+		}
+		permList, ok := perms.([]string)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusOK, response.Err(403, "无权限"))
+			return
+		}
+		for _, p := range permList {
+			if p == "*" || p == perm {
+				c.Next()
+				return
+			}
+		}
+		c.AbortWithStatusJSON(http.StatusOK, response.Err(403, "无权限: "+perm))
+	}
+}
+
+// HasPermission checks if perms slice contains perm (or wildcard "*").
+func HasPermission(perms []string, perm string) bool {
+	for _, p := range perms {
+		if p == "*" || p == perm {
+			return true
+		}
+	}
+	return false
+}

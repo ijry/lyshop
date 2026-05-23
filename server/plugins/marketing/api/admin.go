@@ -4,16 +4,17 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/ijry/lyshop/core/middleware"
 	"github.com/ijry/lyshop/core/response"
 	mktmodel "github.com/ijry/lyshop/plugins/marketing/model"
 	mktsvc "github.com/ijry/lyshop/plugins/marketing/service"
 )
 
 func RegisterAdminRoutes(g *gin.RouterGroup) {
-	g.GET("/marketing/coupons", adminListCoupons)
-	g.POST("/marketing/coupons", adminCreateCoupon)
-	g.GET("/marketing/activities", adminListActivities)
-	g.POST("/marketing/activities", adminCreateActivity)
+	g.GET("/marketing/coupons", middleware.RequirePermission("marketing:view"), adminListCoupons)
+	g.POST("/marketing/coupons", middleware.RequirePermission("marketing:edit"), adminCreateCoupon)
+	g.GET("/marketing/activities", middleware.RequirePermission("marketing:view"), adminListActivities)
+	g.POST("/marketing/activities", middleware.RequirePermission("marketing:edit"), adminCreateActivity)
 }
 
 func adminListCoupons(c *gin.Context) {

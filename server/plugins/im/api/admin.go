@@ -4,15 +4,16 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/ijry/lyshop/core/middleware"
 	"github.com/ijry/lyshop/core/response"
 	immodel "github.com/ijry/lyshop/plugins/im/model"
 	imsvc "github.com/ijry/lyshop/plugins/im/service"
 )
 
 func RegisterAdminRoutes(g *gin.RouterGroup) {
-	g.GET("/im/sessions", adminListSessions)
-	g.GET("/im/sessions/:id/messages", adminListMessages)
-	g.POST("/im/sessions/:id/reply", adminReply)
+	g.GET("/im/sessions", middleware.RequirePermission("im:view"), adminListSessions)
+	g.GET("/im/sessions/:id/messages", middleware.RequirePermission("im:view"), adminListMessages)
+	g.POST("/im/sessions/:id/reply", middleware.RequirePermission("im:reply"), adminReply)
 	g.GET("/im/auto-replies", adminListAutoReplies)
 	g.POST("/im/auto-replies", adminCreateAutoReply)
 }

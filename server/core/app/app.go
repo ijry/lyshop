@@ -2,9 +2,11 @@ package app
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	apiadmin "github.com/ijry/lyshop/api/admin"
 	apiauth "github.com/ijry/lyshop/api/auth"
 	"github.com/ijry/lyshop/config"
 	"github.com/ijry/lyshop/core/cache"
@@ -13,7 +15,9 @@ import (
 	"github.com/ijry/lyshop/core/middleware"
 	"github.com/ijry/lyshop/core/plugin"
 	"github.com/ijry/lyshop/core/response"
+	"github.com/ijry/lyshop/model"
 	imapi "github.com/ijry/lyshop/plugins/im/api"
+	adminsvc "github.com/ijry/lyshop/service/admin"
 )
 
 // Init loads config then initializes DB and Redis.
@@ -29,6 +33,15 @@ func Init(cfgPath string) error {
 	if err := cache.Init(); err != nil {
 		return fmt.Errorf("init cache: %w", err)
 	}
+
+	// Auto-migrate core tables
+	db.DB.AutoMigrate(&model.Admin{}, &model.Role{}, &model.ConfigKV{}, &model.User{})
+
+	// Seed super admin on first run
+	if err := adminsvc.EnsureSuperAdmin(); err != nil {
+		slog.Warn("failed to seed super admin", "error", err)
+	}
+
 	return nil
 }
 
@@ -49,11 +62,16 @@ func Run() error {
 	apiauth.RegisterFrontRoutes(front)
 	apiauth.RegisterAdminRoutes(adminPublic)
 
-	// Dynamic menus endpoint — returns menus for all enabled plugins
+	// Dynamic menus endpoint — filtered by admin's permissions
 	adminAuth.GET("/menus", func(c *gin.Context) {
-		menus := plugin.EnabledMenus(config.Global.Plugins.Enabled)
+		perms, _ := c.Get("perms")
+		permList, _ := perms.([]string)
+		menus := plugin.EnabledMenus(config.Global.Plugins.Enabled, permList)
 		c.JSON(200, menus)
 	})
+
+	// Admin/Role management routes
+	apiadmin.RegisterRoutes(adminAuth)
 
 	// Universal file upload endpoint
 	adminAuth.POST("/upload", func(c *gin.Context) {

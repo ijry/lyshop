@@ -4,17 +4,18 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/ijry/lyshop/core/middleware"
 	"github.com/ijry/lyshop/core/response"
 	wmsmodel "github.com/ijry/lyshop/plugins/wms/model"
 	wmssvc "github.com/ijry/lyshop/plugins/wms/service"
 )
 
 func RegisterAdminRoutes(g *gin.RouterGroup) {
-	g.GET("/wms/warehouses", listWarehouses)
-	g.POST("/wms/warehouses", createWarehouse)
-	g.GET("/wms/stocks", listStocks)
-	g.POST("/wms/inbound", doInbound)
-	g.POST("/wms/outbound", doOutbound)
+	g.GET("/wms/warehouses", middleware.RequirePermission("wms:view"), listWarehouses)
+	g.POST("/wms/warehouses", middleware.RequirePermission("wms:edit"), createWarehouse)
+	g.GET("/wms/stocks", middleware.RequirePermission("wms:view"), listStocks)
+	g.POST("/wms/inbound", middleware.RequirePermission("wms:edit"), doInbound)
+	g.POST("/wms/outbound", middleware.RequirePermission("wms:edit"), doOutbound)
 }
 
 func listWarehouses(c *gin.Context) {
