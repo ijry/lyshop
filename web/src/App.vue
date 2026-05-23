@@ -5,7 +5,8 @@
       <router-view />
     </main>
     <Footer />
-    <ChatFab v-if="$route.name !== 'chat'" />
+    <ChatFab />
+    <ChatDialog />
   </div>
 </template>
 
@@ -13,4 +14,5 @@
 import Header from '@/components/Header.vue'
 import Footer from '@/components/Footer.vue'
 import ChatFab from '@/components/ChatFab.vue'
+import ChatDialog from '@/components/ChatDialog.vue'
 </script>

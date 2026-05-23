@@ -17,7 +17,7 @@
           <div>
             <h4 class="text-sm font-semibold text-gray-800 mb-3">帮助</h4>
             <div class="flex flex-col gap-2">
-              <a href="#" class="text-sm text-gray-500 hover:text-red-600 transition-colors">联系客服</a>
+              <button @click="openChat" class="text-sm text-left text-gray-500 hover:text-red-600 transition-colors bg-transparent border-none p-0">联系客服</button>
               <a href="#" class="text-sm text-gray-500 hover:text-red-600 transition-colors">配送说明</a>
               <a href="#" class="text-sm text-gray-500 hover:text-red-600 transition-colors">退换政策</a>
             </div>
@@ -41,3 +41,13 @@
     </div>
   </footer>
 </template>
+
+<script setup lang="ts">
+import { useChatStore } from '@/stores/chat'
+
+const chat = useChatStore()
+
+function openChat() {
+  chat.open('footer')
+}
+</script>

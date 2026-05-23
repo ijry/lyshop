@@ -122,7 +122,7 @@ const user = ref<any>({})
 const unreadTotal = ref(0)
 
 const orderEntries = [
-  { label: '待付款', icon: 'wallet', badge: 0 },
+  { label: '待付款', icon: 'rmb-circle', badge: 0 },
   { label: '待发货', icon: 'gift', badge: 0 },
   { label: '待收货', icon: 'car', badge: 0 },
   { label: '售后', icon: 'reload', badge: 0 },

@@ -41,7 +41,7 @@ export function request<T = any>(options: UniNamespace.RequestOptions): Promise<
 // Mock request handler — returns local data with simulated delay
 async function mockRequest<T>(method: string, url: string, _data?: any): Promise<T> {
   const { matchMock } = await import('@/mock/index')
-  const result = matchMock(method, url)
+  const result = matchMock(method, url, _data)
 
   // Simulate network delay (100-300ms)
   await new Promise(r => setTimeout(r, 100 + Math.random() * 200))

@@ -92,9 +92,11 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { get, post } from '@/api/request'
+import { useChatStore } from '@/stores/chat'
 
 const route = useRoute()
 const router = useRouter()
+const chat = useChatStore()
 const product = ref<any>({})
 const skus = ref<any[]>([])
 const selectedSku = ref<any>(null)
@@ -123,7 +125,7 @@ function buyNow() {
 }
 
 function openChat() {
-  router.push('/chat')
+  chat.open('product_detail')
 }
 
 onMounted(async () => {

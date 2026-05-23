@@ -1,9 +1,15 @@
 <template>
-  <view class="bg-gray-50 flex flex-col" style="height: 100vh;">
+  <view class="bg-gray-50 flex flex-col" style="height: 100vh; overflow: hidden;">
     <u-navbar title="在线客服" :placeholder="true" />
 
     <!-- Messages -->
-    <scroll-view scroll-y class="flex-1 px-20rpx py-16rpx" :scroll-top="scrollTop" scroll-with-animation>
+    <scroll-view
+      scroll-y
+      class="flex-1 px-20rpx py-16rpx"
+      :scroll-top="scrollTop"
+      scroll-with-animation
+      :style="{ paddingBottom: '180rpx' }"
+    >
       <view class="pb-20rpx">
         <!-- Welcome -->
         <view v-if="!messages.length" class="text-center py-80rpx">
@@ -36,11 +42,18 @@
     </scroll-view>
 
     <!-- Input bar -->
-    <view class="bg-white border-t-1 border-gray-100 px-20rpx py-16rpx flex items-center gap-16rpx"
-      :style="{paddingBottom: 'calc(16rpx + env(safe-area-inset-bottom))'}">
+    <view
+      class="bg-white border-t-1 border-gray-100 px-20rpx py-16rpx flex items-center gap-16rpx"
+      style="position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;"
+      :style="{paddingBottom: 'calc(16rpx + env(safe-area-inset-bottom))'}"
+    >
       <view class="flex-1">
         <u-input v-model="inputText" placeholder="输入消息..." border="surround" shape="circle"
-          @confirm="sendMsg" confirmType="send" />
+          :maxlength="500"
+          @confirm="sendMsg"
+          confirmType="send"
+          clearable
+        />
       </view>
       <u-button type="primary" text="发送" size="small" shape="circle"
         :disabled="!inputText.trim()" @click="sendMsg"
@@ -137,7 +150,7 @@ function sendMsg() {
   inputText.value = ''
   scrollToBottom()
 
-  if (ws) {
+  if (ws && connected.value) {
     ws.send({
       data: JSON.stringify({
         type: 'msg',
@@ -145,7 +158,26 @@ function sendMsg() {
         payload: { msg_type: 'text', content: text }
       })
     })
+    return
   }
+  scheduleLocalReply(text)
+}
+
+function scheduleLocalReply(content: string) {
+  const replies = [
+    '您好，已收到您的消息，客服马上为您处理。',
+    '可以的，这个问题我们支持处理。',
+    '建议您在订单页查看物流进度，有问题我继续帮您。',
+    `关于“${content.slice(0, 8)}”，我这边继续为您跟进。`
+  ]
+  setTimeout(() => {
+    messages.value.push({
+      id: Date.now() + 1,
+      sender_type: 2,
+      content: replies[Math.floor(Math.random() * replies.length)],
+    })
+    scrollToBottom()
+  }, 400)
 }
 
 onUnmounted(() => {

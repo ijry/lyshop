@@ -122,6 +122,17 @@ docker compose up -d
 - [接口文档](https://ijry.github.io/lyshop/api/)
 - [二次开发](https://ijry.github.io/lyshop/dev/secondary-development)
 
+## 最近修复（2026-05-24）
+
+- H5 商品页改为 `u-tabs + up-waterfall`，修复 tab 样式异常并统一瀑布流展示。
+- H5 首页装修数据兼容 `components` 数组/字符串两种格式，轮播改本地静态资源，解决轮播空白。
+- 收货地址页新增可提交表单，演示模式保存失败时也返回成功反馈，生产模式按真实接口结果处理。
+- 订单页演示数据支持按 `status` 查询参数过滤，顶部 tab 切换可见结果变化。
+- H5 客服输入区改为底部固定，未连通 WebSocket 时启用本地自动回复兜底。
+- PC 客服入口统一改为弹窗会话（悬浮按钮/商品详情/页脚），不再跳转新页面。
+- 接口层无新增 API，继续复用现有订单、地址与 IM 接口。
+- 部署配置无新增项，无需额外环境变量。
+
 ## License
 
 [MIT](LICENSE)

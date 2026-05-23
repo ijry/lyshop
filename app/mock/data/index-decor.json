@@ -5,9 +5,9 @@
       "id": "demo_banner",
       "props": {
         "images": [
-          { "url": "https://picsum.photos/750/340?random=1", "link": "" },
-          { "url": "https://picsum.photos/750/340?random=2", "link": "" },
-          { "url": "https://picsum.photos/750/340?random=3", "link": "" }
+          { "url": "/static/lyshop-wordmark.svg", "link": "" },
+          { "url": "/static/lyshop-mark.svg", "link": "/pages/product/list" },
+          { "url": "/static/lyshop-wordmark.svg", "link": "/pages/marketing/coupon" }
         ],
         "height": 340
       }

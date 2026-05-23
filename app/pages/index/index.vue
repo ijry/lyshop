@@ -38,11 +38,25 @@ const components = ref<any[]>([])
 onMounted(async () => {
   const data = await get<any>('/api/v1/index/decor')
   if (data?.components) {
-    try { components.value = JSON.parse(data.components) } catch {}
+    if (Array.isArray(data.components)) {
+      components.value = data.components
+    } else if (typeof data.components === 'string') {
+      try { components.value = JSON.parse(data.components) } catch {}
+    }
   }
   if (!components.value.length) {
     components.value = [
-      { type: 'banner', id: 'default_banner', props: { images: [], height: 300 } },
+      {
+        type: 'banner',
+        id: 'default_banner',
+        props: {
+          images: [
+            { url: '/static/lyshop-wordmark.svg', link: '/pages/product/list' },
+            { url: '/static/lyshop-mark.svg', link: '/pages/marketing/coupon' },
+          ],
+          height: 300
+        }
+      },
       {
         type: 'notice',
         id: 'default_notice',

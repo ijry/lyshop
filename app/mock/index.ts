@@ -18,6 +18,12 @@ import recommend from './data/recommend.json'
 import userProfile from './data/user-profile.json'
 import addresses from './data/addresses.json'
 
+function parseQuery(url: string) {
+  const queryIndex = url.indexOf('?')
+  if (queryIndex < 0) return {}
+  return Object.fromEntries(new URLSearchParams(url.slice(queryIndex + 1)).entries())
+}
+
 // URL pattern → mock data (supports both exact and prefix match)
 const routes: Record<string, any> = {
   'GET /api/v1/index/decor': indexDecor,
@@ -55,12 +61,40 @@ const routes: Record<string, any> = {
 /**
  * Try to match a mock route. Returns { matched: true, data } or { matched: false }.
  */
-export function matchMock(method: string, url: string): { matched: boolean; data?: any } {
-  const key = `${method.toUpperCase()} ${url}`
+export function matchMock(method: string, url: string, params?: Record<string, any>): { matched: boolean; data?: any } {
+  const upperMethod = method.toUpperCase()
+  const [path] = url.split('?')
+  const key = `${upperMethod} ${path}`
+  const query = { ...parseQuery(url), ...(params || {}) }
 
   // Exact match
   if (key in routes) {
-    return { matched: true, data: routes[key] }
+    const data = routes[key]
+    if (upperMethod === 'GET' && path === '/api/v1/products') {
+      const sourceList = Array.isArray(data?.list) ? data.list : []
+      const keyword = String(query.keyword || '').trim().toLowerCase()
+      const categoryID = Number(query.category_id || 0)
+      const page = Number(query.page || 1)
+      const size = Number(query.size || 20)
+      let list = sourceList.slice()
+      if (keyword) {
+        list = list.filter((item: any) => String(item.title || '').toLowerCase().includes(keyword))
+      }
+      if (categoryID > 0) {
+        list = list.filter((item: any) => Number(item.category_id) === categoryID)
+      }
+      const offset = Math.max(page - 1, 0) * Math.max(size, 1)
+      const pageList = list.slice(offset, offset + size)
+      return { matched: true, data: { ...data, list: pageList, total: list.length, page, size } }
+    }
+    if (upperMethod === 'GET' && path === '/api/v1/orders' && query.status) {
+      const status = Number(query.status)
+      const list = Array.isArray(data?.list)
+        ? data.list.filter((item: any) => Number(item.status) === status)
+        : []
+      return { matched: true, data: { ...data, list, total: list.length } }
+    }
+    return { matched: true, data }
   }
 
   // Prefix match (for routes with path params like /products/:id)
