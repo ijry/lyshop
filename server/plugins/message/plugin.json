@@ -1,0 +1,21 @@
+{
+  "name": "message",
+  "title": "消息中心",
+  "version": "1.0.0",
+  "description": "分组消息通知（系统/订单/营销/客服）",
+  "author": "lyshop",
+  "depends": [],
+  "menus": [
+    {
+      "title": "消息管理",
+      "icon": "bell",
+      "path": "/message",
+      "sort": 80,
+      "children": [
+        { "title": "消息列表", "path": "/message/list", "permission": "message:view" },
+        { "title": "发送消息", "path": "/message/send", "permission": "message:send" }
+      ]
+    }
+  ],
+  "permissions": ["message:view", "message:send"]
+}

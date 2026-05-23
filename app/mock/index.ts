@@ -48,6 +48,7 @@ const routes: Record<string, any> = {
   'POST /api/v1/addresses': { id: 3 },
   'GET /api/v1/im/session': { id: 1, user_id: 1, status: 2 },
   'GET /api/v1/im/messages': { list: [], total: 0 },
+'GET /api/v1/messages/unread': { system: 2, order: 1, marketing: 3, im: 0 },  'GET /api/v1/messages': { list: [    { id: 1, group: 'system', title: '系统升级通知', content: 'LYShop 已升级至 2.0 版本', is_read: 0, created_at: '2026-05-22T10:00:00Z' },    { id: 2, group: 'order', title: '订单发货通知', content: '您的订单已发货', is_read: 0, created_at: '2026-05-21T14:00:00Z' },    { id: 3, group: 'marketing', title: '618大促即将开始', content: '全场满300减50', is_read: 0, created_at: '2026-05-20T08:00:00Z' },    { id: 4, group: 'marketing', title: '优惠券到账', content: '满100减20优惠券已到账', is_read: 1, created_at: '2026-05-18T12:00:00Z' },    { id: 5, group: 'system', title: '欢迎注册', content: '新人专享优惠等你来领', is_read: 1, created_at: '2026-05-15T10:00:00Z' },  ], total: 5 },
 }
 
 /**

@@ -64,6 +64,14 @@
       "path": "pages/user/points",
       "style": { "navigationBarTitleText": "我的积分" }
     },
+    },
+    {
+      "path": "pages/message/index",
+      "style": { "navigationBarTitleText": "消息中心" }
+    },
+    {
+      "path": "pages/message/list",
+      "style": { "navigationBarTitleText": "消息列表" }
     {
       "path": "pages/login/index",
       "style": { "navigationBarTitleText": "登录" }

@@ -57,9 +57,12 @@ const messages = ref<any[]>([])
 const inputText = ref('')
 const scrollTop = ref(0)
 const sessionID = ref(0)
+const connected = ref(false)
 
 let ws: any = null
 let heartbeat: any = null
+let reconnectTimer: any = null
+let reconnectDelay = 3000
 
 onMounted(async () => {
   const session = await get<any>('/api/v1/im/session')
@@ -80,6 +83,11 @@ function connectWS(token: string) {
     complete: () => {}
   })
 
+  ws.onOpen(() => {
+    connected.value = true
+    reconnectDelay = 3000
+  })
+
   ws.onMessage((res: any) => {
     try {
       const frame = JSON.parse(res.data)
@@ -94,9 +102,27 @@ function connectWS(token: string) {
     } catch {}
   })
 
+  ws.onClose(() => {
+    connected.value = false
+    scheduleReconnect(token)
+  })
+
+  ws.onError(() => {
+    connected.value = false
+  })
+
+  if (heartbeat) clearInterval(heartbeat)
   heartbeat = setInterval(() => {
     ws?.send({ data: JSON.stringify({ type: 'ping' }) })
   }, 30000)
+}
+
+function scheduleReconnect(token: string) {
+  if (reconnectTimer) clearTimeout(reconnectTimer)
+  reconnectTimer = setTimeout(() => {
+    reconnectDelay = Math.min(reconnectDelay * 2, 30000)
+    connectWS(token)
+  }, reconnectDelay)
 }
 
 function scrollToBottom() {
@@ -124,6 +150,7 @@ function sendMsg() {
 
 onUnmounted(() => {
   if (heartbeat) clearInterval(heartbeat)
+  if (reconnectTimer) clearTimeout(reconnectTimer)
   ws?.close({})
 })
 </script>

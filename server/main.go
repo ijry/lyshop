@@ -14,6 +14,7 @@ import (
 	_ "github.com/ijry/lyshop/plugins/im"
 	_ "github.com/ijry/lyshop/plugins/ai_image"
 	_ "github.com/ijry/lyshop/plugins/decor"
+	_ "github.com/ijry/lyshop/plugins/message"
 	_ "github.com/ijry/lyshop/plugins/storage_local"
 	_ "github.com/ijry/lyshop/plugins/storage_oss"
 	_ "github.com/ijry/lyshop/plugins/storage_cos"
