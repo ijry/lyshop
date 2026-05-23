@@ -9,6 +9,7 @@ const router = createRouter({
     { path: '/cart', name: 'cart', component: () => import('@/views/Cart.vue') },
     { path: '/orders', name: 'orders', component: () => import('@/views/OrderList.vue') },
     { path: '/user', name: 'user', component: () => import('@/views/UserCenter.vue') },
+    { path: '/chat', name: 'chat', component: () => import('@/views/Chat.vue') },
     { path: '/login', name: 'login', component: () => import('@/views/Login.vue') },
   ],
   scrollBehavior: () => ({ top: 0 }),

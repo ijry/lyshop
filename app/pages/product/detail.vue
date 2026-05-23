@@ -56,6 +56,10 @@
       :style="{paddingBottom: 'calc(16rpx + env(safe-area-inset-bottom))'}">
       <!-- Icons -->
       <view class="flex items-center gap-30rpx mr-20rpx">
+        <view class="flex flex-col items-center" @click="uni.navigateTo({url:'/pages/im/chat'})">
+          <u-icon name="kefu-ermai" size="22" color="#666" />
+          <text class="text-20rpx text-gray-500 mt-4rpx">客服</text>
+        </view>
         <view class="flex flex-col items-center" @click="uni.switchTab({url:'/pages/index/index'})">
           <u-icon name="home" size="22" color="#666" />
           <text class="text-20rpx text-gray-500 mt-4rpx">首页</text>

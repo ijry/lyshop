@@ -65,6 +65,10 @@
 
         <!-- Actions -->
         <div class="flex gap-3">
+          <button @click="openChat" class="btn-outline !py-3 flex-center gap-2 w-36">
+            <div class="i-carbon-chat text-lg" />
+            客服
+          </button>
           <button @click="addToCart" class="btn-outline flex-1 !py-3 flex-center gap-2">
             <div class="i-carbon-shopping-cart" />
             加入购物车
@@ -116,6 +120,10 @@ async function addToCart() {
 function buyNow() {
   if (!selectedSku.value) return
   router.push(`/cart`)
+}
+
+function openChat() {
+  router.push('/chat')
 }
 
 onMounted(async () => {
