@@ -34,6 +34,12 @@ const router = createRouter({
         { path: 'ai/models',    name: 'AI模型配置', component: () => import('@/views/ai/ImageGen.vue') },
         // Decor
         { path: 'decor/index',  name: '首页装修', component: () => import('@/views/decor/DecorEditor.vue') },
+        // Checkin
+        { path: 'checkin/rules', name: '签到规则', component: () => import('@/views/checkin/CheckinRules.vue') },
+        { path: 'checkin/logs',  name: '签到记录', component: () => import('@/views/checkin/CheckinLogs.vue') },
+        // Message
+        { path: 'message/list', name: '消息列表', component: () => import('@/views/message/MessageList.vue') },
+        { path: 'message/send', name: '发送消息', component: () => import('@/views/message/MessageSend.vue') },
       ]
     }
   ]

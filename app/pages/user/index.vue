@@ -10,6 +10,14 @@
           <text style="color: #fff; font-size: 20px; font-weight: 700; display: block;">{{ user.nickname || '未登录' }}</text>
           <text style="color: rgba(255,255,255,0.7); font-size: 13px; margin-top: 4px; display: block;">{{ user.phone || '点击登录' }}</text>
         </view>
+        <view @click="uni.navigateTo({url:'/pages/message/index'})"
+          style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; position: relative;">
+          <u-icon name="bell" size="18" color="#fff" />
+          <view v-if="unreadTotal > 0"
+            style="position: absolute; top: -2px; right: -2px; min-width: 14px; height: 14px; background: #facc15; border-radius: 7px; display: flex; align-items: center; justify-content: center;">
+            <text style="color: #111; font-size: 9px; font-weight: 700;">{{ unreadTotal }}</text>
+          </view>
+        </view>
         <view @click="uni.navigateTo({url:'/pages/im/chat'})"
           style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center;">
           <u-icon name="chat" size="18" color="#fff" />
@@ -111,6 +119,7 @@ import { ref, onMounted } from 'vue'
 import { get, post } from '@/utils/request'
 
 const user = ref<any>({})
+const unreadTotal = ref(0)
 
 const orderEntries = [
   { label: '待付款', icon: 'wallet', badge: 0 },
@@ -131,6 +140,10 @@ const quickEntries = [
 ]
 
 const menuCells = ref([
+  { label: '消息中心', icon: 'bell', value: '',
+    action: () => uni.navigateTo({ url: '/pages/message/index' }) },
+  { label: '每日签到', icon: 'calendar', value: '',
+    action: () => uni.navigateTo({ url: '/pages/checkin/index' }) },
   { label: '收货地址', icon: 'map', value: '',
     action: () => uni.navigateTo({ url: '/pages/user/address' }) },
   { label: '我的优惠券', icon: 'coupon', value: '',
@@ -183,8 +196,14 @@ onMounted(async () => {
   const data = await get<any>('/api/v1/user/profile')
   if (data) {
     user.value = data
-    // Update menu values
-    menuCells.value[2].value = `${data.points || 0} 积分`
+    menuCells.value[4].value = `${data.points || 0} 积分`
+  }
+  // Unread message count
+  const unread = await get<any>('/api/v1/messages/unread')
+  if (unread) {
+    const total = Object.values(unread).reduce((s: number, v: any) => s + (v || 0), 0)
+    unreadTotal.value = total as number
+    if (total > 0) menuCells.value[0].value = `${total} 条未读`
   }
 })
 </script>

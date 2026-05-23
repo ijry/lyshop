@@ -18,4 +18,27 @@ jwt:
 
 plugins:
   enabled:
+    # Core commerce
+    - product
+    - order
+    - wms
+    - marketing
+    # Communication
+    - im
+    - message
+    # Marketing extensions
+    - checkin
+    # Content
+    - decor
+    - ai_image
+    # Payment drivers (enable the ones you need)
+    - wechat_pay
+    - alipay
+    # Service drivers
+    - sms
+    - wechat_auth
+    # Storage driver (enable ONE)
     - storage_local
+    # - storage_oss
+    # - storage_cos
+    # - storage_qiniu

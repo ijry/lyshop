@@ -34,6 +34,14 @@ const routes: Record<string, any> = {
     { title: '店铺装修', icon: 'layout', path: '/decor', sort: 70, children: [
       { title: '首页装修', path: '/decor/index' },
     ]},
+    { title: '签到管理', icon: 'calendar', path: '/checkin', sort: 75, children: [
+      { title: '签到规则', path: '/checkin/rules' },
+      { title: '签到记录', path: '/checkin/logs' },
+    ]},
+    { title: '消息管理', icon: 'bell', path: '/message', sort: 80, children: [
+      { title: '消息列表', path: '/message/list' },
+      { title: '发送消息', path: '/message/send' },
+    ]},
     { title: '系统设置', icon: 'settings', path: '/system', sort: 90, children: [
       { title: '支付短信配置', path: '/system/config' },
       { title: '管理员管理', path: '/system/admins' },
@@ -122,6 +130,25 @@ const routes: Record<string, any> = {
 
   // System config
   'GET /admin/api/system/sms/config': { provider: 'aliyun', access_key: 'demo***', sign_name: 'LYShop' },
+
+  // Checkin
+  'GET /admin/api/checkin/rules': [
+    { id: 1, day: 0, points: 10 },
+    { id: 2, day: 3, points: 20 },
+    { id: 3, day: 7, points: 50 },
+  ],
+  'GET /admin/api/checkin/logs': { list: [
+    { id: 1, user_id: 1001, date: '2026-05-22', consecutive_days: 5, points: 20 },
+    { id: 2, user_id: 1002, date: '2026-05-22', consecutive_days: 1, points: 10 },
+    { id: 3, user_id: 1001, date: '2026-05-21', consecutive_days: 4, points: 10 },
+  ], total: 3, page: 1, size: 20 },
+
+  // Messages
+  'GET /admin/api/messages': { list: [
+    { id: 1, user_id: 0, group: 'system', title: '系统升级通知', content: 'LYShop 升级至 2.0', is_read: 0, created_at: '2026-05-22T10:00:00Z' },
+    { id: 2, user_id: 1001, group: 'order', title: '订单发货', content: '您的订单已发货', is_read: 1, created_at: '2026-05-21T14:00:00Z' },
+    { id: 3, user_id: 0, group: 'marketing', title: '618大促', content: '全场满300减50', is_read: 0, created_at: '2026-05-20T08:00:00Z' },
+  ], total: 3, page: 1, size: 20 },
 
   // RBAC: Admins
   'GET /admin/api/admins': [
