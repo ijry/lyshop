@@ -14,7 +14,7 @@
   "dependencies": {
     "@dcloudio/uni-app": "3.0.0-alpha-5010120260519001",
     "pinia": "^2.1.0",
-    "uview-plus": "3.1.31",
+    "uview-plus": "3.8.37",
     "vue": "^3.4.0"
   },
   "devDependencies": {

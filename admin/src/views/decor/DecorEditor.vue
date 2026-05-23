@@ -102,6 +102,7 @@ const compTitle = (type: string) => compTitles[type] || type
 const compPreview = (c: any) => {
   if (c.type === 'banner') return `${c.props?.images?.length || 0} 张图片`
   if (c.type === 'product_grid') return `来源: ${c.props?.source || 'hot'}, 限 ${c.props?.limit || 10} 条`
+  if (c.type === 'notice') return `${c.props?.items?.length || (c.props?.text ? 1 : 0)} 条公告`
   return JSON.stringify(c.props || {}).slice(0, 40)
 }
 
@@ -126,7 +127,17 @@ function defaultProps(type: string): any {
     banner:       { images: [], height: 350 },
     category_nav: { items: [] },
     product_grid: { source: 'hot', limit: 10, columns: 2 },
-    notice:       { text: '欢迎光临！' },
+    notice:       {
+      items: [
+        { text: '欢迎来到 LYShop', link: '/pages/index/index' },
+        { text: '新人下单立减，优惠券限时领取', link: '/pages/marketing/coupon' },
+        { text: '精选好物每日上新，支持多端下单', link: '/pages/product/list' },
+      ],
+      color: '#f97316',
+      bgColor: '#fff7ed',
+      duration: 2500,
+      mode: 'link',
+    },
     image_ad:     { url: '', link: '' },
     rich_text:    { content: '' },
     marketing_zone: { type: 'seckill' },

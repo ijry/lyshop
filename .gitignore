@@ -26,3 +26,6 @@ web/dist/
 .vscode/
 *.swp
 .claude/
+docs-site/docs/public/demo/
+docs-site/docs/public/web-demo/
+docs-site/docs/public/admin-demo/

@@ -20,9 +20,9 @@
     <!-- Float customer service -->
     <view class="fixed right-30rpx bottom-180rpx z-50"
       @click="uni.navigateTo({url:'/pages/im/chat'})">
-      <view class="w-96rpx h-96rpx rounded-full bg-blue-700 flex items-center justify-center"
-        style="box-shadow: 0 4rpx 20rpx rgba(30,64,175,0.4);">
-        <u-icon name="chat" size="22" color="#fff" />
+      <view class="w-96rpx h-96rpx rounded-full flex items-center justify-center"
+        style="background: #dc2626; box-shadow: 0 4rpx 20rpx rgba(220,38,38,0.4);">
+        <u-icon name="kefu-ermai" size="22" color="#fff" />
       </view>
     </view>
   </view>
@@ -43,6 +43,21 @@ onMounted(async () => {
   if (!components.value.length) {
     components.value = [
       { type: 'banner', id: 'default_banner', props: { images: [], height: 300 } },
+      {
+        type: 'notice',
+        id: 'default_notice',
+        props: {
+          items: [
+            { text: '欢迎来到 LYShop', link: '/pages/index/index' },
+            { text: '新人优惠券限时领取', link: '/pages/marketing/coupon' },
+            { text: '热卖商品持续上新', link: '/pages/product/list' }
+          ],
+          color: '#f97316',
+          bgColor: '#fff7ed',
+          duration: 2500,
+          mode: 'link'
+        }
+      },
       { type: 'product_grid', id: 'default_grid', props: { source: 'hot', limit: 10, columns: 2 } }
     ]
   }

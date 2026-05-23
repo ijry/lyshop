@@ -5,11 +5,11 @@
       "id": "demo_banner",
       "props": {
         "images": [
-          { "url": "https://picsum.photos/750/350?random=1", "link": "" },
-          { "url": "https://picsum.photos/750/350?random=2", "link": "" },
-          { "url": "https://picsum.photos/750/350?random=3", "link": "" }
+          { "url": "https://picsum.photos/750/340?random=1", "link": "" },
+          { "url": "https://picsum.photos/750/340?random=2", "link": "" },
+          { "url": "https://picsum.photos/750/340?random=3", "link": "" }
         ],
-        "height": 350
+        "height": 340
       }
     },
     {
@@ -28,12 +28,32 @@
     {
       "type": "notice",
       "id": "demo_notice",
-      "props": { "text": "欢迎使用 LYShop 演示版！所有数据均为模拟数据。" }
+      "props": {
+        "items": [
+          { "text": "618年中大促：全场满300减50，限时3天！", "link": "" },
+          { "text": "新人下单立减20元，优惠券限时领取", "link": "/pages/marketing/coupon" },
+          { "text": "精选好物每日上新，多端同步下单", "link": "/pages/product/list" }
+        ],
+        "color": "#f97316",
+        "bgColor": "#fff7ed",
+        "duration": 2500,
+        "mode": "link"
+      }
+    },
+    {
+      "type": "marketing_zone",
+      "id": "demo_seckill",
+      "props": {}
+    },
+    {
+      "type": "spacer",
+      "id": "demo_spacer",
+      "props": { "height": 16, "background": "#f5f5f5" }
     },
     {
       "type": "product_grid",
       "id": "demo_grid",
-      "props": { "source": "hot", "limit": 6, "columns": 2 }
+      "props": { "source": "hot", "limit": 8, "columns": 2, "title": "热销推荐" }
     }
   ]
 }
