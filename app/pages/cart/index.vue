@@ -38,13 +38,34 @@
       </view>
     </view>
 
+    <!-- Recommend -->
+    <view style="padding: 12px 16px 20px;">
+      <text style="font-size: 15px; font-weight: 700; color: #111; display: block; margin-bottom: 12px;">猜你喜欢</text>
+      <view style="display: flex; flex-wrap: wrap; margin: 0 -5px;">
+        <view v-for="p in recommends" :key="p.product_id"
+          @click="uni.navigateTo({url:`/pages/product/detail?id=${p.product_id}`})"
+          style="width: 50%; padding: 5px; box-sizing: border-box;">
+          <view style="background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,0.04);">
+            <image :src="p.cover" mode="aspectFill" style="width: 100%; height: 150px; display: block;" />
+            <view style="padding: 8px 10px 12px;">
+              <text style="font-size: 12px; color: #333; font-weight: 500; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;">{{ p.title }}</text>
+              <view style="display: flex; align-items: baseline; gap: 4px; margin-top: 4px;">
+                <text style="font-size: 15px; color: #dc2626; font-weight: 700;">¥{{ p.price }}</text>
+                <text v-if="p.origin_price" style="font-size: 10px; color: #ccc; text-decoration: line-through;">¥{{ p.origin_price }}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
     <!-- Bottom checkout bar -->
     <view v-if="items.length"
       class="fixed bottom-0 left-0 right-0 z-100 bg-white border-t-1 border-gray-100 px-30rpx py-20rpx flex items-center justify-between"
       :style="{paddingBottom: 'calc(20rpx + env(safe-area-inset-bottom))'}">
       <view class="flex items-baseline">
         <text class="text-26rpx text-gray-500">合计：</text>
-        <text class="text-36rpx text-blue-700 font-700 ml-4rpx">¥{{ total.toFixed(2) }}</text>
+        <text class="text-36rpx text-red-500 font-700 ml-4rpx">¥{{ total.toFixed(2) }}</text>
       </view>
       <u-button type="primary" :text="`结算(${items.length})`" shape="circle"
         :custom-style="{width: '220rpx'}" @click="checkout" />
@@ -57,6 +78,7 @@ import { ref, computed, onMounted } from 'vue'
 import { get, post } from '@/utils/request'
 
 const items = ref<any[]>([])
+const recommends = ref<any[]>([])
 
 const total = computed(() =>
   items.value.reduce((s, i) => s + (i.sku?.price || 0) * i.qty, 0)
@@ -73,6 +95,9 @@ function skuLabel(item: any) {
 async function loadCart() {
   const data = await get<any[]>('/api/v1/cart')
   items.value = data || []
+  // Load recommendations
+  const rec = await get<any[]>('/api/v1/products/recommend')
+  recommends.value = rec || []
 }
 
 async function updateQty(skuID: number, qty: number) {

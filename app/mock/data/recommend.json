@@ -1,0 +1,6 @@
+[
+  { "product_id": 7, "title": "精华水套装", "cover": "https://picsum.photos/400/400?random=16", "price": 299, "origin_price": 599, "sales": 8900 },
+  { "product_id": 4, "title": "智能手表 Ultra", "cover": "https://picsum.photos/400/400?random=13", "price": 3299, "origin_price": 3999, "sales": 2340 },
+  { "product_id": 3, "title": "真无线降噪耳机", "cover": "https://picsum.photos/400/400?random=12", "price": 899, "origin_price": 1299, "sales": 5620 },
+  { "product_id": 8, "title": "机械键盘 RGB", "cover": "https://picsum.photos/400/400?random=17", "price": 399, "origin_price": 599, "sales": 3200 }
+]

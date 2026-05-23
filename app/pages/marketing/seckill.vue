@@ -1,49 +1,80 @@
 <template>
-  <view class="bg-gray-50 min-h-screen">
+  <view style="min-height: 100vh; background: #f5f5f5;">
     <u-navbar title="限时秒杀" :placeholder="true" />
 
-    <view v-if="!activities.length" class="text-center py-12 text-gray-400">
-      <text>暂无进行中的秒杀活动</text>
+    <!-- Countdown header -->
+    <view style="background: linear-gradient(135deg, #dc2626 0%, #ea580c 100%); padding: 20px 16px;">
+      <view style="display: flex; align-items: center; justify-content: space-between;">
+        <text style="color: #fff; font-size: 18px; font-weight: 700;">限时秒杀</text>
+        <view style="display: flex; align-items: center; gap: 4px;">
+          <text style="color: rgba(255,255,255,0.7); font-size: 12px;">距结束</text>
+          <view v-for="(t, i) in countdownParts" :key="i"
+            style="background: rgba(0,0,0,0.3); color: #fff; font-size: 14px; font-weight: 700; padding: 2px 6px; border-radius: 4px; min-width: 28px; text-align: center;">
+            {{ t }}
+          </view>
+        </view>
+      </view>
     </view>
 
-    <view class="p-3">
-      <view v-for="act in activities" :key="act.id"
-        class="bg-white rounded-xl mb-4 overflow-hidden shadow-sm">
-        <!-- Activity header -->
-        <view class="bg-gradient-to-r from-red-600 to-orange-500 px-4 py-3">
-          <text class="text-white font-bold text-base block">{{ act.name }}</text>
-          <text class="text-red-100 text-xs">{{ act.start_at?.slice(0,16) }} ~ {{ act.end_at?.slice(0,16) }}</text>
-        </view>
-        <!-- Products -->
-        <view v-if="act.products?.length" class="p-3">
-          <scroll-view scroll-x>
-            <view class="flex gap-3">
-              <view v-for="ap in act.products" :key="ap.id"
-                @click="uni.navigateTo({url:`/pages/product/detail?id=${ap.product_id}`})"
-                class="w-32 shrink-0">
-                <view class="bg-gray-100 rounded-xl" style="height:128px;" />
-                <view class="mt-2 px-1">
-                  <text class="text-red-600 font-bold block">¥{{ ap.activity_price }}</text>
-                  <text class="text-gray-400 text-xs block">库存 {{ ap.activity_stock }}</text>
+    <!-- Product list -->
+    <view style="padding: 12px;">
+      <view v-for="p in products" :key="p.product_id"
+        @click="uni.navigateTo({url:`/pages/product/detail?id=${p.product_id}`})"
+        style="display: flex; background: #fff; border-radius: 12px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
+        <image :src="p.cover" mode="aspectFill" style="width: 100px; height: 100px; border-radius: 10px; flex-shrink: 0;" />
+        <view style="flex: 1; margin-left: 12px; display: flex; flex-direction: column; justify-content: space-between;">
+          <text style="font-size: 14px; color: #111; font-weight: 500; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ p.title }}</text>
+          <view>
+            <view style="display: flex; align-items: baseline; gap: 6px;">
+              <text style="font-size: 20px; color: #dc2626; font-weight: 700;">¥{{ p.activity_price }}</text>
+              <text style="font-size: 12px; color: #999; text-decoration: line-through;">¥{{ p.origin_price }}</text>
+            </view>
+            <view style="display: flex; align-items: center; justify-content: space-between; margin-top: 6px;">
+              <!-- Progress bar -->
+              <view style="flex: 1; margin-right: 10px;">
+                <view style="height: 14px; background: #fee2e2; border-radius: 7px; overflow: hidden; position: relative;">
+                  <view :style="{ width: Math.min(((p.activity_stock - 10) / p.activity_stock) * 100, 85) + '%', height: '100%', background: 'linear-gradient(90deg, #dc2626, #ef4444)', borderRadius: '7px' }" />
+                  <text style="position: absolute; top: 0; left: 0; right: 0; text-align: center; font-size: 10px; color: #fff; line-height: 14px;">已抢{{ Math.floor(Math.random()*60+20) }}%</text>
                 </view>
               </view>
+              <view style="background: #dc2626; color: #fff; font-size: 12px; padding: 4px 12px; border-radius: 12px; font-weight: 600;">
+                抢购
+              </view>
             </view>
-          </scroll-view>
+          </view>
         </view>
-        <view v-else class="px-4 pb-4 text-gray-400 text-sm">活动商品加载中...</view>
+      </view>
+
+      <view v-if="!products.length" style="text-align: center; padding: 60px 0; color: #999;">
+        暂无秒杀商品
       </view>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { get } from '@/utils/request'
 
-const activities = ref<any[]>([])
+const products = ref<any[]>([])
+const countdownParts = ref(['00', '00', '00'])
+let timer: any = null
 
 onMounted(async () => {
-  const data = await get<any[]>('/api/v1/marketing/seckills')
-  activities.value = data || []
+  const data = await get<any>('/api/v1/marketing/seckills')
+  const seckill = data?.list?.[0] || data?.[0]
+  if (seckill?.products) products.value = seckill.products
+
+  // Countdown
+  const endAt = seckill?.end_at ? new Date(seckill.end_at).getTime() : Date.now() + 86400000
+  timer = setInterval(() => {
+    const diff = Math.max(0, endAt - Date.now())
+    const h = Math.floor(diff / 3600000)
+    const m = Math.floor((diff % 3600000) / 60000)
+    const s = Math.floor((diff % 60000) / 1000)
+    countdownParts.value = [String(h).padStart(2,'0'), String(m).padStart(2,'0'), String(s).padStart(2,'0')]
+  }, 1000)
 })
+
+onUnmounted(() => timer && clearInterval(timer))
 </script>

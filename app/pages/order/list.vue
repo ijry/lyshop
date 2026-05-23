@@ -16,7 +16,12 @@
         style="box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);">
         <!-- Header -->
         <view class="flex items-center justify-between mb-20rpx">
-          <text class="text-22rpx text-gray-400 font-mono">{{ o.order_no }}</text>
+          <view style="display: flex; align-items: center; gap: 8px;">
+            <text class="text-22rpx text-gray-400 font-mono">{{ o.order_no }}</text>
+            <text v-if="o.activity_type === 'seckill'" style="font-size: 10px; color: #dc2626; background: #fef2f2; padding: 1px 6px; border-radius: 4px;">秒杀</text>
+            <text v-else-if="o.activity_type === 'group_buy'" style="font-size: 10px; color: #2563eb; background: #eff6ff; padding: 1px 6px; border-radius: 4px;">拼团</text>
+            <text v-else-if="o.activity_type === 'bargain'" style="font-size: 10px; color: #16a34a; background: #f0fdf4; padding: 1px 6px; border-radius: 4px;">砍价</text>
+          </view>
           <text :class="statusColor(o.status)" class="text-24rpx font-500">{{ statusLabel(o.status) }}</text>
         </view>
         <!-- Amount + date -->

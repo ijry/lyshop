@@ -12,6 +12,9 @@ import cart from './data/cart.json'
 import orders from './data/orders.json'
 import userCoupons from './data/user-coupons.json'
 import seckills from './data/seckills.json'
+import groupBuy from './data/group-buy.json'
+import bargain from './data/bargain.json'
+import recommend from './data/recommend.json'
 import userProfile from './data/user-profile.json'
 import addresses from './data/addresses.json'
 
@@ -20,6 +23,7 @@ const routes: Record<string, any> = {
   'GET /api/v1/index/decor': indexDecor,
   'GET /api/v1/categories': categories,
   'GET /api/v1/products': products,
+  'GET /api/v1/products/recommend': recommend,
   'GET /api/v1/products/': productDetail, // prefix match for /products/:id
   'GET /api/v1/cart': cart,
   'GET /api/v1/orders': orders,
@@ -33,6 +37,10 @@ const routes: Record<string, any> = {
   ], total: 4 },
   'GET /api/v1/addresses': addresses,
   'GET /api/v1/marketing/seckills': seckills,
+  'GET /api/v1/marketing/group-buy': groupBuy,
+  'GET /api/v1/marketing/bargain': bargain,
+  'POST /api/v1/marketing/group-buy/join': { group_order_id: 1, status: 1 },
+  'POST /api/v1/marketing/bargain/help': { cut_amount: 58.50, current_price: 1200 },
   'POST /api/v1/cart/add': null,
   'POST /api/v1/orders': { order_no: 'DEMO202600001', id: 1, status: 1 },
   'POST /api/v1/auth/sms/send': { dev_code: '123456' },

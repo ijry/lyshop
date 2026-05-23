@@ -143,6 +143,20 @@
         />
       </view>
 
+      <!-- Grid 宫格 -->
+      <view v-else-if="comp.type === 'grid'" class="bg-white mb-16rpx py-20rpx">
+        <view :style="{ display: 'flex', flexWrap: 'wrap' }">
+          <view v-for="item in (comp.props?.items || [])" :key="item.title"
+            @click="item.link && uni.navigateTo({url: item.link})"
+            :style="{ width: (100 / (comp.props?.columns || 4)) + '%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', padding: '10px 0', cursor: 'pointer' }">
+            <view :style="{ width: '44px', height: '44px', borderRadius: '12px', background: item.bg || '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }">
+              {{ item.icon }}
+            </view>
+            <text style="font-size: 12px; color: #333;">{{ item.title }}</text>
+          </view>
+        </view>
+      </view>
+
       <view v-else-if="comp.type === 'rich_text'" class="px-30rpx py-16rpx">
         <rich-text :nodes="comp.props?.content || ''" />
       </view>

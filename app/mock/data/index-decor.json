@@ -26,6 +26,23 @@
       }
     },
     {
+      "type": "grid",
+      "id": "demo_grid_entry",
+      "props": {
+        "columns": 4,
+        "items": [
+          { "title": "秒杀", "icon": "⚡", "bg": "#fef2f2", "link": "/pages/marketing/seckill" },
+          { "title": "拼团", "icon": "👥", "bg": "#eff6ff", "link": "/pages/marketing/group-buy" },
+          { "title": "砍价", "icon": "🔪", "bg": "#f0fdf4", "link": "/pages/marketing/bargain" },
+          { "title": "优惠券", "icon": "🏷️", "bg": "#fff7ed", "link": "/pages/marketing/coupon" },
+          { "title": "积分", "icon": "⭐", "bg": "#fefce8", "link": "/pages/user/points" },
+          { "title": "签到", "icon": "📅", "bg": "#faf5ff", "link": "" },
+          { "title": "收藏", "icon": "❤️", "bg": "#fff1f2", "link": "" },
+          { "title": "客服", "icon": "💬", "bg": "#ecfdf5", "link": "/pages/im/chat" }
+        ]
+      }
+    },
+    {
       "type": "notice",
       "id": "demo_notice",
       "props": {

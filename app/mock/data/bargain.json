@@ -1,0 +1,12 @@
+{
+  "list": [
+    {
+      "id": 1, "type": "bargain", "name": "砍价免费拿",
+      "start_at": "2026-05-01T00:00:00Z", "end_at": "2026-07-01T23:59:59Z", "status": 1,
+      "products": [
+        { "product_id": 6, "title": "羊绒大衣女款", "cover": "https://picsum.photos/400/400?random=15", "origin_price": 1980, "floor_price": 0.01, "max_helpers": 20, "current_helpers": 8 },
+        { "product_id": 2, "title": "轻薄笔记本 Air 15", "cover": "https://picsum.photos/400/400?random=11", "origin_price": 6499, "floor_price": 999, "max_helpers": 30, "current_helpers": 15 }
+      ]
+    }
+  ]
+}

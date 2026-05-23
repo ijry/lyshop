@@ -1,0 +1,14 @@
+{
+  "list": [
+    {
+      "id": 1, "type": "group_buy", "name": "3人拼团特惠",
+      "group_size": 3, "expire_hours": 24,
+      "start_at": "2026-05-01T00:00:00Z", "end_at": "2026-07-01T23:59:59Z", "status": 1,
+      "products": [
+        { "product_id": 4, "title": "智能手表 Ultra", "cover": "https://picsum.photos/400/400?random=13", "origin_price": 3299, "group_price": 2699, "group_stock": 100 },
+        { "product_id": 7, "title": "精华水套装", "cover": "https://picsum.photos/400/400?random=16", "origin_price": 299, "group_price": 199, "group_stock": 500 },
+        { "product_id": 5, "title": "4K超清投影仪", "cover": "https://picsum.photos/400/400?random=14", "origin_price": 3999, "group_price": 3199, "group_stock": 30 }
+      ]
+    }
+  ]
+}

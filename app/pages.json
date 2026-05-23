@@ -41,6 +41,14 @@
       "style": { "navigationBarTitleText": "限时秒杀" }
     },
     {
+      "path": "pages/marketing/group-buy",
+      "style": { "navigationBarTitleText": "拼团特惠" }
+    },
+    {
+      "path": "pages/marketing/bargain",
+      "style": { "navigationBarTitleText": "砍价免费拿" }
+    },
+    {
       "path": "pages/im/chat",
       "style": { "navigationBarTitleText": "在线客服", "navigationBarBackgroundColor": "#ffffff" }
     },
