@@ -2,6 +2,7 @@ package auth
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/ijry/lyshop/core/middleware"
 	"github.com/ijry/lyshop/core/response"
 	authsvc "github.com/ijry/lyshop/service/auth"
 )
@@ -10,6 +11,9 @@ import (
 func RegisterFrontRoutes(g *gin.RouterGroup) {
 	g.POST("/auth/sms/send", sendSMSCode)
 	g.POST("/auth/sms/login", smsLogin)
+
+	auth := g.Group("").Use(middleware.RequireAuth)
+	auth.POST("/user/delete", deleteAccount)
 }
 
 func sendSMSCode(c *gin.Context) {
@@ -44,4 +48,21 @@ func smsLogin(c *gin.Context) {
 		return
 	}
 	response.OK(c, gin.H{"token": token})
+}
+
+func deleteAccount(c *gin.Context) {
+	userID, _ := c.Get("user_id")
+	var req struct {
+		Phone string `json:"phone" binding:"required"`
+		Code  string `json:"code"  binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	if err := authsvc.DeleteUserAccount(c.Request.Context(), userID.(uint64), req.Phone, req.Code); err != nil {
+		response.Fail(c, 10002, err.Error())
+		return
+	}
+	response.OK(c, nil)
 }

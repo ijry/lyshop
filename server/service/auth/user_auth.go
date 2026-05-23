@@ -66,3 +66,28 @@ func SMSLogin(ctx context.Context, phone, code string) (string, error) {
 
 	return middleware.GenerateToken(user.ID, "user", nil)
 }
+
+// DeleteUserAccount verifies the SMS code, then soft-deletes the user.
+func DeleteUserAccount(ctx context.Context, userID uint64, phone, code string) error {
+	if err := VerifySMSCode(ctx, phone, code); err != nil {
+		return err
+	}
+
+	// Verify phone matches the user
+	var user model.User
+	if err := db.DB.WithContext(ctx).First(&user, userID).Error; err != nil {
+		return errors.New("用户不存在")
+	}
+	// Allow wx_ phone prefix (WeChat login users don't have real phone)
+	if user.Phone != phone && user.Phone != "wx_"+phone {
+		return errors.New("手机号与账号不匹配")
+	}
+
+	// Soft delete: set status=0 and anonymize
+	return db.DB.WithContext(ctx).Model(&user).Updates(map[string]any{
+		"status":   0,
+		"phone":    "deleted_" + fmt.Sprintf("%d", userID),
+		"nickname": "已注销用户",
+		"avatar":   "",
+	}).Error
+}
