@@ -8,6 +8,8 @@ import (
 	mktapi "github.com/ijry/lyshop/plugins/marketing/api"
 	mktmodel "github.com/ijry/lyshop/plugins/marketing/model"
 	"github.com/ijry/lyshop/core/plugin"
+	// Blank-import calculators so their init() registers them with the pricing pipeline
+	_ "github.com/ijry/lyshop/plugins/marketing/calculator"
 	"gorm.io/gorm"
 )
 
@@ -38,6 +40,13 @@ func (p *marketingPlugin) Migrate(db *gorm.DB) error {
 		&mktmodel.Activity{},
 		&mktmodel.ActivityProduct{},
 		&mktmodel.PointsLog{},
+		// New tables
+		&mktmodel.GroupBuyOrder{},
+		&mktmodel.GroupBuyMember{},
+		&mktmodel.BargainOrder{},
+		&mktmodel.BargainHelper{},
+		&mktmodel.Distributor{},
+		&mktmodel.DistributionCommission{},
 	)
 }
 

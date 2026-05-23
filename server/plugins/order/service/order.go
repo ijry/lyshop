@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ijry/lyshop/core/db"
+	"github.com/ijry/lyshop/core/marketing"
 	ordermodel "github.com/ijry/lyshop/plugins/order/model"
 	productmodel "github.com/ijry/lyshop/plugins/product/model"
 	"gorm.io/gorm"
@@ -15,11 +16,13 @@ import (
 
 // CreateOrderReq is the request payload to create an order.
 type CreateOrderReq struct {
-	UserID        uint64          `json:"user_id"`
-	AddressID     uint64          `json:"address_id"`
-	PaymentMethod string          `json:"payment_method"` // "wechat" | "alipay"
-	SkuIDs        []uint64        `json:"sku_ids"`         // subset of cart SKUs to checkout
-	Remark        string          `json:"remark"`
+	UserID        uint64   `json:"user_id"`
+	AddressID     uint64   `json:"address_id"`
+	PaymentMethod string   `json:"payment_method"`
+	SkuIDs        []uint64 `json:"sku_ids"`
+	CouponIDs     []uint64 `json:"coupon_ids"`
+	PointsUse     int      `json:"points_use"`
+	Remark        string   `json:"remark"`
 }
 
 func generateOrderNo() string {
@@ -48,7 +51,6 @@ func CreateOrder(ctx context.Context, req CreateOrderReq) (*ordermodel.Order, er
 	}
 
 	var items []ordermodel.OrderItem
-	var goodsAmount float64
 	for _, ci := range cartItems {
 		if len(req.SkuIDs) > 0 && !skuSet[ci.SkuID] {
 			continue
@@ -65,22 +67,41 @@ func CreateOrder(ctx context.Context, req CreateOrderReq) (*ordermodel.Order, er
 			Price:     ci.Sku.Price,
 			Qty:       ci.Qty,
 		})
-		goodsAmount += ci.Sku.Price * float64(ci.Qty)
 	}
 	if len(items) == 0 {
 		return nil, errors.New("未选择有效商品")
 	}
 
-	// 3. Create order in transaction
+	// 3. Run pricing pipeline
+	pricingItems := make([]marketing.OrderItem, len(items))
+	for i, item := range items {
+		pricingItems[i] = marketing.OrderItem{
+			ProductID: item.ProductID, SkuID: item.SkuID,
+			Title: item.Title, Price: item.Price, Qty: item.Qty,
+		}
+	}
+	pCtx := &marketing.PriceContext{
+		UserID:    req.UserID,
+		Items:     pricingItems,
+		CouponIDs: req.CouponIDs,
+		PointsUse: req.PointsUse,
+	}
+	if err := marketing.Calculate(pCtx); err != nil {
+		return nil, fmt.Errorf("价格计算失败: %w", err)
+	}
+	rulesJSON, _ := json.Marshal(pCtx.AppliedRules)
+
+	// 4. Create order in transaction
 	order := &ordermodel.Order{
 		OrderNo:         generateOrderNo(),
 		UserID:          req.UserID,
 		Status:          ordermodel.OrderStatusPending,
 		PaymentMethod:   req.PaymentMethod,
-		GoodsAmount:     goodsAmount,
-		TotalAmount:     goodsAmount,
+		GoodsAmount:     pCtx.GoodsAmount,
+		DiscountAmount:  pCtx.ActivityDiscount + pCtx.FullReduceDiscount + pCtx.CouponDiscount + pCtx.PointsDiscount,
+		TotalAmount:     pCtx.FinalAmount,
 		AddressSnapshot: addrJSON,
-		Remark:          req.Remark,
+		Remark:          req.Remark + string(rulesJSON),
 	}
 
 	err = db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
