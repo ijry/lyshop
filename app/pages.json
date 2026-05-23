@@ -73,6 +73,10 @@
       "path": "pages/message/list",
       "style": { "navigationBarTitleText": "消息列表" }
     {
+    },
+    {
+      "path": "pages/checkin/index",
+      "style": { "navigationBarTitleText": "每日签到" }
       "path": "pages/login/index",
       "style": { "navigationBarTitleText": "登录" }
     }

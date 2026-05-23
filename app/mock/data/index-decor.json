@@ -36,7 +36,7 @@
           { "title": "砍价", "icon": "🔪", "bg": "#f0fdf4", "link": "/pages/marketing/bargain" },
           { "title": "优惠券", "icon": "🏷️", "bg": "#fff7ed", "link": "/pages/marketing/coupon" },
           { "title": "积分", "icon": "⭐", "bg": "#fefce8", "link": "/pages/user/points" },
-          { "title": "签到", "icon": "📅", "bg": "#faf5ff", "link": "" },
+          { "title": "签到", "icon": "📅", "bg": "#faf5ff", "link": "/pages/checkin/index" },
           { "title": "收藏", "icon": "❤️", "bg": "#fff1f2", "link": "" },
           { "title": "客服", "icon": "💬", "bg": "#ecfdf5", "link": "/pages/im/chat" }
         ]
