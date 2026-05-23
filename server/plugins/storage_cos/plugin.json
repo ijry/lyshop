@@ -1,10 +1,16 @@
 {
   "name": "storage_cos",
-  "title": "COS 存储",
+  "title": "腾讯云 COS",
   "version": "1.0.0",
-  "description": "文件存储到 cos",
+  "description": "文件存储到腾讯云 COS",
   "author": "lyshop",
   "depends": [],
   "menus": [],
-  "permissions": []
+  "permissions": [],
+  "config_items": [
+    { "key": "region", "label": "Region", "type": "text", "required": true, "placeholder": "ap-guangzhou" },
+    { "key": "bucket", "label": "Bucket", "type": "text", "required": true },
+    { "key": "secret_id", "label": "SecretId", "type": "text", "required": true },
+    { "key": "secret_key", "label": "SecretKey", "type": "password", "required": true }
+  ]
 }

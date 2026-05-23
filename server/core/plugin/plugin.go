@@ -7,14 +7,15 @@ import (
 
 // Meta holds data from a plugin's plugin.json.
 type Meta struct {
-	Name        string     `json:"name"`
-	Title       string     `json:"title"`
-	Version     string     `json:"version"`
-	Description string     `json:"description"`
-	Author      string     `json:"author"`
-	Depends     []string   `json:"depends"`
-	Menus       []MenuItem `json:"menus"`
-	Permissions []string   `json:"permissions"`
+	Name        string        `json:"name"`
+	Title       string        `json:"title"`
+	Version     string        `json:"version"`
+	Description string        `json:"description"`
+	Author      string        `json:"author"`
+	Depends     []string      `json:"depends"`
+	Menus       []MenuItem    `json:"menus"`
+	Permissions []string      `json:"permissions"`
+	ConfigItems []ConfigField `json:"config_items,omitempty"` // declarative config schema
 }
 
 // MenuItem describes one entry in the admin sidebar.
@@ -25,6 +26,19 @@ type MenuItem struct {
 	Sort       int        `json:"sort"`
 	Permission string     `json:"permission,omitempty"`
 	Children   []MenuItem `json:"children,omitempty"`
+}
+
+// ConfigField describes one configuration field for admin UI rendering.
+type ConfigField struct {
+	Key         string `json:"key"`                    // config_kv key
+	Label       string `json:"label"`                  // display label
+	Type        string `json:"type"`                   // text|password|number|select|switch
+	Placeholder string `json:"placeholder,omitempty"`
+	Required    bool   `json:"required,omitempty"`
+	Options     []struct {                              // for type=select
+		Label string `json:"label"`
+		Value string `json:"value"`
+	} `json:"options,omitempty"`
 }
 
 // Plugin is the interface every plugin must implement.

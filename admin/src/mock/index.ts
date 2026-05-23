@@ -43,7 +43,7 @@ const routes: Record<string, any> = {
       { title: '发送消息', path: '/message/send' },
     ]},
     { title: '系统设置', icon: 'settings', path: '/system', sort: 90, children: [
-      { title: '支付短信配置', path: '/system/config' },
+      { title: '配置中心', path: '/system/config' },
       { title: '管理员管理', path: '/system/admins' },
       { title: '角色管理', path: '/system/roles' },
     ]},
@@ -130,6 +130,41 @@ const routes: Record<string, any> = {
 
   // System config
   'GET /admin/api/system/sms/config': { provider: 'aliyun', access_key: 'demo***', sign_name: 'LYShop' },
+
+  // Config Center
+  'GET /admin/api/config/schemas': [
+    { plugin: 'wechat_pay', title: '微信支付', fields: [
+      { key: 'app_id', label: 'AppID', type: 'text', required: true, placeholder: '微信支付 AppID' },
+      { key: 'mch_id', label: '商户号', type: 'text', required: true },
+      { key: 'api_key', label: 'API v3 密钥', type: 'password', required: true },
+      { key: 'notify_url', label: '异步回调地址', type: 'text' },
+    ]},
+    { plugin: 'alipay', title: '支付宝支付', fields: [
+      { key: 'app_id', label: 'AppID', type: 'text', required: true },
+      { key: 'private_key', label: '应用私钥', type: 'password', required: true },
+      { key: 'public_key', label: '支付宝公钥', type: 'password', required: true },
+      { key: 'sandbox', label: '沙箱模式', type: 'switch' },
+    ]},
+    { plugin: 'sms', title: '短信插件', fields: [
+      { key: 'provider', label: '短信服务商', type: 'select', required: true, options: [
+        { label: '阿里云', value: 'aliyun' }, { label: '腾讯云', value: 'tencent' }
+      ]},
+      { key: 'access_key', label: 'AccessKey', type: 'text', required: true },
+      { key: 'secret_key', label: 'SecretKey', type: 'password', required: true },
+      { key: 'sign_name', label: '签名名称', type: 'text', required: true },
+    ]},
+    { plugin: 'wechat_auth', title: '微信登录', fields: [
+      { key: 'mini_app_id', label: '小程序 AppID', type: 'text' },
+      { key: 'mini_app_secret', label: '小程序 AppSecret', type: 'password' },
+      { key: 'h5_app_id', label: 'H5/App AppID', type: 'text' },
+      { key: 'h5_app_secret', label: 'H5/App AppSecret', type: 'password' },
+    ]},
+    { plugin: 'storage_local', title: '本地存储', fields: [
+      { key: 'upload_dir', label: '上传目录', type: 'text', placeholder: 'uploads' },
+      { key: 'base_url', label: '访问URL前缀', type: 'text', placeholder: 'http://localhost:8080/uploads' },
+    ]},
+  ],
+  'GET /admin/api/config/': { app_id: '', mch_id: '', api_key: '' },
 
   // Checkin
   'GET /admin/api/checkin/rules': [

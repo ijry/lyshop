@@ -6,5 +6,11 @@
   "author": "lyshop",
   "depends": [],
   "menus": [],
-  "permissions": []
+  "permissions": [],
+  "config_items": [
+    { "key": "mini_app_id", "label": "小程序 AppID", "type": "text" },
+    { "key": "mini_app_secret", "label": "小程序 AppSecret", "type": "password" },
+    { "key": "h5_app_id", "label": "H5/App AppID", "type": "text" },
+    { "key": "h5_app_secret", "label": "H5/App AppSecret", "type": "password" }
+  ]
 }

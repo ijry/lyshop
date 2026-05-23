@@ -1,10 +1,16 @@
 {
   "name": "storage_oss",
-  "title": "OSS 存储",
+  "title": "阿里云 OSS",
   "version": "1.0.0",
-  "description": "文件存储到 oss",
+  "description": "文件存储到阿里云 OSS",
   "author": "lyshop",
   "depends": [],
   "menus": [],
-  "permissions": []
+  "permissions": [],
+  "config_items": [
+    { "key": "endpoint", "label": "Endpoint", "type": "text", "required": true, "placeholder": "oss-cn-hangzhou.aliyuncs.com" },
+    { "key": "bucket", "label": "Bucket", "type": "text", "required": true },
+    { "key": "access_key_id", "label": "AccessKeyId", "type": "text", "required": true },
+    { "key": "access_key_secret", "label": "AccessKeySecret", "type": "password", "required": true }
+  ]
 }

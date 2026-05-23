@@ -1,103 +1,135 @@
 <template>
   <div>
-    <h2 class="text-xl font-semibold text-slate-800 mb-6">支付 & 短信配置</h2>
+    <h2 class="text-xl font-semibold text-slate-800 mb-6">配置中心</h2>
 
-    <!-- WeChat Pay -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 mb-4 max-w-xl">
-      <h3 class="font-semibold text-slate-700 mb-4">微信支付</h3>
-      <div class="space-y-3">
-        <div v-for="field in wechatFields" :key="field.key">
-          <label class="block text-sm font-medium text-slate-600 mb-1">{{ field.label }}</label>
-          <input v-model="wechat[field.key]" :type="field.secret ? 'password' : 'text'"
-            class="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm" :placeholder="field.placeholder" />
-        </div>
-        <button @click="saveConfig('wechat_pay', wechat)"
-          class="px-6 py-2 bg-blue-700 text-white rounded-xl text-sm hover:bg-blue-600">保存微信支付配置</button>
-      </div>
+    <div v-if="loading" class="text-center py-12 text-slate-400">加载中...</div>
+
+    <div v-else-if="!schemas.length" class="text-center py-12 text-slate-400">
+      暂无可配置的插件
     </div>
 
-    <!-- Alipay -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 mb-4 max-w-xl">
-      <h3 class="font-semibold text-slate-700 mb-4">支付宝支付</h3>
-      <div class="space-y-3">
-        <div v-for="field in alipayFields" :key="field.key">
-          <label class="block text-sm font-medium text-slate-600 mb-1">{{ field.label }}</label>
-          <textarea v-if="field.textarea" v-model="alipay[field.key]" rows="4"
-            class="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm resize-none" :placeholder="field.placeholder" />
-          <input v-else v-model="alipay[field.key]" :type="field.secret ? 'password' : 'text'"
-            class="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm" :placeholder="field.placeholder" />
+    <div v-else class="flex gap-6">
+      <!-- Plugin tabs -->
+      <div class="w-48 shrink-0">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+          <button v-for="s in schemas" :key="s.plugin"
+            @click="selectPlugin(s.plugin)"
+            :class="activePlugin === s.plugin ? 'bg-red-50 text-red-600 font-medium border-l-3 border-l-red-600' : 'text-slate-600 hover:bg-slate-50'"
+            class="w-full text-left px-4 py-3 text-sm transition-colors border-b border-slate-50 last:border-0">
+            {{ s.title }}
+          </button>
         </div>
-        <div class="flex items-center gap-2">
-          <input type="checkbox" id="sandbox" v-model="alipay.sandbox" />
-          <label for="sandbox" class="text-sm text-slate-600">沙箱模式</label>
+      </div>
+
+      <!-- Config form -->
+      <div class="flex-1 max-w-xl" v-if="activeSchema">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+          <div class="flex items-center justify-between mb-5">
+            <h3 class="text-base font-semibold text-slate-800">{{ activeSchema.title }} 配置</h3>
+            <span class="text-xs text-slate-400">插件: {{ activeSchema.plugin }}</span>
+          </div>
+
+          <div class="space-y-4">
+            <div v-for="field in activeSchema.fields" :key="field.key">
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">
+                {{ field.label }}
+                <span v-if="field.required" class="text-red-500 ml-0.5">*</span>
+              </label>
+
+              <!-- select -->
+              <select v-if="field.type === 'select'" v-model="configValues[field.key]"
+                class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500">
+                <option v-for="opt in field.options" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+              </select>
+
+              <!-- switch -->
+              <div v-else-if="field.type === 'switch'" class="flex items-center gap-2">
+                <input type="checkbox" :id="field.key" v-model="configValues[field.key]"
+                  true-value="true" false-value="false"
+                  class="w-4 h-4 accent-red-600" />
+                <label :for="field.key" class="text-sm text-slate-600">{{ configValues[field.key] === 'true' ? '已开启' : '已关闭' }}</label>
+              </div>
+
+              <!-- password -->
+              <div v-else-if="field.type === 'password'" class="relative">
+                <input v-model="configValues[field.key]" :type="showPw[field.key] ? 'text' : 'password'"
+                  :placeholder="field.placeholder || ''"
+                  class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm pr-10 focus:outline-none focus:border-red-500" />
+                <button @click="showPw[field.key] = !showPw[field.key]"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">
+                  {{ showPw[field.key] ? '隐藏' : '显示' }}
+                </button>
+              </div>
+
+              <!-- text / number -->
+              <input v-else v-model="configValues[field.key]"
+                :type="field.type === 'number' ? 'number' : 'text'"
+                :placeholder="field.placeholder || ''"
+                class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500" />
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3 mt-6">
+            <button @click="save" :disabled="saving"
+              class="px-6 py-2.5 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 transition disabled:opacity-40">
+              {{ saving ? '保存中...' : '保存配置' }}
+            </button>
+            <span v-if="savedMsg" class="text-sm text-green-600">{{ savedMsg }}</span>
+          </div>
         </div>
-        <button @click="saveConfig('alipay', alipay)"
-          class="px-6 py-2 bg-blue-700 text-white rounded-xl text-sm hover:bg-blue-600">保存支付宝配置</button>
       </div>
     </div>
-
-    <!-- SMS -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 max-w-xl">
-      <h3 class="font-semibold text-slate-700 mb-4">短信配置</h3>
-      <div class="space-y-3">
-        <div>
-          <label class="block text-sm font-medium text-slate-600 mb-1">服务商</label>
-          <select v-model="sms.provider" class="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm">
-            <option value="aliyun">阿里云</option>
-            <option value="tencent">腾讯云</option>
-          </select>
-        </div>
-        <div v-for="field in smsFields" :key="field.key">
-          <label class="block text-sm font-medium text-slate-600 mb-1">{{ field.label }}</label>
-          <input v-model="sms[field.key]" :type="field.secret ? 'password' : 'text'"
-            class="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm" :placeholder="field.placeholder" />
-        </div>
-        <button @click="saveSmsConfig"
-          class="px-6 py-2 bg-blue-700 text-white rounded-xl text-sm hover:bg-blue-600">保存短信配置</button>
-      </div>
-    </div>
-
-    <p v-if="saved" class="mt-4 text-green-600 text-sm">✓ 配置已保存</p>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import request from '@/api/request'
 
-const saved = ref(false)
+interface ConfigField {
+  key: string; label: string; type: string;
+  placeholder?: string; required?: boolean;
+  options?: { label: string; value: string }[]
+}
+interface PluginSchema { plugin: string; title: string; fields: ConfigField[] }
 
-const wechat = ref<Record<string, string>>({ app_id: '', mch_id: '', api_key: '' })
-const wechatFields = [
-  { key: 'app_id',  label: 'AppID',  placeholder: 'wx...',        secret: false },
-  { key: 'mch_id',  label: '商户号', placeholder: '1234567890',   secret: false },
-  { key: 'api_key', label: 'API密钥(v3)', placeholder: '32位密钥', secret: true  },
-]
+const schemas = ref<PluginSchema[]>([])
+const activePlugin = ref('')
+const configValues = ref<Record<string, string>>({})
+const showPw = ref<Record<string, boolean>>({})
+const loading = ref(true)
+const saving = ref(false)
+const savedMsg = ref('')
 
-const alipay = ref<Record<string, any>>({ app_id: '', private_key: '', public_key: '', sandbox: false })
-const alipayFields = [
-  { key: 'app_id',     label: 'AppID',      placeholder: '2021...',  secret: false, textarea: false },
-  { key: 'private_key',label: '应用私钥',   placeholder: 'RSA私钥',  secret: true,  textarea: true  },
-  { key: 'public_key', label: '支付宝公钥', placeholder: '支付宝公钥', secret: false, textarea: true },
-]
+const activeSchema = computed(() => schemas.value.find(s => s.plugin === activePlugin.value))
 
-const sms = ref<Record<string, string>>({ provider: 'aliyun', access_key: '', secret_key: '', sign_name: '' })
-const smsFields = [
-  { key: 'access_key', label: 'AccessKey',  placeholder: '', secret: false },
-  { key: 'secret_key', label: 'SecretKey',  placeholder: '', secret: true  },
-  { key: 'sign_name',  label: '短信签名',   placeholder: '公司名称', secret: false },
-]
-
-async function saveConfig(_plugin: string, _data: Record<string, any>) {
-  // Save each field as a ConfigKV via a generic config endpoint
-  // (Implemented as per-plugin config save in Phase 5 system settings)
-  saved.value = true
-  setTimeout(() => saved.value = false, 2000)
+async function selectPlugin(pluginName: string) {
+  activePlugin.value = pluginName
+  const data: any = await request.get(`/config/${pluginName}`)
+  configValues.value = data || {}
+  showPw.value = {}
 }
 
-async function saveSmsConfig() {
-  await request.put('/system/sms/config', sms.value)
-  saved.value = true
-  setTimeout(() => saved.value = false, 2000)
+async function save() {
+  saving.value = true
+  try {
+    await request.put(`/config/${activePlugin.value}`, configValues.value)
+    savedMsg.value = '保存成功'
+    setTimeout(() => savedMsg.value = '', 2000)
+  } catch (e: any) {
+    savedMsg.value = '保存失败: ' + (e.message || '')
+  } finally {
+    saving.value = false
+  }
 }
+
+onMounted(async () => {
+  try {
+    const data: any = await request.get('/config/schemas')
+    schemas.value = data || []
+    if (schemas.value.length) selectPlugin(schemas.value[0].plugin)
+  } finally {
+    loading.value = false
+  }
+})
 </script>

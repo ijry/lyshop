@@ -6,5 +6,12 @@
   "author": "lyshop",
   "depends": [],
   "menus": [],
-  "permissions": []
+  "permissions": [],
+  "config_items": [
+    { "key": "app_id", "label": "AppID", "type": "text", "required": true, "placeholder": "微信支付 AppID" },
+    { "key": "mch_id", "label": "商户号", "type": "text", "required": true, "placeholder": "微信支付商户号" },
+    { "key": "api_key", "label": "API v3 密钥", "type": "password", "required": true },
+    { "key": "serial_no", "label": "证书序列号", "type": "text" },
+    { "key": "notify_url", "label": "异步回调地址", "type": "text", "placeholder": "https://yourdomain.com/api/v1/notify/wechat" }
+  ]
 }

@@ -73,6 +73,49 @@ func Run() error {
 	// Admin/Role management routes
 	apiadmin.RegisterRoutes(adminAuth)
 
+	// === Config Center API ===
+	// GET /admin/api/config/schemas — list all plugins that have configItems
+	adminAuth.GET("/config/schemas", middleware.RequirePermission("system:config"), func(c *gin.Context) {
+		type pluginSchema struct {
+			Plugin string              `json:"plugin"`
+			Title  string              `json:"title"`
+			Fields []plugin.ConfigField `json:"fields"`
+		}
+		var schemas []pluginSchema
+		for _, name := range config.Global.Plugins.Enabled {
+			p := plugin.Find(name)
+			if p == nil { continue }
+			meta := p.Meta()
+			if len(meta.ConfigItems) > 0 {
+				schemas = append(schemas, pluginSchema{Plugin: meta.Name, Title: meta.Title, Fields: meta.ConfigItems})
+			}
+		}
+		response.OK(c, schemas)
+	})
+	// GET /admin/api/config/:plugin — get all config values for a plugin
+	adminAuth.GET("/config/:plugin", middleware.RequirePermission("system:config"), func(c *gin.Context) {
+		pluginName := c.Param("plugin")
+		var kvs []model.ConfigKV
+		db.DB.Where("plugin = ?", pluginName).Find(&kvs)
+		result := map[string]string{}
+		for _, kv := range kvs { result[kv.Key] = kv.Value }
+		response.OK(c, result)
+	})
+	// PUT /admin/api/config/:plugin — save config values for a plugin
+	adminAuth.PUT("/config/:plugin", middleware.RequirePermission("system:config"), func(c *gin.Context) {
+		pluginName := c.Param("plugin")
+		var values map[string]string
+		if err := c.ShouldBindJSON(&values); err != nil {
+			response.Fail(c, 400, err.Error()); return
+		}
+		for k, v := range values {
+			db.DB.Where(model.ConfigKV{Plugin: pluginName, Key: k}).
+				Assign(model.ConfigKV{Value: v}).
+				FirstOrCreate(&model.ConfigKV{})
+		}
+		response.OK(c, nil)
+	})
+
 	// Universal file upload endpoint
 	adminAuth.POST("/upload", func(c *gin.Context) {
 		fh, err := c.FormFile("file")
