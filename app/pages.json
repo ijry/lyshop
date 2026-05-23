@@ -45,13 +45,25 @@
       "style": { "navigationBarTitleText": "在线客服", "navigationBarBackgroundColor": "#ffffff" }
     },
     {
+      "path": "pages/user/index",
+      "style": { "navigationBarTitleText": "个人中心", "navigationStyle": "custom" }
+    },
+    {
+      "path": "pages/user/address",
+      "style": { "navigationBarTitleText": "收货地址" }
+    },
+    {
+      "path": "pages/user/points",
+      "style": { "navigationBarTitleText": "我的积分" }
+    },
+    {
       "path": "pages/login/index",
       "style": { "navigationBarTitleText": "登录" }
     }
   ],
   "tabBar": {
     "color": "#666666",
-    "selectedColor": "#1e40af",
+    "selectedColor": "#dc2626",
     "backgroundColor": "#ffffff",
     "borderStyle": "black",
     "list": [
@@ -59,7 +71,7 @@
       { "pagePath": "pages/product/list",  "text": "商品" },
       { "pagePath": "pages/cart/index",    "text": "购物车" },
       { "pagePath": "pages/order/list",    "text": "订单" },
-      { "pagePath": "pages/login/index",   "text": "我的" }
+      { "pagePath": "pages/user/index",    "text": "我的" }
     ]
   },
   "globalStyle": {

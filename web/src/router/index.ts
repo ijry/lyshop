@@ -8,6 +8,7 @@ const router = createRouter({
     { path: '/product/:id', name: 'product', component: () => import('@/views/ProductDetail.vue') },
     { path: '/cart', name: 'cart', component: () => import('@/views/Cart.vue') },
     { path: '/orders', name: 'orders', component: () => import('@/views/OrderList.vue') },
+    { path: '/user', name: 'user', component: () => import('@/views/UserCenter.vue') },
     { path: '/login', name: 'login', component: () => import('@/views/Login.vue') },
   ],
   scrollBehavior: () => ({ top: 0 }),

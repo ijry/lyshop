@@ -40,7 +40,7 @@
         <!-- User -->
         <template v-if="auth.isLoggedIn">
           <div class="w-8 h-8 rounded-full bg-red-100 flex-center cursor-pointer hover:bg-red-200 transition-colors"
-            @click="$router.push('/orders')">
+            @click="$router.push('/user')">
             <div class="i-carbon-user text-red-600" />
           </div>
         </template>

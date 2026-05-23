@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1, "user_id": 1, "name": "张三", "phone": "13800008888",
+    "province": "上海市", "city": "上海市", "district": "浦东新区",
+    "detail": "世纪大道100号 15楼1501室", "is_default": 1
+  },
+  {
+    "id": 2, "user_id": 1, "name": "李四", "phone": "13900009999",
+    "province": "北京市", "city": "北京市", "district": "朝阳区",
+    "detail": "望京SOHO T3 20层", "is_default": 0
+  }
+]
