@@ -6,10 +6,10 @@
     </linearGradient>
   </defs>
   <g transform="translate(24 24) scale(0.82)">
-    <rect x="38" y="58" width="180" height="150" rx="40" fill="url(#bg)" />
-    <path d="M92 88C92 67.01 108.99 50 129.98 50C150.97 50 167.96 67.01 167.96 88" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round" />
-    <path d="M96 122H126V176H164V196H96V122Z" fill="#FFFFFF" />
-    <circle cx="128" cy="128" r="88" stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="6" />
+    <rect x="44" y="60" width="168" height="168" rx="38" fill="url(#bg)" />
+    <path d="M96 120C96 100.12 112.12 84 132 84C151.88 84 168 100.12 168 120" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round" />
+    <path d="M104 134H130V184H160V204H104V134Z" fill="#FFFFFF" />
+    <circle cx="128" cy="144" r="82" stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="6" />
   </g>
   <text x="248" y="140" fill="#111827" font-size="74" font-weight="800" letter-spacing="-2" font-family="Inter, 'PingFang SC', 'Microsoft YaHei', sans-serif">
     LY<tspan fill="#E53935">Shop</tspan>
