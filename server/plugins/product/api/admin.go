@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -96,6 +97,9 @@ func adminCreateProduct(c *gin.Context) {
 		response.Fail(c, 400, err.Error())
 		return
 	}
+	if len(req.Product.Detail) == 0 {
+		req.Product.Detail = json.RawMessage(`{"version":1,"blocks":[]}`)
+	}
 	if err := productsvc.CreateProduct(c.Request.Context(), &req.Product, req.SKUs, req.Images); err != nil {
 		response.Fail(c, 500, err.Error())
 		return
@@ -105,11 +109,28 @@ func adminCreateProduct(c *gin.Context) {
 
 func adminUpdateProduct(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	var updates map[string]any
-	c.ShouldBindJSON(&updates)
+	var req struct {
+		Product map[string]any                 `json:"product"`
+		Images  []productmodel.ProductImage    `json:"images"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+
+	updates := req.Product
+	if updates == nil {
+		updates = map[string]any{}
+	}
 	if err := productsvc.UpdateProduct(c.Request.Context(), id, updates); err != nil {
 		response.Fail(c, 500, err.Error())
 		return
+	}
+	if req.Images != nil {
+		if err := productsvc.ReplaceProductImages(c.Request.Context(), id, req.Images); err != nil {
+			response.Fail(c, 500, err.Error())
+			return
+		}
 	}
 	response.OK(c, nil)
 }

@@ -19,6 +19,7 @@ const router = createRouter({
         { path: 'product/form/:id',name: '编辑商品', component: () => import('@/views/product/ProductForm.vue') },
         // Order
         { path: 'order/list', name: '订单列表', component: () => import('@/views/order/OrderList.vue') },
+        { path: 'order/detail/:id', name: '订单详情', component: () => import('@/views/order/OrderDetail.vue') },
         // WMS
         { path: 'wms/stock', name: '库存管理', component: () => import('@/views/wms/StockList.vue') },
         // Marketing

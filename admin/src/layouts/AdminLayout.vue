@@ -7,7 +7,14 @@
         <span class="text-lg font-bold text-white tracking-wide">LYShop</span>
       </div>
       <nav class="flex-1 overflow-y-auto py-4 px-3">
-        <div v-for="group in menus" :key="group.path" class="mb-2">
+        <router-link
+          to="/dashboard"
+          class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition mb-2"
+          active-class="!bg-red-600 !text-white"
+        >
+          <span>Dashboard</span>
+        </router-link>
+        <div v-for="group in visibleMenus" :key="group.path" class="mb-2">
           <!-- Group title -->
           <div class="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
             {{ group.title }}
@@ -34,15 +41,6 @@
             <span>{{ group.title }}</span>
           </router-link>
         </div>
-        <!-- Dashboard (always show) -->
-        <router-link
-          to="/dashboard"
-          class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition mt-2"
-          active-class="!bg-red-600 !text-white"
-          v-if="!menus.some(m => m.path === '/dashboard')"
-        >
-          <span>Dashboard</span>
-        </router-link>
       </nav>
     </aside>
 
@@ -64,12 +62,13 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { getMenus } from '@/api/auth'
 
 const auth = useAuthStore()
 const menus = ref<any[]>([])
+const visibleMenus = computed(() => menus.value.filter((item) => item.path !== '/dashboard'))
 
 onMounted(async () => {
   try {

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 
 	"github.com/ijry/lyshop/core/db"
@@ -20,6 +21,29 @@ type ProductDetail struct {
 	productmodel.Product
 	SKUs   []productmodel.ProductSku   `json:"skus"`
 	Images []productmodel.ProductImage `json:"images"`
+}
+
+var defaultDetailJSON = json.RawMessage(`{"version":1,"blocks":[]}`)
+
+func normalizeDetail(raw json.RawMessage) json.RawMessage {
+	if len(raw) == 0 || string(raw) == "null" {
+		return defaultDetailJSON
+	}
+	var payload productmodel.ProductDetailContent
+	if err := json.Unmarshal(raw, &payload); err != nil {
+		return defaultDetailJSON
+	}
+	if payload.Version <= 0 {
+		payload.Version = 1
+	}
+	if payload.Blocks == nil {
+		payload.Blocks = []productmodel.DetailBlock{}
+	}
+	normalized, err := json.Marshal(payload)
+	if err != nil {
+		return defaultDetailJSON
+	}
+	return normalized
 }
 
 func ListProducts(ctx context.Context, q ProductListQuery) ([]productmodel.Product, int64, error) {
@@ -52,6 +76,7 @@ func GetProduct(ctx context.Context, id uint64) (*ProductDetail, error) {
 		}
 		return nil, err
 	}
+	p.Detail = normalizeDetail(p.Detail)
 	detail := &ProductDetail{Product: p}
 	db.DB.WithContext(ctx).Where("product_id = ?", id).Find(&detail.SKUs)
 	db.DB.WithContext(ctx).Where("product_id = ?", id).Order("sort asc").Find(&detail.Images)
@@ -59,6 +84,7 @@ func GetProduct(ctx context.Context, id uint64) (*ProductDetail, error) {
 }
 
 func CreateProduct(ctx context.Context, p *productmodel.Product, skus []productmodel.ProductSku, images []productmodel.ProductImage) error {
+	p.Detail = normalizeDetail(p.Detail)
 	return db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(p).Error; err != nil {
 			return err
@@ -82,6 +108,13 @@ func CreateProduct(ctx context.Context, p *productmodel.Product, skus []productm
 }
 
 func UpdateProduct(ctx context.Context, id uint64, updates map[string]any) error {
+	if detail, ok := updates["detail"]; ok {
+		raw, err := json.Marshal(detail)
+		if err != nil {
+			return err
+		}
+		updates["detail"] = normalizeDetail(raw)
+	}
 	return db.DB.WithContext(ctx).Model(&productmodel.Product{}).Where("id = ?", id).Updates(updates).Error
 }
 
@@ -90,5 +123,22 @@ func DeleteProduct(ctx context.Context, id uint64) error {
 		tx.Where("product_id = ?", id).Delete(&productmodel.ProductSku{})
 		tx.Where("product_id = ?", id).Delete(&productmodel.ProductImage{})
 		return tx.Delete(&productmodel.Product{}, id).Error
+	})
+}
+
+func ReplaceProductImages(ctx context.Context, productID uint64, images []productmodel.ProductImage) error {
+	return db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("product_id = ?", productID).Delete(&productmodel.ProductImage{}).Error; err != nil {
+			return err
+		}
+		for i := range images {
+			images[i].ProductID = productID
+		}
+		if len(images) > 0 {
+			if err := tx.Create(&images).Error; err != nil {
+				return err
+			}
+		}
+		return nil
 	})
 }

@@ -11,6 +11,7 @@ import (
 
 func RegisterAdminRoutes(g *gin.RouterGroup) {
 	g.GET("/orders", middleware.RequirePermission("order:view"), adminListOrders)
+	g.GET("/orders/:id", middleware.RequirePermission("order:view"), adminGetOrderDetail)
 	g.PUT("/orders/:id/ship", middleware.RequirePermission("order:ship"), adminShipOrder)
 }
 
@@ -24,6 +25,16 @@ func adminListOrders(c *gin.Context) {
 		return
 	}
 	response.OK(c, response.PageData{List: list, Total: total, Page: page, Size: size})
+}
+
+func adminGetOrderDetail(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	detail, err := ordersvc.AdminGetOrderDetail(c.Request.Context(), id)
+	if err != nil {
+		response.Fail(c, 404, err.Error())
+		return
+	}
+	response.OK(c, detail)
 }
 
 func adminShipOrder(c *gin.Context) {

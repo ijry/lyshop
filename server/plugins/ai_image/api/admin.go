@@ -44,6 +44,9 @@ func generate(c *gin.Context) {
 	var req struct {
 		ModelID   uint64         `json:"model_id"`
 		Scene     string         `json:"scene"`   // carousel|detail
+		BizType   string         `json:"biz_type"` // cover|gallery|detail|intro
+		TargetProductID uint64   `json:"target_product_id"`
+		RefImageURL string       `json:"ref_image_url"`
 		Prompt    string         `json:"prompt"   binding:"required"`
 		NegPrompt string         `json:"neg_prompt"`
 		Params    map[string]any `json:"params"`
@@ -52,7 +55,10 @@ func generate(c *gin.Context) {
 		response.Fail(c, 400, err.Error())
 		return
 	}
-	task, err := aisvc.Generate(c.Request.Context(), req.ModelID, req.Scene, req.Prompt, req.NegPrompt, req.Params)
+	if req.BizType == "" {
+		req.BizType = "detail"
+	}
+	task, err := aisvc.Generate(c.Request.Context(), req.ModelID, req.Scene, req.BizType, req.Prompt, req.NegPrompt, req.RefImageURL, req.TargetProductID, req.Params)
 	if err != nil {
 		response.Fail(c, 500, err.Error())
 		return

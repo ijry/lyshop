@@ -81,7 +81,13 @@
         <!-- Detail -->
         <div class="mt-10 pt-8 border-t border-gray-100">
           <h3 class="text-base font-semibold text-gray-800 mb-4">商品详情</h3>
-          <div class="prose prose-sm max-w-none text-gray-600" v-html="product.detail" />
+          <div class="space-y-4">
+            <template v-for="block in detailBlocks" :key="block.id">
+              <p v-if="block.type === 'text'" class="text-sm leading-7 text-gray-600 whitespace-pre-wrap">{{ block.props?.text || '' }}</p>
+              <img v-else-if="block.type === 'image'" :src="block.props?.url" :alt="block.props?.alt || ''" class="w-full rounded-xl border border-gray-100" />
+            </template>
+            <p v-if="!detailBlocks.length" class="text-sm text-gray-400">暂无详情</p>
+          </div>
         </div>
       </div>
     </div>
@@ -89,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { get, post } from '@/api/request'
 import { useChatStore } from '@/stores/chat'
@@ -103,6 +109,16 @@ const selectedSku = ref<any>(null)
 const images = ref<string[]>([])
 const mainImage = ref('')
 const qty = ref(1)
+
+const detailBlocks = computed(() => {
+  const detail = product.value?.detail
+  if (!detail) return []
+  const normalized = typeof detail === 'string' ? (() => {
+    try { return JSON.parse(detail) } catch { return null }
+  })() : detail
+  if (!normalized || !Array.isArray(normalized.blocks)) return []
+  return normalized.blocks
+})
 
 function parseAttrs(attrs: string) {
   try { return JSON.parse(attrs).map((a: any) => a.value).join(' / ') }

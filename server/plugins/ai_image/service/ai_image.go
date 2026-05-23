@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"errors"
 
 	aidriver "github.com/ijry/lyshop/core/driver/ai"
 	"github.com/ijry/lyshop/core/db"
@@ -10,15 +11,26 @@ import (
 )
 
 // Generate creates a task record, then asynchronously calls the AI driver.
-func Generate(ctx context.Context, modelID uint64, scene, prompt, negPrompt string, params map[string]any) (*aimodel.AiImageTask, error) {
+func Generate(ctx context.Context, modelID uint64, scene, bizType, prompt, negPrompt, refImageURL string, targetProductID uint64, params map[string]any) (*aimodel.AiImageTask, error) {
+	var model aimodel.AiModel
+	if err := db.DB.WithContext(ctx).First(&model, modelID).Error; err != nil {
+		return nil, errors.New("模型不存在")
+	}
+	if refImageURL != "" && model.SupportsRefImage == 0 {
+		return nil, errors.New("该模型不支持参考图")
+	}
+
 	paramsJSON, _ := json.Marshal(params)
 	task := &aimodel.AiImageTask{
-		ModelID:   modelID,
-		Scene:     scene,
-		Prompt:    prompt,
-		NegPrompt: negPrompt,
-		Params:    paramsJSON,
-		Status:    aimodel.TaskStatusGenerating,
+		ModelID:         modelID,
+		Scene:           scene,
+		BizType:         bizType,
+		TargetProductID: targetProductID,
+		RefImageURL:     refImageURL,
+		Prompt:          prompt,
+		NegPrompt:       negPrompt,
+		Params:          paramsJSON,
+		Status:          aimodel.TaskStatusGenerating,
 	}
 	if err := db.DB.WithContext(ctx).Create(task).Error; err != nil {
 		return nil, err
@@ -26,14 +38,6 @@ func Generate(ctx context.Context, modelID uint64, scene, prompt, negPrompt stri
 
 	// Async generation
 	go func() {
-		var m aimodel.AiModel
-		if err := db.DB.First(&m, modelID).Error; err != nil {
-			db.DB.Model(task).Updates(map[string]any{
-				"status": aimodel.TaskStatusFailed, "error_msg": "model not found",
-			})
-			return
-		}
-
 		width, _ := params["width"].(float64)
 		height, _ := params["height"].(float64)
 		count, _ := params["count"].(float64)
@@ -42,7 +46,7 @@ func Generate(ctx context.Context, modelID uint64, scene, prompt, negPrompt stri
 		if height == 0 { height = 750 }
 		if count == 0 { count = 3 }
 
-		d, err := aidriver.Get(m.Driver)
+		d, err := aidriver.Get(model.Driver)
 		if err != nil {
 			db.DB.Model(task).Updates(map[string]any{
 				"status": aimodel.TaskStatusFailed, "error_msg": err.Error(),
@@ -54,6 +58,7 @@ func Generate(ctx context.Context, modelID uint64, scene, prompt, negPrompt stri
 			Prompt: prompt, NegPrompt: negPrompt,
 			Width: int(width), Height: int(height),
 			Count: int(count), Style: style,
+			RefImageURL: refImageURL,
 		})
 		if err != nil {
 			db.DB.Model(task).Updates(map[string]any{

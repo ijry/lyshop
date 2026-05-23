@@ -9,7 +9,33 @@
   "sales": 1280,
   "status": 1,
   "category_id": 1,
-  "detail": "<p>全新一代旗舰处理器，性能提升40%。5000mAh大电池，支持100W快充。6.7英寸2K AMOLED屏幕，120Hz自适应刷新率。</p><p>IP68防水防尘，支持卫星通信。</p>",
+  "detail": {
+    "version": 1,
+    "blocks": [
+      {
+        "id": "b1",
+        "type": "text",
+        "props": {
+          "text": "全新一代旗舰处理器，性能提升40%。5000mAh大电池，支持100W快充。"
+        }
+      },
+      {
+        "id": "b2",
+        "type": "image",
+        "props": {
+          "url": "https://picsum.photos/750/420?random=120",
+          "alt": "性能展示"
+        }
+      },
+      {
+        "id": "b3",
+        "type": "text",
+        "props": {
+          "text": "6.7英寸2K AMOLED屏幕，120Hz自适应刷新率，IP68防水防尘并支持卫星通信。"
+        }
+      }
+    ]
+  },
   "skus": [
     { "id": 1, "product_id": 1, "attrs": "[{\"name\":\"颜色\",\"value\":\"星空黑\"},{\"name\":\"存储\",\"value\":\"256GB\"}]", "price": 4999.00, "stock": 200, "sku_code": "PHONE-BLK-256" },
     { "id": 2, "product_id": 1, "attrs": "[{\"name\":\"颜色\",\"value\":\"星空黑\"},{\"name\":\"存储\",\"value\":\"512GB\"}]", "price": 5699.00, "stock": 100, "sku_code": "PHONE-BLK-512" },

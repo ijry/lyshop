@@ -28,7 +28,7 @@ if (MOCK_ENABLED) {
     const { matchMock } = await import('@/mock/index')
     const method = (config.method || 'GET').toUpperCase()
     const url = (config.baseURL || '') + (config.url || '')
-    const result = matchMock(method, url)
+    const result = matchMock(method, url, config.params)
 
     if (result.matched) {
       await new Promise(r => setTimeout(r, 100 + Math.random() * 200))

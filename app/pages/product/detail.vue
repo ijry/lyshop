@@ -48,7 +48,13 @@
     <!-- Detail -->
     <view class="p-30rpx">
       <text class="text-28rpx font-600 text-gray-800 block mb-20rpx">商品详情</text>
-      <rich-text :nodes="product.detail || ''" class="text-26rpx text-gray-600" />
+      <view v-if="detailBlocks.length">
+        <view v-for="block in detailBlocks" :key="block.id" class="mb-20rpx">
+          <text v-if="block.type === 'text'" class="text-26rpx text-gray-600 leading-42rpx block">{{ block.props?.text || '' }}</text>
+          <image v-else-if="block.type === 'image'" :src="block.props?.url || ''" mode="widthFix" style="width:100%; border-radius: 12px;" />
+        </view>
+      </view>
+      <text v-else class="text-24rpx text-gray-400">暂无详情</text>
     </view>
 
     <!-- Bottom bar -->
@@ -79,13 +85,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { get, post } from '@/utils/request'
 
 const product = ref<any>({})
 const skus = ref<any[]>([])
 const selectedSku = ref<any>(null)
 const images = ref<string[]>([])
+
+const detailBlocks = computed(() => {
+  const detail = product.value?.detail
+  if (!detail) return []
+  const normalized = typeof detail === 'string' ? (() => {
+    try { return JSON.parse(detail) } catch { return null }
+  })() : detail
+  if (!normalized || !Array.isArray(normalized.blocks)) return []
+  return normalized.blocks
+})
 
 function parseAttrs(attrs: string) {
   try { return JSON.parse(attrs).map((a: any) => a.value).join(' ') }

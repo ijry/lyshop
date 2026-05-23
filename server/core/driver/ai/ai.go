@@ -13,6 +13,7 @@ type GenerateParams struct {
 	Height    int
 	Count     int    // 1-5
 	Style     string // "ecommerce" | "realistic" | "illustration"
+	RefImageURL string
 }
 
 type GenerateResult struct {

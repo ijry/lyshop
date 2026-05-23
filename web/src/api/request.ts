@@ -21,9 +21,9 @@ http.interceptors.response.use(
   err => Promise.reject(err)
 )
 
-async function mockRequest<T>(method: string, url: string): Promise<T> {
+async function mockRequest<T>(method: string, url: string, params?: any): Promise<T> {
   const { matchMock } = await import('@/mock/index')
-  const result = matchMock(method, url)
+  const result = matchMock(method, url, params)
   await new Promise(r => setTimeout(r, 100 + Math.random() * 200))
   if (result.matched) return (result.data ?? null) as T
   console.warn(`[Mock] No data for: ${method} ${url}`)
@@ -31,7 +31,7 @@ async function mockRequest<T>(method: string, url: string): Promise<T> {
 }
 
 export async function get<T = any>(url: string, params?: any): Promise<T> {
-  if (MOCK_ENABLED) return mockRequest<T>('GET', url)
+  if (MOCK_ENABLED) return mockRequest<T>('GET', url, params)
   return http.get(url, { params }) as Promise<T>
 }
 

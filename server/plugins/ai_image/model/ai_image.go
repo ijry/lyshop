@@ -16,6 +16,7 @@ type AiModel struct {
 	Params    json.RawMessage `gorm:"type:json"         json:"params"`
 	IsDefault int8            `gorm:"not null;default:0" json:"is_default"`
 	Status    int8            `gorm:"not null;default:1" json:"status"`
+	SupportsRefImage int8     `gorm:"not null;default:0" json:"supports_ref_image"`
 }
 
 const (
@@ -29,6 +30,9 @@ type AiImageTask struct {
 	model.Base
 	ModelID    uint64          `gorm:"not null"          json:"model_id"`
 	Scene      string          `gorm:"size:32;not null"  json:"scene"` // carousel|detail
+	BizType    string          `gorm:"size:32;not null;default:'detail'" json:"biz_type"` // cover|gallery|detail|intro
+	TargetProductID uint64     `gorm:"not null;default:0;index" json:"target_product_id"`
+	RefImageURL string         `gorm:"size:500"          json:"ref_image_url"`
 	Prompt     string          `gorm:"type:text;not null" json:"prompt"`
 	NegPrompt  string          `gorm:"type:text"         json:"neg_prompt"`
 	Params     json.RawMessage `gorm:"type:json"         json:"params"`

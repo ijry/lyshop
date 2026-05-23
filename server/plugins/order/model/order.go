@@ -29,6 +29,7 @@ type Order struct {
 	TotalAmount    float64         `gorm:"type:decimal(10,2);not null"  json:"total_amount"`
 	AddressSnapshot json.RawMessage `gorm:"type:json"                   json:"address_snapshot"`
 	Remark         string          `gorm:"size:255"                     json:"remark"`
+	TrackingNo     string          `gorm:"size:128"                     json:"tracking_no"`
 	PaidAt         *time.Time      `json:"paid_at"`
 }
 

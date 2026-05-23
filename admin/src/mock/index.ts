@@ -4,6 +4,10 @@
 import products from '../../../app/mock/data/products.json'
 import categories from '../../../app/mock/data/categories.json'
 import orders from '../../../app/mock/data/orders.json'
+import productDetail from '../../../app/mock/data/product-detail.json'
+
+const orderListSource = (orders as any)?.list || []
+const toNumber = (v: any) => Number(v || 0)
 
 const routes: Record<string, any> = {
   // Auth
@@ -59,13 +63,14 @@ const routes: Record<string, any> = {
 
   // Products
   'GET /admin/api/products': products,
-  'GET /admin/api/products/': products.list[0],
+  'GET /admin/api/products/': productDetail,
   'POST /admin/api/products': { id: 100 },
   'GET /admin/api/categories': categories,
   'POST /admin/api/categories': { id: 10 },
 
   // Orders
   'GET /admin/api/orders': orders,
+  'GET /admin/api/orders/': orderListSource[0] || null,
 
   // WMS
   'GET /admin/api/wms/warehouses': [
@@ -104,8 +109,8 @@ const routes: Record<string, any> = {
 
   // AI
   'GET /admin/api/ai/models': [
-    { id: 1, name: '通义万象', driver: 'tongyi', endpoint: '', is_default: 1, status: 1 },
-    { id: 2, name: 'DALL-E 3', driver: 'openai', endpoint: 'https://api.openai.com', is_default: 0, status: 1 },
+    { id: 1, name: '通义万象', driver: 'tongyi', endpoint: '', is_default: 1, status: 1, supports_ref_image: 1 },
+    { id: 2, name: 'DALL-E 3', driver: 'openai', endpoint: 'https://api.openai.com', is_default: 0, status: 1, supports_ref_image: 0 },
   ],
   'GET /admin/api/ai/tasks': {
     list: [
@@ -212,11 +217,24 @@ const routes: Record<string, any> = {
   ],
 }
 
-export function matchMock(method: string, url: string): { matched: boolean; data?: any } {
+export function matchMock(method: string, url: string, params?: Record<string, any>): { matched: boolean; data?: any } {
   const key = `${method.toUpperCase()} ${url}`
+  const query = params || {}
+  if (key === 'GET /admin/api/orders') {
+    const status = toNumber(query.status)
+    const list = status > 0
+      ? orderListSource.filter((item: any) => toNumber(item.status) === status)
+      : orderListSource.slice()
+    return { matched: true, data: { ...orders, list, total: list.length } }
+  }
   if (key in routes) return { matched: true, data: routes[key] }
   for (const pattern of Object.keys(routes)) {
     if (key.startsWith(pattern) && pattern.endsWith('/')) {
+      if (pattern === 'GET /admin/api/orders/') {
+        const id = Number(url.split('/').pop() || 0)
+        const detail = orderListSource.find((item: any) => Number(item.id) === id) || null
+        return { matched: true, data: detail }
+      }
       return { matched: true, data: routes[pattern] }
     }
   }

@@ -25,6 +25,19 @@ type CreateOrderReq struct {
 	Remark        string   `json:"remark"`
 }
 
+type AmountBreakdown struct {
+	GoodsAmount    float64 `json:"goods_amount"`
+	DiscountAmount float64 `json:"discount_amount"`
+	FreightAmount  float64 `json:"freight_amount"`
+	PayableAmount  float64 `json:"payable_amount"`
+}
+
+type OrderView struct {
+	ordermodel.Order
+	Items           []ordermodel.OrderItem `json:"items"`
+	AmountBreakdown AmountBreakdown        `json:"amount_breakdown"`
+}
+
 func generateOrderNo() string {
 	return fmt.Sprintf("%d%06d", time.Now().UnixMilli(), time.Now().Nanosecond()%1000000)
 }
@@ -135,8 +148,46 @@ func CreateOrder(ctx context.Context, req CreateOrderReq) (*ordermodel.Order, er
 	return order, nil
 }
 
+func buildOrderViews(ctx context.Context, orders []ordermodel.Order) ([]OrderView, error) {
+	if len(orders) == 0 {
+		return []OrderView{}, nil
+	}
+	orderIDs := make([]uint64, 0, len(orders))
+	for _, item := range orders {
+		orderIDs = append(orderIDs, item.ID)
+	}
+
+	var orderItems []ordermodel.OrderItem
+	if err := db.DB.WithContext(ctx).
+		Where("order_id IN ?", orderIDs).
+		Order("id asc").
+		Find(&orderItems).Error; err != nil {
+		return nil, err
+	}
+
+	itemMap := make(map[uint64][]ordermodel.OrderItem, len(orderIDs))
+	for _, item := range orderItems {
+		itemMap[item.OrderID] = append(itemMap[item.OrderID], item)
+	}
+
+	result := make([]OrderView, 0, len(orders))
+	for _, item := range orders {
+		result = append(result, OrderView{
+			Order: item,
+			Items: itemMap[item.ID],
+			AmountBreakdown: AmountBreakdown{
+				GoodsAmount:    item.GoodsAmount,
+				DiscountAmount: item.DiscountAmount,
+				FreightAmount:  item.FreightAmount,
+				PayableAmount:  item.TotalAmount,
+			},
+		})
+	}
+	return result, nil
+}
+
 // ListOrders returns paginated orders for a user.
-func ListOrders(ctx context.Context, userID uint64, status int8, page, size int) ([]ordermodel.Order, int64, error) {
+func ListOrders(ctx context.Context, userID uint64, status int8, page, size int) ([]OrderView, int64, error) {
 	if page <= 0 {
 		page = 1
 	}
@@ -149,8 +200,11 @@ func ListOrders(ctx context.Context, userID uint64, status int8, page, size int)
 	}
 	var total int64
 	tx.Model(&ordermodel.Order{}).Count(&total)
-	var list []ordermodel.Order
-	err := tx.Order("id desc").Offset((page - 1) * size).Limit(size).Find(&list).Error
+	var orders []ordermodel.Order
+	if err := tx.Order("id desc").Offset((page - 1) * size).Limit(size).Find(&orders).Error; err != nil {
+		return nil, total, err
+	}
+	list, err := buildOrderViews(ctx, orders)
 	return list, total, err
 }
 
@@ -158,7 +212,7 @@ func ListOrders(ctx context.Context, userID uint64, status int8, page, size int)
 func ShipOrder(ctx context.Context, orderID uint64, trackingNo string) error {
 	return db.DB.WithContext(ctx).Model(&ordermodel.Order{}).
 		Where("id = ? AND status = ?", orderID, ordermodel.OrderStatusPaid).
-		Updates(map[string]any{"status": ordermodel.OrderStatusShipped}).Error
+		Updates(map[string]any{"status": ordermodel.OrderStatusShipped, "tracking_no": trackingNo}).Error
 }
 
 // CreateAddress saves a new address for a user.
@@ -166,8 +220,40 @@ func CreateAddress(ctx context.Context, addr *ordermodel.Address) error {
 	return db.DB.WithContext(ctx).Create(addr).Error
 }
 
+func GetOrderDetail(ctx context.Context, userID, orderID uint64) (*OrderView, error) {
+	var order ordermodel.Order
+	if err := db.DB.WithContext(ctx).
+		Where("id = ? AND user_id = ?", orderID, userID).
+		First(&order).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("订单不存在")
+		}
+		return nil, err
+	}
+	list, err := buildOrderViews(ctx, []ordermodel.Order{order})
+	if err != nil {
+		return nil, err
+	}
+	return &list[0], nil
+}
+
+func AdminGetOrderDetail(ctx context.Context, orderID uint64) (*OrderView, error) {
+	var order ordermodel.Order
+	if err := db.DB.WithContext(ctx).First(&order, orderID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("订单不存在")
+		}
+		return nil, err
+	}
+	list, err := buildOrderViews(ctx, []ordermodel.Order{order})
+	if err != nil {
+		return nil, err
+	}
+	return &list[0], nil
+}
+
 // AdminListOrders returns orders with optional status filter for admin.
-func AdminListOrders(ctx context.Context, status int8, page, size int) ([]ordermodel.Order, int64, error) {
+func AdminListOrders(ctx context.Context, status int8, page, size int) ([]OrderView, int64, error) {
 	if page <= 0 {
 		page = 1
 	}
@@ -180,7 +266,10 @@ func AdminListOrders(ctx context.Context, status int8, page, size int) ([]orderm
 	}
 	var total int64
 	tx.Count(&total)
-	var list []ordermodel.Order
-	err := tx.Order("id desc").Offset((page - 1) * size).Limit(size).Find(&list).Error
+	var orders []ordermodel.Order
+	if err := tx.Order("id desc").Offset((page - 1) * size).Limit(size).Find(&orders).Error; err != nil {
+		return nil, total, err
+	}
+	list, err := buildOrderViews(ctx, orders)
 	return list, total, err
 }

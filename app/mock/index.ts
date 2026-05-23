@@ -33,6 +33,7 @@ const routes: Record<string, any> = {
   'GET /api/v1/products/': productDetail, // prefix match for /products/:id
   'GET /api/v1/cart': cart,
   'GET /api/v1/orders': orders,
+  'GET /api/v1/orders/': (orders as any)?.list?.[0] || null,
   'GET /api/v1/user/coupons': userCoupons,
   'GET /api/v1/user/profile': userProfile,
   'GET /api/v1/user/points/logs': { list: [
@@ -100,6 +101,12 @@ export function matchMock(method: string, url: string, params?: Record<string, a
   // Prefix match (for routes with path params like /products/:id)
   for (const pattern of Object.keys(routes)) {
     if (key.startsWith(pattern) && pattern.endsWith('/')) {
+      if (pattern === 'GET /api/v1/orders/') {
+        const id = Number(path.split('/').pop() || 0)
+        const source = Array.isArray((orders as any)?.list) ? (orders as any).list : []
+        const detail = source.find((item: any) => Number(item.id) === id) || null
+        return { matched: true, data: detail }
+      }
       return { matched: true, data: routes[pattern] }
     }
   }

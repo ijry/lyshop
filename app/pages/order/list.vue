@@ -1,6 +1,5 @@
 <template>
   <view class="min-h-screen bg-gray-50">
-    <!-- Status tabs -->
     <view class="bg-white">
       <u-tabs :list="tabs" :current="activeTab" @click="(item:any) => onTab(item.index)" />
     </view>
@@ -11,12 +10,14 @@
         <text class="text-gray-400 text-28rpx mt-20rpx">暂无订单</text>
       </view>
 
-      <view v-for="o in orders" :key="o.id"
+      <view
+        v-for="o in orders"
+        :key="o.id"
         class="bg-white rounded-20rpx p-30rpx mb-20rpx"
-        style="box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);">
-        <!-- Header -->
+        style="box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);"
+      >
         <view class="flex items-center justify-between mb-20rpx">
-          <view style="display: flex; align-items: center; gap: 8px;">
+          <view class="flex items-center" style="gap: 8px;">
             <text class="text-22rpx text-gray-400 font-mono">{{ o.order_no }}</text>
             <text v-if="o.activity_type === 'seckill'" style="font-size: 10px; color: #dc2626; background: #fef2f2; padding: 1px 6px; border-radius: 4px;">秒杀</text>
             <text v-else-if="o.activity_type === 'group_buy'" style="font-size: 10px; color: #2563eb; background: #eff6ff; padding: 1px 6px; border-radius: 4px;">拼团</text>
@@ -24,15 +25,32 @@
           </view>
           <text :class="statusColor(o.status)" class="text-24rpx font-500">{{ statusLabel(o.status) }}</text>
         </view>
-        <!-- Amount + date -->
+
+        <view v-if="o.items?.length" class="mb-16rpx">
+          <view v-for="it in o.items.slice(0, 2)" :key="it.id" class="flex items-center mb-12rpx" style="gap: 10px;">
+            <image :src="it.cover" mode="aspectFill" style="width: 72rpx; height: 72rpx; border-radius: 10rpx;" />
+            <view class="flex-1 min-w-0">
+              <text class="text-24rpx text-gray-700 block truncate">{{ it.title }}</text>
+              <text class="text-22rpx text-gray-400 mt-4rpx block">x{{ it.qty }}</text>
+            </view>
+          </view>
+        </view>
+
         <view class="flex items-center justify-between">
           <text class="text-24rpx text-gray-500">{{ o.created_at?.slice(0, 10) }}</text>
-          <text class="text-30rpx text-gray-800 font-700">¥{{ o.total_amount }}</text>
+          <text class="text-30rpx text-gray-800 font-700">¥{{ money(o.amount_breakdown?.payable_amount ?? o.total_amount) }}</text>
         </view>
-        <!-- Actions -->
-        <view class="flex justify-end gap-16rpx mt-24rpx" v-if="o.status === 1 || o.status === 4">
-          <u-button v-if="o.status === 1" size="mini" type="primary" text="去付款" shape="circle" @click="toPay(o)" />
-          <u-button v-if="o.status === 4" size="mini" type="success" text="评价" shape="circle" plain />
+
+        <view class="flex justify-end gap-16rpx mt-24rpx">
+          <view class="action-btn-wrap">
+            <u-button size="mini" plain text="查看详情" shape="circle" @click="goDetail(o.id)" />
+          </view>
+          <view class="action-btn-wrap" v-if="o.status === 1">
+            <u-button size="mini" type="primary" text="去付款" shape="circle" @click="toPay(o)" />
+          </view>
+          <view class="action-btn-wrap" v-if="o.status === 4">
+            <u-button size="mini" type="success" text="评价" shape="circle" plain />
+          </view>
         </view>
       </view>
     </view>
@@ -61,6 +79,7 @@ const statusColors: Record<number, string> = {
 }
 const statusLabel = (s: number) => statusLabels[s] || ''
 const statusColor = (s: number) => statusColors[s] || 'text-gray-400'
+const money = (v: number) => Number(v || 0).toFixed(2)
 
 async function loadOrders() {
   const status = statusValues[activeTab.value]
@@ -73,9 +92,19 @@ function onTab(index: number) {
   loadOrders()
 }
 
+function goDetail(id: number) {
+  uni.navigateTo({ url: `/pages/order/detail?id=${id}` })
+}
+
 function toPay(_order: any) {
   uni.showToast({ title: '支付功能开发中', icon: 'none' })
 }
 
 onMounted(loadOrders)
 </script>
+
+<style scoped>
+.action-btn-wrap {
+  display: inline-flex;
+}
+</style>

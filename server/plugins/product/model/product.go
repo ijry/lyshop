@@ -1,8 +1,21 @@
 package model
 
 import (
+	"encoding/json"
+
 	"github.com/ijry/lyshop/model"
 )
+
+type DetailBlock struct {
+	ID    string         `json:"id"`
+	Type  string         `json:"type"`
+	Props map[string]any `json:"props"`
+}
+
+type ProductDetailContent struct {
+	Version int           `json:"version"`
+	Blocks  []DetailBlock `json:"blocks"`
+}
 
 type Product struct {
 	model.Base
@@ -17,5 +30,5 @@ type Product struct {
 	Sales       int     `gorm:"not null;default:0"         json:"sales"`
 	Status      int8    `gorm:"not null;default:1"         json:"status"` // 1=上架 0=下架
 	Sort        int     `gorm:"not null;default:0"         json:"sort"`
-	Detail      string  `gorm:"type:longtext"              json:"detail"`
+	Detail      json.RawMessage `gorm:"type:json"          json:"detail"`
 }

@@ -24,6 +24,7 @@ func RegisterFrontRoutes(g *gin.RouterGroup) {
 
 	auth.POST("/orders", createOrder)
 	auth.GET("/orders", myOrders)
+	auth.GET("/orders/:id", myOrderDetail)
 }
 
 func getCart(c *gin.Context) {
@@ -123,4 +124,15 @@ func myOrders(c *gin.Context) {
 		return
 	}
 	response.OK(c, response.PageData{List: list, Total: total, Page: page, Size: size})
+}
+
+func myOrderDetail(c *gin.Context) {
+	userID, _ := c.Get("user_id")
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	detail, err := ordersvc.GetOrderDetail(c.Request.Context(), userID.(uint64), id)
+	if err != nil {
+		response.Fail(c, 404, err.Error())
+		return
+	}
+	response.OK(c, detail)
 }

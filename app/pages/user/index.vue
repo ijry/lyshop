@@ -135,7 +135,7 @@ const quickEntries = [
     action: () => uni.navigateTo({ url: '/pages/user/points' }) },
   { label: '收货地址', icon: 'map', bg: '#eff6ff', color: '#3b82f6',
     action: () => uni.navigateTo({ url: '/pages/user/address' }) },
-  { label: '在线客服', icon: 'kefu-ermai', bg: '#f0fdf4', color: '#22c55e',
+  { label: '在线客服', icon: 'chat', bg: '#f0fdf4', color: '#22c55e',
     action: () => uni.navigateTo({ url: '/pages/im/chat' }) },
 ]
 
@@ -150,7 +150,7 @@ const menuCells = ref([
     action: () => uni.navigateTo({ url: '/pages/marketing/coupon' }) },
   { label: '我的积分', icon: 'integral', value: '',
     action: () => uni.navigateTo({ url: '/pages/user/points' }) },
-  { label: '联系客服', icon: 'kefu-ermai', value: '',
+  { label: '联系客服', icon: 'chat', value: '',
     action: () => uni.navigateTo({ url: '/pages/im/chat' }) },
 ])
 

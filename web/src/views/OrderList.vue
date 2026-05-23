@@ -2,23 +2,23 @@
   <div class="max-w-5xl mx-auto px-6 py-8">
     <h1 class="text-xl font-bold text-gray-900 mb-6">我的订单</h1>
 
-    <!-- Tabs -->
     <div class="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6 w-fit">
-      <button v-for="(tab, i) in tabs" :key="tab"
+      <button
+        v-for="(tab, i) in tabs"
+        :key="tab"
         @click="activeTab = i; loadOrders()"
         :class="activeTab === i ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500 hover:text-gray-700'"
-        class="px-5 py-2 rounded-lg text-sm font-medium transition-all">
+        class="px-5 py-2 rounded-lg text-sm font-medium transition-all"
+      >
         {{ tab }}
       </button>
     </div>
 
-    <!-- Empty -->
     <div v-if="!orders.length" class="card p-16 text-center">
       <div class="i-carbon-document text-6xl text-gray-200 mx-auto mb-4" />
       <p class="text-gray-400">暂无订单</p>
     </div>
 
-    <!-- Order list -->
     <div v-else class="space-y-4">
       <div v-for="o in orders" :key="o.id" class="card p-5 hover:shadow-md transition-shadow">
         <div class="flex-between mb-4">
@@ -26,19 +26,30 @@
             <span class="text-xs font-mono text-gray-400 bg-gray-50 px-2 py-1 rounded">{{ o.order_no }}</span>
             <span class="text-xs text-gray-400">{{ o.created_at?.slice(0, 10) }}</span>
           </div>
-          <span :class="statusColor(o.status)"
-            class="text-xs font-medium px-2.5 py-1 rounded-full">
+          <span :class="statusColor(o.status)" class="text-xs font-medium px-2.5 py-1 rounded-full">
             {{ statusLabel(o.status) }}
           </span>
         </div>
-        <div class="flex-between">
-          <span class="text-sm text-gray-500">
-            {{ o.payment_method === 'wechat' ? '微信支付' : o.payment_method === 'alipay' ? '支付宝' : '待支付' }}
-          </span>
-          <span class="text-lg font-bold text-gray-900">¥{{ o.total_amount }}</span>
+
+        <div v-if="o.items?.length" class="space-y-2 mb-4">
+          <div v-for="it in o.items.slice(0, 2)" :key="it.id" class="flex items-center gap-3">
+            <img :src="it.cover" class="w-12 h-12 rounded-lg object-cover" />
+            <div class="flex-1 min-w-0">
+              <p class="text-sm text-gray-700 truncate">{{ it.title }}</p>
+              <p class="text-xs text-gray-400">x{{ it.qty }}</p>
+            </div>
+          </div>
         </div>
-        <div v-if="o.status === 1" class="flex justify-end mt-3">
-          <button class="btn-primary !px-6 text-xs">去付款</button>
+
+        <div class="flex-between">
+          <span class="text-sm text-gray-500">{{ payLabel(o.payment_method) }}</span>
+          <span class="text-lg font-bold text-gray-900">¥{{ money(o.amount_breakdown?.payable_amount ?? o.total_amount) }}</span>
+        </div>
+
+        <div class="flex justify-end mt-3 gap-2">
+          <button class="btn-outline !px-5 text-xs" @click="goDetail(o.id)">查看详情</button>
+          <button class="btn-primary !px-6 text-xs" v-if="o.status === 1">去付款</button>
+          <button class="btn-outline !px-5 text-xs" v-if="o.status === 4">评价</button>
         </div>
       </div>
     </div>
@@ -47,8 +58,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { get } from '@/api/request'
 
+const router = useRouter()
 const orders = ref<any[]>([])
 const activeTab = ref(0)
 const tabs = ['全部', '待付款', '待发货', '待收货', '已完成']
@@ -64,11 +77,17 @@ const statusColors: Record<number, string> = {
 }
 const statusLabel = (s: number) => statusLabels[s] || ''
 const statusColor = (s: number) => statusColors[s] || 'bg-gray-50 text-gray-400'
+const payLabel = (m: string) => m === 'wechat' ? '微信支付' : m === 'alipay' ? '支付宝支付' : '未支付'
+const money = (v: number) => Number(v || 0).toFixed(2)
 
 async function loadOrders() {
   const status = statusValues[activeTab.value]
-  const data = await get<any>('/api/v1/orders', { status: status || undefined })
+  const data: any = await get('/api/v1/orders', { status: status || undefined })
   orders.value = data?.list || []
+}
+
+function goDetail(id: number) {
+  router.push(`/orders/${id}`)
 }
 
 onMounted(loadOrders)
