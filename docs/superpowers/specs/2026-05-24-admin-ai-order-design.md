@@ -2,19 +2,20 @@
 
 **日期：** 2026-05-24
 **范围：** `server` + `admin` + `web` + `app` + `mock`
-**目标：** 在不无节制新增接口的前提下，优先升级现有接口语义，完成 AI 进商品编辑、订单列表/详情信息完整化与多端一致展示。
+**目标：** 在不无节制新增接口的前提下，优先升级现有接口语义，完成 AI 进商品编辑、商品详情 JSON block 全链路改造、订单列表/详情信息完整化与多端一致展示。
 
 ---
 
 ## 1. 需求目标（已确认）
 
 1. 管理后台商品编辑页内集成 AI 生图，支持上传实物参考图，并用于详情图/封面/轮播图生成。
-2. 详情图生成结果支持“插入到光标位置”，且 UI 有明确提示。
-3. 同时支持封面图、轮播图 AI 生成，并预留商品介绍图生成入口。
-4. 当模型不支持参考图生图时，前端禁用参考图并提示：`该模型不支持参考图`。
-5. 管理后台 Dashboard 在导航上置顶（第一项）。
-6. 订单体系补全：后台/H5/PC 列表展示商品明细，支持状态切换有效，新增订单详情页，展示价格体系明细与更多订单信息。
-7. 修复 H5 订单列表操作按钮布局与个人中心客服图标。
+2. 商品详情采用 JSON block 编辑器存储（立即全链路），支持图片与文字块编辑。
+3. 详情图生成结果支持“插入到当前编辑位置”，且 UI 有明确提示。
+4. 同时支持封面图、轮播图 AI 生成，并预留商品介绍图生成入口。
+5. 当模型不支持参考图生图时，前端禁用参考图并提示：`该模型不支持参考图`。
+6. 管理后台 Dashboard 在导航上置顶（第一项）。
+7. 订单体系补全：后台/H5/PC 列表展示商品明细，支持状态切换有效，新增订单详情页，展示价格体系明细与更多订单信息。
+8. 修复 H5 订单列表操作按钮布局与个人中心客服图标。
 
 ---
 
@@ -25,6 +26,7 @@
 3. **能力显式化**：AI 模型能力（是否支持参考图）由模型字段声明，前端据此禁用功能。
 4. **可回溯**：AI 任务保留业务目标与参考图信息，便于复现与审计。
 5. **渐进兼容**：升级返回结构时兼容旧字段，避免一次性破坏当前页面。
+6. **Schema 可演进**：商品详情 JSON 采用 `version + blocks`，便于后续扩展块类型。
 
 ---
 
@@ -98,24 +100,48 @@
 
 > 新增详情接口的必要性：现有列表接口分页场景下不应承载全部详情字段；详情资源语义独立明确。
 
+### 3.3 商品详情 JSON schema 升级（全链路）
+
+#### 3.3.1 Product 字段策略
+
+- `products.detail` 升级为 JSON 存储（字段类型 `json`，结构见下）。
+- `GET /products/:id` 与后台商品接口直接返回 JSON 对象，而非 HTML 字符串。
+
+#### 3.3.2 详情 schema（v1）
+
+```json
+{
+  "version": 1,
+  "blocks": [
+    { "id": "b1", "type": "text", "props": { "text": "段落文本" } },
+    { "id": "b2", "type": "image", "props": { "url": "https://...", "alt": "图示" } }
+  ]
+}
+```
+
+说明：
+- 当前首版仅支持 `text`、`image`，并预留后续 `title/list/spacer/video`。
+- 后台编辑器按块编辑；web/app 按块渲染，不再依赖 `rich-text` HTML。
+
 ---
 
 ## 4. 管理后台改造
 
 ### 4.1 商品编辑页融合 AI（`ProductForm`）
 
-新增 `AI 图片助手` 区块，包含：
+新增 `AI 图片助手` + `商品详情 JSON 编辑器`，包含：
 - 目标类型：封面 / 轮播 / 详情 / 介绍图（预留）
 - 模型选择 + 能力展示（是否支持参考图）
 - 参考图上传（受 `supports_ref_image` 控制）
 - Prompt 输入
 - 生成结果列表与“一键应用”操作
+- 详情编辑区块：文字块/图片块新增、删除、排序、当前位置插入
 
 应用行为：
 - 封面：写入 `form.cover`
 - 轮播：追加到商品图片列表
-- 详情：插入到富文本光标位置
-  - 明确提示文案：`将插入到当前光标位置`
+- 详情：作为 `image block` 插入当前编辑位置
+  - 明确提示文案：`将插入到当前编辑位置`
 - 介绍图：先保留为素材位与数据透传，不强制插入详情
 
 ### 4.2 Dashboard 首位
@@ -152,6 +178,15 @@
 
 - 列表补商品摘要行与价格体系摘要。
 - 新增 PC 订单详情页并接路由。
+
+### 5.5 商品详情 JSON 渲染（H5 + PC）
+
+- H5 商品详情页改为 block 渲染：
+  - `text` -> 文本段落
+  - `image` -> 宽图展示
+- PC 商品详情页改为 block 渲染：
+  - 使用统一渲染函数将 `detail.blocks` 渲染为结构化 DOM
+- mock 与真实接口均返回 JSON schema，三端行为一致。
 
 ---
 
@@ -195,7 +230,8 @@
 - 商品编辑页 AI 生成：
   - 不支持参考图模型 -> 控件禁用且提示正确
   - 支持参考图模型 -> 可上传参考图并生成
-  - 详情图可插入光标位置
+  - 详情图可插入当前编辑位置（JSON block）
+- 商品详情 JSON 编辑器可完成文字/图片块增删与保存。
 - Dashboard 在导航第一位。
 - 后台订单 tab 切换有效，详情页信息完整。
 
@@ -205,6 +241,7 @@
 - 订单详情页可达，展示价格体系明细。
 - H5 按钮布局正常不拉满。
 - H5 个人中心客服图标正常显示。
+- 商品详情页按 JSON block 正常渲染，不依赖 HTML 富文本。
 
 ---
 
@@ -218,6 +255,10 @@
 - `server/plugins/order/service/order.go`
 - `server/plugins/order/api/front.go`
 - `server/plugins/order/api/admin.go`
+- `server/plugins/product/model/product.go`
+- `server/plugins/product/service/product.go`
+- `server/plugins/product/api/admin.go`
+- `server/plugins/product/api/front.go`
 - `admin/src/views/product/ProductForm.vue`
 - `admin/src/views/order/OrderList.vue`
 - `admin/src/views/order/OrderDetail.vue`（新增）
@@ -233,9 +274,11 @@
 - `app/mock/data/orders.json`
 - `web/src/views/OrderList.vue`
 - `web/src/views/OrderDetail.vue`（新增）
+- `web/src/views/ProductDetail.vue`
 - `web/src/router/index.ts`
 - `web/src/api/request.ts`
 - `web/src/mock/index.ts`
+- `app/pages/product/detail.vue`
 - `README.md`
 - `docs-site/docs/guide/features.md`
 - `docs-site/docs/api/order.md`
@@ -245,7 +288,7 @@
 
 ## 10. 超范围说明（本轮不做）
 
-1. 不引入新的富文本编辑器库，仅在现有表单能力下实现光标插入。
+1. 不引入第三方可视化拖拽富文本框架；采用项目内轻量 block 编辑器实现。
 2. 不重构 AI 驱动实现细节（仅增加参数透传与能力约束）。
 3. 不引入订单物流第三方查询，仅预留物流字段展示。
 
