@@ -53,6 +53,9 @@
             <p v-if="detail.paid_at">支付时间：{{ formatDate(detail.paid_at) }}</p>
             <p v-if="detail.tracking_no">物流单号：{{ detail.tracking_no }}</p>
             <p v-if="detail.after_sale_summary?.has_open_case" class="text-red-500">售后中</p>
+            <p v-if="detail.after_sale_summary?.latest_case_id">
+              最近售后单：#{{ detail.after_sale_summary.latest_case_id }}（{{ afterSaleSummaryStatusText(detail.after_sale_summary) || '-' }}）
+            </p>
           </div>
         </div>
 
@@ -97,7 +100,7 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getOrderDetail, shipOrder } from '@/api/plugins'
-import { orderStatusLabel, shipmentPrimaryTime, shipmentStatusLabel, shipmentTimeLabel, shipmentTitle } from '@/utils/order-status'
+import { afterSaleStatusLabel, orderStatusLabel, shipmentPrimaryTime, shipmentStatusLabel, shipmentTimeLabel, shipmentTitle } from '@/utils/order-status'
 
 const route = useRoute()
 const router = useRouter()
@@ -114,6 +117,12 @@ const statusLabel = (s: number) => orderStatusLabel(s) || '未知'
 const payLabel = (m: string) => m === 'wechat' ? '微信支付' : m === 'alipay' ? '支付宝支付' : '未支付'
 const money = (v: number) => Number(v || 0).toFixed(2)
 const formatDate = (v?: string) => v ? String(v).slice(0, 19).replace('T', ' ') : '-'
+
+function afterSaleSummaryStatusText(summary: any) {
+  const label = String(summary?.latest_status_label || '').trim()
+  if (label) return label
+  return afterSaleStatusLabel(summary?.latest_status)
+}
 
 async function loadDetail() {
   detail.value = await getOrderDetail(Number(route.params.id))

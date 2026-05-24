@@ -70,7 +70,7 @@
           <div class="space-y-2 text-sm text-gray-600">
             <p>进行中：{{ detail.after_sale_summary?.in_progress_count || 0 }}</p>
             <p v-if="detail.after_sale_summary?.latest_case_id">
-              最近售后单：#{{ detail.after_sale_summary.latest_case_id }}（{{ afterSaleStatusLabel(detail.after_sale_summary.latest_status) || '-' }}）
+              最近售后单：#{{ detail.after_sale_summary.latest_case_id }}（{{ afterSaleSummaryStatusText(detail.after_sale_summary) || '-' }}）
             </p>
           </div>
           <div class="flex gap-2 mt-4">
@@ -148,6 +148,12 @@ const statusLabel = (s: number) => orderStatusLabel(s) || '未知'
 const payLabel = (m: string) => (m === 'wechat' ? '微信支付' : m === 'alipay' ? '支付宝支付' : '未支付')
 const money = (v: number) => Number(v || 0).toFixed(2)
 const formatDate = (v?: string) => (v ? String(v).slice(0, 19).replace('T', ' ') : '-')
+
+function afterSaleSummaryStatusText(summary: any) {
+  const label = String(summary?.latest_status_label || '').trim()
+  if (label) return label
+  return afterSaleStatusLabel(summary?.latest_status)
+}
 
 function refreshReviewFlags() {
   const items = Array.isArray(detail.value?.items) ? detail.value.items : []

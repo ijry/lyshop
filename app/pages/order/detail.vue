@@ -62,7 +62,7 @@
         <text class="text-28rpx font-600 text-gray-800 block mb-16rpx">售后服务</text>
         <text class="text-24rpx text-gray-600 block">进行中：{{ detail.after_sale_summary?.in_progress_count || 0 }}</text>
         <text v-if="detail.after_sale_summary?.latest_case_id" class="text-24rpx text-gray-600 block mt-8rpx">
-          最近售后单：#{{ detail.after_sale_summary.latest_case_id }}（{{ afterSaleStatusLabel(detail.after_sale_summary.latest_status) || '-' }}）
+          最近售后单：#{{ detail.after_sale_summary.latest_case_id }}（{{ afterSaleSummaryStatusText(detail.after_sale_summary) || '-' }}）
         </text>
         <view class="flex gap-16rpx mt-20rpx">
           <u-button
@@ -159,6 +159,12 @@ const money = (v: number) => Number(v || 0).toFixed(2)
 const formatDate = (v?: string) => v ? String(v).slice(0, 19).replace('T', ' ') : '-'
 const hasReviewed = ref(false)
 const hasUnreviewed = ref(false)
+
+function afterSaleSummaryStatusText(summary: any) {
+  const label = String(summary?.latest_status_label || '').trim()
+  if (label) return label
+  return afterSaleStatusLabel(summary?.latest_status)
+}
 
 function refreshReviewFlags() {
   const items = Array.isArray(detail.value?.items) ? detail.value.items : []
