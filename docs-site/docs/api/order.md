@@ -45,6 +45,7 @@
 - `shipments` 单条轨迹包含方向（`direction`）、业务类型（`biz_type`）、物流状态（`logistics_status`）、时间字段（`shipped_at/signed_at/created_at`）、备注（`remark`）和关联售后单（`after_sale_case_id`）。
 - 前台与后台订单列表均可直接使用 `latest_shipment` 展示最新物流状态，并通过 `shipments[*].biz_type=reship` 标注补发摘要。
 - 前台与后台建议统一维护状态文案映射：订单状态、售后状态、物流状态与日志状态流转文案应保持一致。
+- 售后相关查询接口在保留枚举字段的同时，兼容返回可读标签字段（`*_label`），用于前端直接展示中文文案。
 
 ## 购物车勾选结算（兼容升级）
 
@@ -99,6 +100,10 @@
 - `GET /api/v1/after-sales/:id`：返回售后详情、状态日志、关联物流。
 - `POST /api/v1/after-sales/:id/return-shipments`：用户提交回寄物流（快递公司、单号、备注）。
 - `GET /api/v1/after-sales/:id` 中的 `shipments` 与订单详情轨迹字段口径一致，可直接展示方向、业务类型、状态、时间、备注与关联售后单。
+- `GET /api/v1/after-sales/:id` 兼容返回以下标签字段：
+  - 售后单：`status_label`、`case_type_label`
+  - 日志：`from_status_label`、`to_status_label`、`action_label`
+  - 物流：`direction_label`、`biz_type_label`、`logistics_status_label`
 
 ### 后台售后动作
 
@@ -107,6 +112,7 @@
 - `POST /admin/api/after-sales/:id/refund`：登记退款
 - `POST /admin/api/after-sales/:id/complete`：售后完结
 - `POST /admin/api/after-sales/:id/close`：关闭售后
+- `GET /admin/api/after-sales` 与 `GET /admin/api/after-sales/:id` 会兼容返回同口径标签字段（`status_label`、`case_type_label`、`from_status_label`、`to_status_label`、`action_label`、`direction_label`、`biz_type_label`、`logistics_status_label`）。
 
 状态流：
 

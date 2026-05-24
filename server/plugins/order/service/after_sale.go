@@ -56,18 +56,41 @@ type CloseAfterSaleReq struct {
 }
 
 type AfterSaleSummary struct {
-	InProgressCount int64  `json:"in_progress_count"`
-	HasOpenCase     bool   `json:"has_open_case"`
-	LatestStatus    string `json:"latest_status,omitempty"`
-	LatestCaseID    uint64 `json:"latest_case_id,omitempty"`
-	CanApply        bool   `json:"can_apply"`
+	InProgressCount   int64  `json:"in_progress_count"`
+	HasOpenCase       bool   `json:"has_open_case"`
+	LatestStatus      string `json:"latest_status,omitempty"`
+	LatestStatusLabel string `json:"latest_status_label,omitempty"`
+	LatestCaseID      uint64 `json:"latest_case_id,omitempty"`
+	CanApply          bool   `json:"can_apply"`
+}
+
+type AfterSaleCaseListView struct {
+	ordermodel.AfterSaleCase
+	StatusLabel   string `json:"status_label,omitempty"`
+	CaseTypeLabel string `json:"case_type_label,omitempty"`
+}
+
+type AfterSaleLogView struct {
+	ordermodel.AfterSaleLog
+	FromStatusLabel string `json:"from_status_label,omitempty"`
+	ToStatusLabel   string `json:"to_status_label,omitempty"`
+	ActionLabel     string `json:"action_label,omitempty"`
+}
+
+type AfterSaleShipmentView struct {
+	ordermodel.OrderShipment
+	DirectionLabel       string `json:"direction_label,omitempty"`
+	BizTypeLabel         string `json:"biz_type_label,omitempty"`
+	LogisticsStatusLabel string `json:"logistics_status_label,omitempty"`
 }
 
 type AfterSaleCaseView struct {
 	ordermodel.AfterSaleCase
-	Items     []ordermodel.AfterSaleCaseItem `json:"items"`
-	Logs      []ordermodel.AfterSaleLog      `json:"logs"`
-	Shipments []ordermodel.OrderShipment     `json:"shipments"`
+	StatusLabel   string                         `json:"status_label,omitempty"`
+	CaseTypeLabel string                         `json:"case_type_label,omitempty"`
+	Items         []ordermodel.AfterSaleCaseItem `json:"items"`
+	Logs          []AfterSaleLogView             `json:"logs"`
+	Shipments     []AfterSaleShipmentView        `json:"shipments"`
 }
 
 func generateAfterSaleCaseNo() string {
@@ -547,23 +570,43 @@ func GetAfterSale(ctx context.Context, caseID uint64) (*AfterSaleCaseView, error
 	if err := db.DB.WithContext(ctx).Where("case_id = ?", caseID).Order("id asc").Find(&items).Error; err != nil {
 		return nil, err
 	}
-	var logs []ordermodel.AfterSaleLog
-	if err := db.DB.WithContext(ctx).Where("case_id = ?", caseID).Order("id asc").Find(&logs).Error; err != nil {
+	var logRows []ordermodel.AfterSaleLog
+	if err := db.DB.WithContext(ctx).Where("case_id = ?", caseID).Order("id asc").Find(&logRows).Error; err != nil {
 		return nil, err
 	}
-	var shipments []ordermodel.OrderShipment
-	if err := db.DB.WithContext(ctx).Where("after_sale_case_id = ?", caseID).Order("id desc").Find(&shipments).Error; err != nil {
+	logs := make([]AfterSaleLogView, 0, len(logRows))
+	for _, row := range logRows {
+		logs = append(logs, AfterSaleLogView{
+			AfterSaleLog:    row,
+			FromStatusLabel: afterSaleStatusLabel(row.FromStatus),
+			ToStatusLabel:   afterSaleStatusLabel(row.ToStatus),
+			ActionLabel:     afterSaleActionLabel(row.Action),
+		})
+	}
+	var shipmentRows []ordermodel.OrderShipment
+	if err := db.DB.WithContext(ctx).Where("after_sale_case_id = ?", caseID).Order("id desc").Find(&shipmentRows).Error; err != nil {
 		return nil, err
+	}
+	shipments := make([]AfterSaleShipmentView, 0, len(shipmentRows))
+	for _, row := range shipmentRows {
+		shipments = append(shipments, AfterSaleShipmentView{
+			OrderShipment:        row,
+			DirectionLabel:       shipmentDirectionLabel(row.Direction),
+			BizTypeLabel:         shipmentBizTypeLabel(row.BizType),
+			LogisticsStatusLabel: shipmentStatusLabel(row.LogisticsStatus),
+		})
 	}
 	return &AfterSaleCaseView{
 		AfterSaleCase: caseRow,
+		StatusLabel:   afterSaleStatusLabel(caseRow.Status),
+		CaseTypeLabel: afterSaleCaseTypeLabel(caseRow.CaseType),
 		Items:         items,
 		Logs:          logs,
 		Shipments:     shipments,
 	}, nil
 }
 
-func ListAfterSales(ctx context.Context, status string, caseType string, orderID uint64, page int, size int) ([]ordermodel.AfterSaleCase, int64, error) {
+func ListAfterSales(ctx context.Context, status string, caseType string, orderID uint64, page int, size int) ([]AfterSaleCaseListView, int64, error) {
 	if page <= 0 {
 		page = 1
 	}
@@ -590,10 +633,16 @@ func ListAfterSales(ctx context.Context, status string, caseType string, orderID
 	if err := tx.Order("id desc").Offset((page - 1) * size).Limit(size).Find(&list).Error; err != nil {
 		return nil, 0, err
 	}
-	for i := range list {
-		list[i].ApplyImages = decodeStringArray(list[i].ApplyImagesJSON)
+	result := make([]AfterSaleCaseListView, 0, len(list))
+	for _, row := range list {
+		row.ApplyImages = decodeStringArray(row.ApplyImagesJSON)
+		result = append(result, AfterSaleCaseListView{
+			AfterSaleCase: row,
+			StatusLabel:   afterSaleStatusLabel(row.Status),
+			CaseTypeLabel: afterSaleCaseTypeLabel(row.CaseType),
+		})
 	}
-	return list, total, nil
+	return result, total, nil
 }
 
 func buildAfterSaleSummaryMap(ctx context.Context, orderIDs []uint64) (map[uint64]*AfterSaleSummary, error) {
@@ -619,6 +668,7 @@ func buildAfterSaleSummaryMap(ctx context.Context, orderIDs []uint64) (map[uint6
 		if summary.LatestCaseID == 0 {
 			summary.LatestCaseID = row.ID
 			summary.LatestStatus = row.Status
+			summary.LatestStatusLabel = afterSaleStatusLabel(row.Status)
 		}
 		if isAfterSaleStatusOpen(row.Status) {
 			summary.InProgressCount += 1
