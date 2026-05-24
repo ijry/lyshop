@@ -7,9 +7,13 @@ import (
 	productmodel "github.com/ijry/lyshop/plugins/product/model"
 )
 
-func ListCategories(ctx context.Context) ([]productmodel.ProductCategory, error) {
+func ListCategories(ctx context.Context, includeDisabled bool) ([]productmodel.ProductCategory, error) {
 	var list []productmodel.ProductCategory
-	err := db.DB.WithContext(ctx).Where("status = 1").Order("sort asc, id asc").Find(&list).Error
+	tx := db.DB.WithContext(ctx).Model(&productmodel.ProductCategory{})
+	if !includeDisabled {
+		tx = tx.Where("status = 1")
+	}
+	err := tx.Order("sort asc, id asc").Find(&list).Error
 	return list, err
 }
 

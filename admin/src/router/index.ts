@@ -15,6 +15,7 @@ const router = createRouter({
         { path: 'dashboard', component: () => import('@/views/Dashboard.vue') },
         // Product
         { path: 'product/list',    name: '商品列表', component: () => import('@/views/product/ProductList.vue') },
+        { path: 'product/category',name: '商品分类', component: () => import('@/views/product/CategoryList.vue') },
         { path: 'product/form',    name: '新增商品', component: () => import('@/views/product/ProductForm.vue') },
         { path: 'product/form/:id',name: '编辑商品', component: () => import('@/views/product/ProductForm.vue') },
         // Order

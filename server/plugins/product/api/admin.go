@@ -25,7 +25,7 @@ func RegisterAdminRoutes(g *gin.RouterGroup) {
 }
 
 func adminListCategories(c *gin.Context) {
-	list, err := productsvc.ListCategories(c.Request.Context())
+	list, err := productsvc.ListCategories(c.Request.Context(), true)
 	if err != nil {
 		response.Fail(c, 500, err.Error())
 		return
@@ -89,8 +89,8 @@ func adminGetProduct(c *gin.Context) {
 
 func adminCreateProduct(c *gin.Context) {
 	var req struct {
-		Product productmodel.Product      `json:"product"`
-		SKUs    []productmodel.ProductSku `json:"skus"`
+		Product productmodel.Product        `json:"product"`
+		SKUs    []productmodel.ProductSku   `json:"skus"`
 		Images  []productmodel.ProductImage `json:"images"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -110,8 +110,8 @@ func adminCreateProduct(c *gin.Context) {
 func adminUpdateProduct(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	var req struct {
-		Product map[string]any                 `json:"product"`
-		Images  []productmodel.ProductImage    `json:"images"`
+		Product map[string]any              `json:"product"`
+		Images  []productmodel.ProductImage `json:"images"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Fail(c, 400, err.Error())

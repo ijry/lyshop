@@ -12,6 +12,8 @@ const toNumber = (v: any) => Number(v || 0)
 let replySeq = 20000
 let afterSaleSeq = 8000
 const afterSalesSource: any[] = []
+const categoriesSource: any[] = clone(Array.isArray(categories) ? categories : [])
+let categorySeq = Math.max(0, ...categoriesSource.map((item: any) => Number(item?.id || 0)))
 const decorVariantsSource: any[] = [
   {
     id: 1,
@@ -236,6 +238,7 @@ const routes: Record<string, any> = {
   'GET /admin/api/menus': [
     { title: '商品管理', icon: 'box', path: '/product', sort: 10, children: [
       { title: '商品列表', path: '/product/list' },
+      { title: '商品分类', path: '/product/category' },
       { title: '新增商品', path: '/product/form' },
     ]},
     { title: '订单管理', icon: 'shopping-cart', path: '/order', sort: 20, children: [
@@ -293,8 +296,6 @@ const routes: Record<string, any> = {
   'GET /admin/api/products': products,
   'GET /admin/api/products/': productDetail,
   'POST /admin/api/products': { id: 100 },
-  'GET /admin/api/categories': categories,
-  'POST /admin/api/categories': { id: 10 },
 
   // Orders
   'GET /admin/api/orders': orders,
@@ -450,6 +451,46 @@ const routes: Record<string, any> = {
 export function matchMock(method: string, url: string, params?: Record<string, any>): { matched: boolean; data?: any } {
   const key = `${method.toUpperCase()} ${url}`
   const query = params || {}
+  if (key === 'GET /admin/api/categories') {
+    return { matched: true, data: clone(categoriesSource) }
+  }
+  if (key === 'POST /admin/api/categories') {
+    const payload: any = params || {}
+    categorySeq += 1
+    const now = new Date().toISOString()
+    const row = {
+      id: categorySeq,
+      parent_id: 0,
+      name: String(payload.name || `分类${categorySeq}`),
+      icon: String(payload.icon || ''),
+      sort: Number(payload.sort || 0),
+      status: Number(payload.status || 0) === 1 ? 1 : 0,
+      created_at: now,
+      updated_at: now,
+    }
+    categoriesSource.push(row)
+    categoriesSource.sort((a: any, b: any) => Number(a.sort || 0) - Number(b.sort || 0) || Number(a.id || 0) - Number(b.id || 0))
+    return { matched: true, data: clone(row) }
+  }
+  if (key.startsWith('PUT /admin/api/categories/')) {
+    const id = Number(url.split('/').pop() || 0)
+    const target = categoriesSource.find((item: any) => Number(item.id || 0) === id)
+    if (!target) return { matched: true, data: null }
+    const payload: any = params || {}
+    if (payload.name !== undefined) target.name = String(payload.name || target.name)
+    if (payload.icon !== undefined) target.icon = String(payload.icon || '')
+    if (payload.sort !== undefined) target.sort = Number(payload.sort || 0)
+    if (payload.status !== undefined) target.status = Number(payload.status || 0) === 1 ? 1 : 0
+    target.updated_at = new Date().toISOString()
+    categoriesSource.sort((a: any, b: any) => Number(a.sort || 0) - Number(b.sort || 0) || Number(a.id || 0) - Number(b.id || 0))
+    return { matched: true, data: null }
+  }
+  if (key.startsWith('DELETE /admin/api/categories/')) {
+    const id = Number(url.split('/').pop() || 0)
+    const idx = categoriesSource.findIndex((item: any) => Number(item.id || 0) === id)
+    if (idx >= 0) categoriesSource.splice(idx, 1)
+    return { matched: true, data: null }
+  }
   if (key === 'GET /admin/api/orders') {
     const status = toNumber(query.status)
     const list = status > 0

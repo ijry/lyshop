@@ -6,6 +6,7 @@ export const getDashboard = () => request.get('/dashboard')
 // ---- Product ----
 export const getCategories = () => request.get<never, any[]>('/categories')
 export const createCategory = (data: any) => request.post('/categories', data)
+export const updateCategory = (id: number, data: any) => request.put(`/categories/${id}`, data)
 export const deleteCategory = (id: number) => request.delete(`/categories/${id}`)
 
 export const getProducts = (params?: any) => request.get('/products', { params })

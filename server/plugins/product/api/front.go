@@ -17,7 +17,7 @@ func RegisterFrontRoutes(g *gin.RouterGroup) {
 }
 
 func listCategories(c *gin.Context) {
-	list, err := productsvc.ListCategories(c.Request.Context())
+	list, err := productsvc.ListCategories(c.Request.Context(), false)
 	if err != nil {
 		response.Fail(c, 500, err.Error())
 		return
