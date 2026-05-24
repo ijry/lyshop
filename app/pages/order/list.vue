@@ -50,6 +50,17 @@
             {{ formatDate(shipmentPrimaryTime(o.latest_shipment)) }}
           </text>
         </view>
+        <view v-if="o.after_sale_summary?.latest_case_id" class="flex items-center flex-wrap mb-16rpx" style="gap: 8rpx;">
+          <text
+            v-if="o.after_sale_summary?.has_open_case"
+            style="font-size: 10px; color: #dc2626; background: #fef2f2; padding: 1px 6px; border-radius: 4px;"
+          >
+            售后中
+          </text>
+          <text class="text-22rpx text-gray-500">
+            最近售后单：#{{ o.after_sale_summary.latest_case_id }}（{{ afterSaleSummaryStatusText(o.after_sale_summary) || '-' }}）
+          </text>
+        </view>
 
         <view class="flex items-center justify-between">
           <text class="text-24rpx text-gray-500">{{ o.created_at?.slice(0, 10) }}</text>
@@ -75,7 +86,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { get, post } from '@/utils/request'
-import { hasReshipShipment, orderStatusLabel, shipmentPrimaryTime, shipmentStatusLabel } from '@/utils/order-status'
+import { afterSaleStatusLabel, hasReshipShipment, orderStatusLabel, shipmentPrimaryTime, shipmentStatusLabel } from '@/utils/order-status'
 
 const orders = ref<any[]>([])
 const activeTab = ref(0)
@@ -96,6 +107,12 @@ const statusLabel = (s: number) => orderStatusLabel(s)
 const statusColor = (s: number) => statusColors[s] || 'text-gray-400'
 const money = (v: number) => Number(v || 0).toFixed(2)
 const formatDate = (v?: string) => (v ? String(v).slice(0, 19).replace('T', ' ') : '-')
+
+function afterSaleSummaryStatusText(summary: any) {
+  const label = String(summary?.latest_status_label || '').trim()
+  if (label) return label
+  return afterSaleStatusLabel(summary?.latest_status)
+}
 
 function hasReship(order: any) {
   return hasReshipShipment(Array.isArray(order?.shipments) ? order.shipments : [])

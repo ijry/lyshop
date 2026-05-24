@@ -50,6 +50,12 @@
             {{ formatDate(shipmentPrimaryTime(o.latest_shipment)) }}
           </span>
         </div>
+        <div v-if="o.after_sale_summary?.latest_case_id" class="flex items-center flex-wrap gap-2 mb-4">
+          <span v-if="o.after_sale_summary?.has_open_case" class="text-[11px] px-2 py-0.5 rounded-full bg-red-50 text-red-500">售后中</span>
+          <span class="text-xs text-gray-500">
+            最近售后单：#{{ o.after_sale_summary.latest_case_id }}（{{ afterSaleSummaryStatusText(o.after_sale_summary) || '-' }}）
+          </span>
+        </div>
 
         <div class="flex-between">
           <span class="text-sm text-gray-500">{{ payLabel(o.payment_method) }}</span>
@@ -71,7 +77,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { get, post } from '@/api/request'
-import { hasReshipShipment, orderStatusLabel, shipmentPrimaryTime, shipmentStatusLabel } from '@/utils/order-status'
+import { afterSaleStatusLabel, hasReshipShipment, orderStatusLabel, shipmentPrimaryTime, shipmentStatusLabel } from '@/utils/order-status'
 
 const router = useRouter()
 const orders = ref<any[]>([])
@@ -92,6 +98,12 @@ const statusColor = (s: number) => statusColors[s] || 'bg-gray-50 text-gray-400'
 const payLabel = (m: string) => m === 'wechat' ? '微信支付' : m === 'alipay' ? '支付宝支付' : '未支付'
 const money = (v: number) => Number(v || 0).toFixed(2)
 const formatDate = (v?: string) => (v ? String(v).slice(0, 19).replace('T', ' ') : '-')
+
+function afterSaleSummaryStatusText(summary: any) {
+  const label = String(summary?.latest_status_label || '').trim()
+  if (label) return label
+  return afterSaleStatusLabel(summary?.latest_status)
+}
 
 function hasReship(order: any) {
   return hasReshipShipment(Array.isArray(order?.shipments) ? order.shipments : [])
