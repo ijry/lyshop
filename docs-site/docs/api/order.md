@@ -89,6 +89,7 @@
 
 - `GET /api/v1/after-sales/:id`：返回售后详情、状态日志、关联物流。
 - `POST /api/v1/after-sales/:id/return-shipments`：用户提交回寄物流（快递公司、单号、备注）。
+- `GET /api/v1/after-sales/:id` 中的 `shipments` 与订单详情轨迹字段口径一致，可直接展示方向、业务类型、状态、时间、备注与关联售后单。
 
 ### 后台售后动作
 
