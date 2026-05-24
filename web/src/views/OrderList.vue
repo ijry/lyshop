@@ -49,7 +49,8 @@
         <div class="flex justify-end mt-3 gap-2">
           <button class="btn-outline !px-5 text-xs" @click="goDetail(o.id)">查看详情</button>
           <button class="btn-primary !px-6 text-xs" v-if="o.status === 1" :disabled="actioningID === o.id" @click="pay(o)">去付款</button>
-          <button class="btn-outline !px-5 text-xs" v-if="o.status === 3 || o.status === 4" :disabled="actioningID === o.id" @click="review(o)">评价</button>
+          <button class="btn-outline !px-5 text-xs" v-if="canReview(o) && hasUnreviewed(o)" :disabled="actioningID === o.id" @click="review(o, 'root')">评价</button>
+          <button class="btn-outline !px-5 text-xs" v-if="canReview(o) && hasReviewed(o)" :disabled="actioningID === o.id" @click="review(o, 'append')">追加评价</button>
         </div>
       </div>
     </div>
@@ -91,6 +92,21 @@ function goDetail(id: number) {
   router.push(`/orders/${id}`)
 }
 
+function canReview(order: any) {
+  const status = Number(order?.status || 0)
+  return status === 3 || status === 4
+}
+
+function hasReviewed(order: any) {
+  const items = Array.isArray(order?.items) ? order.items : []
+  return items.some((item: any) => !!item?.review?.id)
+}
+
+function hasUnreviewed(order: any) {
+  const items = Array.isArray(order?.items) ? order.items : []
+  return items.length > 0 && items.some((item: any) => !item?.review?.id)
+}
+
 async function pay(order: any) {
   const id = Number(order?.id || 0)
   if (!id || actioningID.value) return
@@ -105,10 +121,10 @@ async function pay(order: any) {
   }
 }
 
-async function review(order: any) {
+async function review(order: any, mode: 'root' | 'append' = 'root') {
   const id = Number(order?.id || 0)
   if (!id || actioningID.value) return
-  router.push(`/orders/${id}/review`)
+  router.push(`/orders/${id}/review?mode=${mode}`)
 }
 
 onMounted(loadOrders)

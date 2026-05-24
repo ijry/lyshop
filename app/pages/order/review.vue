@@ -5,14 +5,15 @@
     <view class="p-20rpx">
       <view class="bg-white rounded-20rpx p-24rpx mb-20rpx" v-if="meta.order_no">
         <text class="text-28rpx font-600 text-gray-800 block mb-12rpx">订单 {{ meta.order_no }}</text>
-        <view class="flex items-center justify-between text-24rpx text-gray-500">
+        <view class="flex items-center justify-between text-24rpx text-gray-500" v-if="viewMode === 'root'">
           <text>物流评分</text>
           <up-rate v-model="logisticsScore" :count="5" size="20" active-color="#dc2626" />
         </view>
-        <text class="text-22rpx text-gray-400 block mt-12rpx">根评价提交后，才能继续追加评论。</text>
+        <text class="text-22rpx text-gray-400 block mt-12rpx" v-if="viewMode === 'root'">根评价提交后，才能继续追加评论。</text>
+        <text class="text-22rpx text-gray-400 block mt-12rpx" v-else>你正在追加已发布评价。</text>
       </view>
 
-      <view v-for="item in items" :key="item.order_item_id" class="bg-white rounded-20rpx p-24rpx mb-20rpx">
+      <view v-if="viewMode === 'root'" v-for="item in items" :key="item.order_item_id" class="bg-white rounded-20rpx p-24rpx mb-20rpx">
         <view class="flex gap-16rpx mb-16rpx">
           <image :src="item.product_cover" mode="aspectFill" style="width: 96rpx; height: 96rpx; border-radius: 12rpx;" />
           <view class="flex-1 min-w-0">
@@ -65,7 +66,7 @@
         </view>
       </view>
 
-      <view v-if="canAppend" class="bg-white rounded-20rpx p-24rpx mb-20rpx">
+      <view v-if="viewMode === 'append' && canAppend" class="bg-white rounded-20rpx p-24rpx mb-20rpx">
         <text class="text-28rpx font-600 text-gray-800 block mb-16rpx">追加评论</text>
         <u-textarea v-model="appendContent" placeholder="追加评论内容" :auto-height="true" maxlength="500" />
 
@@ -112,6 +113,7 @@
       </view>
 
       <u-button
+        v-if="viewMode === 'root'"
         type="primary"
         shape="circle"
         :loading="savingRoot"
@@ -120,7 +122,7 @@
         class="mb-16rpx"
       />
       <u-button
-        v-if="canAppend"
+        v-if="viewMode === 'append' && canAppend"
         type="success"
         shape="circle"
         :loading="savingAppend"
@@ -144,6 +146,8 @@ const savingRoot = ref(false)
 const savingAppend = ref(false)
 const canAppend = ref(false)
 const orderID = ref(0)
+const targetItemID = ref(0)
+const viewMode = ref<'root' | 'append'>('root')
 
 const rootButtonText = computed(() => {
   return items.value.some((item: any) => !item.has_review) ? '提交根评价' : '更新根评价'
@@ -156,13 +160,16 @@ function toast(message: string) {
 function readQueryID() {
   const pages = getCurrentPages()
   const query = (pages[pages.length - 1] as any).options
+  const mode = String(query.mode || '').trim()
+  viewMode.value = mode === 'append' ? 'append' : 'root'
+  targetItemID.value = Number(query.item_id || query.order_item_id || query.review_id || 0)
   return Number(query.id || 0)
 }
 
 async function loadMeta(id: number) {
   const data = await get<any>(`/api/v1/orders/${id}/review`)
   meta.value = data || {}
-  items.value = Array.isArray(data?.options)
+  const options = Array.isArray(data?.options)
     ? data.options.map((item: any) => ({
         ...item,
         product_score: Number(item.product_score || 5),
@@ -171,6 +178,17 @@ async function loadMeta(id: number) {
       }))
     : []
   logisticsScore.value = Number(data?.logistics_score || 5)
+  if (viewMode.value === 'append') {
+    const target = options.find((item: any) => {
+      if (targetItemID.value > 0) return Number(item.order_item_id || 0) === targetItemID.value && !!item.has_review
+      return !!item.has_review
+    })
+    items.value = target ? [target] : []
+    canAppend.value = !!target
+    logisticsScore.value = Number(target?.logistics_score || logisticsScore.value || 5)
+    return
+  }
+  items.value = options
   canAppend.value = !!data?.can_append
 }
 
@@ -225,6 +243,7 @@ function previewImages(urls: string[], index: number) {
 }
 
 async function submitRootReview() {
+  if (viewMode.value !== 'root') return
   if (savingRoot.value) return
   const createItems = items.value.filter((item: any) => !item.has_review)
   const editItems = items.value.filter((item: any) => item.has_review)
@@ -268,13 +287,14 @@ async function submitRootReview() {
 }
 
 async function submitAppendReview() {
+  if (viewMode.value !== 'append') return
   if (savingAppend.value) return
   if (!canAppend.value) {
     toast('请先完成根评价')
     return
   }
   const content = appendContent.value.trim()
-  const itemsToAppend = items.value.filter((item: any) => item.has_review)
+  const itemsToAppend = items.value.length ? [items.value[0]] : []
   if (!content && appendImages.value.length === 0) {
     toast('请填写追评内容或上传图片')
     return

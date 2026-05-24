@@ -60,9 +60,15 @@
                   </div>
                 </div>
               </div>
+              <div class="flex justify-end mt-3">
+                <button class="btn-outline !px-4 !py-2 text-xs" @click="goReview('append', rv.order_item_id)">追加评价</button>
+              </div>
             </div>
           </div>
           <p v-else class="text-sm text-gray-400">暂无评价</p>
+          <div class="flex gap-2 mt-4" v-if="hasUnreviewed">
+            <button class="btn-primary !px-4 !py-2 text-xs" @click="goReview('root')">评价</button>
+          </div>
         </div>
       </div>
     </div>
@@ -78,12 +84,26 @@ const route = useRoute()
 const router = useRouter()
 const detail = ref<any>(null)
 const reviewItems = ref<any[]>([])
+const hasReviewed = ref(false)
+const hasUnreviewed = ref(false)
 
 const statusLabels: Record<number, string> = { 1: '待付款', 2: '待发货', 3: '待收货', 4: '已完成', 5: '售后' }
 const statusLabel = (s: number) => statusLabels[s] || '未知'
 const payLabel = (m: string) => m === 'wechat' ? '微信支付' : m === 'alipay' ? '支付宝支付' : '未支付'
 const money = (v: number) => Number(v || 0).toFixed(2)
 const formatDate = (v: string) => v ? v.slice(0, 19).replace('T', ' ') : '-'
+
+function refreshReviewFlags() {
+  const items = Array.isArray(detail.value?.items) ? detail.value.items : []
+  hasReviewed.value = items.some((item: any) => !!item?.review?.id)
+  hasUnreviewed.value = items.length > 0 && items.some((item: any) => !item?.review?.id)
+}
+
+function goReview(mode: 'root' | 'append', orderItemID?: number) {
+  if (!detail.value?.id) return
+  const itemQuery = mode === 'append' && Number(orderItemID || 0) > 0 ? `&item_id=${Number(orderItemID)}` : ''
+  router.push(`/orders/${detail.value.id}/review?mode=${mode}${itemQuery}`)
+}
 
 onMounted(async () => {
   detail.value = await get<any>(`/api/v1/orders/${route.params.id}`)
@@ -96,5 +116,6 @@ onMounted(async () => {
       })
     }
   }
+  refreshReviewFlags()
 })
 </script>

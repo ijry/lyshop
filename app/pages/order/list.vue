@@ -48,8 +48,8 @@
           <view class="action-btn-wrap" v-if="o.status === 1">
             <u-button size="mini" type="primary" text="去付款" shape="circle" :loading="actioningID === o.id && actioningType === 'pay'" @click="toPay(o)" />
           </view>
-          <view class="action-btn-wrap" v-if="o.status === 3 || o.status === 4">
-            <u-button size="mini" type="success" text="评价" shape="circle" plain :loading="actioningID === o.id && actioningType === 'review'" @click="toReview(o)" />
+          <view class="action-btn-wrap" v-if="canReview(o) && hasUnreviewed(o)">
+            <u-button size="mini" type="success" text="评价" shape="circle" plain :loading="actioningID === o.id && actioningType === 'review'" @click="toReview(o, 'root')" />
           </view>
         </view>
       </view>
@@ -98,6 +98,17 @@ function goDetail(id: number) {
   uni.navigateTo({ url: `/pages/order/detail?id=${id}` })
 }
 
+function canReview(order: any) {
+  const status = Number(order?.status || 0)
+  return status === 3 || status === 4
+}
+
+function hasUnreviewed(order: any) {
+  const items = Array.isArray(order?.items) ? order.items : []
+  if (!items.length) return false
+  return items.some((item: any) => !item?.review?.id)
+}
+
 async function toPay(order: any) {
   const id = Number(order?.id || 0)
   if (!id || actioningID.value) return
@@ -115,10 +126,10 @@ async function toPay(order: any) {
   }
 }
 
-function toReview(order: any) {
+function toReview(order: any, mode: 'root' | 'append' = 'root') {
   const id = Number(order?.id || 0)
   if (!id || actioningID.value) return
-  uni.navigateTo({ url: `/pages/order/review?id=${id}` })
+  uni.navigateTo({ url: `/pages/order/review?id=${id}&mode=${mode}` })
 }
 
 onMounted(loadOrders)

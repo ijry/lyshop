@@ -68,9 +68,23 @@
                 </view>
               </view>
             </view>
+            <view class="flex justify-end mt-12rpx">
+              <u-button size="mini" type="warning" text="追加评价" shape="circle" plain @click="goReview('append', rv.order_item_id)" />
+            </view>
           </view>
         </view>
         <text v-else class="text-24rpx text-gray-400">暂无评价</text>
+        <view class="flex gap-16rpx mt-20rpx">
+          <u-button
+            v-if="hasUnreviewed"
+            size="small"
+            type="success"
+            shape="circle"
+            text="去评价"
+            plain
+            @click="goReview('root')"
+          />
+        </view>
       </view>
     </view>
   </view>
@@ -89,6 +103,20 @@ const statusColor = (s: number) => statusColors[s] || 'text-gray-400'
 const payLabel = (m: string) => m === 'wechat' ? '微信支付' : m === 'alipay' ? '支付宝支付' : '未支付'
 const money = (v: number) => Number(v || 0).toFixed(2)
 const formatDate = (v: string) => v ? v.slice(0, 19).replace('T', ' ') : '-'
+const hasReviewed = ref(false)
+const hasUnreviewed = ref(false)
+
+function refreshReviewFlags() {
+  const items = Array.isArray(detail.value?.items) ? detail.value.items : []
+  hasReviewed.value = items.some((item: any) => !!item?.review?.id)
+  hasUnreviewed.value = items.length > 0 && items.some((item: any) => !item?.review?.id)
+}
+
+function goReview(mode: 'root' | 'append', orderItemID?: number) {
+  if (!detail.value?.id) return
+  const itemQuery = mode === 'append' && Number(orderItemID || 0) > 0 ? `&item_id=${Number(orderItemID)}` : ''
+  uni.navigateTo({ url: `/pages/order/review?id=${detail.value.id}&mode=${mode}${itemQuery}` })
+}
 
 onMounted(async () => {
   const pages = getCurrentPages()
@@ -103,5 +131,6 @@ onMounted(async () => {
       })
     }
   }
+  refreshReviewFlags()
 })
 </script>
