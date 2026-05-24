@@ -35,6 +35,15 @@
               <p class="text-xs text-slate-400 mt-1">{{ formatDate(o.created_at) }}</p>
               <p v-if="o.tracking_no" class="text-xs text-slate-400 mt-1">物流单号：{{ o.tracking_no }}</p>
               <p v-if="o.after_sale_summary?.has_open_case" class="text-xs text-red-500 mt-1">售后中</p>
+              <div v-if="hasShipmentSummary(o)" class="flex items-center flex-wrap gap-1 mt-1">
+                <span v-if="hasReship(o)" class="text-[11px] px-2 py-0.5 rounded-full bg-orange-50 text-orange-600">含补发</span>
+                <span v-if="o.latest_shipment?.tracking_no" class="text-xs text-slate-500">
+                  最新物流：{{ shipmentStatusLabel(o.latest_shipment?.logistics_status) }} · {{ o.latest_shipment?.tracking_no }}
+                </span>
+                <span v-if="shipmentPrimaryTime(o.latest_shipment)" class="text-xs text-slate-400">
+                  {{ formatDate(shipmentPrimaryTime(o.latest_shipment)) }}
+                </span>
+              </div>
             </td>
             <td class="px-4 py-3">
               <div v-if="o.items?.length" class="space-y-2 min-w-[260px]">
@@ -109,12 +118,37 @@ const statusColors: Record<number, string> = {
   4: 'bg-green-50 text-green-700',
   5: 'bg-red-50 text-red-600',
 }
+const shipmentStatusLabels: Record<string, string> = {
+  pending: '待揽收',
+  shipped: '已发货',
+  in_transit: '运输中',
+  signed: '已签收',
+  exception: '物流异常',
+}
 
 const statusLabel = (s: number) => statusLabels[s] || '未知'
 const statusClass = (s: number) => statusColors[s] || 'bg-slate-50 text-slate-400'
 const payLabel = (m: string) => m === 'wechat' ? '微信支付' : m === 'alipay' ? '支付宝支付' : '未支付'
 const money = (v: number) => Number(v || 0).toFixed(2)
-const formatDate = (v: string) => v ? v.slice(0, 19).replace('T', ' ') : '-'
+const formatDate = (v?: string) => v ? String(v).slice(0, 19).replace('T', ' ') : '-'
+
+function shipmentStatusLabel(status: string) {
+  return shipmentStatusLabels[status] || status || '-'
+}
+
+function shipmentPrimaryTime(shipment: any) {
+  if (!shipment) return ''
+  return String(shipment.signed_at || shipment.shipped_at || shipment.created_at || '')
+}
+
+function hasReship(order: any) {
+  const shipments = Array.isArray(order?.shipments) ? order.shipments : []
+  return shipments.some((ship: any) => String(ship?.biz_type || '') === 'reship')
+}
+
+function hasShipmentSummary(order: any) {
+  return Boolean(hasReship(order) || order?.latest_shipment?.tracking_no)
+}
 
 function goDetail(id: number) {
   router.push(`/order/detail/${id}`)
