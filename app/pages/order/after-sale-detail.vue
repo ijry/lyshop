@@ -43,7 +43,7 @@
         <text class="text-28rpx font-600 text-gray-800 block mb-16rpx">进度日志</text>
         <view v-if="detail.logs?.length" class="space-y-12rpx">
           <view v-for="log in detail.logs" :key="log.id" class="border border-gray-100 rounded-16rpx p-16rpx">
-            <text class="text-24rpx text-gray-700 block">{{ log.action }}：{{ log.from_status || '-' }} → {{ log.to_status }}</text>
+            <text class="text-24rpx text-gray-700 block">{{ actionLabel(log.action) }}：{{ statusLabelOrDash(log.from_status) }} → {{ statusLabel(log.to_status) }}</text>
             <text class="text-22rpx text-gray-500 block mt-6rpx">{{ log.content || '-' }}</text>
             <text class="text-22rpx text-gray-400 block mt-6rpx">{{ formatDate(log.created_at) }}</text>
           </view>
@@ -71,6 +71,13 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { get, post } from '@/utils/request'
+import {
+  afterSaleStatusLabel,
+  shipmentPrimaryTime,
+  shipmentStatusLabel,
+  shipmentTimeLabel,
+  shipmentTitle,
+} from '@/utils/order-status'
 
 const detail = ref<any>({})
 const caseID = ref(0)
@@ -80,55 +87,28 @@ const returnForm = ref<any>({
   tracking_no: '',
   remark: '',
 })
-const shipmentBizLabels: Record<string, string> = { initial: '首发', reship: '补发', return: '回寄' }
-const shipmentStatusLabels: Record<string, string> = {
-  pending: '待揽收',
-  shipped: '已发货',
-  in_transit: '运输中',
-  signed: '已签收',
-  exception: '物流异常',
-}
 
-const statusMap: Record<string, string> = {
-  applied: '已申请',
-  approved_wait_user_return: '待回寄',
-  user_returning: '回寄中',
-  warehouse_received: '仓库已收货',
-  refund_pending: '待退款',
-  refunded: '已退款',
-  reship_pending: '待补发',
-  reshipped: '已补发',
-  completed: '已完结',
-  rejected: '已拒绝',
-  closed: '已关闭',
-}
-const statusLabel = (status: string) => statusMap[status] || status
+const statusLabel = (status: string) => afterSaleStatusLabel(status)
 const formatDate = (v?: string) => (v ? String(v).slice(0, 19).replace('T', ' ') : '-')
-
-function shipmentDirectionLabel(direction: string) {
-  return direction === 'inbound' ? '回寄' : '寄出'
+const actionLabels: Record<string, string> = {
+  apply: '提交申请',
+  audit: '审核',
+  return_ship: '回寄物流',
+  receive: '确认收货',
+  refund: '退款',
+  reship: '补发',
+  complete: '完结',
+  close: '关闭',
 }
 
-function shipmentBizLabel(bizType: string) {
-  return shipmentBizLabels[bizType] || bizType || '-'
+function actionLabel(action: string) {
+  return actionLabels[String(action || '')] || action || '-'
 }
 
-function shipmentStatusLabel(status: string) {
-  return shipmentStatusLabels[status] || status || '-'
-}
-
-function shipmentTitle(ship: any) {
-  return `${shipmentDirectionLabel(String(ship.direction || ''))} · ${shipmentBizLabel(String(ship.biz_type || ''))}`
-}
-
-function shipmentPrimaryTime(ship: any) {
-  return String(ship.signed_at || ship.shipped_at || ship.created_at || '')
-}
-
-function shipmentTimeLabel(ship: any) {
-  if (ship.signed_at) return '签收时间'
-  if (ship.shipped_at) return '发货时间'
-  return '记录时间'
+function statusLabelOrDash(status: string) {
+  const value = String(status || '')
+  if (!value) return '-'
+  return statusLabel(value)
 }
 
 function toast(msg: string) {

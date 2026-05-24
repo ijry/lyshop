@@ -50,6 +50,7 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getAfterSales } from '@/api/plugins'
+import { afterSaleStatusLabel } from '@/utils/order-status'
 
 const route = useRoute()
 const router = useRouter()
@@ -67,21 +68,8 @@ const tabs = [
 ]
 
 const typeLabel = (v: string) => v === 'exchange' ? '换货' : '退货'
-const statusLabels: Record<string, string> = {
-  applied: '已申请',
-  approved_wait_user_return: '待用户回寄',
-  user_returning: '用户回寄中',
-  warehouse_received: '仓库已收货',
-  refund_pending: '待退款',
-  refunded: '已退款',
-  reship_pending: '待补发',
-  reshipped: '已补发',
-  completed: '已完结',
-  rejected: '已拒绝',
-  closed: '已关闭',
-}
-const statusLabel = (v: string) => statusLabels[v] || v
-const formatDate = (v: string) => v ? v.slice(0, 19).replace('T', ' ') : '-'
+const statusLabel = (v: string) => afterSaleStatusLabel(v)
+const formatDate = (v?: string) => v ? String(v).slice(0, 19).replace('T', ' ') : '-'
 
 function goDetail(id: number) {
   router.push(`/order/after-sale/detail/${id}`)

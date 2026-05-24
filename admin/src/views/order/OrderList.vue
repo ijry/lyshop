@@ -94,6 +94,7 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { getOrders, shipOrder } from '@/api/plugins'
+import { hasReshipShipment, orderStatusLabel, shipmentPrimaryTime, shipmentStatusLabel } from '@/utils/order-status'
 
 const router = useRouter()
 const orders = ref<any[]>([])
@@ -108,9 +109,6 @@ const tabs = [
   { label: '售后', value: 5 },
 ]
 
-const statusLabels: Record<number, string> = {
-  1: '待付款', 2: '待发货', 3: '待收货', 4: '已完成', 5: '售后'
-}
 const statusColors: Record<number, string> = {
   1: 'bg-yellow-50 text-yellow-700',
   2: 'bg-blue-50 text-blue-700',
@@ -118,32 +116,14 @@ const statusColors: Record<number, string> = {
   4: 'bg-green-50 text-green-700',
   5: 'bg-red-50 text-red-600',
 }
-const shipmentStatusLabels: Record<string, string> = {
-  pending: '待揽收',
-  shipped: '已发货',
-  in_transit: '运输中',
-  signed: '已签收',
-  exception: '物流异常',
-}
-
-const statusLabel = (s: number) => statusLabels[s] || '未知'
+const statusLabel = (s: number) => orderStatusLabel(s) || '未知'
 const statusClass = (s: number) => statusColors[s] || 'bg-slate-50 text-slate-400'
 const payLabel = (m: string) => m === 'wechat' ? '微信支付' : m === 'alipay' ? '支付宝支付' : '未支付'
 const money = (v: number) => Number(v || 0).toFixed(2)
 const formatDate = (v?: string) => v ? String(v).slice(0, 19).replace('T', ' ') : '-'
 
-function shipmentStatusLabel(status: string) {
-  return shipmentStatusLabels[status] || status || '-'
-}
-
-function shipmentPrimaryTime(shipment: any) {
-  if (!shipment) return ''
-  return String(shipment.signed_at || shipment.shipped_at || shipment.created_at || '')
-}
-
 function hasReship(order: any) {
-  const shipments = Array.isArray(order?.shipments) ? order.shipments : []
-  return shipments.some((ship: any) => String(ship?.biz_type || '') === 'reship')
+  return hasReshipShipment(Array.isArray(order?.shipments) ? order.shipments : [])
 }
 
 function hasShipmentSummary(order: any) {

@@ -75,6 +75,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { get, post } from '@/utils/request'
+import { hasReshipShipment, orderStatusLabel, shipmentPrimaryTime, shipmentStatusLabel } from '@/utils/order-status'
 
 const orders = ref<any[]>([])
 const activeTab = ref(0)
@@ -87,37 +88,17 @@ const tabs = [
 ]
 const statusValues = [0, 1, 2, 3, 4]
 
-const statusLabels: Record<number, string> = {
-  1: '待付款', 2: '待发货', 3: '待收货', 4: '已完成', 5: '售后'
-}
 const statusColors: Record<number, string> = {
   1: 'text-orange-500', 2: 'text-blue-500',
   3: 'text-purple-500', 4: 'text-green-500', 5: 'text-red-500'
 }
-const shipmentStatusLabels: Record<string, string> = {
-  pending: '待揽收',
-  shipped: '已发货',
-  in_transit: '运输中',
-  signed: '已签收',
-  exception: '物流异常',
-}
-const statusLabel = (s: number) => statusLabels[s] || ''
+const statusLabel = (s: number) => orderStatusLabel(s)
 const statusColor = (s: number) => statusColors[s] || 'text-gray-400'
 const money = (v: number) => Number(v || 0).toFixed(2)
 const formatDate = (v?: string) => (v ? String(v).slice(0, 19).replace('T', ' ') : '-')
 
-function shipmentStatusLabel(status: string) {
-  return shipmentStatusLabels[status] || status || '-'
-}
-
-function shipmentPrimaryTime(shipment: any) {
-  if (!shipment) return ''
-  return String(shipment.signed_at || shipment.shipped_at || shipment.created_at || '')
-}
-
 function hasReship(order: any) {
-  const shipments = Array.isArray(order?.shipments) ? order.shipments : []
-  return shipments.some((ship: any) => String(ship?.biz_type || '') === 'reship')
+  return hasReshipShipment(Array.isArray(order?.shipments) ? order.shipments : [])
 }
 
 function hasShipmentSummary(order: any) {

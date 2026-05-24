@@ -70,7 +70,7 @@
           <div class="space-y-2 text-sm text-gray-600">
             <p>进行中：{{ detail.after_sale_summary?.in_progress_count || 0 }}</p>
             <p v-if="detail.after_sale_summary?.latest_case_id">
-              最近售后单：#{{ detail.after_sale_summary.latest_case_id }}（{{ detail.after_sale_summary.latest_status || '-' }}）
+              最近售后单：#{{ detail.after_sale_summary.latest_case_id }}（{{ afterSaleStatusLabel(detail.after_sale_summary.latest_status) || '-' }}）
             </p>
           </div>
           <div class="flex gap-2 mt-4">
@@ -128,6 +128,14 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { get } from '@/api/request'
+import {
+  afterSaleStatusLabel,
+  orderStatusLabel,
+  shipmentPrimaryTime,
+  shipmentStatusLabel,
+  shipmentTimeLabel,
+  shipmentTitle,
+} from '@/utils/order-status'
 
 const route = useRoute()
 const router = useRouter()
@@ -136,45 +144,10 @@ const reviewItems = ref<any[]>([])
 const hasReviewed = ref(false)
 const hasUnreviewed = ref(false)
 
-const statusLabels: Record<number, string> = { 1: '待付款', 2: '待发货', 3: '待收货', 4: '已完成', 5: '售后' }
-const shipmentBizLabels: Record<string, string> = { initial: '首发', reship: '补发', return: '回寄' }
-const shipmentStatusLabels: Record<string, string> = {
-  pending: '待揽收',
-  shipped: '已发货',
-  in_transit: '运输中',
-  signed: '已签收',
-  exception: '物流异常',
-}
-const statusLabel = (s: number) => statusLabels[s] || '未知'
+const statusLabel = (s: number) => orderStatusLabel(s) || '未知'
 const payLabel = (m: string) => (m === 'wechat' ? '微信支付' : m === 'alipay' ? '支付宝支付' : '未支付')
 const money = (v: number) => Number(v || 0).toFixed(2)
 const formatDate = (v?: string) => (v ? String(v).slice(0, 19).replace('T', ' ') : '-')
-
-function shipmentDirectionLabel(direction: string) {
-  return direction === 'inbound' ? '回寄' : '寄出'
-}
-
-function shipmentBizLabel(bizType: string) {
-  return shipmentBizLabels[bizType] || bizType || '-'
-}
-
-function shipmentStatusLabel(status: string) {
-  return shipmentStatusLabels[status] || status || '-'
-}
-
-function shipmentTitle(ship: any) {
-  return `${shipmentDirectionLabel(String(ship.direction || ''))} · ${shipmentBizLabel(String(ship.biz_type || ''))}`
-}
-
-function shipmentPrimaryTime(ship: any) {
-  return String(ship.signed_at || ship.shipped_at || ship.created_at || '')
-}
-
-function shipmentTimeLabel(ship: any) {
-  if (ship.signed_at) return '签收时间'
-  if (ship.shipped_at) return '发货时间'
-  return '记录时间'
-}
 
 function refreshReviewFlags() {
   const items = Array.isArray(detail.value?.items) ? detail.value.items : []

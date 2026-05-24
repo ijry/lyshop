@@ -29,9 +29,12 @@
           </div>
           <div v-if="detail.shipments?.length" class="space-y-3">
             <div v-for="ship in detail.shipments" :key="ship.id" class="border border-slate-100 rounded-lg p-3">
-              <p class="text-sm text-slate-700">{{ ship.biz_type }} / {{ ship.direction }}</p>
+              <p class="text-sm text-slate-700">{{ shipmentTitle(ship) }}</p>
               <p class="text-xs text-slate-400 mt-1">{{ ship.company || '未填公司' }} · {{ ship.tracking_no }}</p>
-              <p class="text-xs text-slate-400 mt-1">状态：{{ ship.logistics_status }}</p>
+              <p class="text-xs text-slate-400 mt-1">状态：{{ shipmentStatusLabel(ship.logistics_status) }}</p>
+              <p v-if="shipmentPrimaryTime(ship)" class="text-xs text-slate-400 mt-1">{{ shipmentTimeLabel(ship) }}：{{ formatDate(shipmentPrimaryTime(ship)) }}</p>
+              <p v-if="ship.after_sale_case_id" class="text-xs text-slate-400 mt-1">关联售后单：#{{ ship.after_sale_case_id }}</p>
+              <p v-if="ship.remark" class="text-xs text-slate-400 mt-1">备注：{{ ship.remark }}</p>
             </div>
           </div>
           <p v-else class="text-slate-400 text-sm">暂无物流轨迹</p>
@@ -94,6 +97,7 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getOrderDetail, shipOrder } from '@/api/plugins'
+import { orderStatusLabel, shipmentPrimaryTime, shipmentStatusLabel, shipmentTimeLabel, shipmentTitle } from '@/utils/order-status'
 
 const route = useRoute()
 const router = useRouter()
@@ -106,13 +110,10 @@ const shipForm = ref<any>({
   after_sale_case_id: '',
 })
 
-const statusLabels: Record<number, string> = {
-  1: '待付款', 2: '待发货', 3: '待收货', 4: '已完成', 5: '售后'
-}
-const statusLabel = (s: number) => statusLabels[s] || '未知'
+const statusLabel = (s: number) => orderStatusLabel(s) || '未知'
 const payLabel = (m: string) => m === 'wechat' ? '微信支付' : m === 'alipay' ? '支付宝支付' : '未支付'
 const money = (v: number) => Number(v || 0).toFixed(2)
-const formatDate = (v: string) => v ? v.slice(0, 19).replace('T', ' ') : '-'
+const formatDate = (v?: string) => v ? String(v).slice(0, 19).replace('T', ' ') : '-'
 
 async function loadDetail() {
   detail.value = await getOrderDetail(Number(route.params.id))

@@ -44,6 +44,13 @@
 - 订单列表/详情升级返回 `shipments`、`latest_shipment`、`after_sale_summary`，并继续保留 `tracking_no` 兼容旧前端。
 - `shipments` 单条轨迹包含方向（`direction`）、业务类型（`biz_type`）、物流状态（`logistics_status`）、时间字段（`shipped_at/signed_at/created_at`）、备注（`remark`）和关联售后单（`after_sale_case_id`）。
 - 前台与后台订单列表均可直接使用 `latest_shipment` 展示最新物流状态，并通过 `shipments[*].biz_type=reship` 标注补发摘要。
+- 前台与后台建议统一维护状态文案映射：订单状态、售后状态、物流状态与日志状态流转文案应保持一致。
+
+## 购物车勾选结算（兼容升级）
+
+- 购物车结算继续复用既有确认页入口：`/pages/order/confirm?sku_ids=...`，不新增接口。
+- `sku_ids` 语义升级为“购物车勾选商品集合”，不再默认等于购物车全量商品。
+- 当前端未勾选商品时，应在客户端拦截并提示后再发起下单。
 
 ## 发货接口升级（兼容）
 
@@ -133,6 +140,7 @@
 ## 部署与配置影响
 
 - 本次仅为订单与售后能力增强，无新增部署步骤，无新增环境变量。
+- 购物车勾选结算仅涉及前端交互与参数组装，无后端部署、迁移与配置变更。
 - 数据库会新增售后与物流相关表，需执行服务启动时的插件迁移。
 - 文件上传仍复用统一 `POST /api/v1/upload`（前台）与 `POST /admin/api/upload`（后台）入口；若启用云存储，需先在后台完成对应插件配置（Endpoint/Region/Bucket/密钥/域名）。
 - 系统支持同时启用多个存储驱动，并在 `storage_router` 插件配置默认驱动；请求也可通过 `driver` 参数临时指定驱动（`local/oss/cos/qiniu`，兼容 `aliyun_oss/qcloud_cos/qiniu_kodo`）。

@@ -13,7 +13,7 @@
             <p>售后单号：<span class="font-mono">{{ detail.case_no }}</span></p>
             <p>订单ID：{{ detail.order_id }}</p>
             <p>类型：{{ typeLabel(detail.case_type) }}</p>
-            <p>状态：{{ detail.status }}</p>
+            <p>状态：{{ statusLabel(detail.status) }}</p>
             <p>原因：{{ detail.reason }}</p>
             <p>申请说明：{{ detail.apply_content || '-' }}</p>
           </div>
@@ -23,8 +23,9 @@
           <h3 class="font-semibold text-slate-700 mb-4">状态日志</h3>
           <div v-if="detail.logs?.length" class="space-y-3">
             <div v-for="log in detail.logs" :key="log.id" class="border border-slate-100 rounded-lg p-3">
-              <p class="text-sm text-slate-700">{{ log.action }}：{{ log.from_status || '-' }} → {{ log.to_status }}</p>
+              <p class="text-sm text-slate-700">{{ actionLabel(log.action) }}：{{ statusLabelOrDash(log.from_status) }} → {{ statusLabel(log.to_status) }}</p>
               <p class="text-xs text-slate-400 mt-1">{{ log.content || '-' }}</p>
+              <p class="text-xs text-slate-400 mt-1">{{ formatDate(log.created_at) }}</p>
             </div>
           </div>
           <p v-else class="text-slate-400 text-sm">暂无日志</p>
@@ -48,8 +49,12 @@
           <h3 class="font-semibold text-slate-700 mb-3">物流</h3>
           <div v-if="detail.shipments?.length" class="space-y-2">
             <div v-for="ship in detail.shipments" :key="ship.id" class="border border-slate-100 rounded-lg p-3 text-sm">
-              <p>{{ ship.direction }} / {{ ship.biz_type }}</p>
+              <p>{{ shipmentTitle(ship) }}</p>
               <p class="text-xs text-slate-400 mt-1">{{ ship.company }} · {{ ship.tracking_no }}</p>
+              <p class="text-xs text-slate-400 mt-1">状态：{{ shipmentStatusLabel(ship.logistics_status) }}</p>
+              <p v-if="shipmentPrimaryTime(ship)" class="text-xs text-slate-400 mt-1">{{ shipmentTimeLabel(ship) }}：{{ formatDate(shipmentPrimaryTime(ship)) }}</p>
+              <p v-if="ship.after_sale_case_id" class="text-xs text-slate-400 mt-1">关联售后单：#{{ ship.after_sale_case_id }}</p>
+              <p v-if="ship.remark" class="text-xs text-slate-400 mt-1">备注：{{ ship.remark }}</p>
             </div>
           </div>
           <p v-else class="text-slate-400 text-sm">暂无物流</p>
@@ -63,12 +68,35 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { auditAfterSale, closeAfterSale, completeAfterSale, getAfterSaleDetail, receiveAfterSale, refundAfterSale } from '@/api/plugins'
+import { afterSaleStatusLabel, shipmentPrimaryTime, shipmentStatusLabel, shipmentTimeLabel, shipmentTitle } from '@/utils/order-status'
 
 const route = useRoute()
 const router = useRouter()
 const detail = ref<any>(null)
 
 const typeLabel = (v: string) => v === 'exchange' ? '换货' : '退货'
+const statusLabel = (v: string) => afterSaleStatusLabel(v)
+const formatDate = (v?: string) => v ? String(v).slice(0, 19).replace('T', ' ') : '-'
+const actionLabels: Record<string, string> = {
+  apply: '提交申请',
+  audit: '审核',
+  return_ship: '回寄物流',
+  receive: '确认收货',
+  refund: '退款',
+  reship: '补发',
+  complete: '完结',
+  close: '关闭',
+}
+
+function actionLabel(action: string) {
+  return actionLabels[String(action || '')] || action || '-'
+}
+
+function statusLabelOrDash(status: string) {
+  const value = String(status || '')
+  if (!value) return '-'
+  return statusLabel(value)
+}
 
 async function load() {
   detail.value = await getAfterSaleDetail(Number(route.params.id))
