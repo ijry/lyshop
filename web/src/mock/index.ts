@@ -25,6 +25,11 @@ const addressListSource = Array.isArray(addresses)
   ? JSON.parse(JSON.stringify(addresses))
   : []
 
+function nextUploadURL() {
+  const n = Math.floor(Math.random() * 1000) + 200
+  return `https://picsum.photos/640/640?random=${n}`
+}
+
 function getOrderByID(id: number) {
   return orderListSource.find((item: any) => Number(item.id) === id)
 }
@@ -43,6 +48,7 @@ function buildProductReview(productID: number) {
         product_score: Number(item.review.product_score || 5),
         logistics_score: Number(item.review.logistics_score || 5),
         content: String(item.review.content || ''),
+        images: Array.isArray(item.review.images) ? item.review.images.map((u: any) => String(u || '')) : [],
         edited_times: Number(item.review.edited_times || 0),
         user_nickname: '演示用户',
         user_avatar: '',
@@ -51,6 +57,7 @@ function buildProductReview(productID: number) {
         appends: Array.isArray(item.review.appends) ? item.review.appends.map((ap: any) => ({
           id: Number(ap.id || 0),
           content: String(ap.content || ''),
+          images: Array.isArray(ap.images) ? ap.images.map((u: any) => String(u || '')) : [],
           created_at: ap.created_at || order.created_at,
         })) : [],
         admin_reply: item.review.admin_reply ? {
@@ -85,6 +92,7 @@ function buildOrderReviewMeta(orderID: number) {
     product_score: Number(item.review?.product_score || 5),
     logistics_score: Number(item.review?.logistics_score || 5),
     content: String(item.review?.content || ''),
+    images: Array.isArray(item.review?.images) ? item.review.images.map((u: any) => String(u || '')) : [],
   }))
   const reviewed = options.filter((item: any) => item.has_review)
   return {
@@ -205,14 +213,20 @@ export function matchMock(method: string, url: string, params?: Record<string, a
       const mode = String(params?.mode || 'create')
       const logistics = Number(params?.logistics_score || 5)
       const items = Array.isArray(params?.items) ? params.items : []
+      const appendImages = Array.isArray(params?.append_images)
+        ? params.append_images.map((u: any) => String(u || '').trim()).filter(Boolean).slice(0, 9)
+        : []
       if (mode === 'append') {
+        const appendContent = String(params?.append_content || '').trim()
+        if (!appendContent && !appendImages.length) return { matched: true, data: null }
         for (const item of items) {
           const targetItem = target.items.find((row: any) => Number(row.id) === Number(item.order_item_id))
           if (targetItem?.review) {
             targetItem.review.appends = targetItem.review.appends || []
             targetItem.review.appends.push({
               id: Math.floor(Math.random() * 100000),
-              content: String(params?.append_content || ''),
+              content: appendContent,
+              images: appendImages.slice(),
               created_at: new Date().toISOString(),
             })
           }
@@ -222,12 +236,16 @@ export function matchMock(method: string, url: string, params?: Record<string, a
           const targetItem = target.items.find((row: any) => Number(row.id) === Number(item.order_item_id))
           if (!targetItem) continue
           const now = new Date().toISOString()
+          const images = Array.isArray((item as any)?.images)
+            ? (item as any).images.map((u: any) => String(u || '').trim()).filter(Boolean).slice(0, 9)
+            : []
           if (!targetItem.review) {
             targetItem.review = {
               id: Math.floor(Math.random() * 100000),
               product_score: Number(item.product_score || 5),
               logistics_score: logistics,
               content: String(item.content || ''),
+              images: images.slice(),
               edited_times: 0,
               appends: [],
               admin_reply: null,
@@ -238,6 +256,7 @@ export function matchMock(method: string, url: string, params?: Record<string, a
             targetItem.review.product_score = Number(item.product_score || 5)
             targetItem.review.logistics_score = logistics
             targetItem.review.content = String(item.content || '')
+            targetItem.review.images = images.slice()
             targetItem.review.edited_times = Number(targetItem.review.edited_times || 0) + 1
             targetItem.review.updated_at = now
           }
@@ -252,6 +271,10 @@ export function matchMock(method: string, url: string, params?: Record<string, a
   if (upperMethod === 'GET' && path.startsWith('/api/v1/products/') && path.endsWith('/reviews')) {
     const productID = Number(path.split('/')[4] || 0)
     return { matched: true, data: buildProductReview(productID) }
+  }
+  if (upperMethod === 'POST' && path === '/api/v1/upload') {
+    const url = nextUploadURL()
+    return { matched: true, data: { path: `demo/${Date.now()}.jpg`, url, size: 10240, mime: 'image/jpeg' } }
   }
 
   if (key in routes) {

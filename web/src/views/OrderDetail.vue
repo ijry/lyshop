@@ -49,6 +49,17 @@
               <p class="text-sm text-gray-700">{{ rv.product_title }}</p>
               <p class="text-xs text-gray-400 mt-1">商品 {{ rv.product_score }} / 物流 {{ rv.logistics_score }}</p>
               <p class="text-xs text-gray-500 mt-2">{{ rv.content || '未填写评价' }}</p>
+              <div v-if="rv.images?.length" class="flex flex-wrap gap-2 mt-2">
+                <img v-for="(img, idx) in rv.images" :key="img + idx" :src="img" class="w-14 h-14 rounded-md object-cover border border-gray-100" />
+              </div>
+              <div v-if="rv.appends?.length" class="mt-2 p-2 rounded bg-gray-50 space-y-2">
+                <div v-for="ap in rv.appends" :key="ap.id">
+                  <p class="text-xs text-gray-500">追加：{{ ap.content || '仅图片追评' }}</p>
+                  <div v-if="ap.images?.length" class="flex flex-wrap gap-2 mt-1">
+                    <img v-for="(img, idx) in ap.images" :key="img + idx" :src="img" class="w-12 h-12 rounded object-cover border border-gray-100" />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <p v-else class="text-sm text-gray-400">暂无评价</p>

@@ -49,3 +49,12 @@ export async function del<T = any>(url: string, data?: any): Promise<T> {
   if (MOCK_ENABLED) return mockRequest<T>('DELETE', url, data)
   return http.delete(url, { data }) as Promise<T>
 }
+
+export async function upload<T = any>(url: string, file: File): Promise<T> {
+  if (MOCK_ENABLED) return mockRequest<T>('POST', url, { name: file.name, size: file.size })
+  const form = new FormData()
+  form.append('file', file)
+  return http.post(url, form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }) as Promise<T>
+}

@@ -66,3 +66,35 @@ export const put = <T>(url: string, data?: any) =>
 
 export const del = <T>(url: string, data?: any) =>
   request<T>({ url, method: 'DELETE', data })
+
+export function upload<T = any>(url: string, filePath: string, name = 'file'): Promise<T> {
+  if (MOCK_ENABLED) {
+    return mockRequest<T>('POST', url, { name, filePath })
+  }
+  return new Promise((resolve, reject) => {
+    uni.uploadFile({
+      url: BASE_URL + url,
+      filePath,
+      name,
+      header: {
+        Authorization: `Bearer ${getToken()}`,
+      },
+      success(res) {
+        try {
+          const data = JSON.parse(String(res.data || '{}'))
+          if (data.code !== 0) {
+            uni.showToast({ title: data.msg || '上传失败', icon: 'none' })
+            reject(new Error(data.msg || '上传失败'))
+            return
+          }
+          resolve(data.data as T)
+        } catch (err) {
+          reject(err)
+        }
+      },
+      fail(err) {
+        reject(err)
+      },
+    })
+  })
+}

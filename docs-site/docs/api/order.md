@@ -42,16 +42,19 @@
   "mode": "create",
   "logistics_score": 5,
   "items": [
-    { "order_item_id": 11, "product_score": 5, "content": "做工很好" }
+    { "order_item_id": 11, "product_score": 5, "content": "做工很好", "images": ["https://cdn.example.com/a.jpg"] }
   ],
-  "append_content": ""
+  "append_content": "",
+  "append_images": []
 }
 ```
 
 - `mode=create` 创建根评价
 - `mode=edit` 覆盖原评价
-- `mode=append` 追加到根评价子级
+- `mode=append` 追加到根评价子级，必须先存在对应根评价
+- 根评价与追加评价都支持 `images`
 - 订单评价页会先加载 `GET /api/v1/orders/:id/review` 获取当前评价状态
+- 前台上传文件统一使用 `POST /api/v1/upload`
 
 ## 部署与配置影响
 

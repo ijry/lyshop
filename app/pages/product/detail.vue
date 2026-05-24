@@ -66,7 +66,7 @@
         <view class="text-22rpx text-gray-400 mt-10rpx">共 {{ reviewSummary.total }} 条评价</view>
       </view>
 
-      <view v-if="reviews.length">
+          <view v-if="reviews.length">
         <view v-for="rv in reviews" :key="rv.id" class="bg-white border border-gray-100 rounded-16rpx p-20rpx mb-16rpx">
           <view class="flex items-center justify-between mb-10rpx">
             <text class="text-24rpx text-gray-700">{{ rv.user_nickname || '匿名用户' }}</text>
@@ -77,9 +77,27 @@
             <text class="text-22rpx text-gray-500">物流 {{ rv.logistics_score }}</text>
           </view>
           <text class="text-24rpx text-gray-700 leading-40rpx block">{{ rv.content || '用户未填写文字评价' }}</text>
+          <view v-if="rv.images?.length" class="flex flex-wrap gap-10rpx mt-12rpx">
+            <image
+              v-for="(img, idx) in rv.images"
+              :key="img + idx"
+              :src="img"
+              mode="aspectFill"
+              style="width: 136rpx; height: 136rpx; border-radius: 12rpx;"
+            />
+          </view>
           <view v-if="rv.appends?.length" class="mt-12rpx bg-gray-50 rounded-12rpx p-12rpx">
-            <view v-for="ap in rv.appends" :key="ap.id" class="text-22rpx text-gray-500 leading-34rpx mb-8rpx">
-              追加：{{ ap.content }}
+            <view v-for="ap in rv.appends" :key="ap.id" class="mb-10rpx last:mb-0">
+              <view class="text-22rpx text-gray-500 leading-34rpx">追加：{{ ap.content || '仅图片追评' }}</view>
+              <view v-if="ap.images?.length" class="flex flex-wrap gap-10rpx mt-8rpx">
+                <image
+                  v-for="(img, idx) in ap.images"
+                  :key="img + idx"
+                  :src="img"
+                  mode="aspectFill"
+                  style="width: 120rpx; height: 120rpx; border-radius: 10rpx;"
+                />
+              </view>
             </view>
           </view>
           <view v-if="rv.admin_reply" class="mt-12rpx bg-red-50 rounded-12rpx p-12rpx text-22rpx text-red-600">

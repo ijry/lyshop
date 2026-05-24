@@ -9,10 +9,10 @@ import (
 
 // UploadResult holds the stored path and public URL.
 type UploadResult struct {
-	Path string
-	URL  string
-	Size int64
-	Mime string
+	Path string `json:"path"`
+	URL  string `json:"url"`
+	Size int64  `json:"size"`
+	Mime string  `json:"mime"`
 }
 
 // Driver is the interface all file storage plugins must implement.

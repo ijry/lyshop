@@ -13,6 +13,7 @@ type OrderReview struct {
 	ProductScore   int8   `gorm:"not null;default:5"           json:"product_score"`
 	LogisticsScore int8   `gorm:"not null;default:5"           json:"logistics_score"`
 	Content        string `gorm:"type:text"                    json:"content"`
+	ImagesJSON     string `gorm:"type:text"                    json:"-"`
 	EditedTimes    int    `gorm:"not null;default:0"           json:"edited_times"`
 }
 
@@ -22,6 +23,7 @@ type OrderReviewAppend struct {
 	ReviewID uint64 `gorm:"not null;index"               json:"review_id"`
 	UserID   uint64 `gorm:"not null;index"               json:"user_id"`
 	Content  string `gorm:"type:text"                    json:"content"`
+	ImagesJSON string `gorm:"type:text"                  json:"-"`
 }
 
 // OrderReviewReply is a single admin reply for one root review.

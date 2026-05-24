@@ -35,6 +35,9 @@
             </td>
             <td class="px-4 py-3 text-xs text-slate-600 max-w-[340px] whitespace-pre-wrap break-words">
               {{ rv.content || '用户未填写文本评价' }}
+              <div v-if="rv.images?.length" class="flex flex-wrap gap-2 mt-2">
+                <img v-for="(img, idx) in rv.images" :key="img + idx" :src="img" class="w-10 h-10 rounded object-cover border border-slate-100" />
+              </div>
             </td>
             <td class="px-4 py-3 text-xs text-slate-500">
               <p>追评 {{ rv.appends?.length || 0 }} 条</p>
@@ -73,9 +76,17 @@
             <p>物流评分：{{ detail.logistics_score }}</p>
           </div>
           <div class="p-3 rounded-lg bg-slate-50 text-slate-700 whitespace-pre-wrap break-words">{{ detail.content || '用户未填写文本评价' }}</div>
+          <div v-if="detail.images?.length" class="flex flex-wrap gap-2">
+            <img v-for="(img, idx) in detail.images" :key="img + idx" :src="img" class="w-16 h-16 rounded object-cover border border-slate-100" />
+          </div>
           <div v-if="detail.appends?.length" class="p-3 rounded-lg bg-slate-50">
             <p class="font-medium text-slate-700 mb-2">追评记录</p>
-            <p v-for="ap in detail.appends" :key="ap.id" class="text-xs text-slate-600 mb-2">- {{ ap.content }}</p>
+            <div v-for="ap in detail.appends" :key="ap.id" class="mb-2">
+              <p class="text-xs text-slate-600">- {{ ap.content || '仅图片追评' }}</p>
+              <div v-if="ap.images?.length" class="flex flex-wrap gap-2 mt-1">
+                <img v-for="(img, idx) in ap.images" :key="img + idx" :src="img" class="w-12 h-12 rounded object-cover border border-slate-100" />
+              </div>
+            </div>
           </div>
           <div class="p-3 rounded-lg" :class="detail.admin_reply ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'">
             {{ detail.admin_reply ? `当前回复：${detail.admin_reply.content}` : '未回复' }}

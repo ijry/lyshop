@@ -52,8 +52,13 @@ function nextAppendID() {
 }
 
 function nextReplyID() {
-  replySeq += 1
-  return replySeq
+	replySeq += 1
+	return replySeq
+}
+
+function nextUploadURL() {
+	const n = Math.floor(Math.random() * 1000) + 100
+	return `https://picsum.photos/640/640?random=${n}`
 }
 
 function formatNowISO() {
@@ -94,6 +99,7 @@ function hydrateReviewsFromOrders() {
         product_score: Number(rv.product_score || 5),
         logistics_score: Number(rv.logistics_score || 5),
         content: String(rv.content || ''),
+        images: Array.isArray(rv.images) ? rv.images.map((u: any) => String(u || '')) : [],
         edited_times: Number(rv.edited_times || 0),
         user_id: 1,
         user_nickname: '演示用户',
@@ -104,6 +110,7 @@ function hydrateReviewsFromOrders() {
           id: Number(ap.id || nextAppendID()),
           review_id: Number(rv.id),
           content: String(ap.content || ''),
+          images: Array.isArray(ap.images) ? ap.images.map((u: any) => String(u || '')) : [],
           created_at: ap.created_at || formatNowISO(),
           updated_at: ap.updated_at || ap.created_at || formatNowISO(),
         })) : [],
@@ -177,6 +184,7 @@ function buildOrderReviewMeta(orderID: number) {
       product_score: Number(rv?.product_score || 5),
       logistics_score: Number(rv?.logistics_score || 5),
       content: String(rv?.content || ''),
+      images: Array.isArray(rv?.images) ? rv.images.map((u: any) => String(u || '')) : [],
     }
   })
   const reviewed = options.filter((item: any) => item.has_review)
@@ -205,6 +213,12 @@ function applyReviewToOrderItem(orderID: number, payload: any) {
       content: String(payload?.content || ''),
     })) : [])
   const appendContent = String(payload?.append_content || payload?.content || '').trim()
+  const appendImages = Array.isArray(payload?.append_images)
+    ? payload.append_images.map((u: any) => String(u || '').trim()).filter(Boolean).slice(0, 9)
+    : []
+  if (mode === 'append' && !appendContent && !appendImages.length) {
+    return { ok: false, msg: '追评内容或图片不能为空' }
+  }
 
   let touched = false
   for (const reqItem of items) {
@@ -215,11 +229,12 @@ function applyReviewToOrderItem(orderID: number, payload: any) {
     if (!target) continue
     const productID = Number(target.product_id || 0)
     if (mode === 'append') {
-      if (!target.review || !appendContent) continue
+      if (!target.review) continue
       const appendRow = {
         id: nextAppendID(),
         review_id: Number(target.review.id),
         content: appendContent,
+        images: appendImages.slice(),
         created_at: formatNowISO(),
         updated_at: formatNowISO(),
       }
@@ -237,6 +252,9 @@ function applyReviewToOrderItem(orderID: number, payload: any) {
 
     const score = Math.max(1, Math.min(5, Number(reqItem?.product_score || 5)))
     const content = String(reqItem?.content || payload?.content || '').trim()
+    const images = Array.isArray(reqItem?.images)
+      ? reqItem.images.map((u: any) => String(u || '').trim()).filter(Boolean).slice(0, 9)
+      : []
     const now = formatNowISO()
     if (!target.review) {
       if (mode !== 'create') continue
@@ -250,6 +268,7 @@ function applyReviewToOrderItem(orderID: number, payload: any) {
         product_score: score,
         logistics_score: logisticsScore,
         content,
+        images: images.slice(),
         edited_times: 0,
         user_id: 1,
         user_nickname: '演示用户',
@@ -266,6 +285,7 @@ function applyReviewToOrderItem(orderID: number, payload: any) {
         product_score: score,
         logistics_score: logisticsScore,
         content,
+        images: images.slice(),
         edited_times: 0,
         created_at: now,
         updated_at: now,
@@ -282,6 +302,7 @@ function applyReviewToOrderItem(orderID: number, payload: any) {
     target.review.product_score = score
     target.review.logistics_score = logisticsScore
     target.review.content = content
+    target.review.images = images.slice()
     target.review.edited_times = Number(target.review.edited_times || 0) + 1
     target.review.updated_at = now
     const review = reviewIndexMap.get(Number(target.review.id))
@@ -289,6 +310,7 @@ function applyReviewToOrderItem(orderID: number, payload: any) {
       review.product_score = score
       review.logistics_score = logisticsScore
       review.content = content
+      review.images = images.slice()
       review.edited_times = Number(review.edited_times || 0) + 1
       review.updated_at = now
     }
@@ -457,6 +479,13 @@ export function matchMock(method: string, url: string, params?: Record<string, a
       return { matched: true, data: null }
     }
     return { matched: true, data: null }
+  }
+  if (upperMethod === 'POST' && path === '/api/v1/upload') {
+    const url = nextUploadURL()
+    return {
+      matched: true,
+      data: { path: `demo/${Date.now()}.jpg`, url, size: 10240, mime: 'image/jpeg' },
+    }
   }
   if (upperMethod === 'GET' && path.startsWith('/api/v1/products/') && path.endsWith('/reviews')) {
     const productID = Number(path.split('/')[4] || 0)

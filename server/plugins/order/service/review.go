@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -22,9 +23,10 @@ const (
 )
 
 type ReviewItemInput struct {
-	OrderItemID  uint64 `json:"order_item_id"`
-	ProductScore int8   `json:"product_score"`
-	Content      string `json:"content"`
+	OrderItemID  uint64   `json:"order_item_id"`
+	ProductScore int8     `json:"product_score"`
+	Content      string   `json:"content"`
+	Images       []string `json:"images"`
 }
 
 type SubmitOrderReviewReq struct {
@@ -34,10 +36,12 @@ type SubmitOrderReviewReq struct {
 	LogisticsScore int8              `json:"logistics_score"`
 	Items          []ReviewItemInput `json:"items"`
 	AppendContent  string            `json:"append_content"`
+	AppendImages   []string          `json:"append_images"`
 }
 
 type ReviewAppendView struct {
 	ordermodel.OrderReviewAppend
+	Images []string `json:"images"`
 }
 
 type ReviewReplyView struct {
@@ -49,6 +53,7 @@ type ReviewView struct {
 	OrderNo      string                `json:"order_no"`
 	OrderItem    *ordermodel.OrderItem `json:"order_item,omitempty"`
 	Product      *productmodel.Product `json:"product,omitempty"`
+	Images       []string              `json:"images"`
 	Appends      []ReviewAppendView    `json:"appends"`
 	AdminReply   *ReviewReplyView      `json:"admin_reply,omitempty"`
 	UserNickname string                `json:"user_nickname,omitempty"`
@@ -56,15 +61,16 @@ type ReviewView struct {
 }
 
 type ReviewOption struct {
-	OrderItemID    uint64 `json:"order_item_id"`
-	ReviewID       uint64 `json:"review_id"`
-	HasReview      bool   `json:"has_review"`
-	ProductID      uint64 `json:"product_id"`
-	ProductTitle   string `json:"product_title"`
-	ProductCover   string `json:"product_cover"`
-	ProductScore   int8   `json:"product_score"`
-	LogisticsScore int8   `json:"logistics_score"`
-	Content        string `json:"content"`
+	OrderItemID    uint64   `json:"order_item_id"`
+	ReviewID       uint64   `json:"review_id"`
+	HasReview      bool     `json:"has_review"`
+	ProductID      uint64   `json:"product_id"`
+	ProductTitle   string   `json:"product_title"`
+	ProductCover   string   `json:"product_cover"`
+	ProductScore   int8     `json:"product_score"`
+	LogisticsScore int8     `json:"logistics_score"`
+	Content        string   `json:"content"`
+	Images         []string `json:"images"`
 }
 
 type OrderReviewMeta struct {
@@ -111,6 +117,50 @@ func clampScore(score int8) int8 {
 		return 5
 	}
 	return score
+}
+
+func normalizeImageURLs(urls []string) []string {
+	result := make([]string, 0, len(urls))
+	seen := make(map[string]struct{}, len(urls))
+	for _, raw := range urls {
+		u := strings.TrimSpace(raw)
+		if u == "" {
+			continue
+		}
+		if _, ok := seen[u]; ok {
+			continue
+		}
+		seen[u] = struct{}{}
+		result = append(result, u)
+		if len(result) >= 9 {
+			break
+		}
+	}
+	return result
+}
+
+func encodeImageURLs(urls []string) string {
+	normalized := normalizeImageURLs(urls)
+	if len(normalized) == 0 {
+		return "[]"
+	}
+	buf, err := json.Marshal(normalized)
+	if err != nil {
+		return "[]"
+	}
+	return string(buf)
+}
+
+func decodeImageURLs(raw string) []string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return []string{}
+	}
+	var urls []string
+	if err := json.Unmarshal([]byte(raw), &urls); err != nil {
+		return []string{}
+	}
+	return normalizeImageURLs(urls)
 }
 
 func buildReviewView(ctx context.Context, reviews []ordermodel.OrderReview) ([]ReviewView, error) {
@@ -164,7 +214,10 @@ func buildReviewView(ctx context.Context, reviews []ordermodel.OrderReview) ([]R
 	}
 	appendMap := make(map[uint64][]ReviewAppendView, len(reviewIDs))
 	for _, app := range appends {
-		appendMap[app.ReviewID] = append(appendMap[app.ReviewID], ReviewAppendView{OrderReviewAppend: app})
+		appendMap[app.ReviewID] = append(appendMap[app.ReviewID], ReviewAppendView{
+			OrderReviewAppend: app,
+			Images:            decodeImageURLs(app.ImagesJSON),
+		})
 	}
 
 	var replies []ordermodel.OrderReviewReply
@@ -190,6 +243,7 @@ func buildReviewView(ctx context.Context, reviews []ordermodel.OrderReview) ([]R
 		view := ReviewView{
 			OrderReview: r,
 			OrderNo:     orderMap[r.OrderID].OrderNo,
+			Images:      decodeImageURLs(r.ImagesJSON),
 			Appends:     appendMap[r.ID],
 		}
 		if item, ok := itemMap[r.OrderItemID]; ok {
@@ -285,6 +339,7 @@ func SubmitOrderReview(ctx context.Context, req SubmitOrderReviewReq) error {
 					ProductScore:   clampScore(item.ProductScore),
 					LogisticsScore: clampScore(req.LogisticsScore),
 					Content:        strings.TrimSpace(item.Content),
+					ImagesJSON:     encodeImageURLs(item.Images),
 				}
 				if err := tx.Create(review).Error; err != nil {
 					return err
@@ -306,6 +361,7 @@ func SubmitOrderReview(ctx context.Context, req SubmitOrderReviewReq) error {
 					"product_score":   clampScore(item.ProductScore),
 					"logistics_score": clampScore(req.LogisticsScore),
 					"content":         strings.TrimSpace(item.Content),
+					"images_json":     encodeImageURLs(item.Images),
 					"edited_times":    gorm.Expr("edited_times + ?", 1),
 				}
 				if err := tx.Model(&ordermodel.OrderReview{}).Where("id = ?", review.ID).Updates(updates).Error; err != nil {
@@ -314,8 +370,9 @@ func SubmitOrderReview(ctx context.Context, req SubmitOrderReviewReq) error {
 			}
 		case ReviewModeAppend:
 			appendContent := strings.TrimSpace(req.AppendContent)
-			if appendContent == "" {
-				return errors.New("追评内容不能为空")
+			appendImages := normalizeImageURLs(req.AppendImages)
+			if appendContent == "" && len(appendImages) == 0 {
+				return errors.New("追评内容或图片不能为空")
 			}
 			createdAny := false
 			for _, item := range req.Items {
@@ -333,6 +390,7 @@ func SubmitOrderReview(ctx context.Context, req SubmitOrderReviewReq) error {
 					ReviewID: root.ID,
 					UserID:   req.UserID,
 					Content:  appendContent,
+					ImagesJSON: encodeImageURLs(appendImages),
 				}
 				if err := tx.Create(appendRow).Error; err != nil {
 					return err
@@ -427,6 +485,7 @@ func GetOrderReviewMeta(ctx context.Context, userID, orderID uint64) (*OrderRevi
 			opt.ProductScore = review.ProductScore
 			opt.LogisticsScore = review.LogisticsScore
 			opt.Content = review.Content
+			opt.Images = decodeImageURLs(review.ImagesJSON)
 		}
 		options = append(options, opt)
 	}

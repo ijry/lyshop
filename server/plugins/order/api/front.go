@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	driverStorage "github.com/ijry/lyshop/core/driver/storage"
 	"github.com/ijry/lyshop/core/middleware"
 	"github.com/ijry/lyshop/core/response"
 	ordermodel "github.com/ijry/lyshop/plugins/order/model"
@@ -29,6 +30,7 @@ func RegisterFrontRoutes(g *gin.RouterGroup) {
 	auth.GET("/orders", myOrders)
 	auth.GET("/orders/:id", myOrderDetail)
 	auth.GET("/orders/:id/review", myOrderReviewMeta)
+	auth.POST("/upload", frontUploadFile)
 	auth.POST("/orders/:id/pay", payOrder)
 	auth.POST("/orders/:id/review", reviewOrder)
 }
@@ -193,6 +195,25 @@ func myOrderReviewMeta(c *gin.Context) {
 	response.OK(c, meta)
 }
 
+func frontUploadFile(c *gin.Context) {
+	fh, err := c.FormFile("file")
+	if err != nil {
+		response.Fail(c, 400, "请选择文件")
+		return
+	}
+	driver, err := driverStorage.Get()
+	if err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	result, err := driver.Upload(c.Request.Context(), fh)
+	if err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, result)
+}
+
 func reviewOrder(c *gin.Context) {
 	userID, _ := c.Get("user_id")
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
@@ -200,12 +221,15 @@ func reviewOrder(c *gin.Context) {
 		Mode           string `json:"mode"`
 		LogisticsScore int8   `json:"logistics_score"`
 		Items          []struct {
-			OrderItemID  uint64 `json:"order_item_id"`
-			ProductScore int8   `json:"product_score"`
-			Content      string `json:"content"`
+			OrderItemID  uint64   `json:"order_item_id"`
+			ProductScore int8     `json:"product_score"`
+			Content      string   `json:"content"`
+			Images       []string `json:"images"`
 		} `json:"items"`
-		AppendContent string `json:"append_content"`
-		Content       string `json:"content"`
+		AppendContent string   `json:"append_content"`
+		Content       string   `json:"content"`
+		AppendImages  []string `json:"append_images"`
+		Images        []string `json:"images"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Fail(c, 400, err.Error())
@@ -218,6 +242,7 @@ func reviewOrder(c *gin.Context) {
 			OrderItemID:  item.OrderItemID,
 			ProductScore: item.ProductScore,
 			Content:      item.Content,
+			Images:       item.Images,
 		})
 	}
 	if len(items) == 0 {
@@ -235,6 +260,7 @@ func reviewOrder(c *gin.Context) {
 				OrderItemID:  item.ID,
 				ProductScore: 5,
 				Content:      seedContent,
+				Images:       req.Images,
 			})
 		}
 		if ordersvc.ReviewMode(req.Mode) == ordersvc.ReviewModeAppend && strings.TrimSpace(req.AppendContent) == "" {
@@ -249,6 +275,7 @@ func reviewOrder(c *gin.Context) {
 		LogisticsScore: req.LogisticsScore,
 		Items:          items,
 		AppendContent:  req.AppendContent,
+		AppendImages:   req.AppendImages,
 	}); err != nil {
 		response.Fail(c, 500, err.Error())
 		return

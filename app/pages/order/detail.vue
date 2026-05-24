@@ -45,6 +45,29 @@
             <text class="text-24rpx text-gray-700 block">{{ rv.product_title }}</text>
             <text class="text-22rpx text-gray-400 block mt-6rpx">商品 {{ rv.product_score }} / 物流 {{ rv.logistics_score }}</text>
             <text class="text-24rpx text-gray-600 block mt-10rpx">{{ rv.content || '未填写评价' }}</text>
+            <view v-if="rv.images?.length" class="flex flex-wrap gap-10rpx mt-12rpx">
+              <image
+                v-for="(img, idx) in rv.images"
+                :key="img + idx"
+                :src="img"
+                mode="aspectFill"
+                style="width: 120rpx; height: 120rpx; border-radius: 12rpx;"
+              />
+            </view>
+            <view v-if="rv.appends?.length" class="mt-12rpx bg-gray-50 rounded-12rpx p-12rpx">
+              <view v-for="ap in rv.appends" :key="ap.id" class="mb-10rpx last:mb-0">
+                <text class="text-22rpx text-gray-500 block">追加：{{ ap.content || '仅图片追评' }}</text>
+                <view v-if="ap.images?.length" class="flex flex-wrap gap-10rpx mt-8rpx">
+                  <image
+                    v-for="(img, idx) in ap.images"
+                    :key="img + idx"
+                    :src="img"
+                    mode="aspectFill"
+                    style="width: 108rpx; height: 108rpx; border-radius: 10rpx;"
+                  />
+                </view>
+              </view>
+            </view>
           </view>
         </view>
         <text v-else class="text-24rpx text-gray-400">暂无评价</text>
