@@ -96,7 +96,7 @@
         <div v-if="activeMenu === 'overview' || activeMenu === 'addresses'" class="card p-6">
           <div class="flex-between mb-4">
             <h3 class="text-base font-bold text-gray-900">收货地址</h3>
-            <button class="btn-primary text-xs !px-4 !py-1.5">新增地址</button>
+            <button class="btn-primary text-xs !px-4 !py-1.5" @click="openAddressEditor()">新增地址</button>
           </div>
           <div v-if="addresses.length" class="space-y-3">
             <div v-for="addr in addresses" :key="addr.id"
@@ -108,6 +108,10 @@
                   <span v-if="addr.is_default"
                     class="text-xs bg-red-50 text-red-600 px-2 py-0.5 rounded">默认</span>
                 </div>
+                <div class="flex items-center gap-2">
+                  <button class="text-xs text-blue-600 hover:underline" @click="openAddressEditor(addr)">编辑</button>
+                  <button class="text-xs text-red-500 hover:underline" @click="removeAddress(addr)">删除</button>
+                </div>
               </div>
               <p class="text-sm text-gray-500">{{ addr.province }}{{ addr.city }}{{ addr.district }} {{ addr.detail }}</p>
             </div>
@@ -116,18 +120,54 @@
         </div>
       </div>
     </div>
+
+    <div v-if="showAddressDialog" class="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4" @click.self="closeAddressEditor">
+      <div class="w-full max-w-lg rounded-2xl bg-white shadow-xl p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">{{ editingAddressID ? '编辑地址' : '新增地址' }}</h3>
+        <div class="space-y-3">
+          <input v-model.trim="addressForm.name" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-200" placeholder="收货人姓名" />
+          <input v-model.trim="addressForm.phone" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-200" placeholder="手机号" maxlength="11" />
+          <div class="grid grid-cols-3 gap-3">
+            <input v-model.trim="addressForm.province" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-200" placeholder="省" />
+            <input v-model.trim="addressForm.city" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-200" placeholder="市" />
+            <input v-model.trim="addressForm.district" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-200" placeholder="区" />
+          </div>
+          <input v-model.trim="addressForm.detail" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-red-200" placeholder="详细地址" />
+          <label class="flex items-center gap-2 text-sm text-gray-600">
+            <input type="checkbox" v-model="addressForm.is_default" />
+            设为默认地址
+          </label>
+        </div>
+        <div class="flex justify-end gap-2 mt-5">
+          <button class="btn-outline !px-5 !py-2 text-xs" @click="closeAddressEditor">取消</button>
+          <button class="btn-primary !px-5 !py-2 text-xs" :disabled="savingAddress" @click="saveAddress">保存</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { get } from '@/api/request'
+import { del, get, post, put } from '@/api/request'
 
 const user = ref<any>({})
 const coupons = ref<any[]>([])
 const pointsLogs = ref<any[]>([])
 const addresses = ref<any[]>([])
 const activeMenu = ref('overview')
+const showAddressDialog = ref(false)
+const savingAddress = ref(false)
+const editingAddressID = ref(0)
+const addressForm = ref({
+  name: '',
+  phone: '',
+  province: '',
+  city: '',
+  district: '',
+  detail: '',
+  is_default: false,
+})
 
 const menuItems = [
   { key: 'overview', label: '账户总览', icon: 'i-carbon-dashboard', action: () => activeMenu.value = 'overview' },
@@ -155,4 +195,97 @@ onMounted(async () => {
   pointsLogs.value = pointsData?.list || []
   addresses.value = addrData || []
 })
+
+function resetAddressForm() {
+  editingAddressID.value = 0
+  addressForm.value = {
+    name: '',
+    phone: '',
+    province: '',
+    city: '',
+    district: '',
+    detail: '',
+    is_default: false,
+  }
+}
+
+function openAddressEditor(addr?: any) {
+  if (!addr) {
+    resetAddressForm()
+    showAddressDialog.value = true
+    return
+  }
+  editingAddressID.value = Number(addr.id || 0)
+  addressForm.value = {
+    name: String(addr.name || ''),
+    phone: String(addr.phone || ''),
+    province: String(addr.province || ''),
+    city: String(addr.city || ''),
+    district: String(addr.district || ''),
+    detail: String(addr.detail || ''),
+    is_default: Number(addr.is_default || 0) === 1,
+  }
+  showAddressDialog.value = true
+}
+
+function closeAddressEditor() {
+  showAddressDialog.value = false
+  resetAddressForm()
+}
+
+function validateAddress() {
+  if (!addressForm.value.name.trim()) return '请输入收货人姓名'
+  if (!/^1\d{10}$/.test(addressForm.value.phone)) return '请输入正确手机号'
+  if (!addressForm.value.province.trim() || !addressForm.value.city.trim() || !addressForm.value.district.trim()) return '请输入省市区'
+  if (!addressForm.value.detail.trim()) return '请输入详细地址'
+  return ''
+}
+
+async function refreshAddresses() {
+  addresses.value = await get<any[]>('/api/v1/addresses') || []
+}
+
+async function saveAddress() {
+  const error = validateAddress()
+  if (error) {
+    alert(error)
+    return
+  }
+  if (savingAddress.value) return
+  savingAddress.value = true
+  const payload = {
+    name: addressForm.value.name.trim(),
+    phone: addressForm.value.phone.trim(),
+    province: addressForm.value.province.trim(),
+    city: addressForm.value.city.trim(),
+    district: addressForm.value.district.trim(),
+    detail: addressForm.value.detail.trim(),
+    is_default: addressForm.value.is_default ? 1 : 0,
+  }
+  try {
+    if (editingAddressID.value) {
+      await put(`/api/v1/addresses/${editingAddressID.value}`, payload)
+    } else {
+      await post('/api/v1/addresses', payload)
+    }
+    await refreshAddresses()
+    closeAddressEditor()
+  } catch (error: any) {
+    alert(error?.message || '保存失败')
+  } finally {
+    savingAddress.value = false
+  }
+}
+
+async function removeAddress(addr: any) {
+  const id = Number(addr?.id || 0)
+  if (!id) return
+  if (!window.confirm('确认删除该地址吗？')) return
+  try {
+    await del(`/api/v1/addresses/${id}`)
+    await refreshAddresses()
+  } catch (error: any) {
+    alert(error?.message || '删除失败')
+  }
+}
 </script>

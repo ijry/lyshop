@@ -46,10 +46,10 @@
             <u-button size="mini" plain text="查看详情" shape="circle" @click="goDetail(o.id)" />
           </view>
           <view class="action-btn-wrap" v-if="o.status === 1">
-            <u-button size="mini" type="primary" text="去付款" shape="circle" @click="toPay(o)" />
+            <u-button size="mini" type="primary" text="去付款" shape="circle" :loading="actioningID === o.id && actioningType === 'pay'" @click="toPay(o)" />
           </view>
-          <view class="action-btn-wrap" v-if="o.status === 4">
-            <u-button size="mini" type="success" text="评价" shape="circle" plain />
+          <view class="action-btn-wrap" v-if="o.status === 3 || o.status === 4">
+            <u-button size="mini" type="success" text="评价" shape="circle" plain :loading="actioningID === o.id && actioningType === 'review'" @click="toReview(o)" />
           </view>
         </view>
       </view>
@@ -59,10 +59,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { get } from '@/utils/request'
+import { get, post } from '@/utils/request'
 
 const orders = ref<any[]>([])
 const activeTab = ref(0)
+const actioningID = ref<number>(0)
+const actioningType = ref<'pay' | 'review' | ''>('')
 
 const tabs = [
   { name: '全部' }, { name: '待付款' }, { name: '待发货' },
@@ -96,8 +98,47 @@ function goDetail(id: number) {
   uni.navigateTo({ url: `/pages/order/detail?id=${id}` })
 }
 
-function toPay(_order: any) {
-  uni.showToast({ title: '支付功能开发中', icon: 'none' })
+async function toPay(order: any) {
+  const id = Number(order?.id || 0)
+  if (!id || actioningID.value) return
+  actioningID.value = id
+  actioningType.value = 'pay'
+  try {
+    await post(`/api/v1/orders/${id}/pay`)
+    uni.showToast({ title: '支付成功', icon: 'success' })
+    await loadOrders()
+  } catch {
+    uni.showToast({ title: '支付失败', icon: 'none' })
+  } finally {
+    actioningID.value = 0
+    actioningType.value = ''
+  }
+}
+
+function toReview(order: any) {
+  const id = Number(order?.id || 0)
+  if (!id || actioningID.value) return
+  uni.showModal({
+    title: '订单评价',
+    editable: true,
+    placeholderText: '请输入评价内容（选填）',
+    confirmText: '提交',
+    success: async (res: any) => {
+      if (!res?.confirm) return
+      actioningID.value = id
+      actioningType.value = 'review'
+      try {
+        await post(`/api/v1/orders/${id}/review`, { content: String(res?.content || '').trim() })
+        uni.showToast({ title: '评价成功', icon: 'success' })
+        await loadOrders()
+      } catch {
+        uni.showToast({ title: '评价失败', icon: 'none' })
+      } finally {
+        actioningID.value = 0
+        actioningType.value = ''
+      }
+    },
+  } as any)
 }
 
 onMounted(loadOrders)

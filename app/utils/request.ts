@@ -60,3 +60,9 @@ export const get = <T>(url: string, data?: any) =>
 
 export const post = <T>(url: string, data?: any) =>
   request<T>({ url, method: 'POST', data })
+
+export const put = <T>(url: string, data?: any) =>
+  request<T>({ url, method: 'PUT', data })
+
+export const del = <T>(url: string, data?: any) =>
+  request<T>({ url, method: 'DELETE', data })

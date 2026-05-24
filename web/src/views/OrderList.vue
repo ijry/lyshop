@@ -48,8 +48,8 @@
 
         <div class="flex justify-end mt-3 gap-2">
           <button class="btn-outline !px-5 text-xs" @click="goDetail(o.id)">查看详情</button>
-          <button class="btn-primary !px-6 text-xs" v-if="o.status === 1">去付款</button>
-          <button class="btn-outline !px-5 text-xs" v-if="o.status === 4">评价</button>
+          <button class="btn-primary !px-6 text-xs" v-if="o.status === 1" :disabled="actioningID === o.id" @click="pay(o)">去付款</button>
+          <button class="btn-outline !px-5 text-xs" v-if="o.status === 3 || o.status === 4" :disabled="actioningID === o.id" @click="review(o)">评价</button>
         </div>
       </div>
     </div>
@@ -59,11 +59,12 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { get } from '@/api/request'
+import { get, post } from '@/api/request'
 
 const router = useRouter()
 const orders = ref<any[]>([])
 const activeTab = ref(0)
+const actioningID = ref(0)
 const tabs = ['全部', '待付款', '待发货', '待收货', '已完成']
 const statusValues = [0, 1, 2, 3, 4]
 
@@ -88,6 +89,36 @@ async function loadOrders() {
 
 function goDetail(id: number) {
   router.push(`/orders/${id}`)
+}
+
+async function pay(order: any) {
+  const id = Number(order?.id || 0)
+  if (!id || actioningID.value) return
+  actioningID.value = id
+  try {
+    await post(`/api/v1/orders/${id}/pay`)
+    await loadOrders()
+  } catch (error: any) {
+    alert(error?.message || '支付失败')
+  } finally {
+    actioningID.value = 0
+  }
+}
+
+async function review(order: any) {
+  const id = Number(order?.id || 0)
+  if (!id || actioningID.value) return
+  const raw = window.prompt('请输入评价内容（选填）', '')
+  if (raw === null) return
+  actioningID.value = id
+  try {
+    await post(`/api/v1/orders/${id}/review`, { content: raw.trim() })
+    await loadOrders()
+  } catch (error: any) {
+    alert(error?.message || '评价失败')
+  } finally {
+    actioningID.value = 0
+  }
 }
 
 onMounted(loadOrders)

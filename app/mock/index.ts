@@ -24,7 +24,13 @@ function parseQuery(url: string) {
   return Object.fromEntries(new URLSearchParams(url.slice(queryIndex + 1)).entries())
 }
 
-// URL pattern → mock data (supports both exact and prefix match)
+const orderListSource = Array.isArray((orders as any)?.list)
+  ? JSON.parse(JSON.stringify((orders as any).list))
+  : []
+const addressListSource = Array.isArray(addresses)
+  ? JSON.parse(JSON.stringify(addresses))
+  : []
+
 const routes: Record<string, any> = {
   'GET /api/v1/index/decor': indexDecor,
   'GET /api/v1/categories': categories,
@@ -33,7 +39,7 @@ const routes: Record<string, any> = {
   'GET /api/v1/products/': productDetail, // prefix match for /products/:id
   'GET /api/v1/cart': cart,
   'GET /api/v1/orders': orders,
-  'GET /api/v1/orders/': (orders as any)?.list?.[0] || null,
+  'GET /api/v1/orders/': orderListSource[0] || null,
   'GET /api/v1/user/coupons': userCoupons,
   'GET /api/v1/user/profile': userProfile,
   'GET /api/v1/user/points/logs': { list: [
@@ -52,11 +58,70 @@ const routes: Record<string, any> = {
   'POST /api/v1/orders': { order_no: 'DEMO202600001', id: 1, status: 1 },
   'POST /api/v1/auth/sms/send': { dev_code: '123456' },
   'POST /api/v1/auth/sms/login': { token: 'demo_token_mock' },
-  'POST /api/v1/addresses': { id: 3 },
-'GET /api/v1/checkin/status': { checked_today: false, consecutive_days: 3, month_dates: ['2026-05-17','2026-05-20','2026-05-21'], month_count: 3, month_points: 40 },  'GET /api/v1/checkin/rules': [{ day: 0, points: 10 }, { day: 3, points: 20 }, { day: 7, points: 50 }],  'POST /api/v1/checkin': { points: 20, consecutive_days: 4 },
+  'GET /api/v1/checkin/status': { checked_today: false, consecutive_days: 3, month_dates: ['2026-05-17', '2026-05-20', '2026-05-21'], month_count: 3, month_points: 40 },
+  'GET /api/v1/checkin/rules': [{ day: 0, points: 10 }, { day: 3, points: 20 }, { day: 7, points: 50 }],
+  'POST /api/v1/checkin': { points: 20, consecutive_days: 4 },
   'GET /api/v1/im/session': { id: 1, user_id: 1, status: 2 },
   'GET /api/v1/im/messages': { list: [], total: 0 },
-'GET /api/v1/messages/unread': { system: 2, order: 1, marketing: 3, im: 0 },  'GET /api/v1/messages': { list: [    { id: 1, group: 'system', title: '系统升级通知', content: 'LYShop 已升级至 2.0 版本', is_read: 0, created_at: '2026-05-22T10:00:00Z' },    { id: 2, group: 'order', title: '订单发货通知', content: '您的订单已发货', is_read: 0, created_at: '2026-05-21T14:00:00Z' },    { id: 3, group: 'marketing', title: '618大促即将开始', content: '全场满300减50', is_read: 0, created_at: '2026-05-20T08:00:00Z' },    { id: 4, group: 'marketing', title: '优惠券到账', content: '满100减20优惠券已到账', is_read: 1, created_at: '2026-05-18T12:00:00Z' },    { id: 5, group: 'system', title: '欢迎注册', content: '新人专享优惠等你来领', is_read: 1, created_at: '2026-05-15T10:00:00Z' },  ], total: 5 },
+  'GET /api/v1/messages/unread': { system: 2, order: 1, marketing: 3, im: 0 },
+  'GET /api/v1/messages': {
+    list: [
+      { id: 1, group: 'system', title: '系统升级通知', content: 'LYShop 已升级至 2.0 版本', is_read: 0, created_at: '2026-05-22T10:00:00Z' },
+      { id: 2, group: 'order', title: '订单发货通知', content: '您的订单已发货', is_read: 0, created_at: '2026-05-21T14:00:00Z' },
+      { id: 3, group: 'marketing', title: '618大促即将开始', content: '全场满300减50', is_read: 0, created_at: '2026-05-20T08:00:00Z' },
+      { id: 4, group: 'marketing', title: '优惠券到账', content: '满100减20优惠券已到账', is_read: 1, created_at: '2026-05-18T12:00:00Z' },
+      { id: 5, group: 'system', title: '欢迎注册', content: '新人专享优惠等你来领', is_read: 1, created_at: '2026-05-15T10:00:00Z' },
+    ],
+    total: 5,
+  },
+}
+
+function listOrders(status: number) {
+  const list = status > 0
+    ? orderListSource.filter((item: any) => Number(item.status) === status)
+    : orderListSource.slice()
+  return { list, total: list.length, page: 1, size: 20 }
+}
+
+function upsertAddress(data: Record<string, any>, id?: number) {
+  const payload = {
+    name: String(data.name || '').trim(),
+    phone: String(data.phone || '').trim(),
+    province: String(data.province || '').trim(),
+    city: String(data.city || '').trim(),
+    district: String(data.district || '').trim(),
+    detail: String(data.detail || '').trim(),
+    is_default: Number(data.is_default || 0) === 1 ? 1 : 0,
+  }
+
+  if (id) {
+    const idx = addressListSource.findIndex((item: any) => Number(item.id) === id)
+    if (idx < 0) return null
+    if (payload.is_default === 1) {
+      addressListSource.forEach((item: any) => { item.is_default = 0 })
+    }
+    addressListSource[idx] = { ...addressListSource[idx], ...payload }
+    return addressListSource[idx]
+  }
+
+  const nextID = Math.max(0, ...addressListSource.map((item: any) => Number(item.id || 0))) + 1
+  if (payload.is_default === 1 || addressListSource.length === 0) {
+    addressListSource.forEach((item: any) => { item.is_default = 0 })
+    payload.is_default = 1
+  }
+  const created = { id: nextID, user_id: 1, ...payload }
+  addressListSource.unshift(created)
+  return created
+}
+
+function removeAddress(id: number) {
+  const idx = addressListSource.findIndex((item: any) => Number(item.id) === id)
+  if (idx < 0) return
+  const removed = addressListSource[idx]
+  addressListSource.splice(idx, 1)
+  if (Number(removed.is_default) === 1 && addressListSource.length > 0) {
+    addressListSource[0].is_default = 1
+  }
 }
 
 /**
@@ -67,6 +132,50 @@ export function matchMock(method: string, url: string, params?: Record<string, a
   const [path] = url.split('?')
   const key = `${upperMethod} ${path}`
   const query = { ...parseQuery(url), ...(params || {}) }
+
+  if (upperMethod === 'GET' && path === '/api/v1/orders') {
+    const status = Number(query.status || 0)
+    return { matched: true, data: listOrders(status) }
+  }
+
+  if (upperMethod === 'POST' && path === '/api/v1/addresses') {
+    return { matched: true, data: upsertAddress(params || {}) }
+  }
+  if (upperMethod === 'PUT' && path.startsWith('/api/v1/addresses/')) {
+    const id = Number(path.split('/').pop() || 0)
+    return { matched: true, data: upsertAddress(params || {}, id) }
+  }
+  if (upperMethod === 'DELETE' && path.startsWith('/api/v1/addresses/')) {
+    const id = Number(path.split('/').pop() || 0)
+    removeAddress(id)
+    return { matched: true, data: null }
+  }
+  if (upperMethod === 'GET' && path === '/api/v1/addresses') {
+    return { matched: true, data: addressListSource.slice() }
+  }
+
+  if (upperMethod === 'POST' && path.startsWith('/api/v1/orders/') && path.endsWith('/pay')) {
+    const id = Number(path.split('/')[4] || 0)
+    const target = orderListSource.find((item: any) => Number(item.id) === id)
+    if (target && Number(target.status) === 1) {
+      target.status = 2
+      target.payment_method = target.payment_method || 'wechat'
+      target.paid_at = new Date().toISOString()
+    }
+    return { matched: true, data: null }
+  }
+  if (upperMethod === 'POST' && path.startsWith('/api/v1/orders/') && path.endsWith('/review')) {
+    const id = Number(path.split('/')[4] || 0)
+    const target = orderListSource.find((item: any) => Number(item.id) === id)
+    if (target) {
+      target.status = 4
+      const content = String(params?.content || '').trim()
+      if (content) {
+        target.remark = target.remark ? `${target.remark} | 评价:${content}` : `评价:${content}`
+      }
+    }
+    return { matched: true, data: null }
+  }
 
   // Exact match
   if (key in routes) {
@@ -88,13 +197,6 @@ export function matchMock(method: string, url: string, params?: Record<string, a
       const pageList = list.slice(offset, offset + size)
       return { matched: true, data: { ...data, list: pageList, total: list.length, page, size } }
     }
-    if (upperMethod === 'GET' && path === '/api/v1/orders' && query.status) {
-      const status = Number(query.status)
-      const list = Array.isArray(data?.list)
-        ? data.list.filter((item: any) => Number(item.status) === status)
-        : []
-      return { matched: true, data: { ...data, list, total: list.length } }
-    }
     return { matched: true, data }
   }
 
@@ -103,8 +205,7 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     if (key.startsWith(pattern) && pattern.endsWith('/')) {
       if (pattern === 'GET /api/v1/orders/') {
         const id = Number(path.split('/').pop() || 0)
-        const source = Array.isArray((orders as any)?.list) ? (orders as any).list : []
-        const detail = source.find((item: any) => Number(item.id) === id) || null
+        const detail = orderListSource.find((item: any) => Number(item.id) === id) || null
         return { matched: true, data: detail }
       }
       return { matched: true, data: routes[pattern] }
@@ -112,7 +213,7 @@ export function matchMock(method: string, url: string, params?: Record<string, a
   }
 
   // Default: return empty success for unmatched POST/PUT/DELETE
-  if (['POST', 'PUT', 'DELETE'].includes(method.toUpperCase())) {
+  if (['POST', 'PUT', 'DELETE'].includes(upperMethod)) {
     return { matched: true, data: null }
   }
 

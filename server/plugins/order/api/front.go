@@ -21,10 +21,14 @@ func RegisterFrontRoutes(g *gin.RouterGroup) {
 
 	auth.GET("/addresses", listAddresses)
 	auth.POST("/addresses", createAddress)
+	auth.PUT("/addresses/:id", updateAddress)
+	auth.DELETE("/addresses/:id", deleteAddress)
 
 	auth.POST("/orders", createOrder)
 	auth.GET("/orders", myOrders)
 	auth.GET("/orders/:id", myOrderDetail)
+	auth.POST("/orders/:id/pay", payOrder)
+	auth.POST("/orders/:id/review", reviewOrder)
 }
 
 func getCart(c *gin.Context) {
@@ -77,9 +81,12 @@ func removeFromCart(c *gin.Context) {
 
 func listAddresses(c *gin.Context) {
 	userID, _ := c.Get("user_id")
-	var list []ordermodel.Address
-	response.OK(c, list) // placeholder — full impl in later iteration
-	_ = userID
+	list, err := ordersvc.ListAddresses(c.Request.Context(), userID.(uint64))
+	if err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, list)
 }
 
 func createAddress(c *gin.Context) {
@@ -95,6 +102,32 @@ func createAddress(c *gin.Context) {
 		return
 	}
 	response.OK(c, addr)
+}
+
+func updateAddress(c *gin.Context) {
+	userID, _ := c.Get("user_id")
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	var addr ordermodel.Address
+	if err := c.ShouldBindJSON(&addr); err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	saved, err := ordersvc.UpdateAddress(c.Request.Context(), userID.(uint64), id, addr)
+	if err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, saved)
+}
+
+func deleteAddress(c *gin.Context) {
+	userID, _ := c.Get("user_id")
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err := ordersvc.DeleteAddress(c.Request.Context(), userID.(uint64), id); err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, nil)
 }
 
 func createOrder(c *gin.Context) {
@@ -135,4 +168,28 @@ func myOrderDetail(c *gin.Context) {
 		return
 	}
 	response.OK(c, detail)
+}
+
+func payOrder(c *gin.Context) {
+	userID, _ := c.Get("user_id")
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err := ordersvc.PayOrder(c.Request.Context(), userID.(uint64), id); err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, nil)
+}
+
+func reviewOrder(c *gin.Context) {
+	userID, _ := c.Get("user_id")
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	var req struct {
+		Content string `json:"content"`
+	}
+	_ = c.ShouldBindJSON(&req)
+	if err := ordersvc.ReviewOrder(c.Request.Context(), userID.(uint64), id, req.Content); err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, nil)
 }

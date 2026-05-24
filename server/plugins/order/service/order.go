@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/ijry/lyshop/core/db"
@@ -217,7 +218,137 @@ func ShipOrder(ctx context.Context, orderID uint64, trackingNo string) error {
 
 // CreateAddress saves a new address for a user.
 func CreateAddress(ctx context.Context, addr *ordermodel.Address) error {
-	return db.DB.WithContext(ctx).Create(addr).Error
+	return db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var count int64
+		if err := tx.Model(&ordermodel.Address{}).Where("user_id = ?", addr.UserID).Count(&count).Error; err != nil {
+			return err
+		}
+		if count == 0 {
+			addr.IsDefault = 1
+		}
+		if addr.IsDefault == 1 {
+			if err := tx.Model(&ordermodel.Address{}).Where("user_id = ?", addr.UserID).Update("is_default", 0).Error; err != nil {
+				return err
+			}
+		}
+		return tx.Create(addr).Error
+	})
+}
+
+func ListAddresses(ctx context.Context, userID uint64) ([]ordermodel.Address, error) {
+	var list []ordermodel.Address
+	err := db.DB.WithContext(ctx).
+		Where("user_id = ?", userID).
+		Order("is_default desc, id desc").
+		Find(&list).Error
+	return list, err
+}
+
+func UpdateAddress(ctx context.Context, userID, id uint64, req ordermodel.Address) (*ordermodel.Address, error) {
+	var addr ordermodel.Address
+	if err := db.DB.WithContext(ctx).Where("id = ? AND user_id = ?", id, userID).First(&addr).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("地址不存在")
+		}
+		return nil, err
+	}
+
+	err := db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if req.IsDefault == 1 {
+			if err := tx.Model(&ordermodel.Address{}).Where("user_id = ?", userID).Update("is_default", 0).Error; err != nil {
+				return err
+			}
+		}
+
+		updates := map[string]any{
+			"name":       strings.TrimSpace(req.Name),
+			"phone":      strings.TrimSpace(req.Phone),
+			"province":   strings.TrimSpace(req.Province),
+			"city":       strings.TrimSpace(req.City),
+			"district":   strings.TrimSpace(req.District),
+			"detail":     strings.TrimSpace(req.Detail),
+			"is_default": req.IsDefault,
+		}
+		return tx.Model(&ordermodel.Address{}).Where("id = ? AND user_id = ?", id, userID).Updates(updates).Error
+	})
+	if err != nil {
+		return nil, err
+	}
+	if err := db.DB.WithContext(ctx).Where("id = ? AND user_id = ?", id, userID).First(&addr).Error; err != nil {
+		return nil, err
+	}
+	return &addr, nil
+}
+
+func DeleteAddress(ctx context.Context, userID, id uint64) error {
+	return db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var target ordermodel.Address
+		if err := tx.Where("id = ? AND user_id = ?", id, userID).First(&target).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return errors.New("地址不存在")
+			}
+			return err
+		}
+		if err := tx.Delete(&ordermodel.Address{}, target.ID).Error; err != nil {
+			return err
+		}
+		if target.IsDefault == 1 {
+			var another ordermodel.Address
+			if err := tx.Where("user_id = ?", userID).Order("id desc").First(&another).Error; err == nil {
+				if err := tx.Model(&ordermodel.Address{}).Where("id = ?", another.ID).Update("is_default", 1).Error; err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	})
+}
+
+func PayOrder(ctx context.Context, userID, orderID uint64) error {
+	now := time.Now()
+	res := db.DB.WithContext(ctx).Model(&ordermodel.Order{}).
+		Where("id = ? AND user_id = ? AND status = ?", orderID, userID, ordermodel.OrderStatusPending).
+		Updates(map[string]any{
+			"status":  ordermodel.OrderStatusPaid,
+			"paid_at": &now,
+		})
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return errors.New("订单不存在或当前状态不可支付")
+	}
+	return nil
+}
+
+func ReviewOrder(ctx context.Context, userID, orderID uint64, content string) error {
+	var order ordermodel.Order
+	if err := db.DB.WithContext(ctx).Where("id = ? AND user_id = ?", orderID, userID).First(&order).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("订单不存在")
+		}
+		return err
+	}
+	remark := strings.TrimSpace(order.Remark)
+	if content != "" {
+		if remark != "" {
+			remark += " | "
+		}
+		remark += "评价:" + strings.TrimSpace(content)
+	}
+	res := db.DB.WithContext(ctx).Model(&ordermodel.Order{}).
+		Where("id = ? AND user_id = ?", orderID, userID).
+		Updates(map[string]any{
+			"remark": remark,
+			"status": ordermodel.OrderStatusCompleted,
+		})
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return errors.New("订单不存在")
+	}
+	return nil
 }
 
 func GetOrderDetail(ctx context.Context, userID, orderID uint64) (*OrderView, error) {

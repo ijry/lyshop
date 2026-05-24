@@ -36,6 +36,16 @@ export async function get<T = any>(url: string, params?: any): Promise<T> {
 }
 
 export async function post<T = any>(url: string, data?: any): Promise<T> {
-  if (MOCK_ENABLED) return mockRequest<T>('POST', url)
+  if (MOCK_ENABLED) return mockRequest<T>('POST', url, data)
   return http.post(url, data) as Promise<T>
+}
+
+export async function put<T = any>(url: string, data?: any): Promise<T> {
+  if (MOCK_ENABLED) return mockRequest<T>('PUT', url, data)
+  return http.put(url, data) as Promise<T>
+}
+
+export async function del<T = any>(url: string, data?: any): Promise<T> {
+  if (MOCK_ENABLED) return mockRequest<T>('DELETE', url, data)
+  return http.delete(url, { data }) as Promise<T>
 }
