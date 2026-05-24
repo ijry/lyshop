@@ -1,5 +1,8 @@
 import request from './request'
 
+// ---- Dashboard ----
+export const getDashboard = () => request.get('/dashboard')
+
 // ---- Product ----
 export const getCategories = () => request.get<never, any[]>('/categories')
 export const createCategory = (data: any) => request.post('/categories', data)

@@ -70,6 +70,14 @@ func Run() error {
 		menus := plugin.EnabledMenus(config.Global.Plugins.Enabled, permList)
 		c.JSON(200, menus)
 	})
+	adminAuth.GET("/dashboard", func(c *gin.Context) {
+		data, err := adminsvc.GetDashboard(c.Request.Context())
+		if err != nil {
+			response.Fail(c, 500, err.Error())
+			return
+		}
+		response.OK(c, data)
+	})
 
 	// Admin/Role management routes
 	apiadmin.RegisterRoutes(adminAuth)

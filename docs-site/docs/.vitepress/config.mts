@@ -56,6 +56,7 @@ export default defineConfig({
           items: [
             { text: "接口首页", link: "/api/" },
             { text: "认证接口", link: "/api/auth" },
+            { text: "后台概览接口", link: "/api/admin" },
             { text: "商品接口", link: "/api/product" },
             { text: "订单接口", link: "/api/order" },
             { text: "装修接口", link: "/api/decor" },
