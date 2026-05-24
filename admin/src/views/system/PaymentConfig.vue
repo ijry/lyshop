@@ -108,10 +108,21 @@ const savedMsg = ref('')
 
 const activeSchema = computed(() => schemas.value.find(s => s.plugin === activePlugin.value))
 
+function applyFieldDefaults(schema?: PluginSchema) {
+  if (!schema) return
+  for (const field of schema.fields) {
+    if (field.type !== 'select') continue
+    if (configValues.value[field.key]) continue
+    const first = field.options?.[0]
+    if (first?.value) configValues.value[field.key] = first.value
+  }
+}
+
 async function selectPlugin(pluginName: string) {
   activePlugin.value = pluginName
   const data: any = await request.get(`/config/${pluginName}`)
   configValues.value = data || {}
+  applyFieldDefaults(schemas.value.find(s => s.plugin === pluginName))
   showPw.value = {}
 }
 
@@ -131,7 +142,13 @@ async function save() {
 onMounted(async () => {
   try {
     const data: any = await request.get('/config/schemas')
-    schemas.value = data || []
+    const loaded = (data || []) as PluginSchema[]
+    loaded.sort((a, b) => {
+      if (a.plugin === 'storage_router') return -1
+      if (b.plugin === 'storage_router') return 1
+      return 0
+    })
+    schemas.value = loaded
     if (schemas.value.length) selectPlugin(schemas.value[0].plugin)
   } finally {
     loading.value = false
