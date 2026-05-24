@@ -13,7 +13,7 @@
             <p>售后单号：<span class="font-mono">{{ detail.case_no }}</span></p>
             <p>订单ID：{{ detail.order_id }}</p>
             <p>类型：{{ typeLabel(detail.case_type) }}</p>
-            <p>状态：{{ statusLabel(detail.status) }}</p>
+            <p>状态：{{ statusText(detail.status, detail.status_label) }}</p>
             <p>原因：{{ detail.reason }}</p>
             <p>申请说明：{{ detail.apply_content || '-' }}</p>
           </div>
@@ -23,7 +23,9 @@
           <h3 class="font-semibold text-slate-700 mb-4">状态日志</h3>
           <div v-if="detail.logs?.length" class="space-y-3">
             <div v-for="log in detail.logs" :key="log.id" class="border border-slate-100 rounded-lg p-3">
-              <p class="text-sm text-slate-700">{{ actionLabel(log.action) }}：{{ statusLabelOrDash(log.from_status) }} → {{ statusLabel(log.to_status) }}</p>
+              <p class="text-sm text-slate-700">
+                {{ actionLabel(log.action) }}：{{ statusLabelOrDash(log.from_status, log.from_status_label) }} → {{ statusText(log.to_status, log.to_status_label) }}
+              </p>
               <p class="text-xs text-slate-400 mt-1">{{ log.content || '-' }}</p>
               <p class="text-xs text-slate-400 mt-1">{{ formatDate(log.created_at) }}</p>
             </div>
@@ -51,7 +53,7 @@
             <div v-for="ship in detail.shipments" :key="ship.id" class="border border-slate-100 rounded-lg p-3 text-sm">
               <p>{{ shipmentTitle(ship) }}</p>
               <p class="text-xs text-slate-400 mt-1">{{ ship.company }} · {{ ship.tracking_no }}</p>
-              <p class="text-xs text-slate-400 mt-1">状态：{{ shipmentStatusLabel(ship.logistics_status) }}</p>
+              <p class="text-xs text-slate-400 mt-1">状态：{{ shipmentStatusText(ship.logistics_status, ship.logistics_status_label) }}</p>
               <p v-if="shipmentPrimaryTime(ship)" class="text-xs text-slate-400 mt-1">{{ shipmentTimeLabel(ship) }}：{{ formatDate(shipmentPrimaryTime(ship)) }}</p>
               <p v-if="ship.after_sale_case_id" class="text-xs text-slate-400 mt-1">关联售后单：#{{ ship.after_sale_case_id }}</p>
               <p v-if="ship.remark" class="text-xs text-slate-400 mt-1">备注：{{ ship.remark }}</p>
@@ -92,10 +94,22 @@ function actionLabel(action: string) {
   return actionLabels[String(action || '')] || action || '-'
 }
 
-function statusLabelOrDash(status: string) {
-  const value = String(status || '')
+function statusText(status: string, label?: string) {
+  const mapped = String(label || '').trim()
+  if (mapped) return mapped
+  return statusLabel(status)
+}
+
+function shipmentStatusText(status: string, label?: string) {
+  const mapped = String(label || '').trim()
+  if (mapped) return mapped
+  return shipmentStatusLabel(status)
+}
+
+function statusLabelOrDash(status: string, label?: string) {
+  const value = String(label || status || '')
   if (!value) return '-'
-  return statusLabel(value)
+  return statusText(status, label)
 }
 
 async function load() {

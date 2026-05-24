@@ -33,7 +33,7 @@
             <td class="px-4 py-3 text-xs font-mono text-slate-600">{{ item.case_no }}</td>
             <td class="px-4 py-3 text-slate-700">{{ typeLabel(item.case_type) }}</td>
             <td class="px-4 py-3 text-slate-600">#{{ item.order_id }}</td>
-            <td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs bg-slate-100 text-slate-600">{{ statusLabel(item.status) }}</span></td>
+            <td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs bg-slate-100 text-slate-600">{{ statusText(item.status, item.status_label) }}</span></td>
             <td class="px-4 py-3 text-xs text-slate-400">{{ formatDate(item.created_at) }}</td>
             <td class="px-4 py-3"><button class="text-blue-600 hover:underline text-xs" @click="goDetail(item.id)">查看</button></td>
           </tr>
@@ -70,6 +70,12 @@ const tabs = [
 const typeLabel = (v: string) => v === 'exchange' ? '换货' : '退货'
 const statusLabel = (v: string) => afterSaleStatusLabel(v)
 const formatDate = (v?: string) => v ? String(v).slice(0, 19).replace('T', ' ') : '-'
+
+function statusText(status: string, label?: string) {
+  const value = String(label || '').trim()
+  if (value) return value
+  return statusLabel(status)
+}
 
 function goDetail(id: number) {
   router.push(`/order/after-sale/detail/${id}`)
