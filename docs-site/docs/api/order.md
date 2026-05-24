@@ -43,6 +43,7 @@
 - 列表与详情统一返回 `items` 和 `amount_breakdown`，用于展示商品明细与价格体系。
 - 订单列表/详情升级返回 `shipments`、`latest_shipment`、`after_sale_summary`，并继续保留 `tracking_no` 兼容旧前端。
 - `shipments` 单条轨迹包含方向（`direction`）、业务类型（`biz_type`）、物流状态（`logistics_status`）、时间字段（`shipped_at/signed_at/created_at`）、备注（`remark`）和关联售后单（`after_sale_case_id`）。
+- 订单列表可直接使用 `latest_shipment` 展示最新物流状态，并通过 `shipments[*].biz_type=reship` 标注补发摘要。
 
 ## 发货接口升级（兼容）
 

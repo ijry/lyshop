@@ -41,6 +41,16 @@
           </div>
         </div>
 
+        <div v-if="hasShipmentSummary(o)" class="flex items-center flex-wrap gap-2 mb-4">
+          <span v-if="hasReship(o)" class="text-[11px] px-2 py-0.5 rounded-full bg-orange-50 text-orange-600">含补发</span>
+          <span v-if="o.latest_shipment?.tracking_no" class="text-xs text-gray-500">
+            最新物流：{{ shipmentStatusLabel(o.latest_shipment?.logistics_status) }} · {{ o.latest_shipment?.tracking_no }}
+          </span>
+          <span v-if="shipmentPrimaryTime(o.latest_shipment)" class="text-xs text-gray-400">
+            {{ formatDate(shipmentPrimaryTime(o.latest_shipment)) }}
+          </span>
+        </div>
+
         <div class="flex-between">
           <span class="text-sm text-gray-500">{{ payLabel(o.payment_method) }}</span>
           <span class="text-lg font-bold text-gray-900">¥{{ money(o.amount_breakdown?.payable_amount ?? o.total_amount) }}</span>
@@ -77,10 +87,36 @@ const statusColors: Record<number, string> = {
   4: 'bg-green-50 text-green-600',
   5: 'bg-red-50 text-red-500',
 }
+const shipmentStatusLabels: Record<string, string> = {
+  pending: '待揽收',
+  shipped: '已发货',
+  in_transit: '运输中',
+  signed: '已签收',
+  exception: '物流异常',
+}
 const statusLabel = (s: number) => statusLabels[s] || ''
 const statusColor = (s: number) => statusColors[s] || 'bg-gray-50 text-gray-400'
 const payLabel = (m: string) => m === 'wechat' ? '微信支付' : m === 'alipay' ? '支付宝支付' : '未支付'
 const money = (v: number) => Number(v || 0).toFixed(2)
+const formatDate = (v?: string) => (v ? String(v).slice(0, 19).replace('T', ' ') : '-')
+
+function shipmentStatusLabel(status: string) {
+  return shipmentStatusLabels[status] || status || '-'
+}
+
+function shipmentPrimaryTime(shipment: any) {
+  if (!shipment) return ''
+  return String(shipment.signed_at || shipment.shipped_at || shipment.created_at || '')
+}
+
+function hasReship(order: any) {
+  const shipments = Array.isArray(order?.shipments) ? order.shipments : []
+  return shipments.some((ship: any) => String(ship?.biz_type || '') === 'reship')
+}
+
+function hasShipmentSummary(order: any) {
+  return Boolean(hasReship(order) || order?.latest_shipment?.tracking_no)
+}
 
 async function loadOrders() {
   const status = statusValues[activeTab.value]
