@@ -130,3 +130,5 @@
 
 - 本次仅为订单与售后能力增强，无新增部署步骤，无新增环境变量。
 - 数据库会新增售后与物流相关表，需执行服务启动时的插件迁移。
+- 文件上传仍复用统一 `POST /api/v1/upload` 入口；若启用 `storage_oss`、`storage_cos` 或 `storage_qiniu`，需先在后台完成对应插件配置（Endpoint/Region/Bucket/密钥/域名），并且 `plugins.enabled` 仅保留一个存储驱动。
+- 切换存储驱动后，前台与后台返回的文件 URL 仍保持统一接口语义，不需要改动调用方。
