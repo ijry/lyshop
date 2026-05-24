@@ -355,6 +355,14 @@ const routes: Record<string, any> = {
       { key: 'upload_dir', label: '上传目录', type: 'text', placeholder: 'uploads' },
       { key: 'base_url', label: '访问URL前缀', type: 'text', placeholder: 'http://localhost:8080/uploads' },
     ]},
+    { plugin: 'storage_router', title: '存储路由', fields: [
+      { key: 'default_driver', label: '默认上传驱动', type: 'select', required: true, options: [
+        { label: '本地存储', value: 'local' },
+        { label: '阿里云 OSS', value: 'oss' },
+        { label: '腾讯云 COS', value: 'cos' },
+        { label: '七牛云', value: 'qiniu' },
+      ]},
+    ]},
   ],
   'GET /admin/api/config/': { app_id: '', mch_id: '', api_key: '' },
 

@@ -292,7 +292,11 @@ func frontUploadFile(c *gin.Context) {
 		response.Fail(c, 400, "请选择文件")
 		return
 	}
-	driver, err := driverStorage.Get()
+	driverName := strings.TrimSpace(c.Query("driver"))
+	if driverName == "" {
+		driverName = strings.TrimSpace(c.PostForm("driver"))
+	}
+	driver, err := driverStorage.GetByName(driverName)
 	if err != nil {
 		response.Fail(c, 500, err.Error())
 		return

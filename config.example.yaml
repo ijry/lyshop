@@ -38,7 +38,8 @@ plugins:
     - sms
     - wechat_auth
     # Storage driver (enable ONE)
+    - storage_router
     - storage_local
-    # - storage_oss
-    # - storage_cos
-    # - storage_qiniu
+    - storage_oss
+    - storage_cos
+    - storage_qiniu

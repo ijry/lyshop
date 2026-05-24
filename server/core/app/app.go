@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	apiadmin "github.com/ijry/lyshop/api/admin"
@@ -77,14 +78,16 @@ func Run() error {
 	// GET /admin/api/config/schemas — list all plugins that have configItems
 	adminAuth.GET("/config/schemas", middleware.RequirePermission("system:config"), func(c *gin.Context) {
 		type pluginSchema struct {
-			Plugin string              `json:"plugin"`
-			Title  string              `json:"title"`
+			Plugin string               `json:"plugin"`
+			Title  string               `json:"title"`
 			Fields []plugin.ConfigField `json:"fields"`
 		}
 		var schemas []pluginSchema
 		for _, name := range config.Global.Plugins.Enabled {
 			p := plugin.Find(name)
-			if p == nil { continue }
+			if p == nil {
+				continue
+			}
 			meta := p.Meta()
 			if len(meta.ConfigItems) > 0 {
 				schemas = append(schemas, pluginSchema{Plugin: meta.Name, Title: meta.Title, Fields: meta.ConfigItems})
@@ -98,7 +101,9 @@ func Run() error {
 		var kvs []model.ConfigKV
 		db.DB.Where("plugin = ?", pluginName).Find(&kvs)
 		result := map[string]string{}
-		for _, kv := range kvs { result[kv.Key] = kv.Value }
+		for _, kv := range kvs {
+			result[kv.Key] = kv.Value
+		}
 		response.OK(c, result)
 	})
 	// PUT /admin/api/config/:plugin — save config values for a plugin
@@ -106,7 +111,8 @@ func Run() error {
 		pluginName := c.Param("plugin")
 		var values map[string]string
 		if err := c.ShouldBindJSON(&values); err != nil {
-			response.Fail(c, 400, err.Error()); return
+			response.Fail(c, 400, err.Error())
+			return
 		}
 		for k, v := range values {
 			db.DB.Where(model.ConfigKV{Plugin: pluginName, Key: k}).
@@ -123,7 +129,11 @@ func Run() error {
 			response.Fail(c, 400, "请选择文件")
 			return
 		}
-		driver, err := driverStorage.Get()
+		driverName := strings.TrimSpace(c.Query("driver"))
+		if driverName == "" {
+			driverName = strings.TrimSpace(c.PostForm("driver"))
+		}
+		driver, err := driverStorage.GetByName(driverName)
 		if err != nil {
 			response.Fail(c, 500, err.Error())
 			return
