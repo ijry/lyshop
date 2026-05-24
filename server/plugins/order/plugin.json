@@ -12,7 +12,8 @@
       "path": "/order",
       "sort": 20,
       "children": [
-        { "title": "订单列表", "path": "/order/list", "permission": "order:view" }
+        { "title": "订单列表", "path": "/order/list", "permission": "order:view" },
+        { "title": "售后列表", "path": "/order/after-sale/list", "permission": "order:view" }
       ]
     },
     {

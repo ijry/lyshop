@@ -29,7 +29,10 @@ func RegisterFrontRoutes(g *gin.RouterGroup) {
 	auth.POST("/orders", createOrder)
 	auth.GET("/orders", myOrders)
 	auth.GET("/orders/:id", myOrderDetail)
+	auth.POST("/orders/:id/after-sales", createAfterSale)
 	auth.GET("/orders/:id/review", myOrderReviewMeta)
+	auth.GET("/after-sales/:id", myAfterSaleDetail)
+	auth.POST("/after-sales/:id/return-shipments", myAfterSaleReturnShipment)
 	auth.POST("/upload", frontUploadFile)
 	auth.POST("/orders/:id/pay", payOrder)
 	auth.POST("/orders/:id/review", reviewOrder)
@@ -193,6 +196,94 @@ func myOrderReviewMeta(c *gin.Context) {
 		return
 	}
 	response.OK(c, meta)
+}
+
+func createAfterSale(c *gin.Context) {
+	userID, _ := c.Get("user_id")
+	orderID, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	var req struct {
+		CaseType     string   `json:"case_type"`
+		Reason       string   `json:"reason"`
+		ApplyContent string   `json:"apply_content"`
+		ApplyImages  []string `json:"apply_images"`
+		Items        []struct {
+			OrderItemID uint64 `json:"order_item_id"`
+			Qty         int    `json:"qty"`
+		} `json:"items"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	items := make([]ordersvc.AfterSaleItemReq, 0, len(req.Items))
+	for _, item := range req.Items {
+		items = append(items, ordersvc.AfterSaleItemReq{
+			OrderItemID: item.OrderItemID,
+			Qty:         item.Qty,
+		})
+	}
+	caseID, err := ordersvc.CreateAfterSale(c.Request.Context(), ordersvc.CreateAfterSaleReq{
+		OrderID:      orderID,
+		UserID:       userID.(uint64),
+		CaseType:     req.CaseType,
+		Reason:       req.Reason,
+		ApplyContent: req.ApplyContent,
+		ApplyImages:  req.ApplyImages,
+		Items:        items,
+	})
+	if err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, gin.H{"id": caseID})
+}
+
+func myAfterSaleDetail(c *gin.Context) {
+	userID, _ := c.Get("user_id")
+	caseID, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	detail, err := ordersvc.GetAfterSale(c.Request.Context(), caseID)
+	if err != nil {
+		response.Fail(c, 404, err.Error())
+		return
+	}
+	if detail.UserID != userID.(uint64) {
+		response.Fail(c, 403, "无权限访问该售后单")
+		return
+	}
+	response.OK(c, detail)
+}
+
+func myAfterSaleReturnShipment(c *gin.Context) {
+	userID, _ := c.Get("user_id")
+	caseID, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	var req struct {
+		Company    string `json:"company"`
+		TrackingNo string `json:"tracking_no"`
+		Remark     string `json:"remark"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	detail, err := ordersvc.GetAfterSale(c.Request.Context(), caseID)
+	if err != nil {
+		response.Fail(c, 404, err.Error())
+		return
+	}
+	if detail.UserID != userID.(uint64) {
+		response.Fail(c, 403, "无权限操作该售后单")
+		return
+	}
+	if err := ordersvc.SubmitReturnShipment(c.Request.Context(), caseID, ordersvc.SubmitReturnShipmentReq{
+		Company:    req.Company,
+		TrackingNo: req.TrackingNo,
+		Remark:     req.Remark,
+		UserID:     userID.(uint64),
+	}); err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, nil)
 }
 
 func frontUploadFile(c *gin.Context) {

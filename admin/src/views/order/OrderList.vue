@@ -34,6 +34,7 @@
               <p class="font-mono text-xs text-slate-600">{{ o.order_no }}</p>
               <p class="text-xs text-slate-400 mt-1">{{ formatDate(o.created_at) }}</p>
               <p v-if="o.tracking_no" class="text-xs text-slate-400 mt-1">物流单号：{{ o.tracking_no }}</p>
+              <p v-if="o.after_sale_summary?.has_open_case" class="text-xs text-red-500 mt-1">售后中</p>
             </td>
             <td class="px-4 py-3">
               <div v-if="o.items?.length" class="space-y-2 min-w-[260px]">
@@ -67,6 +68,7 @@
               <div class="flex flex-col gap-2 items-start">
                 <button class="text-blue-600 hover:underline text-xs" @click="goDetail(o.id)">查看详情</button>
                 <button v-if="o.status === 2" @click="ship(o.id)" class="text-emerald-600 hover:underline text-xs">发货</button>
+                <button v-if="o.after_sale_summary?.has_open_case" @click="goAfterSale(o.id)" class="text-red-600 hover:underline text-xs">售后</button>
               </div>
             </td>
           </tr>
@@ -118,6 +120,10 @@ function goDetail(id: number) {
   router.push(`/order/detail/${id}`)
 }
 
+function goAfterSale(id: number) {
+  router.push(`/order/after-sale/list?order_id=${id}`)
+}
+
 function onTabChange(status: number) {
   activeStatus.value = status
   loadOrders()
@@ -131,7 +137,7 @@ async function loadOrders() {
 async function ship(id: number) {
   const no = prompt('请输入快递单号')
   if (!no) return
-  await shipOrder(id, no)
+  await shipOrder(id, { tracking_no: no })
   await loadOrders()
 }
 

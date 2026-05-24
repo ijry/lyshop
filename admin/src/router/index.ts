@@ -20,6 +20,8 @@ const router = createRouter({
         // Order
         { path: 'order/list', name: '订单列表', component: () => import('@/views/order/OrderList.vue') },
         { path: 'order/detail/:id', name: '订单详情', component: () => import('@/views/order/OrderDetail.vue') },
+        { path: 'order/after-sale/list', name: '售后列表', component: () => import('@/views/order/AfterSaleList.vue') },
+        { path: 'order/after-sale/detail/:id', name: '售后详情', component: () => import('@/views/order/AfterSaleDetail.vue') },
         { path: 'review/list', name: '评价列表', component: () => import('@/views/review/ReviewList.vue') },
         // WMS
         { path: 'wms/stock', name: '库存管理', component: () => import('@/views/wms/StockList.vue') },

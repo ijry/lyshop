@@ -9,10 +9,72 @@ import productDetail from '../../../app/mock/data/product-detail.json'
 const orderListSource = (orders as any)?.list || []
 const toNumber = (v: any) => Number(v || 0)
 let replySeq = 20000
+let afterSaleSeq = 8000
+const afterSalesSource: any[] = []
 
 function clone<T>(v: T): T {
   return JSON.parse(JSON.stringify(v))
 }
+
+function nextAfterSaleCaseNo() {
+  afterSaleSeq += 1
+  return `AS${Date.now()}${afterSaleSeq}`
+}
+
+function buildAfterSaleRows() {
+  const rows: any[] = []
+  const target = orderListSource.find((item: any) => Number(item.id) === 2) || orderListSource[0]
+  if (!target) return rows
+  const caseID = ++afterSaleSeq
+  rows.push({
+    id: caseID,
+    order_id: Number(target.id || 0),
+    user_id: Number(target.user_id || 1),
+    case_no: nextAfterSaleCaseNo(),
+    case_type: 'return',
+    status: 'approved_wait_user_return',
+    reason: '尺寸不合适',
+    apply_content: '试穿后不合适',
+    apply_images: ['https://picsum.photos/200/200?random=991'],
+    refund_amount: 0,
+    logs: [
+      {
+        id: Math.floor(Math.random() * 100000),
+        case_id: caseID,
+        from_status: '',
+        to_status: 'applied',
+        action: 'apply',
+        operator_type: 'user',
+        operator_id: Number(target.user_id || 1),
+        content: '提交售后申请',
+        created_at: new Date().toISOString(),
+      },
+      {
+        id: Math.floor(Math.random() * 100000),
+        case_id: caseID,
+        from_status: 'applied',
+        to_status: 'approved_wait_user_return',
+        action: 'audit',
+        operator_type: 'admin',
+        operator_id: 1,
+        content: '售后审核通过',
+        created_at: new Date().toISOString(),
+      },
+    ],
+    items: (target.items || []).slice(0, 1).map((item: any) => ({
+      id: Math.floor(Math.random() * 100000),
+      case_id: caseID,
+      order_item_id: Number(item.id || 0),
+      qty: 1,
+    })),
+    shipments: [],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  })
+  return rows
+}
+
+afterSalesSource.push(...buildAfterSaleRows())
 
 function buildReviewRows() {
   const rows: any[] = []
@@ -139,6 +201,7 @@ const routes: Record<string, any> = {
     ]},
     { title: '订单管理', icon: 'shopping-cart', path: '/order', sort: 20, children: [
       { title: '订单列表', path: '/order/list' },
+      { title: '售后列表', path: '/order/after-sale/list' },
     ]},
     { title: '评价管理', icon: 'star', path: '/review', sort: 21, children: [
       { title: '评价列表', path: '/review/list' },
@@ -353,6 +416,76 @@ export function matchMock(method: string, url: string, params?: Record<string, a
   }
   if (key === 'GET /admin/api/reviews') {
     return { matched: true, data: listReviews(query) }
+  }
+  if (key === 'GET /admin/api/after-sales') {
+    const status = String(query.status || '').trim()
+    const orderID = Number(query.order_id || 0)
+    const page = Math.max(1, Number(query.page || 1))
+    const size = Math.max(1, Number(query.size || 20))
+    let list = afterSalesSource.slice()
+    if (status) list = list.filter((item: any) => String(item.status || '') === status)
+    if (orderID > 0) list = list.filter((item: any) => Number(item.order_id || 0) === orderID)
+    const offset = (page - 1) * size
+    return { matched: true, data: { list: list.slice(offset, offset + size), total: list.length, page, size } }
+  }
+  if (key.startsWith('GET /admin/api/after-sales/')) {
+    const id = Number(url.split('/').pop() || 0)
+    const target = afterSalesSource.find((item: any) => Number(item.id) === id) || null
+    return { matched: true, data: target ? clone(target) : null }
+  }
+  if (key.startsWith('POST /admin/api/after-sales/')) {
+    const id = Number(url.split('/')[4] || 0)
+    const action = String(url.split('/')[5] || '')
+    const target = afterSalesSource.find((item: any) => Number(item.id) === id)
+    if (!target) return { matched: true, data: null }
+    const now = new Date().toISOString()
+    const pushLog = (fromStatus: string, toStatus: string, actionName: string, content: string) => {
+      target.logs = Array.isArray(target.logs) ? target.logs : []
+      target.logs.push({
+        id: Math.floor(Math.random() * 100000),
+        case_id: id,
+        from_status: fromStatus,
+        to_status: toStatus,
+        action: actionName,
+        operator_type: 'admin',
+        operator_id: 1,
+        content,
+        created_at: now,
+      })
+    }
+    if (action === 'audit') {
+      const approve = !!(params as any)?.approve
+      const fromStatus = String(target.status || '')
+      target.status = approve ? 'approved_wait_user_return' : 'rejected'
+      pushLog(fromStatus, target.status, 'audit', approve ? '售后审核通过' : '售后审核拒绝')
+      return { matched: true, data: null }
+    }
+    if (action === 'receive') {
+      const fromStatus = String(target.status || '')
+      target.status = String(target.case_type || '') === 'exchange' ? 'reship_pending' : 'refund_pending'
+      pushLog(fromStatus, target.status, 'receive', '仓库收货确认')
+      return { matched: true, data: null }
+    }
+    if (action === 'refund') {
+      const fromStatus = String(target.status || '')
+      target.status = 'refunded'
+      target.refund_amount = Number((params as any)?.amount || target.refund_amount || 0)
+      pushLog(fromStatus, target.status, 'refund', '退款登记')
+      return { matched: true, data: null }
+    }
+    if (action === 'complete') {
+      const fromStatus = String(target.status || '')
+      target.status = 'completed'
+      pushLog(fromStatus, target.status, 'complete', '售后完结')
+      return { matched: true, data: null }
+    }
+    if (action === 'close') {
+      const fromStatus = String(target.status || '')
+      target.status = 'closed'
+      pushLog(fromStatus, target.status, 'close', '关闭售后')
+      return { matched: true, data: null }
+    }
+    return { matched: true, data: null }
   }
   if (key.startsWith('POST /admin/api/reviews/') && key.endsWith('/reply')) {
     const id = Number(url.split('/')[4] || 0)

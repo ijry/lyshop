@@ -6,17 +6,34 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6">
-      <div class="card p-5">
-        <h3 class="font-semibold text-gray-800 mb-4">商品明细</h3>
-        <div class="space-y-4">
-          <div v-for="it in detail.items || []" :key="it.id" class="flex items-center gap-3">
-            <img :src="it.cover" class="w-14 h-14 rounded-lg object-cover" />
-            <div class="flex-1 min-w-0">
-              <p class="text-sm text-gray-700 truncate">{{ it.title }}</p>
-              <p class="text-xs text-gray-400">数量 x{{ it.qty }}</p>
+      <div class="space-y-4">
+        <div class="card p-5">
+          <h3 class="font-semibold text-gray-800 mb-4">商品明细</h3>
+          <div class="space-y-4">
+            <div v-for="it in detail.items || []" :key="it.id" class="flex items-center gap-3">
+              <img :src="it.cover" class="w-14 h-14 rounded-lg object-cover" />
+              <div class="flex-1 min-w-0">
+                <p class="text-sm text-gray-700 truncate">{{ it.title }}</p>
+                <p class="text-xs text-gray-400">数量 x{{ it.qty }}</p>
+              </div>
+              <p class="text-sm font-medium text-gray-800">¥{{ money(it.price) }}</p>
             </div>
-            <p class="text-sm font-medium text-gray-800">¥{{ money(it.price) }}</p>
           </div>
+        </div>
+
+        <div class="card p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-semibold text-gray-800">物流轨迹</h3>
+            <span v-if="detail.latest_shipment?.tracking_no" class="text-xs text-gray-400">最新单号：{{ detail.latest_shipment.tracking_no }}</span>
+          </div>
+          <div v-if="detail.shipments?.length" class="space-y-3">
+            <div v-for="ship in detail.shipments" :key="ship.id" class="border border-gray-100 rounded-lg p-3">
+              <p class="text-sm text-gray-700">{{ ship.direction === 'inbound' ? '回寄' : '寄出' }} / {{ ship.biz_type }}</p>
+              <p class="text-xs text-gray-500 mt-1">{{ ship.company || '未填公司' }} · {{ ship.tracking_no || '-' }}</p>
+              <p class="text-xs text-gray-500 mt-1">状态：{{ ship.logistics_status || '-' }}</p>
+            </div>
+          </div>
+          <p v-else class="text-sm text-gray-400">暂无物流轨迹</p>
         </div>
       </div>
 
@@ -32,6 +49,7 @@
             <p v-if="detail.tracking_no">物流单号：{{ detail.tracking_no }}</p>
           </div>
         </div>
+
         <div class="card p-5">
           <h3 class="font-semibold text-gray-800 mb-3">价格体系</h3>
           <div class="space-y-2 text-sm text-gray-600">
@@ -39,6 +57,32 @@
             <div class="flex justify-between"><span>优惠金额</span><span>-¥{{ money(detail.amount_breakdown?.discount_amount ?? detail.discount_amount) }}</span></div>
             <div class="flex justify-between"><span>运费</span><span>¥{{ money(detail.amount_breakdown?.freight_amount ?? detail.freight_amount) }}</span></div>
             <div class="flex justify-between font-semibold text-gray-800 pt-2 border-t border-gray-100"><span>实付金额</span><span>¥{{ money(detail.amount_breakdown?.payable_amount ?? detail.total_amount) }}</span></div>
+          </div>
+        </div>
+
+        <div class="card p-5">
+          <h3 class="font-semibold text-gray-800 mb-3">售后服务</h3>
+          <div class="space-y-2 text-sm text-gray-600">
+            <p>进行中：{{ detail.after_sale_summary?.in_progress_count || 0 }}</p>
+            <p v-if="detail.after_sale_summary?.latest_case_id">
+              最近售后单：#{{ detail.after_sale_summary.latest_case_id }}（{{ detail.after_sale_summary.latest_status || '-' }}）
+            </p>
+          </div>
+          <div class="flex gap-2 mt-4">
+            <button
+              v-if="detail.after_sale_summary?.latest_case_id"
+              class="btn-outline !px-4 !py-2 text-xs"
+              @click="goAfterSaleDetail(detail.after_sale_summary.latest_case_id)"
+            >
+              查看售后进度
+            </button>
+            <button
+              v-if="detail.after_sale_summary?.can_apply !== false"
+              class="btn-primary !px-4 !py-2 text-xs"
+              @click="goAfterSaleApply"
+            >
+              申请售后
+            </button>
           </div>
         </div>
 
@@ -89,9 +133,9 @@ const hasUnreviewed = ref(false)
 
 const statusLabels: Record<number, string> = { 1: '待付款', 2: '待发货', 3: '待收货', 4: '已完成', 5: '售后' }
 const statusLabel = (s: number) => statusLabels[s] || '未知'
-const payLabel = (m: string) => m === 'wechat' ? '微信支付' : m === 'alipay' ? '支付宝支付' : '未支付'
+const payLabel = (m: string) => (m === 'wechat' ? '微信支付' : m === 'alipay' ? '支付宝支付' : '未支付')
 const money = (v: number) => Number(v || 0).toFixed(2)
-const formatDate = (v: string) => v ? v.slice(0, 19).replace('T', ' ') : '-'
+const formatDate = (v: string) => (v ? v.slice(0, 19).replace('T', ' ') : '-')
 
 function refreshReviewFlags() {
   const items = Array.isArray(detail.value?.items) ? detail.value.items : []
@@ -103,6 +147,16 @@ function goReview(mode: 'root' | 'append', orderItemID?: number) {
   if (!detail.value?.id) return
   const itemQuery = mode === 'append' && Number(orderItemID || 0) > 0 ? `&item_id=${Number(orderItemID)}` : ''
   router.push(`/orders/${detail.value.id}/review?mode=${mode}${itemQuery}`)
+}
+
+function goAfterSaleApply() {
+  if (!detail.value?.id) return
+  router.push(`/orders/${detail.value.id}/after-sale/apply`)
+}
+
+function goAfterSaleDetail(id: number) {
+  if (!id) return
+  router.push(`/after-sales/${id}`)
 }
 
 onMounted(async () => {
@@ -119,3 +173,4 @@ onMounted(async () => {
   refreshReviewFlags()
 })
 </script>
+

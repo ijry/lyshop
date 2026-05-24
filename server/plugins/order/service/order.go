@@ -35,8 +35,11 @@ type AmountBreakdown struct {
 
 type OrderView struct {
 	ordermodel.Order
-	Items           []OrderItemView `json:"items"`
-	AmountBreakdown AmountBreakdown `json:"amount_breakdown"`
+	Items            []OrderItemView            `json:"items"`
+	AmountBreakdown  AmountBreakdown            `json:"amount_breakdown"`
+	Shipments        []ordermodel.OrderShipment `json:"shipments,omitempty"`
+	LatestShipment   *ordermodel.OrderShipment  `json:"latest_shipment,omitempty"`
+	AfterSaleSummary *AfterSaleSummary          `json:"after_sale_summary,omitempty"`
 }
 
 type OrderItemView struct {
@@ -198,6 +201,15 @@ func buildOrderViews(ctx context.Context, orders []ordermodel.Order) ([]OrderVie
 		}
 	}
 
+	shipmentsMap, err := listOrderShipmentsMap(ctx, orderIDs)
+	if err != nil {
+		return nil, err
+	}
+	afterSaleSummaryMap, err := buildAfterSaleSummaryMap(ctx, orderIDs)
+	if err != nil {
+		return nil, err
+	}
+
 	result := make([]OrderView, 0, len(orders))
 	for _, item := range orders {
 		items := make([]OrderItemView, 0, len(itemMap[item.ID]))
@@ -212,6 +224,12 @@ func buildOrderViews(ctx context.Context, orders []ordermodel.Order) ([]OrderVie
 				Review:    reviewPtr,
 			})
 		}
+		var latestShipment *ordermodel.OrderShipment
+		orderShipments := shipmentsMap[item.ID]
+		if len(orderShipments) > 0 {
+			first := orderShipments[0]
+			latestShipment = &first
+		}
 		result = append(result, OrderView{
 			Order: item,
 			Items: items,
@@ -221,6 +239,9 @@ func buildOrderViews(ctx context.Context, orders []ordermodel.Order) ([]OrderVie
 				FreightAmount:  item.FreightAmount,
 				PayableAmount:  item.TotalAmount,
 			},
+			Shipments:        orderShipments,
+			LatestShipment:   latestShipment,
+			AfterSaleSummary: afterSaleSummaryMap[item.ID],
 		})
 	}
 	return result, nil
@@ -248,11 +269,86 @@ func ListOrders(ctx context.Context, userID uint64, status int8, page, size int)
 	return list, total, err
 }
 
-// ShipOrder marks an order as shipped (admin action).
-func ShipOrder(ctx context.Context, orderID uint64, trackingNo string) error {
-	return db.DB.WithContext(ctx).Model(&ordermodel.Order{}).
-		Where("id = ? AND status = ?", orderID, ordermodel.OrderStatusPaid).
-		Updates(map[string]any{"status": ordermodel.OrderStatusShipped, "tracking_no": trackingNo}).Error
+type ShipOrderReq struct {
+	ShipType        string `json:"ship_type"`
+	AfterSaleCaseID uint64 `json:"after_sale_case_id"`
+	Company         string `json:"company"`
+	TrackingNo      string `json:"tracking_no"`
+	Remark          string `json:"remark"`
+}
+
+// ShipOrder marks an order as shipped or reshipped (admin action).
+func ShipOrder(ctx context.Context, orderID uint64, req ShipOrderReq) error {
+	req.TrackingNo = strings.TrimSpace(req.TrackingNo)
+	if req.TrackingNo == "" {
+		return errors.New("请填写快递单号")
+	}
+	shipType := strings.ToLower(strings.TrimSpace(req.ShipType))
+	if shipType == "" {
+		shipType = string(ordermodel.ShipmentBizTypeInitial)
+	}
+	if shipType != string(ordermodel.ShipmentBizTypeInitial) && shipType != string(ordermodel.ShipmentBizTypeReship) {
+		return errors.New("不支持的发货类型")
+	}
+	return db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var order ordermodel.Order
+		if err := tx.Where("id = ?", orderID).First(&order).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return errors.New("订单不存在")
+			}
+			return err
+		}
+		if shipType == string(ordermodel.ShipmentBizTypeInitial) && order.Status != ordermodel.OrderStatusPaid {
+			return errors.New("当前状态不可发货")
+		}
+		if shipType == string(ordermodel.ShipmentBizTypeReship) {
+			if req.AfterSaleCaseID == 0 {
+				return errors.New("补发需关联售后单")
+			}
+			caseRow, err := lockAfterSaleCase(tx, req.AfterSaleCaseID)
+			if err != nil {
+				return err
+			}
+			if caseRow.OrderID != orderID {
+				return errors.New("补发售后单与订单不匹配")
+			}
+			if caseRow.Status != string(ordermodel.AfterSaleStatusReshipPending) {
+				return errors.New("当前售后状态不可补发")
+			}
+			if err := tx.Model(&ordermodel.AfterSaleCase{}).Where("id = ?", caseRow.ID).Update("status", string(ordermodel.AfterSaleStatusReshipped)).Error; err != nil {
+				return err
+			}
+			if err := writeAfterSaleLogTx(tx, caseRow.ID, caseRow.Status, string(ordermodel.AfterSaleStatusReshipped), "reship", "admin", 0, "售后补发", map[string]any{
+				"tracking_no": req.TrackingNo,
+			}); err != nil {
+				return err
+			}
+		}
+		if _, err := createShipmentTx(tx, CreateShipmentReq{
+			OrderID:         orderID,
+			AfterSaleCaseID: req.AfterSaleCaseID,
+			ShipType:        shipType,
+			Direction:       string(ordermodel.ShipmentDirectionOutbound),
+			Company:         req.Company,
+			TrackingNo:      req.TrackingNo,
+			Remark:          req.Remark,
+			CreatedByType:   "admin",
+			CreatedByID:     0,
+		}); err != nil {
+			return err
+		}
+		updates := map[string]any{"tracking_no": req.TrackingNo}
+		if shipType == string(ordermodel.ShipmentBizTypeInitial) {
+			updates["status"] = ordermodel.OrderStatusShipped
+		}
+		if err := tx.Model(&ordermodel.Order{}).Where("id = ?", orderID).Updates(updates).Error; err != nil {
+			return err
+		}
+		if shipType == string(ordermodel.ShipmentBizTypeReship) {
+			return refreshOrderStatusByAfterSaleTx(tx, orderID)
+		}
+		return nil
+	})
 }
 
 // CreateAddress saves a new address for a user.

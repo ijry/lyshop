@@ -39,6 +39,48 @@
       </view>
 
       <view class="bg-white rounded-20rpx p-24rpx mb-20rpx">
+        <view class="flex items-center justify-between mb-16rpx">
+          <text class="text-28rpx font-600 text-gray-800">物流轨迹</text>
+          <text v-if="detail.latest_shipment?.tracking_no" class="text-22rpx text-gray-400">最新：{{ detail.latest_shipment.tracking_no }}</text>
+        </view>
+        <view v-if="detail.shipments?.length" class="space-y-12rpx">
+          <view v-for="ship in detail.shipments" :key="ship.id" class="border border-gray-100 rounded-16rpx p-16rpx">
+            <text class="text-24rpx text-gray-700 block">{{ ship.direction === 'inbound' ? '回寄' : '寄出' }} / {{ ship.biz_type }}</text>
+            <text class="text-22rpx text-gray-500 block mt-6rpx">{{ ship.company || '未填公司' }} · {{ ship.tracking_no || '-' }}</text>
+            <text class="text-22rpx text-gray-500 block mt-6rpx">状态：{{ ship.logistics_status || '-' }}</text>
+          </view>
+        </view>
+        <text v-else class="text-24rpx text-gray-400">暂无物流轨迹</text>
+      </view>
+
+      <view class="bg-white rounded-20rpx p-24rpx mb-20rpx">
+        <text class="text-28rpx font-600 text-gray-800 block mb-16rpx">售后服务</text>
+        <text class="text-24rpx text-gray-600 block">进行中：{{ detail.after_sale_summary?.in_progress_count || 0 }}</text>
+        <text v-if="detail.after_sale_summary?.latest_case_id" class="text-24rpx text-gray-600 block mt-8rpx">
+          最近售后单：#{{ detail.after_sale_summary.latest_case_id }}（{{ detail.after_sale_summary.latest_status || '-' }}）
+        </text>
+        <view class="flex gap-16rpx mt-20rpx">
+          <u-button
+            v-if="detail.after_sale_summary?.latest_case_id"
+            size="mini"
+            text="查看售后进度"
+            shape="circle"
+            plain
+            @click="goAfterSaleDetail(detail.after_sale_summary.latest_case_id)"
+          />
+          <u-button
+            v-if="detail.after_sale_summary?.can_apply !== false"
+            size="mini"
+            type="warning"
+            text="申请售后"
+            shape="circle"
+            plain
+            @click="goAfterSaleApply"
+          />
+        </view>
+      </view>
+
+      <view class="bg-white rounded-20rpx p-24rpx mb-20rpx">
         <text class="text-28rpx font-600 text-gray-800 block mb-16rpx">评价信息</text>
         <view v-if="reviewItems.length" class="space-y-14rpx">
           <view v-for="rv in reviewItems" :key="rv.id" class="border border-gray-100 rounded-16rpx p-16rpx">
@@ -116,6 +158,16 @@ function goReview(mode: 'root' | 'append', orderItemID?: number) {
   if (!detail.value?.id) return
   const itemQuery = mode === 'append' && Number(orderItemID || 0) > 0 ? `&item_id=${Number(orderItemID)}` : ''
   uni.navigateTo({ url: `/pages/order/review?id=${detail.value.id}&mode=${mode}${itemQuery}` })
+}
+
+function goAfterSaleApply() {
+  if (!detail.value?.id) return
+  uni.navigateTo({ url: `/pages/order/after-sale-apply?id=${detail.value.id}` })
+}
+
+function goAfterSaleDetail(id: number) {
+  if (!id) return
+  uni.navigateTo({ url: `/pages/order/after-sale-detail?id=${id}` })
 }
 
 onMounted(async () => {

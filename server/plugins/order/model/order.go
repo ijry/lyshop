@@ -18,19 +18,19 @@ const (
 
 type Order struct {
 	model.Base
-	OrderNo        string          `gorm:"size:64;uniqueIndex;not null" json:"order_no"`
-	UserID         uint64          `gorm:"not null;index"               json:"user_id"`
-	MerchantID     uint64          `gorm:"not null;default:0"           json:"merchant_id"`
-	Status         int8            `gorm:"not null;index"               json:"status"`
-	PaymentMethod  string          `gorm:"size:32"                      json:"payment_method"`
-	GoodsAmount    float64         `gorm:"type:decimal(10,2);not null"  json:"goods_amount"`
-	DiscountAmount float64         `gorm:"type:decimal(10,2);default:0" json:"discount_amount"`
-	FreightAmount  float64         `gorm:"type:decimal(10,2);default:0" json:"freight_amount"`
-	TotalAmount    float64         `gorm:"type:decimal(10,2);not null"  json:"total_amount"`
+	OrderNo         string          `gorm:"size:64;uniqueIndex;not null" json:"order_no"`
+	UserID          uint64          `gorm:"not null;index"               json:"user_id"`
+	MerchantID      uint64          `gorm:"not null;default:0"           json:"merchant_id"`
+	Status          int8            `gorm:"not null;index"               json:"status"`
+	PaymentMethod   string          `gorm:"size:32"                      json:"payment_method"`
+	GoodsAmount     float64         `gorm:"type:decimal(10,2);not null"  json:"goods_amount"`
+	DiscountAmount  float64         `gorm:"type:decimal(10,2);default:0" json:"discount_amount"`
+	FreightAmount   float64         `gorm:"type:decimal(10,2);default:0" json:"freight_amount"`
+	TotalAmount     float64         `gorm:"type:decimal(10,2);not null"  json:"total_amount"`
 	AddressSnapshot json.RawMessage `gorm:"type:json"                   json:"address_snapshot"`
-	Remark         string          `gorm:"size:255"                     json:"remark"`
-	TrackingNo     string          `gorm:"size:128"                     json:"tracking_no"`
-	PaidAt         *time.Time      `json:"paid_at"`
+	Remark          string          `gorm:"size:255"                     json:"remark"`
+	TrackingNo      string          `gorm:"size:128"                     json:"tracking_no"`
+	PaidAt          *time.Time      `json:"paid_at"`
 }
 
 type OrderItem struct {
@@ -57,9 +57,10 @@ type OrderPayment struct {
 
 type OrderRefund struct {
 	model.Base
-	OrderID  uint64  `gorm:"not null;index"              json:"order_id"`
-	Reason   string  `gorm:"size:255"                    json:"reason"`
-	Amount   float64 `gorm:"type:decimal(10,2);not null" json:"amount"`
-	Status   int8    `gorm:"not null"                    json:"status"` // 1申请中 2已退款 3已拒绝
-	RefundNo string  `gorm:"size:128"                    json:"refund_no"`
+	OrderID         uint64  `gorm:"not null;index"              json:"order_id"`
+	AfterSaleCaseID uint64  `gorm:"index"                       json:"after_sale_case_id"`
+	Reason          string  `gorm:"size:255"                    json:"reason"`
+	Amount          float64 `gorm:"type:decimal(10,2);not null" json:"amount"`
+	Status          int8    `gorm:"not null"                    json:"status"` // 1申请中 2已退款 3已拒绝
+	RefundNo        string  `gorm:"size:128"                    json:"refund_no"`
 }

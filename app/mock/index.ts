@@ -30,6 +30,8 @@ const orderListSource = Array.isArray((orders as any)?.list)
 const addressListSource = Array.isArray(addresses)
   ? JSON.parse(JSON.stringify(addresses))
   : []
+let afterSaleSeq = 8000
+const afterSalesSource: any[] = []
 const productDetailSource = JSON.parse(JSON.stringify(productDetail as any))
 const productReviewMap = new Map<number, any[]>()
 const reviewIndexMap = new Map<number, any>()
@@ -67,6 +69,66 @@ function formatNowISO() {
 
 function getOrderByID(id: number) {
   return orderListSource.find((item: any) => Number(item.id) === id)
+}
+
+function nextAfterSaleCaseNo() {
+  afterSaleSeq += 1
+  return `AS${Date.now()}${afterSaleSeq}`
+}
+
+function statusOpen(status: string) {
+  return !['completed', 'rejected', 'closed'].includes(status)
+}
+
+function buildAfterSaleSummary(orderID: number) {
+  const rows = afterSalesSource
+    .filter((row: any) => Number(row.order_id) === Number(orderID))
+    .sort((a: any, b: any) => Number(b.id) - Number(a.id))
+  if (!rows.length) {
+    return { in_progress_count: 0, has_open_case: false, latest_status: '', latest_case_id: 0, can_apply: true }
+  }
+  const openCount = rows.filter((row: any) => statusOpen(String(row.status || ''))).length
+  return {
+    in_progress_count: openCount,
+    has_open_case: openCount > 0,
+    latest_status: String(rows[0].status || ''),
+    latest_case_id: Number(rows[0].id || 0),
+    can_apply: openCount === 0,
+  }
+}
+
+function ensureOrderExt(order: any) {
+  if (!order) return
+  if (!Array.isArray(order.shipments)) {
+    order.shipments = order.tracking_no ? [{
+      id: Number(order.id) * 10 + 1,
+      order_id: Number(order.id),
+      after_sale_case_id: 0,
+      direction: 'outbound',
+      biz_type: 'initial',
+      company: '顺丰',
+      tracking_no: order.tracking_no,
+      logistics_status: 'shipped',
+      remark: '',
+      created_by_type: 'admin',
+      created_by_id: 0,
+      created_at: order.paid_at || order.created_at,
+    }] : []
+  }
+  order.latest_shipment = order.shipments?.[0] || null
+  order.after_sale_summary = buildAfterSaleSummary(Number(order.id))
+}
+
+for (const order of orderListSource) ensureOrderExt(order)
+
+function getAfterSaleByID(id: number) {
+  return afterSalesSource.find((row: any) => Number(row.id) === id)
+}
+
+function touchOrderAfterSaleSummary(orderID: number) {
+  const order = getOrderByID(orderID)
+  if (!order) return
+  order.after_sale_summary = buildAfterSaleSummary(orderID)
 }
 
 function normalizeMode(mode: string | undefined) {
@@ -138,6 +200,51 @@ function hydrateReviewsFromOrders() {
 }
 
 hydrateReviewsFromOrders()
+if (orderListSource[1]) {
+  const seedCaseID = ++afterSaleSeq
+  afterSalesSource.push({
+    id: seedCaseID,
+    order_id: Number(orderListSource[1].id),
+    user_id: Number(orderListSource[1].user_id || 1),
+    case_no: nextAfterSaleCaseNo(),
+    case_type: 'return',
+    status: 'approved_wait_user_return',
+    reason: '尺寸不合适',
+    apply_content: '试穿后不合适',
+    apply_images: ['https://picsum.photos/200/200?random=991'],
+    items: [{
+      id: Math.floor(Math.random() * 100000),
+      case_id: seedCaseID,
+      order_item_id: Number(orderListSource[1].items?.[0]?.id || 0),
+      qty: 1,
+    }],
+    logs: [{
+      id: Math.floor(Math.random() * 100000),
+      case_id: seedCaseID,
+      from_status: '',
+      to_status: 'applied',
+      action: 'apply',
+      operator_type: 'user',
+      operator_id: Number(orderListSource[1].user_id || 1),
+      content: '提交售后申请',
+      created_at: new Date().toISOString(),
+    }, {
+      id: Math.floor(Math.random() * 100000),
+      case_id: seedCaseID,
+      from_status: 'applied',
+      to_status: 'approved_wait_user_return',
+      action: 'audit',
+      operator_type: 'admin',
+      operator_id: 1,
+      content: '售后审核通过',
+      created_at: new Date().toISOString(),
+    }],
+    shipments: [],
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  })
+}
+for (const order of orderListSource) touchOrderAfterSaleSummary(Number(order.id))
 
 function buildReviewSummary(productID: number) {
   const list = ensureProductReviewBucket(productID)
@@ -333,6 +440,7 @@ function listOrders(status: number) {
   const list = status > 0
     ? orderListSource.filter((item: any) => Number(item.status) === status)
     : orderListSource.slice()
+  for (const item of list) ensureOrderExt(item)
   return { list, total: list.length, page: 1, size: 20 }
 }
 
@@ -487,6 +595,105 @@ export function matchMock(method: string, url: string, params?: Record<string, a
       data: { path: `demo/${Date.now()}.jpg`, url, size: 10240, mime: 'image/jpeg' },
     }
   }
+  if (upperMethod === 'POST' && path.startsWith('/api/v1/orders/') && path.endsWith('/after-sales')) {
+    const orderID = Number(path.split('/')[4] || 0)
+    const order = getOrderByID(orderID)
+    if (!order) return { matched: true, data: null }
+    const body = params || {}
+    const items = Array.isArray(body.items) ? body.items : []
+    const caseType = String(body.case_type || 'return') === 'exchange' ? 'exchange' : 'return'
+    const row = {
+      id: ++afterSaleSeq,
+      order_id: orderID,
+      user_id: Number(order.user_id || 1),
+      case_no: nextAfterSaleCaseNo(),
+      case_type: caseType,
+      status: 'applied',
+      reason: String(body.reason || ''),
+      apply_content: String(body.apply_content || ''),
+      apply_images: Array.isArray(body.apply_images) ? body.apply_images.map((u: any) => String(u || '')).filter(Boolean) : [],
+      items: items.map((item: any) => ({
+        id: Math.floor(Math.random() * 100000),
+        case_id: afterSaleSeq,
+        order_item_id: Number(item.order_item_id || 0),
+        qty: Math.max(1, Number(item.qty || 1)),
+      })),
+      logs: [{
+        id: Math.floor(Math.random() * 100000),
+        case_id: afterSaleSeq,
+        from_status: '',
+        to_status: 'applied',
+        action: 'apply',
+        operator_type: 'user',
+        operator_id: Number(order.user_id || 1),
+        content: '提交售后申请',
+        created_at: new Date().toISOString(),
+      }],
+      shipments: [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+    afterSalesSource.unshift(row)
+    order.status = 5
+    touchOrderAfterSaleSummary(orderID)
+    return { matched: true, data: { id: row.id } }
+  }
+  if (upperMethod === 'GET' && path.startsWith('/api/v1/after-sales/')) {
+    const caseID = Number(path.split('/').pop() || 0)
+    const row = getAfterSaleByID(caseID)
+    return { matched: true, data: row ? JSON.parse(JSON.stringify(row)) : null }
+  }
+  if (upperMethod === 'POST' && path.startsWith('/api/v1/after-sales/') && path.endsWith('/return-shipments')) {
+    const caseID = Number(path.split('/')[4] || 0)
+    const row = getAfterSaleByID(caseID)
+    if (!row) return { matched: true, data: null }
+    const body = params || {}
+    const now = new Date().toISOString()
+    const shipment = {
+      id: Math.floor(Math.random() * 100000),
+      order_id: Number(row.order_id),
+      after_sale_case_id: caseID,
+      direction: 'inbound',
+      biz_type: 'return',
+      company: String(body.company || ''),
+      tracking_no: String(body.tracking_no || ''),
+      logistics_status: 'shipped',
+      remark: String(body.remark || ''),
+      created_by_type: 'user',
+      created_by_id: Number(row.user_id || 1),
+      created_at: now,
+    }
+    row.shipments = Array.isArray(row.shipments) ? row.shipments : []
+    row.shipments.unshift(shipment)
+    row.status = 'user_returning'
+    row.logs = Array.isArray(row.logs) ? row.logs : []
+    row.logs.push({
+      id: Math.floor(Math.random() * 100000),
+      case_id: caseID,
+      from_status: 'approved_wait_user_return',
+      to_status: 'user_returning',
+      action: 'return_ship',
+      operator_type: 'user',
+      operator_id: Number(row.user_id || 1),
+      content: '用户提交回寄物流',
+      created_at: now,
+    })
+    const order = getOrderByID(Number(row.order_id))
+    if (order) {
+      order.shipments = Array.isArray(order.shipments) ? order.shipments : []
+      order.shipments.unshift(shipment)
+      order.latest_shipment = order.shipments[0] || null
+      touchOrderAfterSaleSummary(Number(row.order_id))
+    }
+    return { matched: true, data: null }
+  }
+  if (upperMethod === 'GET' && path.startsWith('/api/v1/orders/') && !path.endsWith('/review')) {
+    const id = Number(path.split('/').pop() || 0)
+    const detail = getOrderByID(id) || null
+    if (!detail) return { matched: true, data: null }
+    ensureOrderExt(detail)
+    return { matched: true, data: JSON.parse(JSON.stringify(detail)) }
+  }
   if (upperMethod === 'GET' && path.startsWith('/api/v1/products/') && path.endsWith('/reviews')) {
     const productID = Number(path.split('/')[4] || 0)
     const page = Number(query.page || 1)
@@ -520,11 +727,6 @@ export function matchMock(method: string, url: string, params?: Record<string, a
   // Prefix match (for routes with path params like /products/:id)
   for (const pattern of Object.keys(routes)) {
     if (key.startsWith(pattern) && pattern.endsWith('/')) {
-      if (pattern === 'GET /api/v1/orders/') {
-        const id = Number(path.split('/').pop() || 0)
-        const detail = getOrderByID(id) || null
-        return { matched: true, data: detail }
-      }
       return { matched: true, data: routes[pattern] }
     }
   }
