@@ -71,6 +71,9 @@
           <view class="action-btn-wrap">
             <u-button size="mini" plain text="查看详情" shape="circle" @click="goDetail(o.id)" />
           </view>
+          <view class="action-btn-wrap" v-if="o.after_sale_summary?.latest_case_id">
+            <u-button size="mini" plain text="售后进度" shape="circle" @click="goAfterSaleDetail(o.after_sale_summary.latest_case_id)" />
+          </view>
           <view class="action-btn-wrap" v-if="o.status === 1">
             <u-button size="mini" type="primary" text="去付款" shape="circle" :loading="actioningID === o.id && actioningType === 'pay'" @click="toPay(o)" />
           </view>
@@ -135,6 +138,11 @@ function onTab(index: number) {
 
 function goDetail(id: number) {
   uni.navigateTo({ url: `/pages/order/detail?id=${id}` })
+}
+
+function goAfterSaleDetail(id: number) {
+  if (!id) return
+  uni.navigateTo({ url: `/pages/order/after-sale-detail?id=${id}` })
 }
 
 function canReview(order: any) {

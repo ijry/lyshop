@@ -64,6 +64,13 @@
 
         <div class="flex justify-end mt-3 gap-2">
           <button class="btn-outline !px-5 text-xs" @click="goDetail(o.id)">查看详情</button>
+          <button
+            class="btn-outline !px-5 text-xs"
+            v-if="o.after_sale_summary?.latest_case_id"
+            @click="goAfterSaleDetail(o.after_sale_summary.latest_case_id)"
+          >
+            售后进度
+          </button>
           <button class="btn-primary !px-6 text-xs" v-if="o.status === 1" :disabled="actioningID === o.id" @click="pay(o)">去付款</button>
           <button class="btn-outline !px-5 text-xs" v-if="canReview(o) && hasUnreviewed(o)" :disabled="actioningID === o.id" @click="review(o, 'root')">评价</button>
           <button class="btn-outline !px-5 text-xs" v-if="canReview(o) && hasReviewed(o)" :disabled="actioningID === o.id" @click="review(o, 'append')">追加评价</button>
@@ -121,6 +128,11 @@ async function loadOrders() {
 
 function goDetail(id: number) {
   router.push(`/orders/${id}`)
+}
+
+function goAfterSaleDetail(id: number) {
+  if (!id) return
+  router.push(`/after-sales/${id}`)
 }
 
 function canReview(order: any) {
