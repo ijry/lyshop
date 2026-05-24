@@ -28,7 +28,19 @@ if (MOCK_ENABLED) {
     const { matchMock } = await import('@/mock/index')
     const method = (config.method || 'GET').toUpperCase()
     const url = (config.baseURL || '') + (config.url || '')
-    const result = matchMock(method, url, config.params)
+    let payload: any = config.params
+    if (method !== 'GET' && config.data) {
+      if (typeof config.data === 'string') {
+        try {
+          payload = JSON.parse(config.data)
+        } catch {
+          payload = config.params
+        }
+      } else {
+        payload = config.data
+      }
+    }
+    const result = matchMock(method, url, payload)
 
     if (result.matched) {
       await new Promise(r => setTimeout(r, 100 + Math.random() * 200))

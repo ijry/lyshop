@@ -1,7 +1,27 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-4">
-      <h2 class="text-xl font-semibold text-slate-800">首页装修</h2>
+      <div class="flex items-center gap-3">
+        <h2 class="text-xl font-semibold text-slate-800">首页装修</h2>
+        <select v-model="currentVariantKey" @change="changeVariant"
+          class="border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-slate-700 bg-white">
+          <option v-for="v in variants" :key="v.variant_key" :value="v.variant_key">
+            {{ v.variant_name }}（{{ v.variant_key }}）{{ v.is_published ? ' · 已发布' : '' }}
+          </option>
+        </select>
+        <button @click="copyVariant"
+          class="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs hover:bg-slate-200 transition">
+          复制副本
+        </button>
+        <button @click="renameVariant"
+          class="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs hover:bg-slate-200 transition">
+          重命名
+        </button>
+        <button @click="deleteVariant"
+          class="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs hover:bg-red-100 transition">
+          删除副本
+        </button>
+      </div>
       <div class="flex gap-2">
         <button @click="save" :disabled="saving"
           class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm hover:bg-slate-200 transition">
@@ -79,6 +99,8 @@ import { ref, computed, onMounted } from 'vue'
 import request from '@/api/request'
 
 const components = ref<any[]>([])
+const variants = ref<any[]>([])
+const currentVariantKey = ref('default')
 const selectedIndex = ref<number | null>(null)
 const saving = ref(false)
 const propsJson = ref('')
@@ -180,20 +202,96 @@ function remove(i: number) {
 async function save() {
   saving.value = true
   try {
-    await request.put('/decor/index', { components: components.value })
+    await request.put(`/decor/index?variant=${encodeURIComponent(currentVariantKey.value)}`, { components: components.value })
+    await loadVariants()
   } finally { saving.value = false }
 }
 
 async function publish() {
   await save()
-  await request.post('/decor/index/publish')
-  alert('已发布上线！')
+  await request.post(`/decor/index/publish?variant=${encodeURIComponent(currentVariantKey.value)}`)
+  await loadVariants()
+  alert('已发布上线（单活发布）')
+}
+
+async function loadVariants() {
+  const data: any = await request.get('/decor/index/variants')
+  variants.value = Array.isArray(data) ? data : []
+  if (!variants.value.length) {
+    variants.value = [{
+      variant_key: 'default',
+      variant_name: '默认副本',
+      is_published: false,
+    }]
+  }
+  const currentExists = variants.value.some(v => v.variant_key === currentVariantKey.value)
+  if (!currentExists) {
+    const published = variants.value.find(v => v.is_published)
+    currentVariantKey.value = published?.variant_key || variants.value[0].variant_key || 'default'
+  }
+}
+
+async function loadCurrentVariant() {
+  const data: any = await request.get(`/decor/index?variant=${encodeURIComponent(currentVariantKey.value)}`)
+  if (data?.components) {
+    try { components.value = JSON.parse(data.components) } catch {}
+  } else {
+    components.value = []
+  }
+  selectedIndex.value = null
+  propsJson.value = ''
+}
+
+async function changeVariant() {
+  await loadCurrentVariant()
+}
+
+function toVariantKey(raw: string) {
+  return raw.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '')
+}
+
+async function copyVariant() {
+  const keyRaw = prompt('请输入新副本标识（如 spring_festival_2027）')
+  if (!keyRaw) return
+  const newVariantKey = toVariantKey(keyRaw)
+  if (!newVariantKey) {
+    alert('副本标识不合法')
+    return
+  }
+  const newVariantName = prompt('请输入新副本名称', `副本 ${newVariantKey}`) || `副本 ${newVariantKey}`
+  await request.post('/decor/index/copies', {
+    from_variant_key: currentVariantKey.value,
+    new_variant_key: newVariantKey,
+    new_variant_name: newVariantName,
+  })
+  await loadVariants()
+  currentVariantKey.value = newVariantKey
+  await loadCurrentVariant()
+}
+
+async function renameVariant() {
+  const current = variants.value.find(v => v.variant_key === currentVariantKey.value)
+  const next = prompt('请输入副本名称', current?.variant_name || '')
+  if (!next) return
+  await request.put(`/decor/index/variants/${encodeURIComponent(currentVariantKey.value)}`, {
+    variant_name: next,
+  })
+  await loadVariants()
+}
+
+async function deleteVariant() {
+  if (currentVariantKey.value === 'default') {
+    alert('默认副本不支持删除')
+    return
+  }
+  if (!confirm(`确认删除副本 ${currentVariantKey.value}？`)) return
+  await request.delete(`/decor/index/variants/${encodeURIComponent(currentVariantKey.value)}`)
+  await loadVariants()
+  await loadCurrentVariant()
 }
 
 onMounted(async () => {
-  const data: any = await request.get('/decor/index')
-  if (data?.components) {
-    try { components.value = JSON.parse(data.components) } catch {}
-  }
+  await loadVariants()
+  await loadCurrentVariant()
 })
 </script>

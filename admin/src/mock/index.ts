@@ -11,6 +11,21 @@ const toNumber = (v: any) => Number(v || 0)
 let replySeq = 20000
 let afterSaleSeq = 8000
 const afterSalesSource: any[] = []
+const decorVariantsSource: any[] = [
+  {
+    id: 1,
+    merchant_id: 0,
+    page_key: 'index',
+    variant_key: 'default',
+    variant_name: '默认副本',
+    components: JSON.stringify([
+      { type: 'banner', id: 'c1', props: { images: [{ url: 'https://picsum.photos/750/350?random=1' }], height: 350 } },
+      { type: 'product_grid', id: 'c2', props: { source: 'hot', limit: 6, columns: 2 } },
+    ]),
+    is_published: true,
+    published_at: '2026-05-25T10:00:00Z',
+  },
+]
 
 function clone<T>(v: T): T {
   return JSON.parse(JSON.stringify(v))
@@ -308,15 +323,6 @@ const routes: Record<string, any> = {
   'POST /admin/api/ai/generate': { id: 99, status: 1, model_id: 1, prompt: 'demo', result_urls: null },
   'GET /admin/api/ai/tasks/': { id: 99, status: 2, model_id: 1, prompt: 'demo', result_urls: '["https://picsum.photos/750/750?random=91","https://picsum.photos/750/750?random=92"]' },
 
-  // Decor
-  'GET /admin/api/decor/': {
-    id: 1, page_key: 'index', merchant_id: 0,
-    components: JSON.stringify([
-      { type: 'banner', id: 'c1', props: { images: [{ url: 'https://picsum.photos/750/350?random=1' }], height: 350 } },
-      { type: 'product_grid', id: 'c2', props: { source: 'hot', limit: 6, columns: 2 } },
-    ]),
-  },
-
   // Upload
   'POST /admin/api/upload': { path: 'demo/mock.jpg', url: 'https://picsum.photos/400/400?random=50', size: 12345, mime: 'image/jpeg' },
 
@@ -499,6 +505,74 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     const id = Number(url.split('/')[4] || 0)
     const content = String((params as any)?.content || '').trim()
     if (id && content) upsertReviewReply(id, content)
+    return { matched: true, data: null }
+  }
+  if (key === 'GET /admin/api/decor/index/variants') {
+    return { matched: true, data: clone(decorVariantsSource) }
+  }
+  if (key.startsWith('GET /admin/api/decor/index')) {
+    const parsed = new URL(url, 'https://mock.local')
+    const variantKey = String(parsed.searchParams.get('variant') || 'default')
+    const item = decorVariantsSource.find((row: any) => String(row.variant_key) === variantKey) || decorVariantsSource[0]
+    return { matched: true, data: clone(item) }
+  }
+  if (key.startsWith('PUT /admin/api/decor/index')) {
+    const parsed = new URL(url, 'https://mock.local')
+    const variantKey = String(parsed.searchParams.get('variant') || 'default')
+    const target = decorVariantsSource.find((row: any) => String(row.variant_key) === variantKey)
+    if (target) {
+      target.components = JSON.stringify((params as any)?.components || [])
+    }
+    return { matched: true, data: target ? clone(target) : null }
+  }
+  if (key.startsWith('POST /admin/api/decor/index/publish')) {
+    const parsed = new URL(url, 'https://mock.local')
+    const variantKey = String(parsed.searchParams.get('variant') || 'default')
+    const now = new Date().toISOString()
+    for (const row of decorVariantsSource) {
+      row.is_published = false
+      row.published_at = null
+    }
+    const target = decorVariantsSource.find((row: any) => String(row.variant_key) === variantKey)
+    if (target) {
+      target.is_published = true
+      target.published_at = now
+    }
+    return { matched: true, data: null }
+  }
+  if (key === 'POST /admin/api/decor/index/copies') {
+    const payload: any = params || {}
+    const fromVariantKey = String(payload.from_variant_key || 'default')
+    const newVariantKey = String(payload.new_variant_key || '').trim()
+    const newVariantName = String(payload.new_variant_name || '').trim() || `副本 ${newVariantKey}`
+    const source = decorVariantsSource.find((row: any) => String(row.variant_key) === fromVariantKey)
+    if (!source || !newVariantKey) return { matched: true, data: null }
+    if (!decorVariantsSource.find((row: any) => String(row.variant_key) === newVariantKey)) {
+      decorVariantsSource.push({
+        ...clone(source),
+        id: Math.max(...decorVariantsSource.map((row: any) => Number(row.id || 0))) + 1,
+        variant_key: newVariantKey,
+        variant_name: newVariantName,
+        is_published: false,
+        published_at: null,
+      })
+    }
+    return { matched: true, data: null }
+  }
+  if (key.startsWith('PUT /admin/api/decor/index/variants/')) {
+    const variantKey = decodeURIComponent(url.split('/').pop() || '')
+    const target = decorVariantsSource.find((row: any) => String(row.variant_key) === variantKey)
+    if (target) {
+      target.variant_name = String((params as any)?.variant_name || target.variant_name)
+    }
+    return { matched: true, data: null }
+  }
+  if (key.startsWith('DELETE /admin/api/decor/index/variants/')) {
+    const variantKey = decodeURIComponent(url.split('/').pop() || '')
+    if (variantKey !== 'default') {
+      const idx = decorVariantsSource.findIndex((row: any) => String(row.variant_key) === variantKey && !row.is_published)
+      if (idx >= 0) decorVariantsSource.splice(idx, 1)
+    }
     return { matched: true, data: null }
   }
   if (key in routes) return { matched: true, data: routes[key] }

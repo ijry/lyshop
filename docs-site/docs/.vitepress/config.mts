@@ -58,6 +58,7 @@ export default defineConfig({
             { text: "认证接口", link: "/api/auth" },
             { text: "商品接口", link: "/api/product" },
             { text: "订单接口", link: "/api/order" },
+            { text: "装修接口", link: "/api/decor" },
             { text: "营销接口", link: "/api/marketing" },
             { text: "IM 接口", link: "/api/im" },
             { text: "支付接口", link: "/api/payment" }
