@@ -6,8 +6,8 @@
       <view class="bg-white rounded-20rpx p-24rpx mb-20rpx">
         <text class="text-28rpx font-600 text-gray-800 block">售后单号：{{ detail.case_no }}</text>
         <text class="text-24rpx text-gray-600 block mt-8rpx">订单ID：{{ detail.order_id }}</text>
-        <text class="text-24rpx text-gray-600 block mt-8rpx">类型：{{ detail.case_type === 'exchange' ? '换货' : '退货' }}</text>
-        <text class="text-24rpx text-gray-600 block mt-8rpx">状态：{{ statusLabel(detail.status) }}</text>
+        <text class="text-24rpx text-gray-600 block mt-8rpx">类型：{{ caseTypeText(detail.case_type, detail.case_type_label) }}</text>
+        <text class="text-24rpx text-gray-600 block mt-8rpx">状态：{{ statusText(detail.status, detail.status_label) }}</text>
         <text class="text-24rpx text-gray-600 block mt-8rpx">原因：{{ detail.reason }}</text>
         <text v-if="detail.apply_content" class="text-24rpx text-gray-600 block mt-8rpx">说明：{{ detail.apply_content }}</text>
         <view v-if="detail.apply_images?.length" class="flex flex-wrap gap-12rpx mt-16rpx">
@@ -28,7 +28,7 @@
           <view v-for="ship in detail.shipments" :key="ship.id" class="border border-gray-100 rounded-16rpx p-16rpx">
             <text class="text-24rpx text-gray-700 block">{{ shipmentTitle(ship) }}</text>
             <text class="text-22rpx text-gray-500 block mt-6rpx">{{ ship.company || '未填公司' }} · {{ ship.tracking_no || '-' }}</text>
-            <text class="text-22rpx text-gray-500 block mt-6rpx">状态：{{ shipmentStatusLabel(ship.logistics_status) }}</text>
+            <text class="text-22rpx text-gray-500 block mt-6rpx">状态：{{ shipmentStatusText(ship.logistics_status, ship.logistics_status_label) }}</text>
             <text v-if="shipmentPrimaryTime(ship)" class="text-22rpx text-gray-500 block mt-6rpx">
               {{ shipmentTimeLabel(ship) }}：{{ formatDate(shipmentPrimaryTime(ship)) }}
             </text>
@@ -43,7 +43,7 @@
         <text class="text-28rpx font-600 text-gray-800 block mb-16rpx">进度日志</text>
         <view v-if="detail.logs?.length" class="space-y-12rpx">
           <view v-for="log in detail.logs" :key="log.id" class="border border-gray-100 rounded-16rpx p-16rpx">
-            <text class="text-24rpx text-gray-700 block">{{ actionLabel(log.action) }}：{{ statusLabelOrDash(log.from_status) }} → {{ statusLabel(log.to_status) }}</text>
+            <text class="text-24rpx text-gray-700 block">{{ actionText(log.action, log.action_label) }}：{{ statusLabelOrDash(log.from_status, log.from_status_label) }} → {{ statusText(log.to_status, log.to_status_label) }}</text>
             <text class="text-22rpx text-gray-500 block mt-6rpx">{{ log.content || '-' }}</text>
             <text class="text-22rpx text-gray-400 block mt-6rpx">{{ formatDate(log.created_at) }}</text>
           </view>
@@ -90,6 +90,10 @@ const returnForm = ref<any>({
 
 const statusLabel = (status: string) => afterSaleStatusLabel(status)
 const formatDate = (v?: string) => (v ? String(v).slice(0, 19).replace('T', ' ') : '-')
+const caseTypeLabels: Record<string, string> = {
+  return: '退货',
+  exchange: '换货',
+}
 const actionLabels: Record<string, string> = {
   apply: '提交申请',
   audit: '审核',
@@ -105,10 +109,35 @@ function actionLabel(action: string) {
   return actionLabels[String(action || '')] || action || '-'
 }
 
-function statusLabelOrDash(status: string) {
-  const value = String(status || '')
+function caseTypeText(caseType: string, label?: string) {
+  const mapped = String(label || '').trim()
+  if (mapped) return mapped
+  const value = String(caseType || '')
+  return caseTypeLabels[value] || value
+}
+
+function statusText(status: string, label?: string) {
+  const mapped = String(label || '').trim()
+  if (mapped) return mapped
+  return statusLabel(status)
+}
+
+function shipmentStatusText(status: string, label?: string) {
+  const mapped = String(label || '').trim()
+  if (mapped) return mapped
+  return shipmentStatusLabel(status)
+}
+
+function actionText(action: string, label?: string) {
+  const mapped = String(label || '').trim()
+  if (mapped) return mapped
+  return actionLabel(action)
+}
+
+function statusLabelOrDash(status: string, label?: string) {
+  const value = String(label || status || '')
   if (!value) return '-'
-  return statusLabel(value)
+  return statusText(status, label)
 }
 
 function toast(msg: string) {

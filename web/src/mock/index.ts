@@ -11,7 +11,7 @@ import bargain from '../../../app/mock/data/bargain.json'
 import recommend from '../../../app/mock/data/recommend.json'
 import userProfile from '../../../app/mock/data/user-profile.json'
 import addresses from '../../../app/mock/data/addresses.json'
-import { afterSaleStatusLabel } from '../utils/order-status'
+import { afterSaleStatusLabel, shipmentStatusLabel } from '../utils/order-status'
 
 function parseQuery(url: string) {
   const queryIndex = url.indexOf('?')
@@ -31,6 +31,29 @@ const addressListSource = Array.isArray(addresses)
   : []
 let afterSaleSeq = 8000
 const afterSalesSource: any[] = []
+const afterSaleCaseTypeLabels: Record<string, string> = {
+  return: '退货',
+  exchange: '换货',
+}
+const afterSaleActionLabels: Record<string, string> = {
+  apply: '提交申请',
+  audit: '审核',
+  return_ship: '回寄物流',
+  receive: '确认收货',
+  refund: '退款',
+  reship: '补发',
+  complete: '完结',
+  close: '关闭',
+}
+const shipmentDirectionLabels: Record<string, string> = {
+  outbound: '寄出',
+  inbound: '回寄',
+}
+const shipmentBizTypeLabels: Record<string, string> = {
+  initial: '首发',
+  reship: '补发',
+  return: '回寄',
+}
 
 function nextUploadURL() {
   const n = Math.floor(Math.random() * 1000) + 200
@@ -48,6 +71,33 @@ function nextAfterSaleCaseNo() {
 
 function statusOpen(status: string) {
   return !['completed', 'rejected', 'closed'].includes(status)
+}
+
+function withAfterSaleLabels(row: any) {
+  const data = clone(row || {})
+  const logs = Array.isArray(data.logs)
+    ? data.logs.map((log: any) => ({
+      ...log,
+      from_status_label: String(log?.from_status || '').trim() ? afterSaleStatusLabel(log.from_status) : '',
+      to_status_label: afterSaleStatusLabel(log?.to_status),
+      action_label: afterSaleActionLabels[String(log?.action || '')] || String(log?.action || ''),
+    }))
+    : []
+  const shipments = Array.isArray(data.shipments)
+    ? data.shipments.map((ship: any) => ({
+      ...ship,
+      direction_label: shipmentDirectionLabels[String(ship?.direction || '')] || String(ship?.direction || ''),
+      biz_type_label: shipmentBizTypeLabels[String(ship?.biz_type || '')] || String(ship?.biz_type || ''),
+      logistics_status_label: shipmentStatusLabel(ship?.logistics_status),
+    }))
+    : []
+  return {
+    ...data,
+    status_label: afterSaleStatusLabel(data?.status),
+    case_type_label: afterSaleCaseTypeLabels[String(data?.case_type || '')] || String(data?.case_type || ''),
+    logs,
+    shipments,
+  }
 }
 
 function buildAfterSaleSummary(orderID: number) {
@@ -450,7 +500,7 @@ export function matchMock(method: string, url: string, params?: Record<string, a
   if (upperMethod === 'GET' && path.startsWith('/api/v1/after-sales/')) {
     const caseID = Number(path.split('/').pop() || 0)
     const row = getAfterSaleByID(caseID)
-    return { matched: true, data: row ? JSON.parse(JSON.stringify(row)) : null }
+    return { matched: true, data: row ? withAfterSaleLabels(row) : null }
   }
   if (upperMethod === 'POST' && path.startsWith('/api/v1/after-sales/') && path.endsWith('/return-shipments')) {
     const caseID = Number(path.split('/')[4] || 0)

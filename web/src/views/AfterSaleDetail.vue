@@ -8,8 +8,8 @@
     <div class="card p-5 mb-4">
       <p class="text-sm text-gray-600">售后单号：<span class="font-mono">{{ detail.case_no }}</span></p>
       <p class="text-sm text-gray-600 mt-1">订单ID：{{ detail.order_id }}</p>
-      <p class="text-sm text-gray-600 mt-1">类型：{{ detail.case_type === 'exchange' ? '换货' : '退货' }}</p>
-      <p class="text-sm text-gray-600 mt-1">状态：{{ statusLabel(detail.status) }}</p>
+      <p class="text-sm text-gray-600 mt-1">类型：{{ caseTypeText(detail.case_type, detail.case_type_label) }}</p>
+      <p class="text-sm text-gray-600 mt-1">状态：{{ statusText(detail.status, detail.status_label) }}</p>
       <p class="text-sm text-gray-600 mt-1">原因：{{ detail.reason }}</p>
       <p v-if="detail.apply_content" class="text-sm text-gray-600 mt-1">说明：{{ detail.apply_content }}</p>
       <div v-if="detail.apply_images?.length" class="flex flex-wrap gap-2 mt-3">
@@ -29,7 +29,7 @@
         <div v-for="ship in detail.shipments" :key="ship.id" class="border border-gray-100 rounded-lg p-3">
           <p class="text-sm text-gray-700">{{ shipmentTitle(ship) }}</p>
           <p class="text-xs text-gray-500 mt-1">{{ ship.company || '未填公司' }} · {{ ship.tracking_no || '-' }}</p>
-          <p class="text-xs text-gray-500 mt-1">状态：{{ shipmentStatusLabel(ship.logistics_status) }}</p>
+          <p class="text-xs text-gray-500 mt-1">状态：{{ shipmentStatusText(ship.logistics_status, ship.logistics_status_label) }}</p>
           <p v-if="shipmentPrimaryTime(ship)" class="text-xs text-gray-500 mt-1">
             {{ shipmentTimeLabel(ship) }}：{{ formatDate(shipmentPrimaryTime(ship)) }}
           </p>
@@ -44,7 +44,7 @@
       <h3 class="text-sm font-semibold text-gray-800 mb-3">进度日志</h3>
       <div v-if="detail.logs?.length" class="space-y-3">
         <div v-for="log in detail.logs" :key="log.id" class="border border-gray-100 rounded-lg p-3">
-          <p class="text-sm text-gray-700">{{ actionLabel(log.action) }}：{{ statusLabelOrDash(log.from_status) }} → {{ statusLabel(log.to_status) }}</p>
+          <p class="text-sm text-gray-700">{{ actionText(log.action, log.action_label) }}：{{ statusLabelOrDash(log.from_status, log.from_status_label) }} → {{ statusText(log.to_status, log.to_status_label) }}</p>
           <p class="text-xs text-gray-500 mt-1">{{ log.content || '-' }}</p>
           <p class="text-xs text-gray-400 mt-1">{{ formatDate(log.created_at) }}</p>
         </div>
@@ -89,6 +89,10 @@ const returnForm = ref<any>({
 })
 const statusLabel = (status: string) => afterSaleStatusLabel(status)
 const formatDate = (v?: string) => (v ? String(v).slice(0, 19).replace('T', ' ') : '-')
+const caseTypeLabels: Record<string, string> = {
+  return: '退货',
+  exchange: '换货',
+}
 const actionLabels: Record<string, string> = {
   apply: '提交申请',
   audit: '审核',
@@ -104,10 +108,35 @@ function actionLabel(action: string) {
   return actionLabels[String(action || '')] || action || '-'
 }
 
-function statusLabelOrDash(status: string) {
-  const value = String(status || '')
+function caseTypeText(caseType: string, label?: string) {
+  const mapped = String(label || '').trim()
+  if (mapped) return mapped
+  const value = String(caseType || '')
+  return caseTypeLabels[value] || value
+}
+
+function statusText(status: string, label?: string) {
+  const mapped = String(label || '').trim()
+  if (mapped) return mapped
+  return statusLabel(status)
+}
+
+function shipmentStatusText(status: string, label?: string) {
+  const mapped = String(label || '').trim()
+  if (mapped) return mapped
+  return shipmentStatusLabel(status)
+}
+
+function actionText(action: string, label?: string) {
+  const mapped = String(label || '').trim()
+  if (mapped) return mapped
+  return actionLabel(action)
+}
+
+function statusLabelOrDash(status: string, label?: string) {
+  const value = String(label || status || '')
   if (!value) return '-'
-  return statusLabel(value)
+  return statusText(status, label)
 }
 
 function alertMsg(msg: string) {
