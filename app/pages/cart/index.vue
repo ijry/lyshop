@@ -12,6 +12,16 @@
     <view v-else class="p-20rpx">
       <view v-for="item in items" :key="item.sku_id"
         class="flex items-center bg-white rounded-20rpx p-24rpx mb-20rpx shadow-sm">
+        <!-- Select -->
+        <view class="pr-16rpx flex-shrink-0" @click.stop="toggleItem(item.sku_id)">
+          <view
+            class="w-36rpx h-36rpx rounded-full border-2 flex items-center justify-center"
+            :class="isChecked(item.sku_id) ? 'border-blue-700 bg-blue-700' : 'border-gray-300 bg-white'"
+          >
+            <u-icon v-if="isChecked(item.sku_id)" name="checkmark" size="14" color="#fff" />
+          </view>
+        </view>
+
         <!-- Product image -->
         <image :src="item.product?.cover" mode="aspectFill"
           class="w-160rpx h-160rpx rounded-16rpx flex-shrink-0" />
@@ -63,12 +73,23 @@
     <view v-if="items.length"
       class="fixed bottom-0 left-0 right-0 z-100 bg-white border-t-1 border-gray-100 px-30rpx py-20rpx flex items-center justify-between"
       :style="{paddingBottom: 'calc(20rpx + env(safe-area-inset-bottom))'}">
-      <view class="flex items-baseline">
-        <text class="text-26rpx text-gray-500">合计：</text>
-        <text class="text-36rpx text-red-500 font-700 ml-4rpx">¥{{ total.toFixed(2) }}</text>
+      <view class="flex items-center gap-24rpx">
+        <view class="flex items-center" @click="toggleCheckAll">
+          <view
+            class="w-36rpx h-36rpx rounded-full border-2 flex items-center justify-center mr-10rpx"
+            :class="allChecked ? 'border-blue-700 bg-blue-700' : 'border-gray-300 bg-white'"
+          >
+            <u-icon v-if="allChecked" name="checkmark" size="14" color="#fff" />
+          </view>
+          <text class="text-24rpx text-gray-600">全选</text>
+        </view>
+        <view class="flex items-baseline">
+          <text class="text-26rpx text-gray-500">合计：</text>
+          <text class="text-36rpx text-red-500 font-700 ml-4rpx">¥{{ selectedTotal.toFixed(2) }}</text>
+        </view>
       </view>
-      <u-button type="primary" :text="`结算(${items.length})`" shape="circle"
-        :custom-style="{width: '220rpx'}" @click="checkout" />
+      <u-button type="primary" :text="`结算(${selectedCount})`" shape="circle"
+        :disabled="selectedCount === 0" :custom-style="{width: '220rpx'}" @click="checkout" />
     </view>
   </view>
 </template>
@@ -79,9 +100,17 @@ import { get, post } from '@/utils/request'
 
 const items = ref<any[]>([])
 const recommends = ref<any[]>([])
+const checkedSkuIds = ref<number[]>([])
 
-const total = computed(() =>
-  items.value.reduce((s, i) => s + (i.sku?.price || 0) * i.qty, 0)
+const selectedItems = computed(() =>
+  items.value.filter(i => checkedSkuIds.value.includes(i.sku_id))
+)
+const selectedCount = computed(() => selectedItems.value.length)
+const selectedTotal = computed(() =>
+  selectedItems.value.reduce((s, i) => s + (i.sku?.price || 0) * i.qty, 0)
+)
+const allChecked = computed(() =>
+  items.value.length > 0 && checkedSkuIds.value.length === items.value.length
 )
 
 function skuLabel(item: any) {
@@ -95,6 +124,7 @@ function skuLabel(item: any) {
 async function loadCart() {
   const data = await get<any[]>('/api/v1/cart')
   items.value = data || []
+  checkedSkuIds.value = items.value.map(i => i.sku_id)
   // Load recommendations
   const rec = await get<any[]>('/api/v1/products/recommend')
   recommends.value = rec || []
@@ -106,10 +136,35 @@ async function updateQty(skuID: number, qty: number) {
 
 async function remove(skuID: number) {
   items.value = items.value.filter(i => i.sku_id !== skuID)
+  checkedSkuIds.value = checkedSkuIds.value.filter(id => id !== skuID)
+}
+
+function isChecked(skuID: number) {
+  return checkedSkuIds.value.includes(skuID)
+}
+
+function toggleItem(skuID: number) {
+  if (isChecked(skuID)) {
+    checkedSkuIds.value = checkedSkuIds.value.filter(id => id !== skuID)
+    return
+  }
+  checkedSkuIds.value.push(skuID)
+}
+
+function toggleCheckAll() {
+  if (allChecked.value) {
+    checkedSkuIds.value = []
+    return
+  }
+  checkedSkuIds.value = items.value.map(i => i.sku_id)
 }
 
 function checkout() {
-  const ids = items.value.map(i => i.sku_id).join(',')
+  if (!checkedSkuIds.value.length) {
+    uni.showToast({ title: '请先勾选商品', icon: 'none' })
+    return
+  }
+  const ids = checkedSkuIds.value.join(',')
   uni.navigateTo({ url: `/pages/order/confirm?sku_ids=${ids}` })
 }
 
