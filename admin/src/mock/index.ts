@@ -5,6 +5,7 @@ import products from '../../../app/mock/data/products.json'
 import categories from '../../../app/mock/data/categories.json'
 import orders from '../../../app/mock/data/orders.json'
 import productDetail from '../../../app/mock/data/product-detail.json'
+import { afterSaleStatusLabel, shipmentStatusLabel } from '../utils/order-status'
 
 const orderListSource = (orders as any)?.list || []
 const toNumber = (v: any) => Number(v || 0)
@@ -29,6 +30,29 @@ const decorVariantsSource: any[] = [
 
 function clone<T>(v: T): T {
   return JSON.parse(JSON.stringify(v))
+}
+
+function withAfterSaleLabels(row: any) {
+  const data = clone(row || {})
+  const logs = Array.isArray(data.logs)
+    ? data.logs.map((log: any) => ({
+      ...log,
+      from_status_label: String(log?.from_status || '').trim() ? afterSaleStatusLabel(log.from_status) : '',
+      to_status_label: afterSaleStatusLabel(log?.to_status),
+    }))
+    : []
+  const shipments = Array.isArray(data.shipments)
+    ? data.shipments.map((ship: any) => ({
+      ...ship,
+      logistics_status_label: shipmentStatusLabel(ship?.logistics_status),
+    }))
+    : []
+  return {
+    ...data,
+    status_label: afterSaleStatusLabel(data?.status),
+    logs,
+    shipments,
+  }
 }
 
 function nextAfterSaleCaseNo() {
@@ -254,6 +278,15 @@ const routes: Record<string, any> = {
     today_sales: 28960.50,
     pending_refunds: 3,
     online_sessions: 2,
+    sales_trend: [
+      { date: '2026-05-19', orders: 42, sales: 18660.00 },
+      { date: '2026-05-20', orders: 38, sales: 17280.00 },
+      { date: '2026-05-21', orders: 47, sales: 21340.00 },
+      { date: '2026-05-22', orders: 52, sales: 24120.50 },
+      { date: '2026-05-23', orders: 49, sales: 22590.00 },
+      { date: '2026-05-24', orders: 58, sales: 27630.00 },
+      { date: '2026-05-25', orders: 56, sales: 28960.50 },
+    ],
   },
 
   // Products
@@ -436,12 +469,13 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     if (status) list = list.filter((item: any) => String(item.status || '') === status)
     if (orderID > 0) list = list.filter((item: any) => Number(item.order_id || 0) === orderID)
     const offset = (page - 1) * size
-    return { matched: true, data: { list: list.slice(offset, offset + size), total: list.length, page, size } }
+    const pageList = list.slice(offset, offset + size).map((item: any) => withAfterSaleLabels(item))
+    return { matched: true, data: { list: pageList, total: list.length, page, size } }
   }
   if (key.startsWith('GET /admin/api/after-sales/')) {
     const id = Number(url.split('/').pop() || 0)
     const target = afterSalesSource.find((item: any) => Number(item.id) === id) || null
-    return { matched: true, data: target ? clone(target) : null }
+    return { matched: true, data: target ? withAfterSaleLabels(target) : null }
   }
   if (key.startsWith('POST /admin/api/after-sales/')) {
     const id = Number(url.split('/')[4] || 0)
