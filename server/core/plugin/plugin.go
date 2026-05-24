@@ -32,7 +32,7 @@ type MenuItem struct {
 type ConfigField struct {
 	Key         string `json:"key"`                    // config_kv key
 	Label       string `json:"label"`                  // display label
-	Type        string `json:"type"`                   // text|password|number|select|switch
+	Type        string `json:"type"`                   // text|password|textarea|number|select|switch
 	Placeholder string `json:"placeholder,omitempty"`
 	Required    bool   `json:"required,omitempty"`
 	Options     []struct {                              // for type=select

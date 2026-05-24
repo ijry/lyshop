@@ -146,8 +146,8 @@ const routes: Record<string, any> = {
     ]},
     { plugin: 'alipay', title: '支付宝支付', fields: [
       { key: 'app_id', label: 'AppID', type: 'text', required: true },
-      { key: 'private_key', label: '应用私钥', type: 'password', required: true },
-      { key: 'public_key', label: '支付宝公钥', type: 'password', required: true },
+      { key: 'private_key', label: '应用私钥', type: 'textarea', required: true, placeholder: 'RSA2 私钥内容' },
+      { key: 'public_key', label: '支付宝公钥', type: 'textarea', required: true, placeholder: '支付宝公钥内容' },
       { key: 'sandbox', label: '沙箱模式', type: 'switch' },
     ]},
     { plugin: 'sms', title: '短信插件', fields: [

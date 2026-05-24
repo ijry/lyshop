@@ -50,6 +50,11 @@
                 <label :for="field.key" class="text-sm text-slate-600">{{ configValues[field.key] === 'true' ? '已开启' : '已关闭' }}</label>
               </div>
 
+              <!-- textarea -->
+              <textarea v-else-if="field.type === 'textarea'" v-model="configValues[field.key]"
+                rows="5" :placeholder="field.placeholder || ''"
+                class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono resize-y focus:outline-none focus:border-red-500" />
+
               <!-- password -->
               <div v-else-if="field.type === 'password'" class="relative">
                 <input v-model="configValues[field.key]" :type="showPw[field.key] ? 'text' : 'password'"
