@@ -62,6 +62,66 @@ function nextAfterSaleCaseNo() {
   return `AS${Date.now()}${afterSaleSeq}`
 }
 
+function statusOpen(status: string) {
+  return !['completed', 'rejected', 'closed'].includes(status)
+}
+
+function buildAfterSaleSummary(orderID: number) {
+  const rows = afterSalesSource
+    .filter((row: any) => Number(row.order_id) === Number(orderID))
+    .sort((a: any, b: any) => Number(b.id) - Number(a.id))
+  if (!rows.length) {
+    return {
+      in_progress_count: 0,
+      has_open_case: false,
+      latest_status: '',
+      latest_status_label: '',
+      latest_case_id: 0,
+      can_apply: true,
+    }
+  }
+  const latestStatus = String(rows[0].status || '')
+  const openCount = rows.filter((row: any) => statusOpen(String(row.status || ''))).length
+  return {
+    in_progress_count: openCount,
+    has_open_case: openCount > 0,
+    latest_status: latestStatus,
+    latest_status_label: afterSaleStatusLabel(latestStatus),
+    latest_case_id: Number(rows[0].id || 0),
+    can_apply: openCount === 0,
+  }
+}
+
+function ensureOrderExt(order: any) {
+  if (!order) return
+  if (!Array.isArray(order.shipments)) {
+    order.shipments = order.tracking_no ? [{
+      id: Number(order.id) * 10 + 1,
+      order_id: Number(order.id),
+      after_sale_case_id: 0,
+      direction: 'outbound',
+      biz_type: 'initial',
+      company: '顺丰',
+      tracking_no: order.tracking_no,
+      logistics_status: 'shipped',
+      remark: '',
+      created_by_type: 'admin',
+      created_by_id: 0,
+      created_at: order.paid_at || order.created_at,
+    }] : []
+  }
+  order.latest_shipment = order.shipments?.[0] || null
+  order.after_sale_summary = buildAfterSaleSummary(Number(order.id))
+}
+
+function touchOrderAfterSaleSummary(orderID: number) {
+  const target = orderListSource.find((item: any) => Number(item.id) === Number(orderID))
+  if (!target) return
+  target.after_sale_summary = buildAfterSaleSummary(orderID)
+}
+
+for (const order of orderListSource) ensureOrderExt(order)
+
 function buildAfterSaleRows() {
   const rows: any[] = []
   const target = orderListSource.find((item: any) => Number(item.id) === 2) || orderListSource[0]
@@ -116,6 +176,7 @@ function buildAfterSaleRows() {
 }
 
 afterSalesSource.push(...buildAfterSaleRows())
+for (const order of orderListSource) touchOrderAfterSaleSummary(Number(order.id))
 
 function buildReviewRows() {
   const rows: any[] = []
@@ -543,12 +604,14 @@ export function matchMock(method: string, url: string, params?: Record<string, a
       const fromStatus = String(target.status || '')
       target.status = approve ? 'approved_wait_user_return' : 'rejected'
       pushLog(fromStatus, target.status, 'audit', approve ? '售后审核通过' : '售后审核拒绝')
+      touchOrderAfterSaleSummary(Number(target.order_id || 0))
       return { matched: true, data: null }
     }
     if (action === 'receive') {
       const fromStatus = String(target.status || '')
       target.status = String(target.case_type || '') === 'exchange' ? 'reship_pending' : 'refund_pending'
       pushLog(fromStatus, target.status, 'receive', '仓库收货确认')
+      touchOrderAfterSaleSummary(Number(target.order_id || 0))
       return { matched: true, data: null }
     }
     if (action === 'refund') {
@@ -556,18 +619,21 @@ export function matchMock(method: string, url: string, params?: Record<string, a
       target.status = 'refunded'
       target.refund_amount = Number((params as any)?.amount || target.refund_amount || 0)
       pushLog(fromStatus, target.status, 'refund', '退款登记')
+      touchOrderAfterSaleSummary(Number(target.order_id || 0))
       return { matched: true, data: null }
     }
     if (action === 'complete') {
       const fromStatus = String(target.status || '')
       target.status = 'completed'
       pushLog(fromStatus, target.status, 'complete', '售后完结')
+      touchOrderAfterSaleSummary(Number(target.order_id || 0))
       return { matched: true, data: null }
     }
     if (action === 'close') {
       const fromStatus = String(target.status || '')
       target.status = 'closed'
       pushLog(fromStatus, target.status, 'close', '关闭售后')
+      touchOrderAfterSaleSummary(Number(target.order_id || 0))
       return { matched: true, data: null }
     }
     return { matched: true, data: null }

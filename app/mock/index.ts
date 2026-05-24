@@ -17,6 +17,7 @@ import bargain from './data/bargain.json'
 import recommend from './data/recommend.json'
 import userProfile from './data/user-profile.json'
 import addresses from './data/addresses.json'
+import { afterSaleStatusLabel } from '../utils/order-status'
 
 function parseQuery(url: string) {
   const queryIndex = url.indexOf('?')
@@ -85,13 +86,22 @@ function buildAfterSaleSummary(orderID: number) {
     .filter((row: any) => Number(row.order_id) === Number(orderID))
     .sort((a: any, b: any) => Number(b.id) - Number(a.id))
   if (!rows.length) {
-    return { in_progress_count: 0, has_open_case: false, latest_status: '', latest_case_id: 0, can_apply: true }
+    return {
+      in_progress_count: 0,
+      has_open_case: false,
+      latest_status: '',
+      latest_status_label: '',
+      latest_case_id: 0,
+      can_apply: true,
+    }
   }
+  const latestStatus = String(rows[0].status || '')
   const openCount = rows.filter((row: any) => statusOpen(String(row.status || ''))).length
   return {
     in_progress_count: openCount,
     has_open_case: openCount > 0,
-    latest_status: String(rows[0].status || ''),
+    latest_status: latestStatus,
+    latest_status_label: afterSaleStatusLabel(latestStatus),
     latest_case_id: Number(rows[0].id || 0),
     can_apply: openCount === 0,
   }
