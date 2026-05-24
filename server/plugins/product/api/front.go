@@ -11,6 +11,7 @@ import (
 func RegisterFrontRoutes(g *gin.RouterGroup) {
 	g.GET("/categories", listCategories)
 	g.GET("/products", listProducts)
+	g.GET("/products/recommend", listRecommendProducts)
 	g.GET("/products/:id", getProduct)
 	g.GET("/products/:id/reviews", listProductReviews)
 }
@@ -44,6 +45,22 @@ func getProduct(c *gin.Context) {
 		return
 	}
 	response.OK(c, detail)
+}
+
+func listRecommendProducts(c *gin.Context) {
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "8"))
+	if limit <= 0 {
+		limit = 8
+	}
+	if limit > 50 {
+		limit = 50
+	}
+	list, err := productsvc.ListRecommendProducts(c.Request.Context(), limit)
+	if err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, list)
 }
 
 func listProductReviews(c *gin.Context) {

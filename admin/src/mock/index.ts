@@ -230,10 +230,6 @@ const routes: Record<string, any> = {
     { title: '客服中心', icon: 'message-circle', path: '/im', sort: 50, children: [
       { title: '客服会话', path: '/im/sessions' },
     ]},
-    { title: 'AI 工具', icon: 'cpu', path: '/ai', sort: 60, children: [
-      { title: 'AI 生图', path: '/ai/tasks' },
-      { title: '模型配置', path: '/ai/models' },
-    ]},
     { title: '店铺装修', icon: 'layout', path: '/decor', sort: 70, children: [
       { title: '首页装修', path: '/decor/index' },
     ]},

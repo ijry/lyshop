@@ -68,6 +68,23 @@ func ListProducts(ctx context.Context, q ProductListQuery) ([]productmodel.Produ
 	return list, total, err
 }
 
+func ListRecommendProducts(ctx context.Context, limit int) ([]productmodel.Product, error) {
+	if limit <= 0 {
+		limit = 8
+	}
+	if limit > 50 {
+		limit = 50
+	}
+	var list []productmodel.Product
+	err := db.DB.WithContext(ctx).
+		Model(&productmodel.Product{}).
+		Where("status = ?", 1).
+		Order("sales desc, sort desc, id desc").
+		Limit(limit).
+		Find(&list).Error
+	return list, err
+}
+
 func GetProduct(ctx context.Context, id uint64) (*ProductDetail, error) {
 	var p productmodel.Product
 	if err := db.DB.WithContext(ctx).First(&p, id).Error; err != nil {

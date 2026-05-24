@@ -5,17 +5,6 @@
   "description": "AI生成商品轮播图和详情图，支持多模型聚合",
   "author": "lyshop",
   "depends": ["product"],
-  "menus": [
-    {
-      "title": "AI工具",
-      "icon": "cpu",
-      "path": "/ai",
-      "sort": 60,
-      "children": [
-        { "title": "AI生图配置", "path": "/ai/models",  "permission": "ai:config" },
-        { "title": "生图记录",   "path": "/ai/tasks",   "permission": "ai:view" }
-      ]
-    }
-  ],
+  "menus": [],
   "permissions": ["ai:view", "ai:generate", "ai:config"]
 }

@@ -10,10 +10,12 @@
 - `GET /api/product/detail`
 - `GET /api/product/category/list`
 - `GET /api/product/sku/list`
+- `GET /api/v1/products/recommend?limit=8`
 - `GET /api/v1/products/:id/reviews?page=1&size=10`
 
 ## 说明
 
 - 前台接口用于商品浏览与详情展示
 - 后台接口用于商品维护、上架与库存信息管理
+- `GET /api/v1/products/recommend` 返回上架商品推荐列表，默认 8 条，支持 `limit` 参数（最大 50）
 - 商品详情页的“评价 Tab”通过 `GET /api/v1/products/:id/reviews` 获取评分摘要、评价列表、追评与商家回复（含评价图片与追评图片）
