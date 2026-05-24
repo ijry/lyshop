@@ -15,6 +15,7 @@
     { "path": "pages/order/confirm",        "style": { "navigationBarTitleText": "确认订单" } },
     { "path": "pages/order/list",           "style": { "navigationBarTitleText": "我的订单" } },
     { "path": "pages/order/detail",         "style": { "navigationBarTitleText": "订单详情" } },
+    { "path": "pages/order/review",         "style": { "navigationBarTitleText": "订单评价" } },
     { "path": "pages/marketing/coupon",     "style": { "navigationBarTitleText": "我的优惠券" } },
     { "path": "pages/marketing/seckill",    "style": { "navigationBarTitleText": "限时秒杀" } },
     { "path": "pages/marketing/group-buy",  "style": { "navigationBarTitleText": "拼团特惠" } },

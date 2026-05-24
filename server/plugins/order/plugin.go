@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 
 	"github.com/gin-gonic/gin"
+	"github.com/ijry/lyshop/core/plugin"
 	orderapi "github.com/ijry/lyshop/plugins/order/api"
 	ordermodel "github.com/ijry/lyshop/plugins/order/model"
-	"github.com/ijry/lyshop/core/plugin"
 	"gorm.io/gorm"
 )
 
@@ -38,6 +38,9 @@ func (p *orderPlugin) Migrate(db *gorm.DB) error {
 		&ordermodel.OrderItem{},
 		&ordermodel.OrderPayment{},
 		&ordermodel.OrderRefund{},
+		&ordermodel.OrderReview{},
+		&ordermodel.OrderReviewAppend{},
+		&ordermodel.OrderReviewReply{},
 	)
 }
 

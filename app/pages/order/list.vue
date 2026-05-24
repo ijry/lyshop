@@ -118,27 +118,7 @@ async function toPay(order: any) {
 function toReview(order: any) {
   const id = Number(order?.id || 0)
   if (!id || actioningID.value) return
-  uni.showModal({
-    title: '订单评价',
-    editable: true,
-    placeholderText: '请输入评价内容（选填）',
-    confirmText: '提交',
-    success: async (res: any) => {
-      if (!res?.confirm) return
-      actioningID.value = id
-      actioningType.value = 'review'
-      try {
-        await post(`/api/v1/orders/${id}/review`, { content: String(res?.content || '').trim() })
-        uni.showToast({ title: '评价成功', icon: 'success' })
-        await loadOrders()
-      } catch {
-        uni.showToast({ title: '评价失败', icon: 'none' })
-      } finally {
-        actioningID.value = 0
-        actioningType.value = ''
-      }
-    },
-  } as any)
+  uni.navigateTo({ url: `/pages/order/review?id=${id}` })
 }
 
 onMounted(loadOrders)

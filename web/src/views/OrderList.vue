@@ -108,17 +108,7 @@ async function pay(order: any) {
 async function review(order: any) {
   const id = Number(order?.id || 0)
   if (!id || actioningID.value) return
-  const raw = window.prompt('请输入评价内容（选填）', '')
-  if (raw === null) return
-  actioningID.value = id
-  try {
-    await post(`/api/v1/orders/${id}/review`, { content: raw.trim() })
-    await loadOrders()
-  } catch (error: any) {
-    alert(error?.message || '评价失败')
-  } finally {
-    actioningID.value = 0
-  }
+  router.push(`/orders/${id}/review`)
 }
 
 onMounted(loadOrders)

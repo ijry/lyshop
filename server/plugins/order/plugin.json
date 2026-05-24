@@ -14,7 +14,16 @@
       "children": [
         { "title": "订单列表", "path": "/order/list", "permission": "order:view" }
       ]
+    },
+    {
+      "title": "评价管理",
+      "icon": "star",
+      "path": "/review",
+      "sort": 21,
+      "children": [
+        { "title": "评价列表", "path": "/review/list", "permission": "order:view" }
+      ]
     }
   ],
-  "permissions": ["order:view", "order:ship", "order:refund"]
+  "permissions": ["order:view", "order:ship", "order:refund", "order:review-reply"]
 }

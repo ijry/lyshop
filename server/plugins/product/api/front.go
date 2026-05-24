@@ -12,6 +12,7 @@ func RegisterFrontRoutes(g *gin.RouterGroup) {
 	g.GET("/categories", listCategories)
 	g.GET("/products", listProducts)
 	g.GET("/products/:id", getProduct)
+	g.GET("/products/:id/reviews", listProductReviews)
 }
 
 func listCategories(c *gin.Context) {
@@ -43,4 +44,16 @@ func getProduct(c *gin.Context) {
 		return
 	}
 	response.OK(c, detail)
+}
+
+func listProductReviews(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
+	data, err := productsvc.ListProductReviews(c.Request.Context(), id, page, size)
+	if err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, data)
 }

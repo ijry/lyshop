@@ -35,8 +35,13 @@ type AmountBreakdown struct {
 
 type OrderView struct {
 	ordermodel.Order
-	Items           []ordermodel.OrderItem `json:"items"`
-	AmountBreakdown AmountBreakdown        `json:"amount_breakdown"`
+	Items           []OrderItemView `json:"items"`
+	AmountBreakdown AmountBreakdown `json:"amount_breakdown"`
+}
+
+type OrderItemView struct {
+	ordermodel.OrderItem
+	Review *ReviewView `json:"review,omitempty"`
 }
 
 func generateOrderNo() string {
@@ -167,15 +172,49 @@ func buildOrderViews(ctx context.Context, orders []ordermodel.Order) ([]OrderVie
 	}
 
 	itemMap := make(map[uint64][]ordermodel.OrderItem, len(orderIDs))
+	itemIDs := make([]uint64, 0, len(orderItems))
 	for _, item := range orderItems {
 		itemMap[item.OrderID] = append(itemMap[item.OrderID], item)
+		itemIDs = append(itemIDs, item.ID)
+	}
+
+	reviewMap := map[uint64]ReviewView{}
+	if len(itemIDs) > 0 {
+		var reviews []ordermodel.OrderReview
+		if err := db.DB.WithContext(ctx).
+			Where("order_item_id IN ?", itemIDs).
+			Order("id asc").
+			Find(&reviews).Error; err != nil {
+			return nil, err
+		}
+		if len(reviews) > 0 {
+			list, err := buildReviewView(ctx, reviews)
+			if err != nil {
+				return nil, err
+			}
+			for _, review := range list {
+				reviewMap[review.OrderItemID] = review
+			}
+		}
 	}
 
 	result := make([]OrderView, 0, len(orders))
 	for _, item := range orders {
+		items := make([]OrderItemView, 0, len(itemMap[item.ID]))
+		for _, orderItem := range itemMap[item.ID] {
+			var reviewPtr *ReviewView
+			if review, ok := reviewMap[orderItem.ID]; ok {
+				reviewCopy := review
+				reviewPtr = &reviewCopy
+			}
+			items = append(items, OrderItemView{
+				OrderItem: orderItem,
+				Review:    reviewPtr,
+			})
+		}
 		result = append(result, OrderView{
 			Order: item,
-			Items: itemMap[item.ID],
+			Items: items,
 			AmountBreakdown: AmountBreakdown{
 				GoodsAmount:    item.GoodsAmount,
 				DiscountAmount: item.DiscountAmount,
@@ -322,33 +361,25 @@ func PayOrder(ctx context.Context, userID, orderID uint64) error {
 }
 
 func ReviewOrder(ctx context.Context, userID, orderID uint64, content string) error {
-	var order ordermodel.Order
-	if err := db.DB.WithContext(ctx).Where("id = ? AND user_id = ?", orderID, userID).First(&order).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("订单不存在")
-		}
+	var items []ordermodel.OrderItem
+	if err := db.DB.WithContext(ctx).Where("order_id = ?", orderID).Find(&items).Error; err != nil {
 		return err
 	}
-	remark := strings.TrimSpace(order.Remark)
-	if content != "" {
-		if remark != "" {
-			remark += " | "
-		}
-		remark += "评价:" + strings.TrimSpace(content)
-	}
-	res := db.DB.WithContext(ctx).Model(&ordermodel.Order{}).
-		Where("id = ? AND user_id = ?", orderID, userID).
-		Updates(map[string]any{
-			"remark": remark,
-			"status": ordermodel.OrderStatusCompleted,
+	reviewItems := make([]ReviewItemInput, 0, len(items))
+	for _, item := range items {
+		reviewItems = append(reviewItems, ReviewItemInput{
+			OrderItemID:  item.ID,
+			ProductScore: 5,
+			Content:      strings.TrimSpace(content),
 		})
-	if res.Error != nil {
-		return res.Error
 	}
-	if res.RowsAffected == 0 {
-		return errors.New("订单不存在")
-	}
-	return nil
+	return SubmitOrderReview(ctx, SubmitOrderReviewReq{
+		OrderID:        orderID,
+		UserID:         userID,
+		Mode:           ReviewModeCreate,
+		LogisticsScore: 5,
+		Items:          reviewItems,
+	})
 }
 
 func GetOrderDetail(ctx context.Context, userID, orderID uint64) (*OrderView, error) {

@@ -2,6 +2,7 @@ package api
 
 import (
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/ijry/lyshop/core/middleware"
@@ -27,6 +28,7 @@ func RegisterFrontRoutes(g *gin.RouterGroup) {
 	auth.POST("/orders", createOrder)
 	auth.GET("/orders", myOrders)
 	auth.GET("/orders/:id", myOrderDetail)
+	auth.GET("/orders/:id/review", myOrderReviewMeta)
 	auth.POST("/orders/:id/pay", payOrder)
 	auth.POST("/orders/:id/review", reviewOrder)
 }
@@ -180,14 +182,74 @@ func payOrder(c *gin.Context) {
 	response.OK(c, nil)
 }
 
+func myOrderReviewMeta(c *gin.Context) {
+	userID, _ := c.Get("user_id")
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	meta, err := ordersvc.GetOrderReviewMeta(c.Request.Context(), userID.(uint64), id)
+	if err != nil {
+		response.Fail(c, 404, err.Error())
+		return
+	}
+	response.OK(c, meta)
+}
+
 func reviewOrder(c *gin.Context) {
 	userID, _ := c.Get("user_id")
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	var req struct {
-		Content string `json:"content"`
+		Mode           string `json:"mode"`
+		LogisticsScore int8   `json:"logistics_score"`
+		Items          []struct {
+			OrderItemID  uint64 `json:"order_item_id"`
+			ProductScore int8   `json:"product_score"`
+			Content      string `json:"content"`
+		} `json:"items"`
+		AppendContent string `json:"append_content"`
+		Content       string `json:"content"`
 	}
-	_ = c.ShouldBindJSON(&req)
-	if err := ordersvc.ReviewOrder(c.Request.Context(), userID.(uint64), id, req.Content); err != nil {
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+
+	var items []ordersvc.ReviewItemInput
+	for _, item := range req.Items {
+		items = append(items, ordersvc.ReviewItemInput{
+			OrderItemID:  item.OrderItemID,
+			ProductScore: item.ProductScore,
+			Content:      item.Content,
+		})
+	}
+	if len(items) == 0 {
+		detail, err := ordersvc.GetOrderDetail(c.Request.Context(), userID.(uint64), id)
+		if err != nil {
+			response.Fail(c, 404, err.Error())
+			return
+		}
+		seedContent := strings.TrimSpace(req.Content)
+		for _, item := range detail.Items {
+			if ordersvc.ReviewMode(req.Mode) == ordersvc.ReviewModeAppend && item.Review == nil {
+				continue
+			}
+			items = append(items, ordersvc.ReviewItemInput{
+				OrderItemID:  item.ID,
+				ProductScore: 5,
+				Content:      seedContent,
+			})
+		}
+		if ordersvc.ReviewMode(req.Mode) == ordersvc.ReviewModeAppend && strings.TrimSpace(req.AppendContent) == "" {
+			req.AppendContent = seedContent
+		}
+	}
+
+	if err := ordersvc.SubmitOrderReview(c.Request.Context(), ordersvc.SubmitOrderReviewReq{
+		OrderID:        id,
+		UserID:         userID.(uint64),
+		Mode:           ordersvc.ReviewMode(req.Mode),
+		LogisticsScore: req.LogisticsScore,
+		Items:          items,
+		AppendContent:  req.AppendContent,
+	}); err != nil {
 		response.Fail(c, 500, err.Error())
 		return
 	}

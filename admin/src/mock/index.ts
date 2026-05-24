@@ -8,6 +8,122 @@ import productDetail from '../../../app/mock/data/product-detail.json'
 
 const orderListSource = (orders as any)?.list || []
 const toNumber = (v: any) => Number(v || 0)
+let replySeq = 20000
+
+function clone<T>(v: T): T {
+  return JSON.parse(JSON.stringify(v))
+}
+
+function buildReviewRows() {
+  const rows: any[] = []
+  for (const order of orderListSource) {
+    const items = Array.isArray(order?.items) ? order.items : []
+    for (const item of items) {
+      const rv = item?.review
+      if (!rv || Number(rv.id || 0) <= 0) continue
+      rows.push({
+        id: Number(rv.id),
+        order_id: Number(order.id || 0),
+        order_no: String(order.order_no || ''),
+        order_item_id: Number(item.id || 0),
+        product_id: Number(item.product_id || 0),
+        product_score: Number(rv.product_score || 5),
+        logistics_score: Number(rv.logistics_score || 5),
+        content: String(rv.content || ''),
+        edited_times: Number(rv.edited_times || 0),
+        user_id: Number(order.user_id || 1),
+        user_nickname: '演示用户',
+        user_avatar: '',
+        created_at: rv.created_at || order.created_at,
+        updated_at: rv.updated_at || rv.created_at || order.created_at,
+        appends: Array.isArray(rv.appends) ? rv.appends.map((ap: any) => ({
+          id: Number(ap.id || 0),
+          review_id: Number(rv.id),
+          content: String(ap.content || ''),
+          created_at: ap.created_at || order.created_at,
+          updated_at: ap.updated_at || ap.created_at || order.created_at,
+        })) : [],
+        admin_reply: rv.admin_reply ? {
+          id: Number(rv.admin_reply.id || ++replySeq),
+          review_id: Number(rv.id),
+          admin_id: Number(rv.admin_reply.admin_id || 1),
+          content: String(rv.admin_reply.content || ''),
+          created_at: rv.admin_reply.created_at || order.created_at,
+          updated_at: rv.admin_reply.updated_at || rv.admin_reply.created_at || order.created_at,
+        } : null,
+        order_item: {
+          id: Number(item.id || 0),
+          order_id: Number(order.id || 0),
+          product_id: Number(item.product_id || 0),
+          title: String(item.title || ''),
+          cover: String(item.cover || ''),
+          qty: Number(item.qty || 0),
+          price: Number(item.price || 0),
+        },
+        product: {
+          id: Number(item.product_id || 0),
+          title: String(item.title || ''),
+          cover: String(item.cover || ''),
+        },
+      })
+    }
+  }
+  rows.sort((a, b) => Number(b.id) - Number(a.id))
+  return rows
+}
+
+const reviewRows = buildReviewRows()
+
+function getReviewByID(id: number) {
+  return reviewRows.find((row: any) => Number(row.id) === id)
+}
+
+function listReviews(params?: Record<string, any>) {
+  const query = params || {}
+  const productID = toNumber(query.product_id)
+  const keyword = String(query.keyword || '').trim().toLowerCase()
+  const page = Math.max(1, toNumber(query.page) || 1)
+  const size = Math.max(1, toNumber(query.size) || 20)
+  let list = reviewRows.slice()
+  if (productID > 0) list = list.filter((item: any) => toNumber(item.product_id) === productID)
+  if (keyword) list = list.filter((item: any) => String(item.content || '').toLowerCase().includes(keyword))
+  const offset = (page - 1) * size
+  const pageList = list.slice(offset, offset + size).map((item: any) => clone(item))
+  return { list: pageList, total: list.length, page, size }
+}
+
+function upsertReviewReply(id: number, content: string) {
+  const target = getReviewByID(id)
+  if (!target) return
+  const now = new Date().toISOString()
+  if (!target.admin_reply) {
+    replySeq += 1
+    target.admin_reply = {
+      id: replySeq,
+      review_id: id,
+      admin_id: 1,
+      content,
+      created_at: now,
+      updated_at: now,
+    }
+  } else {
+    target.admin_reply.content = content
+    target.admin_reply.updated_at = now
+  }
+  for (const order of orderListSource) {
+    const items = Array.isArray(order?.items) ? order.items : []
+    const item = items.find((row: any) => toNumber(row?.review?.id) === id)
+    if (!item?.review) continue
+    item.review.admin_reply = {
+      id: target.admin_reply.id,
+      content,
+      created_at: target.admin_reply.created_at,
+      updated_at: target.admin_reply.updated_at,
+      admin_id: 1,
+    }
+    item.review.updated_at = now
+  }
+}
 
 const routes: Record<string, any> = {
   // Auth
@@ -21,6 +137,9 @@ const routes: Record<string, any> = {
     ]},
     { title: '订单管理', icon: 'shopping-cart', path: '/order', sort: 20, children: [
       { title: '订单列表', path: '/order/list' },
+    ]},
+    { title: '评价管理', icon: 'star', path: '/review', sort: 21, children: [
+      { title: '评价列表', path: '/review/list' },
     ]},
     { title: '仓储管理', icon: 'warehouse', path: '/wms', sort: 30, children: [
       { title: '库存管理', path: '/wms/stock' },
@@ -71,6 +190,9 @@ const routes: Record<string, any> = {
   // Orders
   'GET /admin/api/orders': orders,
   'GET /admin/api/orders/': orderListSource[0] || null,
+  'GET /admin/api/reviews': { list: reviewRows.slice(), total: reviewRows.length, page: 1, size: 20 },
+  'GET /admin/api/reviews/': reviewRows[0] || null,
+  'POST /admin/api/reviews/': null,
 
   // WMS
   'GET /admin/api/wms/warehouses': [
@@ -208,7 +330,7 @@ const routes: Record<string, any> = {
   'GET /admin/api/permissions': [
     'system:admin', 'system:config',
     'product:view', 'product:create', 'product:edit', 'product:delete',
-    'order:view', 'order:ship', 'order:refund',
+    'order:view', 'order:ship', 'order:refund', 'order:review-reply',
     'wms:view', 'wms:edit',
     'marketing:view', 'marketing:edit',
     'im:view', 'im:reply',
@@ -227,6 +349,15 @@ export function matchMock(method: string, url: string, params?: Record<string, a
       : orderListSource.slice()
     return { matched: true, data: { ...orders, list, total: list.length } }
   }
+  if (key === 'GET /admin/api/reviews') {
+    return { matched: true, data: listReviews(query) }
+  }
+  if (key.startsWith('POST /admin/api/reviews/') && key.endsWith('/reply')) {
+    const id = Number(url.split('/')[4] || 0)
+    const content = String((params as any)?.content || '').trim()
+    if (id && content) upsertReviewReply(id, content)
+    return { matched: true, data: null }
+  }
   if (key in routes) return { matched: true, data: routes[key] }
   for (const pattern of Object.keys(routes)) {
     if (key.startsWith(pattern) && pattern.endsWith('/')) {
@@ -235,10 +366,22 @@ export function matchMock(method: string, url: string, params?: Record<string, a
         const detail = orderListSource.find((item: any) => Number(item.id) === id) || null
         return { matched: true, data: detail }
       }
+      if (pattern === 'GET /admin/api/reviews/') {
+        const id = Number(url.split('/').pop() || 0)
+        return { matched: true, data: getReviewByID(id) || null }
+      }
       return { matched: true, data: routes[pattern] }
     }
   }
   if (['POST', 'PUT', 'DELETE'].includes(method.toUpperCase())) {
+    if (key === 'POST /admin/api/reviews/') {
+      const id = Number((params as any)?.review_id || 0) || Number((url.split('/').pop() || 0))
+      const content = String((params as any)?.content || '').trim()
+      if (id && content) {
+        upsertReviewReply(id, content)
+      }
+      return { matched: true, data: null }
+    }
     return { matched: true, data: null }
   }
   return { matched: false }

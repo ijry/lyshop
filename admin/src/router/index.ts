@@ -20,6 +20,7 @@ const router = createRouter({
         // Order
         { path: 'order/list', name: '订单列表', component: () => import('@/views/order/OrderList.vue') },
         { path: 'order/detail/:id', name: '订单详情', component: () => import('@/views/order/OrderDetail.vue') },
+        { path: 'review/list', name: '评价列表', component: () => import('@/views/review/ReviewList.vue') },
         // WMS
         { path: 'wms/stock', name: '库存管理', component: () => import('@/views/wms/StockList.vue') },
         // Marketing

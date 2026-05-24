@@ -1,10 +1,8 @@
 <template>
   <view class="min-h-screen bg-white pb-120rpx">
-    <!-- Images carousel -->
     <u-swiper :list="images" height="375" v-if="images.length" radius="0" />
     <view v-else class="bg-gray-100 h-750rpx" />
 
-    <!-- Price + Title -->
     <view class="p-30rpx">
       <view class="flex items-baseline gap-12rpx mb-16rpx">
         <text class="text-48rpx font-700 text-red-500">¥{{ product.price }}</text>
@@ -23,10 +21,8 @@
       </view>
     </view>
 
-    <!-- Divider -->
     <view class="h-16rpx bg-gray-50" />
 
-    <!-- SKU selector -->
     <view class="p-30rpx" v-if="skus.length">
       <text class="text-28rpx font-600 text-gray-800 block mb-20rpx">规格选择</text>
       <view class="flex flex-wrap gap-16rpx">
@@ -42,12 +38,12 @@
       </view>
     </view>
 
-    <!-- Divider -->
     <view class="h-16rpx bg-gray-50" />
+    <view class="bg-white">
+      <u-tabs :list="detailTabs" :current="activeTab" @click="onTabClick" />
+    </view>
 
-    <!-- Detail -->
-    <view class="p-30rpx">
-      <text class="text-28rpx font-600 text-gray-800 block mb-20rpx">商品详情</text>
+    <view class="p-30rpx" v-if="activeTab === 0">
       <view v-if="detailBlocks.length">
         <view v-for="block in detailBlocks" :key="block.id" class="mb-20rpx">
           <text v-if="block.type === 'text'" class="text-26rpx text-gray-600 leading-42rpx block">{{ block.props?.text || '' }}</text>
@@ -57,10 +53,45 @@
       <text v-else class="text-24rpx text-gray-400">暂无详情</text>
     </view>
 
-    <!-- Bottom bar -->
+    <view class="p-30rpx" v-else>
+      <view class="bg-gray-50 rounded-16rpx p-20rpx mb-20rpx">
+        <view class="flex items-center justify-between text-24rpx text-gray-500">
+          <text>商品评分</text>
+          <text class="text-red-500 font-600">{{ reviewSummary.avg_product_score.toFixed(1) }}</text>
+        </view>
+        <view class="flex items-center justify-between text-24rpx text-gray-500 mt-8rpx">
+          <text>物流评分</text>
+          <text class="text-red-500 font-600">{{ reviewSummary.avg_logistics_score.toFixed(1) }}</text>
+        </view>
+        <view class="text-22rpx text-gray-400 mt-10rpx">共 {{ reviewSummary.total }} 条评价</view>
+      </view>
+
+      <view v-if="reviews.length">
+        <view v-for="rv in reviews" :key="rv.id" class="bg-white border border-gray-100 rounded-16rpx p-20rpx mb-16rpx">
+          <view class="flex items-center justify-between mb-10rpx">
+            <text class="text-24rpx text-gray-700">{{ rv.user_nickname || '匿名用户' }}</text>
+            <text class="text-22rpx text-gray-400">{{ formatDate(rv.created_at) }}</text>
+          </view>
+          <view class="flex items-center gap-12rpx mb-10rpx">
+            <text class="text-22rpx text-gray-500">商品 {{ rv.product_score }}</text>
+            <text class="text-22rpx text-gray-500">物流 {{ rv.logistics_score }}</text>
+          </view>
+          <text class="text-24rpx text-gray-700 leading-40rpx block">{{ rv.content || '用户未填写文字评价' }}</text>
+          <view v-if="rv.appends?.length" class="mt-12rpx bg-gray-50 rounded-12rpx p-12rpx">
+            <view v-for="ap in rv.appends" :key="ap.id" class="text-22rpx text-gray-500 leading-34rpx mb-8rpx">
+              追加：{{ ap.content }}
+            </view>
+          </view>
+          <view v-if="rv.admin_reply" class="mt-12rpx bg-red-50 rounded-12rpx p-12rpx text-22rpx text-red-600">
+            商家回复：{{ rv.admin_reply.content }}
+          </view>
+        </view>
+      </view>
+      <view v-else class="text-center py-80rpx text-24rpx text-gray-400">暂无评价</view>
+    </view>
+
     <view class="fixed bottom-0 left-0 right-0 z-100 bg-white border-t-1 border-gray-100 flex items-center px-20rpx py-16rpx"
       :style="{paddingBottom: 'calc(16rpx + env(safe-area-inset-bottom))'}">
-      <!-- Icons -->
       <view class="flex items-center gap-30rpx mr-20rpx">
         <view class="flex flex-col items-center" @click="uni.navigateTo({url:'/pages/im/chat'})">
           <u-icon name="kefu-ermai" size="22" color="#666" />
@@ -75,7 +106,6 @@
           <text class="text-20rpx text-gray-500 mt-4rpx">购物车</text>
         </view>
       </view>
-      <!-- Buttons -->
       <view class="flex-1 flex gap-16rpx">
         <u-button type="warning" text="加入购物车" @click="addCart" class="flex-1" shape="circle" />
         <u-button type="primary" text="立即购买" @click="buyNow" class="flex-1" shape="circle" />
@@ -92,6 +122,10 @@ const product = ref<any>({})
 const skus = ref<any[]>([])
 const selectedSku = ref<any>(null)
 const images = ref<string[]>([])
+const reviews = ref<any[]>([])
+const reviewSummary = ref<any>({ avg_product_score: 0, avg_logistics_score: 0, total: 0 })
+const activeTab = ref(0)
+const detailTabs = [{ name: '详情' }, { name: '评价' }]
 
 const detailBlocks = computed(() => {
   const detail = product.value?.detail
@@ -108,10 +142,24 @@ function parseAttrs(attrs: string) {
   catch { return '默认' }
 }
 
+function formatDate(v: string) {
+  return v ? String(v).slice(0, 19).replace('T', ' ') : '-'
+}
+
+async function loadReviews(id: number) {
+  const data = await get<any>(`/api/v1/products/${id}/reviews`, { page: 1, size: 20 })
+  reviewSummary.value = data?.summary || { avg_product_score: 0, avg_logistics_score: 0, total: 0 }
+  reviews.value = Array.isArray(data?.list) ? data.list : []
+}
+
+function onTabClick(item: any) {
+  activeTab.value = Number(item?.index || 0)
+}
+
 onMounted(async () => {
   const pages = getCurrentPages()
   const query = (pages[pages.length - 1] as any).options
-  const id = query.id
+  const id = Number(query.id)
   const data = await get<any>(`/api/v1/products/${id}`)
   if (!data) return
   product.value = data
@@ -121,6 +169,7 @@ onMounted(async () => {
   if (data.cover) imgList.push(data.cover)
   if (data.images) imgList.push(...data.images.map((i: any) => i.url))
   images.value = imgList
+  await loadReviews(id)
 })
 
 async function addCart() {

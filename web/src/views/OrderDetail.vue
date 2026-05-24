@@ -41,6 +41,18 @@
             <div class="flex justify-between font-semibold text-gray-800 pt-2 border-t border-gray-100"><span>实付金额</span><span>¥{{ money(detail.amount_breakdown?.payable_amount ?? detail.total_amount) }}</span></div>
           </div>
         </div>
+
+        <div class="card p-5">
+          <h3 class="font-semibold text-gray-800 mb-3">评价信息</h3>
+          <div v-if="reviewItems.length" class="space-y-3">
+            <div v-for="rv in reviewItems" :key="rv.id" class="border border-gray-100 rounded-lg p-3">
+              <p class="text-sm text-gray-700">{{ rv.product_title }}</p>
+              <p class="text-xs text-gray-400 mt-1">商品 {{ rv.product_score }} / 物流 {{ rv.logistics_score }}</p>
+              <p class="text-xs text-gray-500 mt-2">{{ rv.content || '未填写评价' }}</p>
+            </div>
+          </div>
+          <p v-else class="text-sm text-gray-400">暂无评价</p>
+        </div>
       </div>
     </div>
   </div>
@@ -54,6 +66,7 @@ import { get } from '@/api/request'
 const route = useRoute()
 const router = useRouter()
 const detail = ref<any>(null)
+const reviewItems = ref<any[]>([])
 
 const statusLabels: Record<number, string> = { 1: '待付款', 2: '待发货', 3: '待收货', 4: '已完成', 5: '售后' }
 const statusLabel = (s: number) => statusLabels[s] || '未知'
@@ -63,5 +76,14 @@ const formatDate = (v: string) => v ? v.slice(0, 19).replace('T', ' ') : '-'
 
 onMounted(async () => {
   detail.value = await get<any>(`/api/v1/orders/${route.params.id}`)
+  reviewItems.value = []
+  for (const item of detail.value?.items || []) {
+    if (item.review) {
+      reviewItems.value.push({
+        ...item.review,
+        product_title: item.title,
+      })
+    }
+  }
 })
 </script>

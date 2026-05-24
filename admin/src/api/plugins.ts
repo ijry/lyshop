@@ -26,6 +26,9 @@ export const getOrders = (params?: any) => request.get('/orders', { params })
 export const getOrderDetail = (id: number) => request.get(`/orders/${id}`)
 export const shipOrder = (id: number, trackingNo: string) =>
   request.put(`/orders/${id}/ship`, { tracking_no: trackingNo })
+export const getReviews = (params?: any) => request.get('/reviews', { params })
+export const getReviewDetail = (id: number) => request.get(`/reviews/${id}`)
+export const replyReview = (id: number, content: string) => request.post(`/reviews/${id}/reply`, { content })
 
 // ---- WMS ----
 export const getWarehouses = () => request.get('/wms/warehouses')
