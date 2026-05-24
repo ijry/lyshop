@@ -55,6 +55,7 @@
             <p v-if="detail.after_sale_summary?.has_open_case" class="text-red-500">售后中</p>
             <p v-if="detail.after_sale_summary?.latest_case_id">
               最近售后单：#{{ detail.after_sale_summary.latest_case_id }}（{{ afterSaleSummaryStatusText(detail.after_sale_summary) || '-' }}）
+              <button class="text-blue-600 hover:underline text-xs ml-2" @click="goAfterSaleDetail(detail.after_sale_summary.latest_case_id)">查看</button>
             </p>
           </div>
         </div>
@@ -122,6 +123,11 @@ function afterSaleSummaryStatusText(summary: any) {
   const label = String(summary?.latest_status_label || '').trim()
   if (label) return label
   return afterSaleStatusLabel(summary?.latest_status)
+}
+
+function goAfterSaleDetail(id: number) {
+  if (!id) return
+  router.push(`/order/after-sale/detail/${id}`)
 }
 
 async function loadDetail() {

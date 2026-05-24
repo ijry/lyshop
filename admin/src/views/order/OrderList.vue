@@ -80,7 +80,13 @@
               <div class="flex flex-col gap-2 items-start">
                 <button class="text-blue-600 hover:underline text-xs" @click="goDetail(o.id)">查看详情</button>
                 <button v-if="o.status === 2" @click="ship(o.id)" class="text-emerald-600 hover:underline text-xs">发货</button>
-                <button v-if="o.after_sale_summary?.has_open_case" @click="goAfterSale(o.id)" class="text-red-600 hover:underline text-xs">售后</button>
+                <button
+                  v-if="o.after_sale_summary?.latest_case_id"
+                  @click="goAfterSaleDetail(o.after_sale_summary.latest_case_id)"
+                  class="text-red-600 hover:underline text-xs"
+                >
+                  售后进度
+                </button>
               </div>
             </td>
           </tr>
@@ -143,8 +149,9 @@ function goDetail(id: number) {
   router.push(`/order/detail/${id}`)
 }
 
-function goAfterSale(id: number) {
-  router.push(`/order/after-sale/list?order_id=${id}`)
+function goAfterSaleDetail(id: number) {
+  if (!id) return
+  router.push(`/order/after-sale/detail/${id}`)
 }
 
 function onTabChange(status: number) {
