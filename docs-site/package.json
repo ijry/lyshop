@@ -8,7 +8,7 @@
     "showcase:capture": "node scripts/capture-showcase.js",
     "showcase:build": "npm run demo:build && npm run web-demo:build && npm run showcase:capture",
     "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
+    "docs:build": "node scripts/prepare-docs-build.js && vitepress build docs",
     "docs:build-with-demo": "npm run showcase:build && npm run docs:build",
     "docs:preview": "vitepress preview docs"
   },
