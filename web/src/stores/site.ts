@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
 import { get } from '@/api/request'
+import { i18n } from '@/locales'
+
+const t = (key: string) => i18n.global.t(key)
 
 export interface SiteSettings {
   site_name: string
@@ -25,27 +28,29 @@ export interface SiteSettings {
   color_hero_to: string
 }
 
-const defaults: SiteSettings = {
-  site_name: 'LYShop',
-  site_logo: '',
-  seo_title: 'LYShop - 开源商城',
-  seo_keywords: '商城,电商,开源',
-  seo_description: '开源插件化商城系统',
-  icp: '',
-  hero_badge: '限时秒杀进行中',
-  hero_title: '精选好物\n品质生活从这里开始',
-  hero_subtitle: '数千款精选商品，正品保障，极速发货，让购物更简单。',
-  hero_btn_text: '立即选购',
-  hero_btn_link: '/products',
-  color_primary: '#dc2626',
-  color_primary_light: '#ef4444',
-  color_primary_dark: '#b91c1c',
-  color_bg_page: '#f9fafb',
-  color_bg_header: 'rgba(255,255,255,0.8)',
-  color_bg_footer: '#f9fafb',
-  color_price: '#ef4444',
-  color_hero_from: '#b91c1c',
-  color_hero_to: '#991b1b',
+function getDefaults(): SiteSettings {
+  return {
+    site_name: 'LYShop',
+    site_logo: '',
+    seo_title: t('site.title'),
+    seo_keywords: t('site.keywords'),
+    seo_description: t('site.description'),
+    icp: '',
+    hero_badge: t('site.flashSale'),
+    hero_title: t('site.heroTitle'),
+    hero_subtitle: t('site.heroSubtitle'),
+    hero_btn_text: t('site.heroCta'),
+    hero_btn_link: '/products',
+    color_primary: '#dc2626',
+    color_primary_light: '#ef4444',
+    color_primary_dark: '#b91c1c',
+    color_bg_page: '#f9fafb',
+    color_bg_header: 'rgba(255,255,255,0.8)',
+    color_bg_footer: '#f9fafb',
+    color_price: '#ef4444',
+    color_hero_from: '#b91c1c',
+    color_hero_to: '#991b1b',
+  }
 }
 
 function applyTheme(s: SiteSettings) {
@@ -81,10 +86,12 @@ function applyTheme(s: SiteSettings) {
 }
 
 export const useSiteStore = defineStore('site', () => {
+  const defaults = getDefaults()
   const settings = ref<SiteSettings>({ ...defaults })
   const loaded = ref(false)
 
   async function load() {
+    const defaults = getDefaults()
     try {
       const data = await get<SiteSettings>('/api/v1/site-settings')
       if (data) settings.value = { ...defaults, ...data }

@@ -1,7 +1,7 @@
 <template>
   <view class="min-h-screen bg-gray-50">
     <view class="px-20rpx py-16rpx bg-white">
-      <u-search v-model="keyword" placeholder="搜索商品" @search="onSearch" @clear="onSearch" />
+      <u-search v-model="keyword" :placeholder="$t('productList.search')" @search="onSearch" @clear="onSearch" />
     </view>
 
     <view class="bg-white border-b-1 border-gray-100 px-8rpx">
@@ -16,7 +16,7 @@
 
     <view class="p-16rpx">
       <view v-if="loading" class="flex justify-center py-80rpx">
-        <u-loading-icon text="加载中..." />
+        <u-loading-icon :text="$t('productList.loading')" />
       </view>
 
       <up-waterfall
@@ -33,7 +33,7 @@
                 <text class="text-26rpx text-gray-800 font-500 line-clamp-2">{{ p.title }}</text>
                 <view class="flex items-center justify-between mt-16rpx">
                   <text class="text-30rpx text-red-600 font-700">¥{{ p.price }}</text>
-                  <text class="text-22rpx text-gray-400">销量 {{ p.sales }}</text>
+                  <text class="text-22rpx text-gray-400">{{ $t('productList.sales') }} {{ p.sales }}</text>
                 </view>
               </view>
             </view>
@@ -47,7 +47,7 @@
                 <text class="text-26rpx text-gray-800 font-500 line-clamp-2">{{ p.title }}</text>
                 <view class="flex items-center justify-between mt-16rpx">
                   <text class="text-30rpx text-red-600 font-700">¥{{ p.price }}</text>
-                  <text class="text-22rpx text-gray-400">销量 {{ p.sales }}</text>
+                  <text class="text-22rpx text-gray-400">{{ $t('productList.sales') }} {{ p.sales }}</text>
                 </view>
               </view>
             </view>
@@ -56,7 +56,7 @@
       </up-waterfall>
 
       <view v-if="!loading && !products.length" class="text-center py-120rpx text-gray-400 text-28rpx">
-        暂无商品
+        {{ $t('productList.empty') }}
       </view>
     </view>
   </view>
@@ -64,10 +64,13 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { get } from '@/utils/request'
 
+const { t } = useI18n()
+
 const products = ref<any[]>([])
-const categories = ref<any[]>([{ id: '', name: '全部' }])
+const categories = ref<any[]>([{ id: '', name: t('productList.all') }])
 const keyword = ref('')
 const categoryID = ref<string | number>('')
 const activeTab = ref(0)
@@ -121,7 +124,7 @@ onMounted(async () => {
 
   const cats = await get<any[]>('/api/v1/categories')
   if (Array.isArray(cats) && cats.length) {
-    categories.value = [{ id: '', name: '全部' }, ...cats]
+    categories.value = [{ id: '', name: t('productList.all') }, ...cats]
   }
   syncActiveTab()
   loadProducts()

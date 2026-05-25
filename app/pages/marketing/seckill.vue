@@ -1,13 +1,13 @@
 <template>
   <view style="min-height: 100vh; background: #f5f5f5;">
-    <u-navbar title="限时秒杀" :placeholder="true" />
+    <u-navbar :title="$t('seckill.title')" :placeholder="true" />
 
     <!-- Countdown header -->
     <view style="background: linear-gradient(135deg, #dc2626 0%, #ea580c 100%); padding: 20px 16px;">
       <view style="display: flex; align-items: center; justify-content: space-between;">
-        <text style="color: #fff; font-size: 18px; font-weight: 700;">限时秒杀</text>
+        <text style="color: #fff; font-size: 18px; font-weight: 700;">{{ $t('seckill.title') }}</text>
         <view style="display: flex; align-items: center; gap: 4px;">
-          <text style="color: rgba(255,255,255,0.7); font-size: 12px;">距结束</text>
+          <text style="color: rgba(255,255,255,0.7); font-size: 12px;">{{ $t('seckill.endsIn') }}</text>
           <view v-for="(t, i) in countdownParts" :key="i"
             style="background: rgba(0,0,0,0.3); color: #fff; font-size: 14px; font-weight: 700; padding: 2px 6px; border-radius: 4px; min-width: 28px; text-align: center;">
             {{ t }}
@@ -34,11 +34,11 @@
               <view style="flex: 1; margin-right: 10px;">
                 <view style="height: 14px; background: #fee2e2; border-radius: 7px; overflow: hidden; position: relative;">
                   <view :style="{ width: Math.min(((p.activity_stock - 10) / p.activity_stock) * 100, 85) + '%', height: '100%', background: 'linear-gradient(90deg, #dc2626, #ef4444)', borderRadius: '7px' }" />
-                  <text style="position: absolute; top: 0; left: 0; right: 0; text-align: center; font-size: 10px; color: #fff; line-height: 14px;">已抢{{ Math.floor(Math.random()*60+20) }}%</text>
+                  <text style="position: absolute; top: 0; left: 0; right: 0; text-align: center; font-size: 10px; color: #fff; line-height: 14px;">{{ Math.floor(Math.random()*60+20) }}%</text>
                 </view>
               </view>
               <view style="background: #dc2626; color: #fff; font-size: 12px; padding: 4px 12px; border-radius: 12px; font-weight: 600;">
-                抢购
+                {{ $t('seckill.buyNow') }}
               </view>
             </view>
           </view>
@@ -46,7 +46,7 @@
       </view>
 
       <view v-if="!products.length" style="text-align: center; padding: 60px 0; color: #999;">
-        暂无秒杀商品
+        {{ $t('seckill.empty') }}
       </view>
     </view>
   </view>

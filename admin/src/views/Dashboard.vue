@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h2 class="text-xl font-semibold text-slate-800 mb-6">控制台</h2>
+    <h2 class="text-xl font-semibold text-slate-800 mb-6">{{ $t('dashboard.title') }}</h2>
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
       <div
         v-for="card in cards"
@@ -13,20 +13,20 @@
     </div>
     <div class="bg-white rounded-xl shadow-sm p-6 border border-slate-100">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-base font-semibold text-slate-800">近 7 天销售趋势</h3>
+        <h3 class="text-base font-semibold text-slate-800">{{ $t('dashboard.salesTrend') }}</h3>
         <button
           class="text-xs px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
           @click="loadDashboard"
         >
-          刷新
+          {{ $t('common.refresh') }}
         </button>
       </div>
 
-      <p v-if="loading" class="text-slate-400 text-center py-12">数据加载中...</p>
+      <p v-if="loading" class="text-slate-400 text-center py-12">{{ $t('dashboard.dataLoading') }}</p>
 
       <div v-else-if="trend.length" ref="chartRef" class="h-72 w-full" />
 
-      <p v-else class="text-slate-400 text-center py-12">暂无趋势数据</p>
+      <p v-else class="text-slate-400 text-center py-12">{{ $t('dashboard.noTrendData') }}</p>
     </div>
   </div>
 </template>
@@ -34,7 +34,10 @@
 <script setup lang="ts">
 import type { EChartsType } from 'echarts/core'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { getDashboard } from '@/api/plugins'
+
+const { t } = useI18n()
 
 type TrendPoint = {
   date: string
@@ -64,10 +67,10 @@ const dashboard = ref<DashboardData>({
 })
 
 const cards = computed(() => [
-  { label: '今日订单', value: String(dashboard.value.today_orders || 0) },
-  { label: '今日销售额', value: `¥${money(dashboard.value.today_sales || 0)}` },
-  { label: '待处理售后', value: String(dashboard.value.pending_refunds || 0) },
-  { label: '在线客服会话', value: String(dashboard.value.online_sessions || 0) },
+  { label: t('dashboard.todayOrders'), value: String(dashboard.value.today_orders || 0) },
+  { label: t('dashboard.todaySales'), value: `¥${money(dashboard.value.today_sales || 0)}` },
+  { label: t('dashboard.pendingAfterSale'), value: String(dashboard.value.pending_refunds || 0) },
+  { label: t('dashboard.onlineSessions'), value: String(dashboard.value.online_sessions || 0) },
 ])
 
 const trend = computed(() => dashboard.value.sales_trend || [])
@@ -108,7 +111,7 @@ async function renderChart() {
     legend: {
       top: 0,
       right: 0,
-      data: ['销售额', '订单量'],
+      data: [t('dashboard.salesAmount'), t('dashboard.orderCount')],
     },
     grid: {
       left: 56,
@@ -126,20 +129,20 @@ async function renderChart() {
     yAxis: [
       {
         type: 'value',
-        name: '销售额(元)',
+        name: t('dashboard.salesAmount'),
         axisLabel: { color: '#64748b' },
         splitLine: { lineStyle: { color: '#f1f5f9' } },
       },
       {
         type: 'value',
-        name: '订单量(单)',
+        name: t('dashboard.orderCount'),
         axisLabel: { color: '#64748b' },
         splitLine: { show: false },
       },
     ],
     series: [
       {
-        name: '销售额',
+        name: t('dashboard.salesAmount'),
         type: 'bar',
         yAxisIndex: 0,
         barMaxWidth: 28,
@@ -150,7 +153,7 @@ async function renderChart() {
         },
       },
       {
-        name: '订单量',
+        name: t('dashboard.orderCount'),
         type: 'line',
         yAxisIndex: 1,
         smooth: true,

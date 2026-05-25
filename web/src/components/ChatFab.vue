@@ -7,7 +7,7 @@
     <div class="i-carbon-chat text-xl text-white" />
     <div class="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
     <div class="absolute right-full mr-3 px-3 py-1.5 bg-gray-800 text-white text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-      在线客服
+      {{ $t('chatFab.onlineService') }}
     </div>
   </button>
 </template>

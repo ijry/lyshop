@@ -3,84 +3,87 @@ package service
 import (
 	"strconv"
 	"strings"
+
+	"github.com/gin-gonic/gin"
+	"github.com/ijry/lyshop/core/i18n"
 )
 
-var orderStatusLabels = map[int8]string{
-	1: "待付款",
-	2: "待发货",
-	3: "待收货",
-	4: "已完成",
-	5: "售后",
+var orderStatusI18nKeys = map[int8]string{
+	1: "order.status.pending",
+	2: "order.status.shipped",
+	3: "order.status.delivering",
+	4: "order.status.completed",
+	5: "order.status.afterSale",
 }
 
-var afterSaleCaseTypeLabels = map[string]string{
-	"return":   "退货",
-	"exchange": "换货",
+var afterSaleCaseTypeI18nKeys = map[string]string{
+	"return":   "afterSale.type.return",
+	"exchange": "afterSale.type.exchange",
 }
 
-var afterSaleStatusLabels = map[string]string{
-	"applied":                   "已申请",
-	"approved_wait_user_return": "待用户回寄",
-	"user_returning":            "用户回寄中",
-	"warehouse_received":        "仓库已收货",
-	"refund_pending":            "待退款",
-	"refunded":                  "已退款",
-	"reship_pending":            "待补发",
-	"reshipped":                 "已补发",
-	"completed":                 "已完结",
-	"rejected":                  "已拒绝",
-	"closed":                    "已关闭",
+var afterSaleStatusI18nKeys = map[string]string{
+	"applied":                   "afterSale.status.applied",
+	"approved_wait_user_return": "afterSale.status.waitReturn",
+	"user_returning":            "afterSale.status.returning",
+	"warehouse_received":        "afterSale.status.received",
+	"refund_pending":            "afterSale.status.refundPending",
+	"refunded":                  "afterSale.status.refunded",
+	"reship_pending":            "afterSale.status.reshipPending",
+	"reshipped":                 "afterSale.status.reshipped",
+	"completed":                 "afterSale.status.completed",
+	"rejected":                  "afterSale.status.rejected",
+	"closed":                    "afterSale.status.closed",
 }
 
-var deliveryTypeLabels = map[string]string{
-	"express": "快递配送",
-	"local":   "同城配送",
+var deliveryTypeI18nKeys = map[string]string{
+	"express": "delivery.type.express",
+	"local":   "delivery.type.local",
 }
 
-var shipmentStatusLabels = map[string]string{
-	"pending":    "待揽收",
-	"shipped":    "已发货",
-	"in_transit": "运输中",
-	"signed":     "已签收",
-	"exception":  "物流异常",
+var shipmentStatusI18nKeys = map[string]string{
+	"pending":    "shipment.status.pending",
+	"shipped":    "shipment.status.shipped",
+	"in_transit": "shipment.status.inTransit",
+	"signed":     "shipment.status.signed",
+	"exception":  "shipment.status.exception",
 }
 
-var shipmentBizTypeLabels = map[string]string{
-	"initial": "首发",
-	"reship":  "补发",
-	"return":  "回寄",
+var shipmentBizTypeI18nKeys = map[string]string{
+	"initial": "shipment.bizType.initial",
+	"reship":  "shipment.bizType.reship",
+	"return":  "shipment.bizType.return",
 }
 
-var shipmentDirectionLabels = map[string]string{
-	"outbound": "寄出",
-	"inbound":  "回寄",
+var shipmentDirectionI18nKeys = map[string]string{
+	"outbound": "shipment.direction.outbound",
+	"inbound":  "shipment.direction.inbound",
 }
 
-var afterSaleActionLabels = map[string]string{
-	"apply":       "提交申请",
-	"audit":       "审核",
-	"return_ship": "回寄物流",
-	"receive":     "确认收货",
-	"refund":      "退款",
-	"reship":      "补发",
-	"complete":    "完结",
-	"close":       "关闭",
+var afterSaleActionI18nKeys = map[string]string{
+	"apply":       "afterSale.action.apply",
+	"audit":       "afterSale.action.review",
+	"return_ship": "afterSale.action.return",
+	"receive":     "afterSale.action.receive",
+	"refund":      "afterSale.action.refund",
+	"reship":      "afterSale.action.reship",
+	"complete":    "afterSale.action.complete",
+	"close":       "afterSale.action.close",
 }
 
-func deliveryTypeLabel(dt string) string {
+func deliveryTypeLabel(c *gin.Context, dt string) string {
 	value := strings.TrimSpace(dt)
-	if label, ok := deliveryTypeLabels[value]; ok {
-		return label
+	if key, ok := deliveryTypeI18nKeys[value]; ok {
+		return i18n.T(c, key)
 	}
 	if value == "" {
-		return "快递配送"
+		return i18n.T(c, "delivery.type.express")
 	}
 	return value
 }
 
-func orderStatusLabel(status int8) string {
-	if label, ok := orderStatusLabels[status]; ok {
-		return label
+func orderStatusLabel(c *gin.Context, status int8) string {
+	if key, ok := orderStatusI18nKeys[status]; ok {
+		return i18n.T(c, key)
 	}
 	if status <= 0 {
 		return ""
@@ -88,50 +91,50 @@ func orderStatusLabel(status int8) string {
 	return strconv.Itoa(int(status))
 }
 
-func afterSaleCaseTypeLabel(caseType string) string {
+func afterSaleCaseTypeLabel(c *gin.Context, caseType string) string {
 	value := strings.TrimSpace(caseType)
-	if label, ok := afterSaleCaseTypeLabels[value]; ok {
-		return label
+	if key, ok := afterSaleCaseTypeI18nKeys[value]; ok {
+		return i18n.T(c, key)
 	}
 	return value
 }
 
-func afterSaleStatusLabel(status string) string {
+func afterSaleStatusLabel(c *gin.Context, status string) string {
 	value := strings.TrimSpace(status)
-	if label, ok := afterSaleStatusLabels[value]; ok {
-		return label
+	if key, ok := afterSaleStatusI18nKeys[value]; ok {
+		return i18n.T(c, key)
 	}
 	return value
 }
 
-func shipmentStatusLabel(status string) string {
+func shipmentStatusLabel(c *gin.Context, status string) string {
 	value := strings.TrimSpace(status)
-	if label, ok := shipmentStatusLabels[value]; ok {
-		return label
+	if key, ok := shipmentStatusI18nKeys[value]; ok {
+		return i18n.T(c, key)
 	}
 	return value
 }
 
-func shipmentBizTypeLabel(bizType string) string {
+func shipmentBizTypeLabel(c *gin.Context, bizType string) string {
 	value := strings.TrimSpace(bizType)
-	if label, ok := shipmentBizTypeLabels[value]; ok {
-		return label
+	if key, ok := shipmentBizTypeI18nKeys[value]; ok {
+		return i18n.T(c, key)
 	}
 	return value
 }
 
-func shipmentDirectionLabel(direction string) string {
+func shipmentDirectionLabel(c *gin.Context, direction string) string {
 	value := strings.TrimSpace(direction)
-	if label, ok := shipmentDirectionLabels[value]; ok {
-		return label
+	if key, ok := shipmentDirectionI18nKeys[value]; ok {
+		return i18n.T(c, key)
 	}
 	return value
 }
 
-func afterSaleActionLabel(action string) string {
+func afterSaleActionLabel(c *gin.Context, action string) string {
 	value := strings.TrimSpace(action)
-	if label, ok := afterSaleActionLabels[value]; ok {
-		return label
+	if key, ok := afterSaleActionI18nKeys[value]; ok {
+		return i18n.T(c, key)
 	}
 	return value
 }

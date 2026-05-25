@@ -1,23 +1,23 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-xl font-semibold text-slate-800">商品列表</h2>
+      <h2 class="text-xl font-semibold text-slate-800">{{ $t('product.list.title') }}</h2>
       <router-link to="/product/form"
         class="px-4 py-2 bg-blue-700 text-white text-sm rounded-xl hover:bg-blue-600 transition">
-        + 新增商品
+        {{ $t('product.list.add') }}
       </router-link>
     </div>
 
     <!-- Search bar -->
     <div class="bg-white rounded-xl shadow-sm p-4 mb-4 flex gap-3 border border-slate-100">
-      <input v-model="query.keyword" placeholder="搜索商品名称"
+      <input v-model="query.keyword" :placeholder="$t('product.list.searchPlaceholder')"
         class="border border-slate-200 rounded-lg px-3 py-2 text-sm flex-1 focus:outline-none focus:border-blue-400" />
       <select v-model="query.category_id"
         class="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none">
-        <option value="">全部分类</option>
+        <option value="">{{ $t('product.list.allCategory') }}</option>
         <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
       </select>
-      <button @click="loadProducts" class="px-4 py-2 bg-slate-100 rounded-lg text-sm hover:bg-slate-200">搜索</button>
+      <button @click="loadProducts" class="px-4 py-2 bg-slate-100 rounded-lg text-sm hover:bg-slate-200">{{ $t('common.search') }}</button>
     </div>
 
     <!-- Table -->
@@ -25,13 +25,13 @@
       <table class="w-full text-sm">
         <thead class="bg-slate-50 border-b border-slate-100">
           <tr>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">ID</th>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">商品</th>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">价格</th>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">库存</th>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">收藏数</th>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">状态</th>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">操作</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('common.id') }}</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('product.list.product') }}</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('product.list.price') }}</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('product.list.stock') }}</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('product.list.favorites') }}</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('common.status') }}</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('common.action') }}</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-50">
@@ -40,7 +40,7 @@
             <td class="px-4 py-3">
               <div class="flex items-center gap-3">
                 <img v-if="p.cover" :src="p.cover" class="w-10 h-10 rounded-lg object-cover" />
-                <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-xs" v-else>图</div>
+                <div class="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-xs" v-else>{{ $t('product.list.image') }}</div>
                 <span class="font-medium text-slate-700 truncate max-w-xs">{{ p.title }}</span>
               </div>
             </td>
@@ -50,35 +50,35 @@
             <td class="px-4 py-3">
               <span :class="p.status===1 ? 'text-green-600 bg-green-50' : 'text-slate-400 bg-slate-100'"
                 class="px-2 py-1 rounded-full text-xs">
-                {{ p.status === 1 ? '上架' : '下架' }}
+                {{ p.status === 1 ? $t('product.list.onSale') : $t('product.list.offSale') }}
               </span>
             </td>
             <td class="px-4 py-3">
               <router-link :to="`/product/form/${p.id}`"
-                class="text-blue-600 hover:underline text-xs mr-3">编辑</router-link>
+                class="text-blue-600 hover:underline text-xs mr-3">{{ $t('common.edit') }}</router-link>
               <button
                 v-if="canManageReview"
                 @click="openReview(p)"
                 class="text-emerald-600 hover:underline text-xs mr-3"
               >
-                管理评价
+                {{ $t('product.list.manageReview') }}
               </button>
-              <button @click="remove(p.id)" class="text-red-500 hover:underline text-xs">删除</button>
+              <button @click="remove(p.id)" class="text-red-500 hover:underline text-xs">{{ $t('common.delete') }}</button>
             </td>
           </tr>
           <tr v-if="!products.length">
-            <td colspan="7" class="px-4 py-12 text-center text-slate-400">暂无商品</td>
+            <td colspan="7" class="px-4 py-12 text-center text-slate-400">{{ $t('product.list.noProduct') }}</td>
           </tr>
         </tbody>
       </table>
       <!-- Pagination -->
       <div class="px-4 py-3 flex items-center justify-between border-t border-slate-100 text-sm text-slate-500">
-        <span>共 {{ total }} 条</span>
+        <span>{{ $t('common.totalCount', { total }) }}</span>
         <div class="flex gap-2">
           <button :disabled="query.page <= 1" @click="query.page--; loadProducts()"
-            class="px-3 py-1 rounded-lg border hover:bg-slate-50 disabled:opacity-40">上一页</button>
+            class="px-3 py-1 rounded-lg border hover:bg-slate-50 disabled:opacity-40">{{ $t('common.prevPage') }}</button>
           <button :disabled="query.page * query.size >= total" @click="query.page++; loadProducts()"
-            class="px-3 py-1 rounded-lg border hover:bg-slate-50 disabled:opacity-40">下一页</button>
+            class="px-3 py-1 rounded-lg border hover:bg-slate-50 disabled:opacity-40">{{ $t('common.nextPage') }}</button>
         </div>
       </div>
     </div>
@@ -86,8 +86,8 @@
     <div v-if="showReviewModal && reviewProduct" class="fixed inset-0 bg-black/35 flex items-center justify-center z-50" @click.self="closeReview">
       <div class="bg-white rounded-xl w-[1120px] max-w-[96vw] max-h-[92vh] overflow-auto p-6">
         <div class="flex items-center justify-between mb-4">
-          <h3 class="text-base font-semibold text-slate-800">管理评价 - {{ reviewProduct.title }}（ID: {{ reviewProduct.id }}）</h3>
-          <button class="text-slate-400 hover:text-slate-600" @click="closeReview">关闭</button>
+          <h3 class="text-base font-semibold text-slate-800">{{ $t('product.list.reviewTitle', { title: reviewProduct.title, id: reviewProduct.id }) }}</h3>
+          <button class="text-slate-400 hover:text-slate-600" @click="closeReview">{{ $t('common.close') }}</button>
         </div>
         <ReviewManager
           :show-title="false"
@@ -101,6 +101,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { getProducts, getCategories, deleteProduct } from '@/api/plugins'
 import {
   getMenus,
@@ -112,6 +113,7 @@ import ReviewManager from '@/components/review/ReviewManager.vue'
 import { useAuthStore } from '@/stores/auth'
 import { confirmAction } from '@/utils/dialog'
 
+const { t } = useI18n()
 const products = ref<any[]>([])
 const categories = ref<any[]>([])
 const total = ref(0)
@@ -146,7 +148,7 @@ async function loadProducts() {
 }
 
 async function remove(id: number) {
-  if (!confirmAction('确认删除该商品？')) return
+  if (!confirmAction(t('common.confirmDelete'))) return
   await deleteProduct(id)
   loadProducts()
 }

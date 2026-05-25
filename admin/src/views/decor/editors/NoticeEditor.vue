@@ -3,15 +3,15 @@
     <!-- Notice items -->
     <div>
       <div class="flex items-center justify-between mb-2">
-        <label class="text-xs text-slate-500">公告列表</label>
-        <button @click="addItem" class="text-xs text-blue-600 hover:underline">+ 添加</button>
+        <label class="text-xs text-slate-500">{{ $t('decor.notice.list') }}</label>
+        <button @click="addItem" class="text-xs text-blue-600 hover:underline">{{ $t('decor.notice.add') }}</button>
       </div>
       <div class="space-y-2">
         <div v-for="(item, idx) in modelValue.items" :key="idx"
           class="border border-slate-200 rounded-lg p-2.5 space-y-2">
           <div class="flex items-center gap-2">
             <input :value="item.text" @input="updateItem(idx, 'text', ($event.target as HTMLInputElement).value)"
-              placeholder="公告内容" class="flex-1 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-blue-400" />
+              :placeholder="$t('decor.notice.content')" class="flex-1 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-blue-400" />
             <div class="flex gap-0.5 shrink-0">
               <button @click="moveItem(idx, -1)" :disabled="idx === 0"
                 class="px-1.5 py-1 text-xs text-slate-400 hover:text-slate-600 disabled:opacity-30">↑</button>
@@ -21,18 +21,18 @@
                 class="px-1.5 py-1 text-xs text-red-400 hover:text-red-600">×</button>
             </div>
           </div>
-          <LinkPicker :modelValue="item.link" @update:modelValue="updateItem(idx, 'link', $event)" label="跳转" />
+          <LinkPicker :modelValue="item.link" @update:modelValue="updateItem(idx, 'link', $event)" :label="$t('decor.notice.link')" />
         </div>
       </div>
     </div>
 
     <!-- Colors -->
-    <ColorInput :modelValue="modelValue.color" @update:modelValue="updateField('color', $event)" label="文字颜色" />
-    <ColorInput :modelValue="modelValue.bgColor" @update:modelValue="updateField('bgColor', $event)" label="背景颜色" />
+    <ColorInput :modelValue="modelValue.color" @update:modelValue="updateField('color', $event)" :label="$t('decor.notice.textColor')" />
+    <ColorInput :modelValue="modelValue.bgColor" @update:modelValue="updateField('bgColor', $event)" :label="$t('decor.notice.bgColor')" />
 
     <!-- Duration -->
     <div>
-      <label class="block text-xs text-slate-500 mb-1.5">滚动间隔 (ms)</label>
+      <label class="block text-xs text-slate-500 mb-1.5">{{ $t('decor.notice.interval') }}</label>
       <div class="flex items-center gap-3">
         <input type="range" :value="modelValue.duration" @input="updateField('duration', Number(($event.target as HTMLInputElement).value))"
           min="1000" max="10000" step="500" class="flex-1 accent-blue-600" />
@@ -42,11 +42,11 @@
 
     <!-- Mode -->
     <div>
-      <label class="block text-xs text-slate-500 mb-1.5">样式</label>
+      <label class="block text-xs text-slate-500 mb-1.5">{{ $t('decor.notice.style') }}</label>
       <select :value="modelValue.mode" @change="updateField('mode', ($event.target as HTMLSelectElement).value)"
         class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400">
-        <option value="link">可点击跳转</option>
-        <option value="closable">可关闭</option>
+        <option value="link">{{ $t('decor.notice.clickable') }}</option>
+        <option value="closable">{{ $t('decor.notice.closeable') }}</option>
       </select>
     </div>
   </div>

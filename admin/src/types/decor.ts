@@ -62,19 +62,19 @@ export type DecorComponentType = DecorComponent['type']
 
 // ---- Component library metadata ----
 
-export const componentLib: Array<{ type: DecorComponentType; title: string; icon: string }> = [
-  { type: 'banner',          title: '轮播图',   icon: '🖼' },
-  { type: 'category_nav',    title: '分类导航', icon: '📂' },
-  { type: 'product_grid',    title: '商品列表', icon: '🛍' },
-  { type: 'notice',          title: '公告栏',   icon: '📢' },
-  { type: 'image_ad',        title: '广告图',   icon: '🎯' },
-  { type: 'rich_text',       title: '富文本',   icon: '📝' },
-  { type: 'marketing_zone',  title: '营销区块', icon: '🏷' },
-  { type: 'spacer',          title: '间距',     icon: '↕' },
+export const componentLib: Array<{ type: DecorComponentType; titleKey: string; icon: string }> = [
+  { type: 'banner',          titleKey: 'decor.type.banner',         icon: '🖼' },
+  { type: 'category_nav',    titleKey: 'decor.type.categoryNav',    icon: '📂' },
+  { type: 'product_grid',    titleKey: 'decor.type.productGrid',    icon: '🛍' },
+  { type: 'notice',          titleKey: 'decor.type.notice',         icon: '📢' },
+  { type: 'image_ad',        titleKey: 'decor.type.imageAd',        icon: '🎯' },
+  { type: 'rich_text',       titleKey: 'decor.type.richText',       icon: '📝' },
+  { type: 'marketing_zone',  titleKey: 'decor.type.marketingZone',  icon: '🏷' },
+  { type: 'spacer',          titleKey: 'decor.type.spacer',         icon: '↕' },
 ]
 
-export const compTitleMap: Record<string, string> = Object.fromEntries(
-  componentLib.map(c => [c.type, c.title])
+export const compTitleKeyMap: Record<string, string> = Object.fromEntries(
+  componentLib.map(c => [c.type, c.titleKey])
 )
 
 // ---- Default props factory ----

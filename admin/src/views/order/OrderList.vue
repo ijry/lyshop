@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-xl font-semibold text-slate-800">订单列表</h2>
+      <h2 class="text-xl font-semibold text-slate-800">{{ $t('order.list.title') }}</h2>
     </div>
 
     <div class="flex gap-2 mb-4 flex-wrap">
@@ -20,12 +20,12 @@
       <table class="w-full text-sm">
         <thead class="bg-slate-50 border-b border-slate-100">
           <tr>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">订单号</th>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">商品信息</th>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">金额明细</th>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">用户/支付</th>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">状态</th>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">操作</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('order.list.orderId') }}</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('order.list.productInfo') }}</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('order.list.amountDetail') }}</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('order.list.userPayment') }}</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('common.status') }}</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('common.action') }}</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-50">
@@ -33,22 +33,22 @@
             <td class="px-4 py-3">
               <p class="font-mono text-xs text-slate-600">{{ o.order_no }}</p>
               <p class="text-xs text-slate-400 mt-1">{{ formatDate(o.created_at) }}</p>
-              <p v-if="o.tracking_no" class="text-xs text-slate-400 mt-1">物流单号：{{ o.tracking_no }}</p>
-              <p v-if="o.after_sale_summary?.has_open_case" class="text-xs text-red-500 mt-1">售后中</p>
+              <p v-if="o.tracking_no" class="text-xs text-slate-400 mt-1">{{ $t('order.list.trackingNo') }}{{ o.tracking_no }}</p>
+              <p v-if="o.after_sale_summary?.has_open_case" class="text-xs text-red-500 mt-1">{{ $t('order.list.afterSaleActive') }}</p>
               <p v-if="o.after_sale_summary?.latest_case_id" class="text-xs text-slate-500 mt-1">
-                最近售后单：#{{ o.after_sale_summary.latest_case_id }}（{{ afterSaleSummaryStatusText(o.after_sale_summary) || '-' }}）
+                {{ $t('order.list.latestAfterSale') }}#{{ o.after_sale_summary.latest_case_id }}（{{ afterSaleSummaryStatusText(o.after_sale_summary) || '-' }}）
               </p>
               <div v-if="hasShipmentSummary(o)" class="flex items-center flex-wrap gap-1 mt-1">
-                <span v-if="hasReship(o)" class="text-[11px] px-2 py-0.5 rounded-full bg-orange-50 text-orange-600">含补发</span>
+                <span v-if="hasReship(o)" class="text-[11px] px-2 py-0.5 rounded-full bg-orange-50 text-orange-600">{{ $t('order.list.hasReship') }}</span>
                 <template v-if="o.latest_shipment?.delivery_type === 'local'">
-                  <span class="text-[11px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">同城配送</span>
+                  <span class="text-[11px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">{{ $t('order.list.localDelivery') }}</span>
                   <span v-if="o.latest_shipment?.rider_name" class="text-xs text-slate-500">
-                    骑手：{{ o.latest_shipment.rider_name }}
+                    {{ $t('order.list.rider') }}{{ o.latest_shipment.rider_name }}
                   </span>
                 </template>
                 <template v-else>
                   <span v-if="o.latest_shipment?.tracking_no" class="text-xs text-slate-500">
-                    最新物流：{{ shipmentStatusText(o.latest_shipment?.logistics_status, o.latest_shipment?.logistics_status_label) }} · {{ o.latest_shipment?.tracking_no }}
+                    {{ $t('order.list.latestLogistics') }}{{ shipmentStatusText(o.latest_shipment?.logistics_status, o.latest_shipment?.logistics_status_label) }} · {{ o.latest_shipment?.tracking_no }}
                   </span>
                 </template>
                 <span v-if="shipmentPrimaryTime(o.latest_shipment)" class="text-xs text-slate-400">
@@ -65,18 +65,18 @@
                     <p class="text-xs text-slate-400">x{{ it.qty }}</p>
                   </div>
                 </div>
-                <p v-if="o.items.length > 2" class="text-xs text-slate-400">共 {{ o.items.length }} 件商品</p>
+                <p v-if="o.items.length > 2" class="text-xs text-slate-400">{{ $t('order.list.itemCount', { count: o.items.length }) }}</p>
               </div>
-              <p v-else class="text-slate-400 text-xs">暂无商品明细</p>
+              <p v-else class="text-slate-400 text-xs">{{ $t('order.list.noItems') }}</p>
             </td>
             <td class="px-4 py-3 text-xs text-slate-600">
-              <p>商品：¥{{ money(o.amount_breakdown?.goods_amount ?? o.goods_amount) }}</p>
-              <p>优惠：-¥{{ money(o.amount_breakdown?.discount_amount ?? o.discount_amount) }}</p>
-              <p>运费：¥{{ money(o.amount_breakdown?.freight_amount ?? o.freight_amount) }}</p>
-              <p class="text-slate-800 font-semibold mt-1">实付：¥{{ money(o.amount_breakdown?.payable_amount ?? o.total_amount) }}</p>
+              <p>{{ $t('order.list.productAmount') }}¥{{ money(o.amount_breakdown?.goods_amount ?? o.goods_amount) }}</p>
+              <p>{{ $t('order.list.discount') }}-¥{{ money(o.amount_breakdown?.discount_amount ?? o.discount_amount) }}</p>
+              <p>{{ $t('order.list.freight') }}¥{{ money(o.amount_breakdown?.freight_amount ?? o.freight_amount) }}</p>
+              <p class="text-slate-800 font-semibold mt-1">{{ $t('order.list.paidAmount') }}¥{{ money(o.amount_breakdown?.payable_amount ?? o.total_amount) }}</p>
             </td>
             <td class="px-4 py-3 text-xs text-slate-600">
-              <p>用户ID：{{ o.user_id }}</p>
+              <p>{{ $t('order.list.userId') }}{{ o.user_id }}</p>
               <p class="mt-1">{{ payLabel(o.payment_method) }}</p>
             </td>
             <td class="px-4 py-3">
@@ -86,20 +86,20 @@
             </td>
             <td class="px-4 py-3">
               <div class="flex flex-col gap-2 items-start">
-                <button class="text-blue-600 hover:underline text-xs" @click="goDetail(o.id)">查看详情</button>
-                <button v-if="o.status === 2" @click="goDetail(o.id)" class="text-emerald-600 hover:underline text-xs">发货</button>
+                <button class="text-blue-600 hover:underline text-xs" @click="goDetail(o.id)">{{ $t('order.list.viewDetail') }}</button>
+                <button v-if="o.status === 2" @click="goDetail(o.id)" class="text-emerald-600 hover:underline text-xs">{{ $t('order.list.ship') }}</button>
                 <button
                   v-if="o.after_sale_summary?.latest_case_id"
                   @click="goAfterSaleDetail(o.after_sale_summary.latest_case_id)"
                   class="text-red-600 hover:underline text-xs"
                 >
-                  售后进度
+                  {{ $t('order.list.afterSaleProgress') }}
                 </button>
               </div>
             </td>
           </tr>
           <tr v-if="!orders.length">
-            <td colspan="6" class="px-4 py-12 text-center text-slate-400">暂无订单</td>
+            <td colspan="6" class="px-4 py-12 text-center text-slate-400">{{ $t('order.list.noOrder') }}</td>
           </tr>
         </tbody>
       </table>
@@ -108,23 +108,25 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { getOrders } from '@/api/plugins'
 import { afterSaleStatusLabel, hasReshipShipment, orderStatusLabel, shipmentPrimaryTime, shipmentStatusLabel } from '@/utils/order-status'
 
+const { t } = useI18n()
 const router = useRouter()
 const orders = ref<any[]>([])
 const activeStatus = ref(0)
 
-const tabs = [
-  { label: '全部', value: 0 },
-  { label: '待付款', value: 1 },
-  { label: '待发货', value: 2 },
-  { label: '待收货', value: 3 },
-  { label: '已完成', value: 4 },
-  { label: '售后', value: 5 },
-]
+const tabs = computed(() => [
+  { label: t('order.list.all'), value: 0 },
+  { label: t('orderStatus.pending'), value: 1 },
+  { label: t('orderStatus.shipped'), value: 2 },
+  { label: t('orderStatus.delivering'), value: 3 },
+  { label: t('orderStatus.completed'), value: 4 },
+  { label: t('orderStatus.afterSale'), value: 5 },
+])
 
 const statusColors: Record<number, string> = {
   1: 'bg-yellow-50 text-yellow-700',
@@ -133,9 +135,9 @@ const statusColors: Record<number, string> = {
   4: 'bg-green-50 text-green-700',
   5: 'bg-red-50 text-red-600',
 }
-const statusLabel = (s: number) => orderStatusLabel(s) || '未知'
+const statusLabel = (s: number) => orderStatusLabel(s) || t('common.noData')
 const statusClass = (s: number) => statusColors[s] || 'bg-slate-50 text-slate-400'
-const payLabel = (m: string) => m === 'wechat' ? '微信支付' : m === 'alipay' ? '支付宝支付' : '未支付'
+const payLabel = (m: string) => m === 'wechat' ? t('order.list.wechatPay') : m === 'alipay' ? t('order.list.alipay') : t('order.list.unpaid')
 const money = (v: number) => Number(v || 0).toFixed(2)
 const formatDate = (v?: string) => v ? String(v).slice(0, 19).replace('T', ' ') : '-'
 

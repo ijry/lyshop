@@ -16,7 +16,7 @@
       </view>
 
       <view v-if="!messages.length" style="text-align: center; padding: 60px 0; color: #999; font-size: 14px;">
-        暂无消息
+        {{ $t('messageList.empty') }}
       </view>
     </view>
   </view>
@@ -24,15 +24,18 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { get } from '@/utils/request'
+
+const { t } = useI18n()
 
 const messages = ref<any[]>([])
 const group = ref('')
 
-const groupTitles: Record<string, string> = {
-  system: '系统通知', order: '订单消息', marketing: '营销消息', im: '客服消息'
-}
-const groupTitle = computed(() => groupTitles[group.value] || '消息列表')
+const groupTitles = computed<Record<string, string>>(() => ({
+  system: t('messageList.system'), order: t('messageList.order'), marketing: t('messageList.marketing'), im: t('messageList.service')
+}))
+const groupTitle = computed(() => groupTitles.value[group.value] || t('messageList.title'))
 
 onMounted(async () => {
   const pages = getCurrentPages()

@@ -15,7 +15,7 @@
           <span class="text-lg font-bold" :style="{ color: 'var(--color-price, #ef4444)' }">¥{{ product.price }}</span>
           <span v-if="product.origin_price" class="text-xs text-gray-300 line-through">¥{{ product.origin_price }}</span>
         </div>
-        <span class="text-xs text-gray-400">{{ product.sales }}人付款</span>
+        <span class="text-xs text-gray-400">{{ product.sales }}{{ $t('productCard.peoplePaid') }}</span>
       </div>
     </div>
   </div>

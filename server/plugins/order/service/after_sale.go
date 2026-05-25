@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/ijry/lyshop/core/db"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -202,7 +203,7 @@ func lockAfterSaleCase(tx *gorm.DB, caseID uint64) (*ordermodel.AfterSaleCase, e
 	var row ordermodel.AfterSaleCase
 	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id = ?", caseID).First(&row).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("售后单不存在")
+			return nil, errors.New("afterSale.err.notFound")
 		}
 		return nil, err
 	}
@@ -236,17 +237,18 @@ func refreshOrderStatusByAfterSaleTx(tx *gorm.DB, orderID uint64) error {
 	return tx.Model(&ordermodel.Order{}).Where("id = ?", orderID).Update("status", restoreStatus).Error
 }
 
+// CreateAfterSale creates a new after-sale case for an order.
 func CreateAfterSale(ctx context.Context, req CreateAfterSaleReq) (uint64, error) {
 	if req.OrderID == 0 || req.UserID == 0 {
-		return 0, errors.New("参数错误")
+		return 0, errors.New("afterSale.err.invalidParams")
 	}
 	caseType := normalizeAfterSaleType(req.CaseType)
 	reason := strings.TrimSpace(req.Reason)
 	if reason == "" {
-		return 0, errors.New("请填写售后原因")
+		return 0, errors.New("afterSale.err.reasonRequired")
 	}
 	if len(req.Items) == 0 {
-		return 0, errors.New("请选择售后商品")
+		return 0, errors.New("afterSale.err.selectProducts")
 	}
 
 	var createdID uint64
@@ -254,12 +256,12 @@ func CreateAfterSale(ctx context.Context, req CreateAfterSaleReq) (uint64, error
 		var order ordermodel.Order
 		if err := tx.Where("id = ? AND user_id = ?", req.OrderID, req.UserID).First(&order).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return errors.New("订单不存在")
+				return errors.New("afterSale.err.orderNotFound")
 			}
 			return err
 		}
 		if order.Status < ordermodel.OrderStatusPaid {
-			return errors.New("订单未支付，暂不可售后")
+			return errors.New("afterSale.err.orderNotPaid")
 		}
 
 		itemQty := map[uint64]int{}
@@ -272,7 +274,7 @@ func CreateAfterSale(ctx context.Context, req CreateAfterSaleReq) (uint64, error
 			itemIDs = append(itemIDs, item.OrderItemID)
 		}
 		if len(itemQty) == 0 {
-			return errors.New("请选择有效售后商品")
+			return errors.New("afterSale.err.selectValidProducts")
 		}
 
 		var orderItems []ordermodel.OrderItem
@@ -280,7 +282,7 @@ func CreateAfterSale(ctx context.Context, req CreateAfterSaleReq) (uint64, error
 			return err
 		}
 		if len(orderItems) == 0 {
-			return errors.New("订单商品不存在")
+			return errors.New("afterSale.err.itemNotFound")
 		}
 
 		var activeCaseItems []ordermodel.AfterSaleCaseItem
@@ -300,10 +302,10 @@ func CreateAfterSale(ctx context.Context, req CreateAfterSaleReq) (uint64, error
 		}
 		for _, item := range orderItems {
 			if activeItemMap[item.ID] {
-				return fmt.Errorf("商品 %d 已有进行中售后", item.ID)
+				return fmt.Errorf("afterSale.err.activeCase (item_id=%d)", item.ID)
 			}
 			if itemQty[item.ID] > item.Qty {
-				return fmt.Errorf("商品 %d 售后数量超过已购数量", item.ID)
+				return fmt.Errorf("afterSale.err.qtyExceeded (item_id=%d)", item.ID)
 			}
 		}
 
@@ -334,7 +336,7 @@ func CreateAfterSale(ctx context.Context, req CreateAfterSaleReq) (uint64, error
 		if err := tx.Create(&items).Error; err != nil {
 			return err
 		}
-		if err := writeAfterSaleLogTx(tx, caseRow.ID, "", caseRow.Status, "apply", "user", req.UserID, "提交售后申请", map[string]any{
+		if err := writeAfterSaleLogTx(tx, caseRow.ID, "", caseRow.Status, "apply", "user", req.UserID, "afterSale.log.applied", map[string]any{
 			"case_type": caseType,
 			"reason":    reason,
 		}); err != nil {
@@ -352,6 +354,7 @@ func CreateAfterSale(ctx context.Context, req CreateAfterSaleReq) (uint64, error
 	return createdID, nil
 }
 
+// AuditAfterSale approves or rejects an after-sale case.
 func AuditAfterSale(ctx context.Context, caseID uint64, req AuditAfterSaleReq) error {
 	return db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		caseRow, err := lockAfterSaleCase(tx, caseID)
@@ -359,7 +362,7 @@ func AuditAfterSale(ctx context.Context, caseID uint64, req AuditAfterSaleReq) e
 			return err
 		}
 		if caseRow.Status != string(ordermodel.AfterSaleStatusApplied) {
-			return errors.New("当前状态不可审核")
+			return errors.New("afterSale.err.cannotReview")
 		}
 		from := caseRow.Status
 		updates := map[string]any{
@@ -376,7 +379,7 @@ func AuditAfterSale(ctx context.Context, caseID uint64, req AuditAfterSaleReq) e
 			return err
 		}
 		to := updates["status"].(string)
-		if err := writeAfterSaleLogTx(tx, caseID, from, to, "audit", "admin", req.AdminID, "售后审核", map[string]any{
+		if err := writeAfterSaleLogTx(tx, caseID, from, to, "audit", "admin", req.AdminID, "afterSale.log.reviewed", map[string]any{
 			"approve": req.Approve,
 		}); err != nil {
 			return err
@@ -385,6 +388,7 @@ func AuditAfterSale(ctx context.Context, caseID uint64, req AuditAfterSaleReq) e
 	})
 }
 
+// SubmitReturnShipment records the user's return shipment.
 func SubmitReturnShipment(ctx context.Context, caseID uint64, req SubmitReturnShipmentReq) error {
 	return db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		caseRow, err := lockAfterSaleCase(tx, caseID)
@@ -392,7 +396,7 @@ func SubmitReturnShipment(ctx context.Context, caseID uint64, req SubmitReturnSh
 			return err
 		}
 		if caseRow.Status != string(ordermodel.AfterSaleStatusApprovedWaitReturn) {
-			return errors.New("当前状态不可提交回寄物流")
+			return errors.New("afterSale.err.cannotReturn")
 		}
 		if _, err := createShipmentTx(tx, CreateShipmentReq{
 			OrderID:         caseRow.OrderID,
@@ -412,7 +416,7 @@ func SubmitReturnShipment(ctx context.Context, caseID uint64, req SubmitReturnSh
 		if err := tx.Model(&ordermodel.AfterSaleCase{}).Where("id = ?", caseID).Update("status", to).Error; err != nil {
 			return err
 		}
-		if err := writeAfterSaleLogTx(tx, caseID, from, to, "return_ship", "user", req.UserID, "用户提交回寄物流", map[string]any{
+		if err := writeAfterSaleLogTx(tx, caseID, from, to, "return_ship", "user", req.UserID, "afterSale.log.returnShipped", map[string]any{
 			"company":     strings.TrimSpace(req.Company),
 			"tracking_no": strings.TrimSpace(req.TrackingNo),
 		}); err != nil {
@@ -422,6 +426,7 @@ func SubmitReturnShipment(ctx context.Context, caseID uint64, req SubmitReturnSh
 	})
 }
 
+// ReceiveAfterSale confirms warehouse receipt of returned goods.
 func ReceiveAfterSale(ctx context.Context, caseID uint64, adminID uint64) error {
 	return db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		caseRow, err := lockAfterSaleCase(tx, caseID)
@@ -429,7 +434,7 @@ func ReceiveAfterSale(ctx context.Context, caseID uint64, adminID uint64) error 
 			return err
 		}
 		if caseRow.Status != string(ordermodel.AfterSaleStatusUserReturning) {
-			return errors.New("当前状态不可确认收货")
+			return errors.New("afterSale.err.cannotReceive")
 		}
 		nextStatus := string(ordermodel.AfterSaleStatusRefundPending)
 		if caseRow.CaseType == string(ordermodel.AfterSaleCaseTypeExchange) {
@@ -438,13 +443,14 @@ func ReceiveAfterSale(ctx context.Context, caseID uint64, adminID uint64) error 
 		if err := tx.Model(&ordermodel.AfterSaleCase{}).Where("id = ?", caseID).Update("status", nextStatus).Error; err != nil {
 			return err
 		}
-		if err := writeAfterSaleLogTx(tx, caseID, caseRow.Status, nextStatus, "receive", "admin", adminID, "仓库收货确认", nil); err != nil {
+		if err := writeAfterSaleLogTx(tx, caseID, caseRow.Status, nextStatus, "receive", "admin", adminID, "afterSale.log.received", nil); err != nil {
 			return err
 		}
 		return refreshOrderStatusByAfterSaleTx(tx, caseRow.OrderID)
 	})
 }
 
+// MarkRefund records a refund for an after-sale case.
 func MarkRefund(ctx context.Context, caseID uint64, req MarkRefundReq) error {
 	return db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		caseRow, err := lockAfterSaleCase(tx, caseID)
@@ -452,7 +458,7 @@ func MarkRefund(ctx context.Context, caseID uint64, req MarkRefundReq) error {
 			return err
 		}
 		if caseRow.Status != string(ordermodel.AfterSaleStatusRefundPending) {
-			return errors.New("当前状态不可登记退款")
+			return errors.New("afterSale.err.cannotRefund")
 		}
 		amount := req.Amount
 		if amount <= 0 {
@@ -467,7 +473,7 @@ func MarkRefund(ctx context.Context, caseID uint64, req MarkRefundReq) error {
 			}
 		}
 		if amount <= 0 {
-			return errors.New("退款金额无效")
+			return errors.New("afterSale.err.invalidRefundAmount")
 		}
 		refundNo := strings.TrimSpace(req.RefundNo)
 		if refundNo == "" {
@@ -490,7 +496,7 @@ func MarkRefund(ctx context.Context, caseID uint64, req MarkRefundReq) error {
 		}).Error; err != nil {
 			return err
 		}
-		if err := writeAfterSaleLogTx(tx, caseID, caseRow.Status, string(ordermodel.AfterSaleStatusRefunded), "refund", "admin", req.AdminID, "退款登记", map[string]any{
+		if err := writeAfterSaleLogTx(tx, caseID, caseRow.Status, string(ordermodel.AfterSaleStatusRefunded), "refund", "admin", req.AdminID, "afterSale.log.refunded", map[string]any{
 			"amount":    amount,
 			"refund_no": refundNo,
 		}); err != nil {
@@ -503,6 +509,7 @@ func MarkRefund(ctx context.Context, caseID uint64, req MarkRefundReq) error {
 	})
 }
 
+// CompleteAfterSale marks an after-sale case as completed.
 func CompleteAfterSale(ctx context.Context, caseID uint64, adminID uint64) error {
 	return db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		caseRow, err := lockAfterSaleCase(tx, caseID)
@@ -517,7 +524,7 @@ func CompleteAfterSale(ctx context.Context, caseID uint64, adminID uint64) error
 			string(ordermodel.AfterSaleStatusReshipped): true,
 		}
 		if !allowed[caseRow.Status] {
-			return errors.New("当前状态不可完结")
+			return errors.New("afterSale.err.cannotComplete")
 		}
 		now := time.Now()
 		if err := tx.Model(&ordermodel.AfterSaleCase{}).Where("id = ?", caseID).Updates(map[string]any{
@@ -526,13 +533,14 @@ func CompleteAfterSale(ctx context.Context, caseID uint64, adminID uint64) error
 		}).Error; err != nil {
 			return err
 		}
-		if err := writeAfterSaleLogTx(tx, caseID, caseRow.Status, string(ordermodel.AfterSaleStatusCompleted), "complete", "admin", adminID, "售后完结", nil); err != nil {
+		if err := writeAfterSaleLogTx(tx, caseID, caseRow.Status, string(ordermodel.AfterSaleStatusCompleted), "complete", "admin", adminID, "afterSale.log.completed", nil); err != nil {
 			return err
 		}
 		return refreshOrderStatusByAfterSaleTx(tx, caseRow.OrderID)
 	})
 }
 
+// CloseAfterSale closes an after-sale case.
 func CloseAfterSale(ctx context.Context, caseID uint64, req CloseAfterSaleReq) error {
 	return db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		caseRow, err := lockAfterSaleCase(tx, caseID)
@@ -540,11 +548,11 @@ func CloseAfterSale(ctx context.Context, caseID uint64, req CloseAfterSaleReq) e
 			return err
 		}
 		if !statusAllowClose(caseRow.Status) {
-			return errors.New("当前状态不可关闭")
+			return errors.New("afterSale.err.cannotClose")
 		}
 		closeReason := strings.TrimSpace(req.Reason)
 		if closeReason == "" {
-			return errors.New("请填写关闭原因")
+			return errors.New("afterSale.err.closeReasonRequired")
 		}
 		if err := tx.Model(&ordermodel.AfterSaleCase{}).Where("id = ?", caseID).Updates(map[string]any{
 			"status":       string(ordermodel.AfterSaleStatusClosed),
@@ -552,7 +560,7 @@ func CloseAfterSale(ctx context.Context, caseID uint64, req CloseAfterSaleReq) e
 		}).Error; err != nil {
 			return err
 		}
-		if err := writeAfterSaleLogTx(tx, caseID, caseRow.Status, string(ordermodel.AfterSaleStatusClosed), "close", "admin", req.AdminID, "关闭售后", map[string]any{
+		if err := writeAfterSaleLogTx(tx, caseID, caseRow.Status, string(ordermodel.AfterSaleStatusClosed), "close", "admin", req.AdminID, "afterSale.log.closed", map[string]any{
 			"reason": closeReason,
 		}); err != nil {
 			return err
@@ -561,11 +569,13 @@ func CloseAfterSale(ctx context.Context, caseID uint64, req CloseAfterSaleReq) e
 	})
 }
 
-func GetAfterSale(ctx context.Context, caseID uint64) (*AfterSaleCaseView, error) {
+// GetAfterSale returns an after-sale case detail view.
+func GetAfterSale(c *gin.Context, caseID uint64) (*AfterSaleCaseView, error) {
+	ctx := c.Request.Context()
 	var caseRow ordermodel.AfterSaleCase
 	if err := db.DB.WithContext(ctx).Where("id = ?", caseID).First(&caseRow).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("售后单不存在")
+			return nil, errors.New("afterSale.err.notFound")
 		}
 		return nil, err
 	}
@@ -582,9 +592,9 @@ func GetAfterSale(ctx context.Context, caseID uint64) (*AfterSaleCaseView, error
 	for _, row := range logRows {
 		logs = append(logs, AfterSaleLogView{
 			AfterSaleLog:    row,
-			FromStatusLabel: afterSaleStatusLabel(row.FromStatus),
-			ToStatusLabel:   afterSaleStatusLabel(row.ToStatus),
-			ActionLabel:     afterSaleActionLabel(row.Action),
+			FromStatusLabel: afterSaleStatusLabel(c, row.FromStatus),
+			ToStatusLabel:   afterSaleStatusLabel(c, row.ToStatus),
+			ActionLabel:     afterSaleActionLabel(c, row.Action),
 		})
 	}
 	var shipmentRows []ordermodel.OrderShipment
@@ -595,28 +605,30 @@ func GetAfterSale(ctx context.Context, caseID uint64) (*AfterSaleCaseView, error
 	for _, row := range shipmentRows {
 		shipments = append(shipments, AfterSaleShipmentView{
 			OrderShipment:        row,
-			DirectionLabel:       shipmentDirectionLabel(row.Direction),
-			BizTypeLabel:         shipmentBizTypeLabel(row.BizType),
-			LogisticsStatusLabel: shipmentStatusLabel(row.LogisticsStatus),
+			DirectionLabel:       shipmentDirectionLabel(c, row.Direction),
+			BizTypeLabel:         shipmentBizTypeLabel(c, row.BizType),
+			LogisticsStatusLabel: shipmentStatusLabel(c, row.LogisticsStatus),
 		})
 	}
 	return &AfterSaleCaseView{
 		AfterSaleCase: caseRow,
-		StatusLabel:   afterSaleStatusLabel(caseRow.Status),
-		CaseTypeLabel: afterSaleCaseTypeLabel(caseRow.CaseType),
+		StatusLabel:   afterSaleStatusLabel(c, caseRow.Status),
+		CaseTypeLabel: afterSaleCaseTypeLabel(c, caseRow.CaseType),
 		Items:         items,
 		Logs:          logs,
 		Shipments:     shipments,
 	}, nil
 }
 
-func ListAfterSales(ctx context.Context, status string, caseType string, orderID uint64, page int, size int) ([]AfterSaleCaseListView, int64, error) {
+// ListAfterSales returns paginated after-sale cases.
+func ListAfterSales(c *gin.Context, status string, caseType string, orderID uint64, page int, size int) ([]AfterSaleCaseListView, int64, error) {
 	if page <= 0 {
 		page = 1
 	}
 	if size <= 0 || size > 100 {
 		size = 20
 	}
+	ctx := c.Request.Context()
 	tx := db.DB.WithContext(ctx).Model(&ordermodel.AfterSaleCase{})
 	status = strings.TrimSpace(status)
 	if status != "" {
@@ -642,14 +654,14 @@ func ListAfterSales(ctx context.Context, status string, caseType string, orderID
 		row.ApplyImages = decodeStringArray(row.ApplyImagesJSON)
 		result = append(result, AfterSaleCaseListView{
 			AfterSaleCase: row,
-			StatusLabel:   afterSaleStatusLabel(row.Status),
-			CaseTypeLabel: afterSaleCaseTypeLabel(row.CaseType),
+			StatusLabel:   afterSaleStatusLabel(c, row.Status),
+			CaseTypeLabel: afterSaleCaseTypeLabel(c, row.CaseType),
 		})
 	}
 	return result, total, nil
 }
 
-func buildAfterSaleSummaryMap(ctx context.Context, orderIDs []uint64) (map[uint64]*AfterSaleSummary, error) {
+func buildAfterSaleSummaryMap(c *gin.Context, ctx context.Context, orderIDs []uint64) (map[uint64]*AfterSaleSummary, error) {
 	result := make(map[uint64]*AfterSaleSummary, len(orderIDs))
 	if len(orderIDs) == 0 {
 		return result, nil
@@ -672,7 +684,7 @@ func buildAfterSaleSummaryMap(ctx context.Context, orderIDs []uint64) (map[uint6
 		if summary.LatestCaseID == 0 {
 			summary.LatestCaseID = row.ID
 			summary.LatestStatus = row.Status
-			summary.LatestStatusLabel = afterSaleStatusLabel(row.Status)
+			summary.LatestStatusLabel = afterSaleStatusLabel(c, row.Status)
 		}
 		if isAfterSaleStatusOpen(row.Status) {
 			summary.InProgressCount += 1

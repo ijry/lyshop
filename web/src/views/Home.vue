@@ -26,7 +26,7 @@
             </router-link>
             <router-link to="/products"
               class="bg-white/10 backdrop-blur-sm text-white px-8 py-3 rounded-xl font-semibold text-sm border border-white/20 hover:bg-white/20 transition-colors">
-              查看全部
+              {{ $t('home.viewAll') }}
             </router-link>
           </div>
         </div>
@@ -53,11 +53,11 @@
     <!-- Hot products -->
     <section class="max-w-7xl mx-auto px-6 mt-12">
       <div class="flex-between mb-6">
-        <h2 class="text-xl font-bold text-gray-900">热销推荐</h2>
+        <h2 class="text-xl font-bold text-gray-900">{{ $t('home.hotRecommend') }}</h2>
         <router-link to="/products"
           class="text-sm font-medium flex items-center gap-1 hover:opacity-80 transition-colors"
           :style="{ color: 'var(--color-primary, #dc2626)' }">
-          查看全部 <div class="i-carbon-arrow-right text-sm" />
+          {{ $t('home.viewAll') }} <div class="i-carbon-arrow-right text-sm" />
         </router-link>
       </div>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-5">
@@ -68,12 +68,12 @@
     <!-- Features -->
     <section class="max-w-7xl mx-auto px-6 mt-16 mb-8">
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div v-for="f in features" :key="f.title"
+        <div v-for="f in features" :key="f.titleKey"
           class="flex items-center gap-3 bg-white rounded-xl p-4 border border-gray-100">
           <div :class="f.icon" class="text-2xl shrink-0" :style="{ color: 'var(--color-primary, #dc2626)' }" />
           <div>
-            <p class="text-sm font-semibold text-gray-800">{{ f.title }}</p>
-            <p class="text-xs text-gray-400 mt-0.5">{{ f.desc }}</p>
+            <p class="text-sm font-semibold text-gray-800">{{ $t(f.titleKey) }}</p>
+            <p class="text-xs text-gray-400 mt-0.5">{{ $t(f.descKey) }}</p>
           </div>
         </div>
       </div>
@@ -99,10 +99,10 @@ const heroLines = computed(() =>
 )
 
 const features = [
-  { icon: 'i-carbon-delivery-truck', title: '极速发货', desc: '下单24小时内发出' },
-  { icon: 'i-carbon-checkmark-outline', title: '正品保障', desc: '全球品牌直供' },
-  { icon: 'i-carbon-renew', title: '无忧退换', desc: '7天无理由退货' },
-  { icon: 'i-carbon-headset', title: '在线客服', desc: '7×24小时在线' },
+  { icon: 'i-carbon-delivery-truck', titleKey: 'home.featureFastTitle', descKey: 'home.featureFastDesc' },
+  { icon: 'i-carbon-checkmark-outline', titleKey: 'home.featureAuthTitle', descKey: 'home.featureAuthDesc' },
+  { icon: 'i-carbon-renew', titleKey: 'home.featureReturnTitle', descKey: 'home.featureReturnDesc' },
+  { icon: 'i-carbon-headset', titleKey: 'home.featureServiceTitle', descKey: 'home.featureServiceDesc' },
 ]
 
 onMounted(async () => {

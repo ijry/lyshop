@@ -4,7 +4,7 @@
       <!-- Sidebar categories -->
       <aside class="hidden md:block w-52 shrink-0">
         <div class="sticky top-24 card p-4">
-          <h3 class="text-sm font-semibold text-gray-800 mb-3">商品分类</h3>
+          <h3 class="text-sm font-semibold text-gray-800 mb-3">{{ $t('productList.category') }}</h3>
           <div class="flex flex-col gap-0.5">
             <button v-for="c in categories" :key="c.id"
               @click="categoryID = c.id; loadProducts()"
@@ -25,7 +25,7 @@
           <div class="relative">
             <div class="i-carbon-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
             <input v-model="keyword" @keyup.enter="loadProducts"
-              placeholder="搜索你想要的商品..."
+              :placeholder="$t('productList.searchPlaceholder')"
               class="input-base pl-11 !rounded-xl !py-3" />
           </div>
         </div>
@@ -43,7 +43,7 @@
         <!-- Empty -->
         <div v-else class="flex flex-col items-center py-20">
           <div class="i-carbon-search text-5xl text-gray-200 mb-4" />
-          <p class="text-gray-400 text-sm">暂无商品</p>
+          <p class="text-gray-400 text-sm">{{ $t('productList.empty') }}</p>
         </div>
       </div>
     </div>
@@ -52,11 +52,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { get } from '@/api/request'
 import ProductCard from '@/components/ProductCard.vue'
 
+const { t } = useI18n()
 const products = ref<any[]>([])
-const categories = ref<any[]>([{ id: '', name: '全部' }])
+const categories = ref<any[]>([{ id: '', name: t('orderList.all') }])
 const keyword = ref('')
 const categoryID = ref<string | number>('')
 const loading = ref(false)
@@ -76,7 +78,7 @@ async function loadProducts() {
 
 onMounted(async () => {
   const cats = await get<any[]>('/api/v1/categories')
-  if (cats) categories.value = [{ id: '', name: '全部' }, ...cats]
+  if (cats) categories.value = [{ id: '', name: t('orderList.all') }, ...cats]
   loadProducts()
 })
 </script>

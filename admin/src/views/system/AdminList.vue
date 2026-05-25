@@ -1,10 +1,10 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-xl font-semibold text-slate-800">管理员管理</h2>
+      <h2 class="text-xl font-semibold text-slate-800">{{ $t('system.admin.title') }}</h2>
       <button @click="showCreate = true"
         class="bg-red-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-red-700 transition">
-        + 新增管理员
+        {{ $t('system.admin.add') }}
       </button>
     </div>
 
@@ -12,12 +12,12 @@
       <table class="w-full text-sm">
         <thead class="bg-slate-50 text-slate-500">
           <tr>
-            <th class="px-4 py-3 text-left">ID</th>
-            <th class="px-4 py-3 text-left">用户名</th>
-            <th class="px-4 py-3 text-left">角色</th>
-            <th class="px-4 py-3 text-left">状态</th>
-            <th class="px-4 py-3 text-left">创建时间</th>
-            <th class="px-4 py-3 text-left">操作</th>
+            <th class="px-4 py-3 text-left">{{ $t('common.id') }}</th>
+            <th class="px-4 py-3 text-left">{{ $t('system.admin.username') }}</th>
+            <th class="px-4 py-3 text-left">{{ $t('system.admin.role') }}</th>
+            <th class="px-4 py-3 text-left">{{ $t('common.status') }}</th>
+            <th class="px-4 py-3 text-left">{{ $t('system.admin.createTime') }}</th>
+            <th class="px-4 py-3 text-left">{{ $t('common.action') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -31,12 +31,12 @@
             </td>
             <td class="px-4 py-3">
               <span :class="a.status === 1 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'"
-                class="px-2 py-0.5 rounded text-xs">{{ a.status === 1 ? '正常' : '禁用' }}</span>
+                class="px-2 py-0.5 rounded text-xs">{{ a.status === 1 ? $t('system.admin.active') : $t('system.admin.banned') }}</span>
             </td>
             <td class="px-4 py-3 text-slate-400">{{ a.created_at?.slice(0, 10) }}</td>
             <td class="px-4 py-3">
               <button v-if="a.id !== 1" @click="deleteAdmin(a.id)"
-                class="text-red-500 hover:text-red-700 text-xs">删除</button>
+                class="text-red-500 hover:text-red-700 text-xs">{{ $t('common.delete') }}</button>
             </td>
           </tr>
         </tbody>
@@ -46,21 +46,21 @@
     <!-- Create dialog -->
     <div v-if="showCreate" class="fixed inset-0 bg-black/30 flex items-center justify-center z-50" @click.self="showCreate=false">
       <div class="bg-white rounded-2xl p-6 w-96 shadow-xl">
-        <h3 class="text-lg font-semibold text-slate-800 mb-4">新增管理员</h3>
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">{{ $t('system.admin.addTitle') }}</h3>
         <div class="space-y-3">
-          <input v-model="form.username" placeholder="用户名"
+          <input v-model="form.username" :placeholder="$t('system.admin.username')"
             class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500" />
-          <input v-model="form.password" type="password" placeholder="密码"
+          <input v-model="form.password" type="password" :placeholder="$t('system.admin.password')"
             class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500" />
           <select v-model="form.role_id"
             class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500">
-            <option value="">选择角色</option>
+            <option value="">{{ $t('system.admin.selectRole') }}</option>
             <option v-for="r in roles" :key="r.id" :value="r.id">{{ r.name }}</option>
           </select>
         </div>
         <div class="flex gap-3 mt-5">
-          <button @click="showCreate=false" class="flex-1 border border-slate-200 rounded-xl py-2.5 text-sm text-slate-600 hover:bg-slate-50">取消</button>
-          <button @click="createAdmin" class="flex-1 bg-red-600 text-white rounded-xl py-2.5 text-sm hover:bg-red-700">创建</button>
+          <button @click="showCreate=false" class="flex-1 border border-slate-200 rounded-xl py-2.5 text-sm text-slate-600 hover:bg-slate-50">{{ $t('common.cancel') }}</button>
+          <button @click="createAdmin" class="flex-1 bg-red-600 text-white rounded-xl py-2.5 text-sm hover:bg-red-700">{{ $t('common.create') }}</button>
         </div>
       </div>
     </div>
@@ -69,8 +69,11 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import request from '@/api/request'
 import { confirmAction } from '@/utils/dialog'
+
+const { t } = useI18n()
 
 const admins = ref<any[]>([])
 const roles = ref<any[]>([])
@@ -78,7 +81,7 @@ const showCreate = ref(false)
 const form = ref({ username: '', password: '', role_id: '' })
 
 function roleName(roleId: number) {
-  return roles.value.find(r => r.id === roleId)?.name || `角色#${roleId}`
+  return roles.value.find(r => r.id === roleId)?.name || `${t('system.admin.role')}#${roleId}`
 }
 
 async function loadData() {
@@ -94,7 +97,7 @@ async function createAdmin() {
 }
 
 async function deleteAdmin(id: number) {
-  if (!confirmAction('确认删除？')) return
+  if (!confirmAction(t('common.confirmDelete'))) return
   await request.delete(`/admins/${id}`)
   loadData()
 }

@@ -31,8 +31,11 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { get } from '@/utils/request'
 import DecorRender from '@/components/decor/DecorRender.vue'
+
+const { t } = useI18n()
 
 const components = ref<any[]>([])
 const isPreview = ref(false)
@@ -84,9 +87,9 @@ onMounted(async () => {
         id: 'default_notice',
         props: {
           items: [
-            { text: '欢迎来到 LYShop', link: '/pages/index/index' },
-            { text: '新人优惠券限时领取', link: '/pages/marketing/coupon?mode=claim' },
-            { text: '热卖商品持续上新', link: '/pages/product/list' }
+            { text: t('home.welcome'), link: '/pages/index/index' },
+            { text: t('home.newUserCoupon'), link: '/pages/marketing/coupon?mode=claim' },
+            { text: t('home.hotProducts'), link: '/pages/product/list' }
           ],
           color: '#f97316',
           bgColor: '#fff7ed',

@@ -7,7 +7,7 @@
       </div>
       <button @click="open = !open"
         class="px-2.5 py-1.5 text-xs bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition shrink-0">
-        选择
+        {{ $t('common.select') }}
       </button>
     </div>
 
@@ -25,7 +25,7 @@
       </div>
 
       <div class="overflow-y-auto" style="max-height: 330px;">
-        <!-- Tab: 商城页面 -->
+        <!-- Tab: pages -->
         <div v-if="activeTab === 'pages'" class="p-2 space-y-0.5">
           <div v-for="page in shopPages" :key="page.path" @click="selectLink(page.path)"
             :class="modelValue === page.path ? 'bg-blue-50 text-blue-600' : 'hover:bg-slate-50'"
@@ -35,9 +35,9 @@
           </div>
         </div>
 
-        <!-- Tab: 商品分类 -->
+        <!-- Tab: categories -->
         <div v-if="activeTab === 'categories'" class="p-2">
-          <div v-if="!categories.length" class="text-center py-4 text-xs text-slate-400">加载中...</div>
+          <div v-if="!categories.length" class="text-center py-4 text-xs text-slate-400">{{ $t('linkPicker.loading') }}</div>
           <div v-for="cat in categories" :key="cat.id" @click="selectLink(`/pages/product/list?category_id=${cat.id}`)"
             :class="modelValue === `/pages/product/list?category_id=${cat.id}` ? 'bg-blue-50 text-blue-600' : 'hover:bg-slate-50'"
             class="px-3 py-2 rounded-lg text-xs cursor-pointer transition">
@@ -45,12 +45,12 @@
           </div>
         </div>
 
-        <!-- Tab: 指定商品 -->
+        <!-- Tab: products -->
         <div v-if="activeTab === 'products'" class="p-2 space-y-2">
-          <input v-model="productKeyword" @input="searchProducts" placeholder="搜索商品名称..."
+          <input v-model="productKeyword" @input="searchProducts" :placeholder="$t('linkPicker.searchPlaceholder')"
             class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-blue-400" />
           <div v-if="!products.length" class="text-center py-3 text-xs text-slate-400">
-            {{ productKeyword ? '未找到商品' : '输入关键词搜索' }}
+            {{ productKeyword ? $t('linkPicker.notFound') : $t('linkPicker.searchPlaceholder') }}
           </div>
           <div v-for="p in products" :key="p.id" @click="selectLink(`/pages/product/detail?id=${p.id}`)"
             :class="modelValue === `/pages/product/detail?id=${p.id}` ? 'bg-blue-50' : 'hover:bg-slate-50'"
@@ -64,7 +64,7 @@
           </div>
         </div>
 
-        <!-- Tab: 营销活动 -->
+        <!-- Tab: marketing -->
         <div v-if="activeTab === 'marketing'" class="p-2 space-y-0.5">
           <div v-for="item in marketingPages" :key="item.path" @click="selectLink(item.path)"
             :class="modelValue === item.path ? 'bg-blue-50 text-blue-600' : 'hover:bg-slate-50'"
@@ -73,13 +73,13 @@
           </div>
         </div>
 
-        <!-- Tab: 自定义 -->
+        <!-- Tab: custom -->
         <div v-if="activeTab === 'custom'" class="p-3 space-y-2">
           <input v-model="customUrl" placeholder="/pages/..."
             class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-blue-400" />
           <button @click="selectLink(customUrl)" :disabled="!customUrl.trim()"
             class="w-full px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-500 disabled:opacity-50 transition">
-            确认
+            {{ $t('common.confirm') }}
           </button>
         </div>
       </div>
@@ -92,7 +92,10 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { getCategories, getProducts } from '@/api/plugins'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   modelValue: string
@@ -114,46 +117,46 @@ let categoriesLoaded = false
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 
 const tabs = [
-  { key: 'pages' as const, label: '页面' },
-  { key: 'categories' as const, label: '分类' },
-  { key: 'products' as const, label: '商品' },
-  { key: 'marketing' as const, label: '营销' },
-  { key: 'custom' as const, label: '自定义' },
+  { key: 'pages' as const, label: t('linkPicker.page') },
+  { key: 'categories' as const, label: t('linkPicker.category') },
+  { key: 'products' as const, label: t('linkPicker.product') },
+  { key: 'marketing' as const, label: t('linkPicker.marketing') },
+  { key: 'custom' as const, label: t('linkPicker.custom') },
 ]
 
 const shopPages = [
-  { label: '首页', path: '/pages/index/index' },
-  { label: '商品列表', path: '/pages/product/list' },
-  { label: '购物车', path: '/pages/cart/index' },
-  { label: '我的订单', path: '/pages/order/list' },
-  { label: '个人中心', path: '/pages/user/index' },
-  { label: '我的收藏', path: '/pages/user/favorites' },
-  { label: '我的积分', path: '/pages/user/points' },
-  { label: '会员中心', path: '/pages/user/vip' },
-  { label: '消息中心', path: '/pages/message/index' },
-  { label: '每日签到', path: '/pages/checkin/index' },
+  { label: t('linkPicker.home'), path: '/pages/index/index' },
+  { label: t('linkPicker.productList'), path: '/pages/product/list' },
+  { label: t('linkPicker.cart'), path: '/pages/cart/index' },
+  { label: t('linkPicker.orders'), path: '/pages/order/list' },
+  { label: t('linkPicker.userCenter'), path: '/pages/user/index' },
+  { label: t('linkPicker.favorites'), path: '/pages/user/favorites' },
+  { label: t('linkPicker.points'), path: '/pages/user/points' },
+  { label: t('linkPicker.vipCenter'), path: '/pages/user/vip' },
+  { label: t('linkPicker.messageCenter'), path: '/pages/message/index' },
+  { label: t('linkPicker.checkin'), path: '/pages/checkin/index' },
 ]
 
 const marketingPages = [
-  { label: '领券中心', path: '/pages/marketing/coupon?mode=claim' },
-  { label: '限时秒杀', path: '/pages/marketing/seckill' },
-  { label: '拼团特惠', path: '/pages/marketing/group-buy' },
-  { label: '砍价免费拿', path: '/pages/marketing/bargain' },
+  { label: t('linkPicker.couponCenter'), path: '/pages/marketing/coupon?mode=claim' },
+  { label: t('linkPicker.seckill'), path: '/pages/marketing/seckill' },
+  { label: t('linkPicker.groupBuy'), path: '/pages/marketing/group-buy' },
+  { label: t('linkPicker.bargain'), path: '/pages/marketing/bargain' },
 ]
 
 const allKnownPages = [...shopPages, ...marketingPages]
 
 const displayText = computed(() => {
-  if (!props.modelValue) return '未设置链接'
+  if (!props.modelValue) return t('linkPicker.noLink')
   const known = allKnownPages.find(p => p.path === props.modelValue)
   if (known) return known.label
   if (props.modelValue.includes('category_id=')) {
     const catId = new URLSearchParams(props.modelValue.split('?')[1]).get('category_id')
     const cat = categories.value.find(c => String(c.id) === catId)
-    return cat ? `分类: ${cat.name}` : props.modelValue
+    return cat ? `${t('linkPicker.categoryPrefix')}${cat.name}` : props.modelValue
   }
   if (props.modelValue.includes('/product/detail')) {
-    return `商品详情 ${props.modelValue}`
+    return `${t('linkPicker.productDetail')} ${props.modelValue}`
   }
   return props.modelValue
 })

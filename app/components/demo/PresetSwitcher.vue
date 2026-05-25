@@ -11,7 +11,7 @@
       <view v-else class="mx-30rpx rounded-2xl shadow-2xl overflow-hidden"
         style="background: rgba(255,255,255,0.96); backdrop-filter: blur(12px); max-width: 680rpx; width: 100%;">
         <view class="px-24rpx pt-20rpx pb-12rpx flex items-center justify-between">
-          <text class="text-24rpx text-gray-400">切换演示行业</text>
+          <text class="text-24rpx text-gray-400">{{ $t('presetSwitcher.title') }}</text>
           <text class="text-24rpx text-gray-400 px-8rpx" @click="expanded = false">✕</text>
         </view>
         <view class="flex flex-wrap px-16rpx pb-20rpx gap-12rpx">

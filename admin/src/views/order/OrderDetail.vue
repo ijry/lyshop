@@ -1,52 +1,52 @@
 <template>
   <div>
     <div class="flex items-center gap-3 mb-6">
-      <button class="text-slate-400 hover:text-slate-600 text-sm" @click="router.back()">← 返回</button>
-      <h2 class="text-xl font-semibold text-slate-800">订单详情</h2>
+      <button class="text-slate-400 hover:text-slate-600 text-sm" @click="router.back()">{{ $t('common.back') }}</button>
+      <h2 class="text-xl font-semibold text-slate-800">{{ $t('order.detail.title') }}</h2>
     </div>
 
     <div v-if="detail" class="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-6">
       <div class="space-y-4">
         <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-          <h3 class="font-semibold text-slate-700 mb-4">商品明细</h3>
+          <h3 class="font-semibold text-slate-700 mb-4">{{ $t('order.detail.items') }}</h3>
           <div v-if="detail.items?.length" class="space-y-4">
             <div v-for="it in detail.items" :key="it.id" class="flex items-center gap-3 p-3 rounded-lg border border-slate-100">
               <img :src="it.cover" class="w-16 h-16 rounded object-cover border border-slate-200" />
               <div class="flex-1 min-w-0">
                 <p class="text-sm text-slate-700 truncate">{{ it.title }}</p>
-                <p class="text-xs text-slate-400 mt-1">数量 x{{ it.qty }}</p>
+                <p class="text-xs text-slate-400 mt-1">x{{ it.qty }}</p>
               </div>
               <p class="text-sm font-medium text-slate-800">¥{{ money(it.price) }}</p>
             </div>
           </div>
-          <p v-else class="text-slate-400 text-sm">暂无商品数据</p>
+          <p v-else class="text-slate-400 text-sm">{{ $t('order.detail.noItems') }}</p>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
           <div class="flex items-center justify-between mb-4">
-            <h3 class="font-semibold text-slate-700">物流轨迹</h3>
-            <button class="text-xs text-blue-600 hover:underline" @click="showShipDialog = true">补发/发货</button>
+            <h3 class="font-semibold text-slate-700">{{ $t('order.detail.logistics') }}</h3>
+            <button class="text-xs text-blue-600 hover:underline" @click="showShipDialog = true">{{ $t('order.detail.ship') }}</button>
           </div>
           <div v-if="detail.shipments?.length" class="space-y-3">
             <div v-for="ship in detail.shipments" :key="ship.id" class="border border-slate-100 rounded-lg p-3">
               <div class="flex items-center justify-between gap-3">
                 <p class="text-sm text-slate-700">{{ shipmentTitle(ship) }}</p>
-                <button v-if="ship.delivery_type !== 'local'" data-test="sync-shipment" class="text-xs text-blue-600 hover:underline" @click="syncShip(ship.id)">刷新物流</button>
+                <button v-if="ship.delivery_type !== 'local'" data-test="sync-shipment" class="text-xs text-blue-600 hover:underline" @click="syncShip(ship.id)">{{ $t('common.refresh') }}</button>
               </div>
               <template v-if="ship.delivery_type === 'local'">
-                <p class="text-xs text-slate-400 mt-1">骑手：{{ ship.rider_name || '-' }}</p>
-                <p class="text-xs text-slate-400 mt-1">骑手电话：{{ ship.rider_phone || '-' }}</p>
+                <p class="text-xs text-slate-400 mt-1">{{ $t('order.list.rider') }}{{ ship.rider_name || '-' }}</p>
+                <p class="text-xs text-slate-400 mt-1">{{ $t('order.detail.riderPhone') }}：{{ ship.rider_phone || '-' }}</p>
               </template>
               <template v-else>
-                <p class="text-xs text-slate-400 mt-1">{{ ship.company || '未填公司' }} · {{ ship.tracking_no }}</p>
-                <p class="text-xs text-slate-400 mt-1">渠道：{{ ship.channel_provider || '待绑定' }}</p>
+                <p class="text-xs text-slate-400 mt-1">{{ ship.company || '-' }} · {{ ship.tracking_no }}</p>
+                <p class="text-xs text-slate-400 mt-1">{{ $t('order.detail.channelProvider') }}{{ ship.channel_provider || '-' }}</p>
               </template>
-              <p class="text-xs text-slate-400 mt-1">状态：{{ shipmentStatusText(ship.logistics_status, ship.logistics_status_label) }}</p>
+              <p class="text-xs text-slate-400 mt-1">{{ $t('order.detail.orderStatus') }}{{ shipmentStatusText(ship.logistics_status, ship.logistics_status_label) }}</p>
               <p v-if="shipmentPrimaryTime(ship)" class="text-xs text-slate-400 mt-1">{{ shipmentTimeLabel(ship) }}：{{ formatDate(shipmentPrimaryTime(ship)) }}</p>
-              <p v-if="ship.after_sale_case_id" class="text-xs text-slate-400 mt-1">关联售后单：#{{ ship.after_sale_case_id }}</p>
-              <p v-if="ship.remark" class="text-xs text-slate-400 mt-1">备注：{{ ship.remark }}</p>
+              <p v-if="ship.after_sale_case_id" class="text-xs text-slate-400 mt-1">{{ $t('order.detail.relatedAfterSale') }}#{{ ship.after_sale_case_id }}</p>
+              <p v-if="ship.remark" class="text-xs text-slate-400 mt-1">{{ $t('order.detail.remark') }}{{ ship.remark }}</p>
               <div v-if="ship.delivery_type !== 'local' && tracksMap[ship.id]?.length" class="mt-3 border-t border-slate-100 pt-3 space-y-2">
-                <p class="text-xs text-slate-500">轨迹节点</p>
+                <p class="text-xs text-slate-500">{{ $t('order.detail.trackingNodes') }}</p>
                 <div v-for="track in tracksMap[ship.id]" :key="track.id" class="text-xs text-slate-500">
                   <span>{{ formatDate(track.event_time) }}</span>
                   <span class="mx-1">·</span>
@@ -56,79 +56,79 @@
               </div>
             </div>
           </div>
-          <p v-else class="text-slate-400 text-sm">暂无物流轨迹</p>
+          <p v-else class="text-slate-400 text-sm">{{ $t('order.detail.noLogistics') }}</p>
         </div>
       </div>
 
       <div class="space-y-4">
         <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-          <h3 class="font-semibold text-slate-700 mb-3">订单信息</h3>
+          <h3 class="font-semibold text-slate-700 mb-3">{{ $t('order.detail.orderInfo') }}</h3>
           <div class="space-y-2 text-sm text-slate-600">
-            <p>订单号：<span class="font-mono">{{ detail.order_no }}</span></p>
-            <p>用户ID：{{ detail.user_id }}</p>
-            <p>支付方式：{{ payLabel(detail.payment_method) }}</p>
-            <p>状态：{{ statusLabel(detail.status) }}</p>
-            <p>下单时间：{{ formatDate(detail.created_at) }}</p>
-            <p v-if="detail.paid_at">支付时间：{{ formatDate(detail.paid_at) }}</p>
-            <p v-if="detail.tracking_no">物流单号：{{ detail.tracking_no }}</p>
-            <p v-if="detail.after_sale_summary?.has_open_case" class="text-red-500">售后中</p>
+            <p>{{ $t('order.detail.orderNo') }}<span class="font-mono">{{ detail.order_no }}</span></p>
+            <p>{{ $t('order.detail.userId') }}{{ detail.user_id }}</p>
+            <p>{{ $t('order.detail.paymentMethod') }}{{ payLabel(detail.payment_method) }}</p>
+            <p>{{ $t('order.detail.orderStatus') }}{{ statusLabel(detail.status) }}</p>
+            <p>{{ $t('order.detail.orderTime') }}{{ formatDate(detail.created_at) }}</p>
+            <p v-if="detail.paid_at">{{ $t('order.detail.payTime') }}{{ formatDate(detail.paid_at) }}</p>
+            <p v-if="detail.tracking_no">{{ $t('order.detail.trackingNoLabel') }}{{ detail.tracking_no }}</p>
+            <p v-if="detail.after_sale_summary?.has_open_case" class="text-red-500">{{ $t('order.list.afterSaleActive') }}</p>
             <p v-if="detail.after_sale_summary?.latest_case_id">
-              最近售后单：#{{ detail.after_sale_summary.latest_case_id }}（{{ afterSaleSummaryStatusText(detail.after_sale_summary) || '-' }}）
-              <button class="text-blue-600 hover:underline text-xs ml-2" @click="goAfterSaleDetail(detail.after_sale_summary.latest_case_id)">查看</button>
+              {{ $t('order.detail.latestAfterSale') }}#{{ detail.after_sale_summary.latest_case_id }}（{{ afterSaleSummaryStatusText(detail.after_sale_summary) || '-' }}）
+              <button class="text-blue-600 hover:underline text-xs ml-2" @click="goAfterSaleDetail(detail.after_sale_summary.latest_case_id)">{{ $t('common.view') }}</button>
             </p>
           </div>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
-          <h3 class="font-semibold text-slate-700 mb-3">价格体系</h3>
+          <h3 class="font-semibold text-slate-700 mb-3">{{ $t('order.detail.priceSystem') }}</h3>
           <div class="space-y-2 text-sm text-slate-600">
-            <div class="flex items-center justify-between"><span>商品金额</span><span>¥{{ money(detail.amount_breakdown?.goods_amount ?? detail.goods_amount) }}</span></div>
-            <div class="flex items-center justify-between"><span>优惠金额</span><span>-¥{{ money(detail.amount_breakdown?.discount_amount ?? detail.discount_amount) }}</span></div>
-            <div class="flex items-center justify-between"><span>运费</span><span>¥{{ money(detail.amount_breakdown?.freight_amount ?? detail.freight_amount) }}</span></div>
-            <div class="flex items-center justify-between text-slate-800 font-semibold pt-2 border-t border-slate-100"><span>实付金额</span><span>¥{{ money(detail.amount_breakdown?.payable_amount ?? detail.total_amount) }}</span></div>
+            <div class="flex items-center justify-between"><span>{{ $t('order.detail.productAmount') }}</span><span>¥{{ money(detail.amount_breakdown?.goods_amount ?? detail.goods_amount) }}</span></div>
+            <div class="flex items-center justify-between"><span>{{ $t('order.detail.discountAmount') }}</span><span>-¥{{ money(detail.amount_breakdown?.discount_amount ?? detail.discount_amount) }}</span></div>
+            <div class="flex items-center justify-between"><span>{{ $t('order.detail.freightAmount') }}</span><span>¥{{ money(detail.amount_breakdown?.freight_amount ?? detail.freight_amount) }}</span></div>
+            <div class="flex items-center justify-between text-slate-800 font-semibold pt-2 border-t border-slate-100"><span>{{ $t('order.detail.paidAmount') }}</span><span>¥{{ money(detail.amount_breakdown?.payable_amount ?? detail.total_amount) }}</span></div>
           </div>
         </div>
       </div>
     </div>
 
     <div v-else class="bg-white rounded-xl shadow-sm border border-slate-100 p-10 text-center text-slate-400">
-      加载中...
+      {{ $t('order.detail.loading') }}
     </div>
 
     <div v-if="showShipDialog" class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div class="bg-white rounded-2xl p-6 w-[420px] shadow-xl">
-        <h3 class="font-semibold text-slate-800 mb-4">补发/发货</h3>
+        <h3 class="font-semibold text-slate-800 mb-4">{{ $t('order.detail.ship') }}</h3>
         <div class="space-y-3">
           <select v-model="shipForm.ship_type" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm">
-            <option value="initial">首发</option>
-            <option value="reship">补发</option>
+            <option value="initial">{{ $t('order.detail.initialShip') }}</option>
+            <option value="reship">{{ $t('order.detail.reShip') }}</option>
           </select>
           <div v-if="storeDeliveryMode === 'both'" class="flex gap-3">
             <label class="flex items-center gap-1.5 text-sm text-slate-600 cursor-pointer">
               <input type="radio" v-model="shipForm.delivery_type" value="express" class="accent-blue-600" />
-              快递配送
+              {{ $t('order.detail.expressDelivery') }}
             </label>
             <label class="flex items-center gap-1.5 text-sm text-slate-600 cursor-pointer">
               <input type="radio" v-model="shipForm.delivery_type" value="local" class="accent-blue-600" />
-              同城配送
+              {{ $t('order.detail.localDelivery') }}
             </label>
           </div>
           <template v-if="shipForm.delivery_type === 'express'">
             <select v-model="shipForm.company" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm">
-              <option value="">请选择快递公司</option>
+              <option value="">{{ $t('order.detail.selectExpress') }}</option>
               <option v-for="item in courierOptions" :key="item.code" :value="item.code">{{ item.name }}（{{ item.code }}）</option>
             </select>
-            <input v-model="shipForm.tracking_no" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="快递单号" />
+            <input v-model="shipForm.tracking_no" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" :placeholder="$t('order.detail.trackingNo')" />
           </template>
           <template v-else>
-            <input v-model="shipForm.rider_name" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="骑手名称" />
-            <input v-model="shipForm.rider_phone" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="骑手电话" />
+            <input v-model="shipForm.rider_name" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" :placeholder="$t('order.detail.riderName')" />
+            <input v-model="shipForm.rider_phone" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" :placeholder="$t('order.detail.riderPhone')" />
           </template>
-          <input v-if="shipForm.ship_type === 'reship'" v-model="shipForm.after_sale_case_id" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="售后单ID" />
+          <input v-if="shipForm.ship_type === 'reship'" v-model="shipForm.after_sale_case_id" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" :placeholder="$t('order.detail.afterSaleId')" />
         </div>
         <div class="flex gap-3 mt-5">
-          <button class="flex-1 px-4 py-2 bg-slate-100 rounded-lg text-sm" @click="showShipDialog = false">取消</button>
-          <button class="flex-1 px-4 py-2 bg-blue-700 text-white rounded-lg text-sm" @click="submitShip">确认</button>
+          <button class="flex-1 px-4 py-2 bg-slate-100 rounded-lg text-sm" @click="showShipDialog = false">{{ $t('common.cancel') }}</button>
+          <button class="flex-1 px-4 py-2 bg-blue-700 text-white rounded-lg text-sm" @click="submitShip">{{ $t('common.confirm') }}</button>
         </div>
       </div>
     </div>
@@ -138,10 +138,12 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { getDeliveryMode, getOrderDetail, getShipmentTracks, shipOrder, syncShipment } from '@/api/plugins'
 import { afterSaleStatusLabel, orderStatusLabel, shipmentPrimaryTime, shipmentStatusLabel, shipmentTimeLabel, shipmentTitle } from '@/utils/order-status'
 import { notify } from '@/utils/notify'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const detail = ref<any>(null)
@@ -169,8 +171,8 @@ const courierOptions = [
   { code: 'JT', name: '极兔速递' },
 ]
 
-const statusLabel = (s: number) => orderStatusLabel(s) || '未知'
-const payLabel = (m: string) => m === 'wechat' ? '微信支付' : m === 'alipay' ? '支付宝支付' : '未支付'
+const statusLabel = (s: number) => orderStatusLabel(s) || t('common.noData')
+const payLabel = (m: string) => m === 'wechat' ? t('order.list.wechatPay') : m === 'alipay' ? t('order.list.alipay') : t('order.list.unpaid')
 const money = (v: number) => Number(v || 0).toFixed(2)
 const formatDate = (v?: string) => v ? String(v).slice(0, 19).replace('T', ' ') : '-'
 
@@ -222,20 +224,20 @@ async function submitShip() {
   const form = shipForm.value
   if (form.delivery_type === 'express') {
     if (!form.company) {
-      notify('请选择快递公司')
+      notify(t('order.detail.expressRequired'))
       return
     }
     if (!form.tracking_no?.trim()) {
-      notify('请填写快递单号')
+      notify(t('order.detail.trackingRequired'))
       return
     }
   } else {
     if (!form.rider_name?.trim()) {
-      notify('请填写骑手名称')
+      notify(t('order.detail.riderNameRequired'))
       return
     }
     if (!form.rider_phone?.trim()) {
-      notify('请填写骑手电话')
+      notify(t('order.detail.riderPhoneRequired'))
       return
     }
   }

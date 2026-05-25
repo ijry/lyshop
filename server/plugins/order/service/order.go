@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/ijry/lyshop/core/db"
 	"github.com/ijry/lyshop/core/marketing"
 	ordermodel "github.com/ijry/lyshop/plugins/order/model"
@@ -57,7 +58,7 @@ type OrderShipmentView struct {
 	LogisticsStatusLabel string `json:"logistics_status_label,omitempty"`
 }
 
-func buildOrderShipmentViews(rows []ordermodel.OrderShipment) []OrderShipmentView {
+func buildOrderShipmentViews(c *gin.Context, rows []ordermodel.OrderShipment) []OrderShipmentView {
 	if len(rows) == 0 {
 		return []OrderShipmentView{}
 	}
@@ -65,10 +66,10 @@ func buildOrderShipmentViews(rows []ordermodel.OrderShipment) []OrderShipmentVie
 	for _, row := range rows {
 		result = append(result, OrderShipmentView{
 			OrderShipment:        row,
-			DeliveryTypeLabel:    deliveryTypeLabel(row.DeliveryType),
-			DirectionLabel:       shipmentDirectionLabel(row.Direction),
-			BizTypeLabel:         shipmentBizTypeLabel(row.BizType),
-			LogisticsStatusLabel: shipmentStatusLabel(row.LogisticsStatus),
+			DeliveryTypeLabel:    deliveryTypeLabel(c, row.DeliveryType),
+			DirectionLabel:       shipmentDirectionLabel(c, row.Direction),
+			BizTypeLabel:         shipmentBizTypeLabel(c, row.BizType),
+			LogisticsStatusLabel: shipmentStatusLabel(c, row.LogisticsStatus),
 		})
 	}
 	return result
@@ -83,14 +84,14 @@ func CreateOrder(ctx context.Context, req CreateOrderReq) (*ordermodel.Order, er
 	// 1. Load address
 	var addr ordermodel.Address
 	if err := db.DB.WithContext(ctx).Where("id = ? AND user_id = ?", req.AddressID, req.UserID).First(&addr).Error; err != nil {
-		return nil, errors.New("收货地址不存在")
+		return nil, errors.New("order.err.addressNotFound")
 	}
 	addrJSON, _ := json.Marshal(addr)
 
 	// 2. Build order items from cart
 	cartItems, err := GetCart(ctx, req.UserID)
 	if err != nil || len(cartItems) == 0 {
-		return nil, errors.New("购物车为空")
+		return nil, errors.New("order.err.cartEmpty")
 	}
 
 	// Filter to requested SKU IDs
@@ -118,7 +119,7 @@ func CreateOrder(ctx context.Context, req CreateOrderReq) (*ordermodel.Order, er
 		})
 	}
 	if len(items) == 0 {
-		return nil, errors.New("未选择有效商品")
+		return nil, errors.New("order.err.noValidProducts")
 	}
 
 	// 3. Run pricing pipeline
@@ -140,7 +141,7 @@ func CreateOrder(ctx context.Context, req CreateOrderReq) (*ordermodel.Order, er
 		pCtx.VIPLevelID = asset.CurrentLevelID
 	}
 	if err := marketing.Calculate(pCtx); err != nil {
-		return nil, fmt.Errorf("价格计算失败: %w", err)
+		return nil, fmt.Errorf("order.err.priceCalcFailed: %w", err)
 	}
 	rulesJSON, _ := json.Marshal(pCtx.AppliedRules)
 
@@ -171,7 +172,7 @@ func CreateOrder(ctx context.Context, req CreateOrderReq) (*ordermodel.Order, er
 				return res.Error
 			}
 			if res.RowsAffected == 0 {
-				return fmt.Errorf("商品库存不足 (sku_id=%d)", items[i].SkuID)
+				return fmt.Errorf("order.err.insufficientStock (sku_id=%d)", items[i].SkuID)
 			}
 		}
 		return tx.Create(&items).Error
@@ -188,7 +189,7 @@ func CreateOrder(ctx context.Context, req CreateOrderReq) (*ordermodel.Order, er
 	return order, nil
 }
 
-func buildOrderViews(ctx context.Context, orders []ordermodel.Order) ([]OrderView, error) {
+func buildOrderViews(c *gin.Context, ctx context.Context, orders []ordermodel.Order) ([]OrderView, error) {
 	if len(orders) == 0 {
 		return []OrderView{}, nil
 	}
@@ -236,7 +237,7 @@ func buildOrderViews(ctx context.Context, orders []ordermodel.Order) ([]OrderVie
 	if err != nil {
 		return nil, err
 	}
-	afterSaleSummaryMap, err := buildAfterSaleSummaryMap(ctx, orderIDs)
+	afterSaleSummaryMap, err := buildAfterSaleSummaryMap(c, ctx, orderIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -256,7 +257,7 @@ func buildOrderViews(ctx context.Context, orders []ordermodel.Order) ([]OrderVie
 			})
 		}
 		var latestShipment *OrderShipmentView
-		orderShipments := buildOrderShipmentViews(shipmentsMap[item.ID])
+		orderShipments := buildOrderShipmentViews(c, shipmentsMap[item.ID])
 		if len(orderShipments) > 0 {
 			first := orderShipments[0]
 			latestShipment = &first
@@ -279,13 +280,14 @@ func buildOrderViews(ctx context.Context, orders []ordermodel.Order) ([]OrderVie
 }
 
 // ListOrders returns paginated orders for a user.
-func ListOrders(ctx context.Context, userID uint64, status int8, page, size int) ([]OrderView, int64, error) {
+func ListOrders(c *gin.Context, userID uint64, status int8, page, size int) ([]OrderView, int64, error) {
 	if page <= 0 {
 		page = 1
 	}
 	if size <= 0 || size > 50 {
 		size = 20
 	}
+	ctx := c.Request.Context()
 	tx := db.DB.WithContext(ctx).Where("user_id = ?", userID)
 	if status > 0 {
 		tx = tx.Where("status = ?", status)
@@ -296,7 +298,7 @@ func ListOrders(ctx context.Context, userID uint64, status int8, page, size int)
 	if err := tx.Order("id desc").Offset((page - 1) * size).Limit(size).Find(&orders).Error; err != nil {
 		return nil, total, err
 	}
-	list, err := buildOrderViews(ctx, orders)
+	list, err := buildOrderViews(c, ctx, orders)
 	return list, total, err
 }
 
@@ -316,15 +318,15 @@ func ShipOrder(ctx context.Context, orderID uint64, req ShipOrderReq) error {
 	deliveryType := normalizeDeliveryType(req.DeliveryType)
 	if deliveryType == string(ordermodel.DeliveryTypeLocal) {
 		if strings.TrimSpace(req.RiderName) == "" {
-			return errors.New("请填写骑手名称")
+			return errors.New("delivery.err.riderNameRequired")
 		}
 		if strings.TrimSpace(req.RiderPhone) == "" {
-			return errors.New("请填写骑手电话")
+			return errors.New("delivery.err.riderPhoneRequired")
 		}
 	} else {
 		req.TrackingNo = strings.TrimSpace(req.TrackingNo)
 		if req.TrackingNo == "" {
-			return errors.New("请填写快递单号")
+			return errors.New("delivery.err.trackingRequired")
 		}
 	}
 	shipType := strings.ToLower(strings.TrimSpace(req.ShipType))
@@ -332,38 +334,38 @@ func ShipOrder(ctx context.Context, orderID uint64, req ShipOrderReq) error {
 		shipType = string(ordermodel.ShipmentBizTypeInitial)
 	}
 	if shipType != string(ordermodel.ShipmentBizTypeInitial) && shipType != string(ordermodel.ShipmentBizTypeReship) {
-		return errors.New("不支持的发货类型")
+		return errors.New("order.err.unsupportedDelivery")
 	}
 	var createdShipmentID uint64
 	err := db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var order ordermodel.Order
 		if err := tx.Where("id = ?", orderID).First(&order).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return errors.New("订单不存在")
+				return errors.New("order.err.notFound")
 			}
 			return err
 		}
 		if shipType == string(ordermodel.ShipmentBizTypeInitial) && order.Status != ordermodel.OrderStatusPaid {
-			return errors.New("当前状态不可发货")
+			return errors.New("order.err.cannotShip")
 		}
 		if shipType == string(ordermodel.ShipmentBizTypeReship) {
 			if req.AfterSaleCaseID == 0 {
-				return errors.New("补发需关联售后单")
+				return errors.New("order.err.reshipNeedCase")
 			}
 			caseRow, err := lockAfterSaleCase(tx, req.AfterSaleCaseID)
 			if err != nil {
 				return err
 			}
 			if caseRow.OrderID != orderID {
-				return errors.New("补发售后单与订单不匹配")
+				return errors.New("order.err.reshipCaseMismatch")
 			}
 			if caseRow.Status != string(ordermodel.AfterSaleStatusReshipPending) {
-				return errors.New("当前售后状态不可补发")
+				return errors.New("order.err.reshipStatusInvalid")
 			}
 			if err := tx.Model(&ordermodel.AfterSaleCase{}).Where("id = ?", caseRow.ID).Update("status", string(ordermodel.AfterSaleStatusReshipped)).Error; err != nil {
 				return err
 			}
-			if err := writeAfterSaleLogTx(tx, caseRow.ID, caseRow.Status, string(ordermodel.AfterSaleStatusReshipped), "reship", "admin", 0, "售后补发", map[string]any{
+			if err := writeAfterSaleLogTx(tx, caseRow.ID, caseRow.Status, string(ordermodel.AfterSaleStatusReshipped), "reship", "admin", 0, "afterSale.log.reship", map[string]any{
 				"tracking_no": req.TrackingNo,
 			}); err != nil {
 				return err
@@ -445,7 +447,7 @@ func UpdateAddress(ctx context.Context, userID, id uint64, req ordermodel.Addres
 	var addr ordermodel.Address
 	if err := db.DB.WithContext(ctx).Where("id = ? AND user_id = ?", id, userID).First(&addr).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("地址不存在")
+			return nil, errors.New("address not found")
 		}
 		return nil, err
 	}
@@ -482,7 +484,7 @@ func DeleteAddress(ctx context.Context, userID, id uint64) error {
 		var target ordermodel.Address
 		if err := tx.Where("id = ? AND user_id = ?", id, userID).First(&target).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return errors.New("地址不存在")
+				return errors.New("address not found")
 			}
 			return err
 		}
@@ -508,12 +510,12 @@ func PayOrder(ctx context.Context, userID, orderID uint64) error {
 			Where("id = ? AND user_id = ?", orderID, userID).
 			First(&order).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return errors.New("订单不存在或当前状态不可支付")
+				return errors.New("order.err.cannotPay")
 			}
 			return err
 		}
 		if order.Status != ordermodel.OrderStatusPending {
-			return errors.New("订单不存在或当前状态不可支付")
+			return errors.New("order.err.cannotPay")
 		}
 
 		now := time.Now()
@@ -550,32 +552,34 @@ func ReviewOrder(ctx context.Context, userID, orderID uint64, content string) er
 	})
 }
 
-func GetOrderDetail(ctx context.Context, userID, orderID uint64) (*OrderView, error) {
+func GetOrderDetail(c *gin.Context, userID, orderID uint64) (*OrderView, error) {
+	ctx := c.Request.Context()
 	var order ordermodel.Order
 	if err := db.DB.WithContext(ctx).
 		Where("id = ? AND user_id = ?", orderID, userID).
 		First(&order).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("订单不存在")
+			return nil, errors.New("order.err.notFound")
 		}
 		return nil, err
 	}
-	list, err := buildOrderViews(ctx, []ordermodel.Order{order})
+	list, err := buildOrderViews(c, ctx, []ordermodel.Order{order})
 	if err != nil {
 		return nil, err
 	}
 	return &list[0], nil
 }
 
-func AdminGetOrderDetail(ctx context.Context, orderID uint64) (*OrderView, error) {
+func AdminGetOrderDetail(c *gin.Context, orderID uint64) (*OrderView, error) {
+	ctx := c.Request.Context()
 	var order ordermodel.Order
 	if err := db.DB.WithContext(ctx).First(&order, orderID).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("订单不存在")
+			return nil, errors.New("order.err.notFound")
 		}
 		return nil, err
 	}
-	list, err := buildOrderViews(ctx, []ordermodel.Order{order})
+	list, err := buildOrderViews(c, ctx, []ordermodel.Order{order})
 	if err != nil {
 		return nil, err
 	}
@@ -583,13 +587,14 @@ func AdminGetOrderDetail(ctx context.Context, orderID uint64) (*OrderView, error
 }
 
 // AdminListOrders returns orders with optional status filter for admin.
-func AdminListOrders(ctx context.Context, status int8, page, size int) ([]OrderView, int64, error) {
+func AdminListOrders(c *gin.Context, status int8, page, size int) ([]OrderView, int64, error) {
 	if page <= 0 {
 		page = 1
 	}
 	if size <= 0 || size > 100 {
 		size = 20
 	}
+	ctx := c.Request.Context()
 	tx := db.DB.WithContext(ctx).Model(&ordermodel.Order{})
 	if status > 0 {
 		tx = tx.Where("status = ?", status)
@@ -600,6 +605,6 @@ func AdminListOrders(ctx context.Context, status int8, page, size int) ([]OrderV
 	if err := tx.Order("id desc").Offset((page - 1) * size).Limit(size).Find(&orders).Error; err != nil {
 		return nil, total, err
 	}
-	list, err := buildOrderViews(ctx, orders)
+	list, err := buildOrderViews(c, ctx, orders)
 	return list, total, err
 }

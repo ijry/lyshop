@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -8,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/ijry/lyshop/config"
+	"github.com/ijry/lyshop/core/i18n"
 	"github.com/ijry/lyshop/core/response"
 )
 
@@ -50,12 +52,12 @@ func ParseToken(tokenStr string) (*Claims, error) {
 func RequireAuth(c *gin.Context) {
 	auth := c.GetHeader("Authorization")
 	if !strings.HasPrefix(auth, "Bearer ") {
-		c.AbortWithStatusJSON(http.StatusOK, response.Err(401, "请先登录"))
+		c.AbortWithStatusJSON(http.StatusOK, response.Err(401, i18n.T(c, "auth.loginRequired")))
 		return
 	}
 	claims, err := ParseToken(strings.TrimPrefix(auth, "Bearer "))
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusOK, response.Err(401, "Token无效或已过期"))
+		c.AbortWithStatusJSON(http.StatusOK, response.Err(401, i18n.T(c, "auth.tokenInvalid")))
 		return
 	}
 	c.Set("user_id", claims.UserID)
@@ -71,7 +73,7 @@ func RequireAdmin(c *gin.Context) {
 		return
 	}
 	if role, _ := c.Get("role"); role != "admin" {
-		c.AbortWithStatusJSON(http.StatusOK, response.Err(403, "无权限"))
+		c.AbortWithStatusJSON(http.StatusOK, response.Err(403, i18n.T(c, "auth.noPermission")))
 		return
 	}
 	c.Next()
@@ -83,12 +85,12 @@ func RequirePermission(perm string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		perms, exists := c.Get("perms")
 		if !exists {
-			c.AbortWithStatusJSON(http.StatusOK, response.Err(403, "无权限"))
+			c.AbortWithStatusJSON(http.StatusOK, response.Err(403, i18n.T(c, "auth.noPermission")))
 			return
 		}
 		permList, ok := perms.([]string)
 		if !ok {
-			c.AbortWithStatusJSON(http.StatusOK, response.Err(403, "无权限"))
+			c.AbortWithStatusJSON(http.StatusOK, response.Err(403, i18n.T(c, "auth.noPermission")))
 			return
 		}
 		for _, p := range permList {
@@ -97,7 +99,7 @@ func RequirePermission(perm string) gin.HandlerFunc {
 				return
 			}
 		}
-		c.AbortWithStatusJSON(http.StatusOK, response.Err(403, "无权限: "+perm))
+		c.AbortWithStatusJSON(http.StatusOK, response.Err(403, fmt.Sprintf(i18n.T(c, "auth.noPermissionDetail"), perm)))
 	}
 }
 

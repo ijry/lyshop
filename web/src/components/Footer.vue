@@ -13,27 +13,27 @@
             <span class="text-base font-bold text-gray-900">{{ site.settings.site_name || 'LYShop' }}</span>
           </div>
           <p class="text-sm text-gray-500 max-w-xs leading-relaxed">
-            {{ site.settings.seo_description || '开源插件化商城系统，Go + Vue3 + uni-app，支持多端部署。' }}
+            {{ site.settings.seo_description || $t('footer.description') }}
           </p>
         </div>
         <div class="flex gap-16">
           <div>
-            <h4 class="text-sm font-semibold text-gray-800 mb-3">帮助</h4>
+            <h4 class="text-sm font-semibold text-gray-800 mb-3">{{ $t('footer.help') }}</h4>
             <div class="flex flex-col gap-2">
-              <button @click="openChat" class="footer-link text-sm text-left text-gray-500 transition-colors bg-transparent border-none p-0">联系客服</button>
-              <a href="#" class="footer-link text-sm text-gray-500 transition-colors">配送说明</a>
-              <a href="#" class="footer-link text-sm text-gray-500 transition-colors">退换政策</a>
+              <button @click="openChat" class="footer-link text-sm text-left text-gray-500 transition-colors bg-transparent border-none p-0">{{ $t('footer.contact') }}</button>
+              <a href="#" class="footer-link text-sm text-gray-500 transition-colors">{{ $t('footer.shipping') }}</a>
+              <a href="#" class="footer-link text-sm text-gray-500 transition-colors">{{ $t('footer.returnPolicy') }}</a>
             </div>
           </div>
           <div>
-            <h4 class="text-sm font-semibold text-gray-800 mb-3">关于</h4>
+            <h4 class="text-sm font-semibold text-gray-800 mb-3">{{ $t('footer.about') }}</h4>
             <div class="flex flex-col gap-2">
               <a href="https://github.com/ijry/lyshop" target="_blank"
                 class="footer-link text-sm text-gray-500 transition-colors flex items-center gap-1">
                 <div class="i-carbon-logo-github text-sm" /> GitHub
               </a>
               <a href="https://ijry.github.io/lyshop/" target="_blank"
-                class="footer-link text-sm text-gray-500 transition-colors">文档</a>
+                class="footer-link text-sm text-gray-500 transition-colors">{{ $t('footer.docs') }}</a>
             </div>
           </div>
         </div>

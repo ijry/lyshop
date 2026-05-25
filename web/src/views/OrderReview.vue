@@ -1,15 +1,15 @@
 <template>
   <div class="max-w-4xl mx-auto px-6 py-8">
     <div class="flex items-center gap-3 mb-6">
-      <button class="text-slate-400 hover:text-slate-600 text-sm" @click="router.back()">← 返回</button>
-      <h1 class="text-xl font-bold text-gray-900">订单评价</h1>
+      <button class="text-slate-400 hover:text-slate-600 text-sm" @click="router.back()">← {{ $t('orderDetail.back') }}</button>
+      <h1 class="text-xl font-bold text-gray-900">{{ $t('orderReview.title') }}</h1>
     </div>
 
     <div class="card p-5 mb-4" v-if="meta.order_no">
       <div class="flex items-center justify-between">
-        <p class="text-sm text-gray-500">订单号：{{ meta.order_no }}</p>
+        <p class="text-sm text-gray-500">{{ $t('orderDetail.orderNo') }}{{ meta.order_no }}</p>
         <div class="flex items-center gap-2" v-if="mode === 'root'">
-          <span class="text-sm text-gray-500">物流评分</span>
+          <span class="text-sm text-gray-500">{{ $t('orderReview.logisticsScore') }}</span>
           <div class="flex items-center gap-1">
             <button
               v-for="n in 5"
@@ -23,8 +23,8 @@
           </div>
         </div>
       </div>
-      <p class="text-xs text-gray-400 mt-2" v-if="mode === 'root'">根评价提交后，才能继续追加评论。</p>
-      <p class="text-xs text-gray-400 mt-2" v-else>你正在追加已发布评价。</p>
+      <p class="text-xs text-gray-400 mt-2" v-if="mode === 'root'">{{ $t('orderReview.rootFirstTip') }}</p>
+      <p class="text-xs text-gray-400 mt-2" v-else>{{ $t('orderReview.appendingTip') }}</p>
     </div>
 
     <div v-if="mode === 'root'" class="space-y-4">
@@ -33,9 +33,9 @@
           <img :src="item.product_cover" class="w-16 h-16 rounded-lg object-cover border border-gray-100" />
           <div class="flex-1 min-w-0">
             <p class="text-sm text-gray-800 font-medium line-clamp-1">{{ item.product_title }}</p>
-            <p class="text-xs text-gray-400 mt-1">订单商品ID：{{ item.order_item_id }}</p>
+            <p class="text-xs text-gray-400 mt-1">{{ $t('orderReview.orderItemId') }}{{ item.order_item_id }}</p>
             <div class="flex items-center gap-2 mt-3">
-              <span class="text-sm text-gray-500">商品评分</span>
+              <span class="text-sm text-gray-500">{{ $t('orderReview.productScore') }}</span>
               <div class="flex items-center gap-1">
                 <button
                   v-for="n in 5"
@@ -48,10 +48,10 @@
                 </button>
               </div>
             </div>
-            <textarea v-model="item.content" class="w-full mt-3 border border-gray-200 rounded-xl p-3 text-sm min-h-[88px] outline-none focus:border-red-300" placeholder="写点使用体验..." />
+            <textarea v-model="item.content" class="w-full mt-3 border border-gray-200 rounded-xl p-3 text-sm min-h-[88px] outline-none focus:border-red-300" :placeholder="$t('orderReview.contentPlaceholder')" />
             <div class="mt-3">
               <div class="flex items-center justify-between text-xs text-gray-400 mb-2">
-                <span>图片</span>
+                <span>{{ $t('orderReview.images') }}</span>
                 <span>{{ item.images.length }}/9</span>
               </div>
               <div class="flex flex-wrap gap-2">
@@ -64,7 +64,7 @@
                   class="w-20 h-20 rounded-lg border border-dashed border-gray-300 text-xs text-gray-500 hover:border-gray-400"
                   @click="pickImages(item.images)"
                 >
-                  + 添加
+                  {{ $t('orderReview.addImage') }}
                 </button>
               </div>
             </div>
@@ -79,18 +79,18 @@
           <img :src="itemForAppend.product_cover" class="w-16 h-16 rounded-lg object-cover border border-gray-100" />
           <div class="flex-1 min-w-0">
             <p class="text-sm text-gray-800 font-medium line-clamp-1">{{ itemForAppend.product_title }}</p>
-            <p class="text-xs text-gray-400 mt-1">订单商品ID：{{ itemForAppend.order_item_id }}</p>
-            <p class="text-xs text-gray-500 mt-2">{{ itemForAppend.content || '未填写评价' }}</p>
+            <p class="text-xs text-gray-400 mt-1">{{ $t('orderReview.orderItemId') }}{{ itemForAppend.order_item_id }}</p>
+            <p class="text-xs text-gray-500 mt-2">{{ itemForAppend.content || $t('orderDetail.noReview') }}</p>
             <div v-if="itemForAppend.images?.length" class="flex flex-wrap gap-2 mt-2">
               <img v-for="(img, idx) in itemForAppend.images" :key="img + idx" :src="img" class="w-14 h-14 rounded-md object-cover border border-gray-100" />
             </div>
           </div>
         </div>
 
-        <textarea v-model="appendContent" class="w-full border border-gray-200 rounded-xl p-3 text-sm min-h-[90px] outline-none focus:border-red-300" placeholder="可选：补充追评内容" />
+        <textarea v-model="appendContent" class="w-full border border-gray-200 rounded-xl p-3 text-sm min-h-[90px] outline-none focus:border-red-300" placeholder="" />
         <div>
           <div class="flex items-center justify-between text-xs text-gray-400 mb-2">
-            <span>追评图片</span>
+            <span>{{ $t('orderReview.appendReview') }}</span>
             <span>{{ appendImages.length }}/9</span>
           </div>
           <div class="flex flex-wrap gap-2">
@@ -103,20 +103,20 @@
               class="w-20 h-20 rounded-lg border border-dashed border-gray-300 text-xs text-gray-500 hover:border-gray-400"
               @click="pickImages(appendImages)"
             >
-              + 添加
+              {{ $t('orderReview.addImage') }}
             </button>
           </div>
         </div>
       </div>
-      <p v-else class="text-sm text-gray-400">未找到可追加的评价</p>
+      <p v-else class="text-sm text-gray-400">{{ $t('orderReview.noAppendTarget') }}</p>
     </div>
 
     <div class="mt-6 space-y-3">
       <button v-if="mode === 'root'" class="btn-primary w-full !py-3" :disabled="savingRoot" @click="submitRootReview">
-        {{ savingRoot ? '提交中...' : rootButtonText }}
+        {{ savingRoot ? $t('orderReview.submitting') : rootButtonText }}
       </button>
       <button v-else class="btn-primary w-full !py-3" :disabled="savingAppend" @click="submitAppendReview">
-        {{ savingAppend ? '提交中...' : '提交追加评价' }}
+        {{ savingAppend ? $t('orderReview.submitting') : $t('orderReview.appendReview') }}
       </button>
     </div>
   </div>
@@ -125,8 +125,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { get, post, upload } from '@/api/request'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 
@@ -141,7 +143,7 @@ const savingAppend = ref(false)
 const mode = ref<'root' | 'append'>('root')
 
 const rootButtonText = computed(() => {
-  return items.value.some((item: any) => !item.has_review) ? '提交根评价' : '更新根评价'
+  return items.value.some((item: any) => !item.has_review) ? t('orderReview.submitRoot') : t('orderReview.updateRoot')
 })
 
 function notify(msg: string) {
@@ -205,7 +207,7 @@ async function submitRootReview() {
   const createItems = items.value.filter((item: any) => !item.has_review)
   const editItems = items.value.filter((item: any) => item.has_review)
   if (!createItems.length && !editItems.length) {
-    notify('暂无可提交的根评价')
+    notify(t('orderReview.noRootToSubmit'))
     return
   }
   savingRoot.value = true
@@ -234,10 +236,10 @@ async function submitRootReview() {
         })),
       })
     }
-    notify('根评价已提交')
+    notify(t('orderReview.submitRoot'))
     router.back()
   } catch (error: any) {
-    notify(error?.message || '提交失败')
+    notify(error?.message || t('orderReview.submitFailed'))
   } finally {
     savingRoot.value = false
   }
@@ -246,12 +248,12 @@ async function submitRootReview() {
 async function submitAppendReview() {
   if (savingAppend.value) return
   if (!itemForAppend.value) {
-    notify('请先完成根评价')
+    notify(t('orderReview.rootFirstRequired'))
     return
   }
   const content = appendContent.value.trim()
   if (!content && appendImages.value.length === 0) {
-    notify('请填写追评内容或上传图片')
+    notify(t('orderReview.appendContentRequired'))
     return
   }
   savingAppend.value = true
@@ -262,10 +264,10 @@ async function submitAppendReview() {
       append_content: content,
       append_images: appendImages.value.slice(),
     })
-    notify('追评已提交')
+    notify(t('orderReview.appendSuccess'))
     router.back()
   } catch (error: any) {
-    notify(error?.message || '提交失败')
+    notify(error?.message || t('orderReview.submitFailed'))
   } finally {
     savingAppend.value = false
   }

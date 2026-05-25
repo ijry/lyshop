@@ -6,9 +6,9 @@
       <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <div class="w-2 h-2 rounded-full" :class="wsConnected ? 'bg-green-500' : 'bg-red-400'" />
-          <span class="text-sm font-semibold text-slate-700">客服会话</span>
+          <span class="text-sm font-semibold text-slate-700">{{ $t('im.title') }}</span>
         </div>
-        <span class="text-xs text-slate-400">{{ sessions.length }} 个会话</span>
+        <span class="text-xs text-slate-400">{{ $t('im.sessionCount', { count: sessions.length }) }}</span>
       </div>
       <!-- Session list -->
       <div class="flex-1 overflow-y-auto">
@@ -21,14 +21,14 @@
               <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
                 <span class="text-xs text-slate-600 font-medium">U{{ s.user_id }}</span>
               </div>
-              <span class="text-sm font-medium text-slate-800">用户 #{{ s.user_id }}</span>
+              <span class="text-sm font-medium text-slate-800">{{ $t('im.userLabel', { id: s.user_id }) }}</span>
             </div>
             <span :class="statusClass(s.status)" class="text-xs px-1.5 py-0.5 rounded-full">
               {{ statusLabel(s.status) }}
             </span>
           </div>
           <div class="flex items-center justify-between pl-10">
-            <span class="text-xs text-slate-400 truncate flex-1 mr-2">{{ s.last_msg || '暂无消息' }}</span>
+            <span class="text-xs text-slate-400 truncate flex-1 mr-2">{{ s.last_msg || $t('im.noMessages') }}</span>
             <div class="flex items-center gap-1.5 shrink-0">
               <span class="text-xs text-slate-300">{{ formatTime(s.updated_at) }}</span>
               <span v-if="s.unread_count > 0"
@@ -38,7 +38,7 @@
             </div>
           </div>
         </div>
-        <div v-if="!sessions.length" class="text-center py-12 text-slate-400 text-sm">暂无会话</div>
+        <div v-if="!sessions.length" class="text-center py-12 text-slate-400 text-sm">{{ $t('im.noSessions') }}</div>
       </div>
     </div>
 
@@ -50,7 +50,7 @@
             <svg class="w-16 h-16 mx-auto mb-3 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1">
               <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
-            <span class="text-sm">选择左侧会话开始回复</span>
+            <span class="text-sm">{{ $t('im.selectSession') }}</span>
           </div>
         </div>
       </template>
@@ -62,8 +62,8 @@
               <span class="text-xs text-red-600 font-bold">U{{ activeSession.user_id }}</span>
             </div>
             <div>
-              <span class="text-sm font-semibold text-slate-800">用户 #{{ activeSession.user_id }}</span>
-              <span class="text-xs text-slate-400 ml-2">会话 #{{ activeSession.id }}</span>
+              <span class="text-sm font-semibold text-slate-800">{{ $t('im.userLabel', { id: activeSession.user_id }) }}</span>
+              <span class="text-xs text-slate-400 ml-2">{{ $t('im.sessionLabel', { id: activeSession.id }) }}</span>
             </div>
           </div>
           <span :class="statusClass(activeSession.status)" class="text-xs px-2 py-1 rounded-full">
@@ -79,7 +79,7 @@
               <div :class="m.sender_type === 2 ? 'bg-red-600' : 'bg-slate-200'"
                 class="w-7 h-7 rounded-full flex items-center justify-center shrink-0">
                 <span :class="m.sender_type === 2 ? 'text-white' : 'text-slate-600'" class="text-xs font-medium">
-                  {{ m.sender_type === 2 ? '客' : '用' }}
+                  {{ m.sender_type === 2 ? $t('im.avatarStaff') : $t('im.avatarUser') }}
                 </span>
               </div>
               <!-- Bubble -->
@@ -97,11 +97,11 @@
         <!-- Input -->
         <div class="px-5 py-3 border-t border-slate-100 flex gap-3 shrink-0">
           <input v-model="replyText" @keyup.enter="sendReply"
-            placeholder="输入回复内容，Enter 发送"
+            :placeholder="$t('im.inputPlaceholder')"
             class="flex-1 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400/20 transition" />
           <button @click="sendReply" :disabled="!replyText.trim()"
             class="px-6 py-2.5 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 transition disabled:opacity-40">
-            发送
+            {{ $t('im.send') }}
           </button>
         </div>
       </template>
@@ -111,7 +111,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import request from '@/api/request'
+
+const { t } = useI18n()
 
 const sessions = ref<any[]>([])
 const messages = ref<any[]>([])
@@ -189,7 +192,7 @@ function scheduleReconnect() {
   }, reconnectDelay)
 }
 
-const statusLabels: Record<number, string> = { 1: '等待', 2: '进行中', 3: '已关闭' }
+const statusLabels: Record<number, string> = { 1: t('im.statusWaiting'), 2: t('im.statusActive'), 3: t('im.statusClosed') }
 const statusClasses: Record<number, string> = {
   1: 'bg-yellow-50 text-yellow-600',
   2: 'bg-green-50 text-green-600',

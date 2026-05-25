@@ -1,6 +1,6 @@
 <template>
   <div class="max-w-5xl mx-auto px-6 py-8">
-    <h1 class="text-xl font-bold text-gray-900 mb-6">我的订单</h1>
+    <h1 class="text-xl font-bold text-gray-900 mb-6">{{ $t('orderList.title') }}</h1>
 
     <div class="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6 w-fit">
       <button
@@ -16,7 +16,7 @@
 
     <div v-if="!orders.length" class="card p-16 text-center">
       <div class="i-carbon-document text-6xl text-gray-200 mx-auto mb-4" />
-      <p class="text-gray-400">暂无订单</p>
+      <p class="text-gray-400">{{ $t('orderList.empty') }}</p>
     </div>
 
     <div v-else class="space-y-4">
@@ -42,18 +42,18 @@
         </div>
 
         <div v-if="hasShipmentSummary(o)" class="flex items-center flex-wrap gap-2 mb-4">
-          <span v-if="hasReship(o)" class="text-[11px] px-2 py-0.5 rounded-full bg-orange-50 text-orange-600">含补发</span>
+          <span v-if="hasReship(o)" class="text-[11px] px-2 py-0.5 rounded-full bg-orange-50 text-orange-600">{{ $t('orderList.includeReship') }}</span>
           <span v-if="o.latest_shipment?.tracking_no" class="text-xs text-gray-500">
-            最新物流：{{ shipmentStatusText(o.latest_shipment?.logistics_status, o.latest_shipment?.logistics_status_label) }} · {{ o.latest_shipment?.tracking_no }}
+            {{ $t('orderList.latestLogistics') }}{{ shipmentStatusText(o.latest_shipment?.logistics_status, o.latest_shipment?.logistics_status_label) }} · {{ o.latest_shipment?.tracking_no }}
           </span>
           <span v-if="shipmentPrimaryTime(o.latest_shipment)" class="text-xs text-gray-400">
             {{ formatDate(shipmentPrimaryTime(o.latest_shipment)) }}
           </span>
         </div>
         <div v-if="o.after_sale_summary?.latest_case_id" class="flex items-center flex-wrap gap-2 mb-4">
-          <span v-if="o.after_sale_summary?.has_open_case" class="text-[11px] px-2 py-0.5 rounded-full bg-red-50 text-red-500">售后中</span>
+          <span v-if="o.after_sale_summary?.has_open_case" class="text-[11px] px-2 py-0.5 rounded-full bg-red-50 text-red-500">{{ $t('orderList.afterSaleInProgress') }}</span>
           <span class="text-xs text-gray-500">
-            最近售后单：#{{ o.after_sale_summary.latest_case_id }}（{{ afterSaleSummaryStatusText(o.after_sale_summary) || '-' }}）
+            {{ $t('orderList.latestAfterSale') }}#{{ o.after_sale_summary.latest_case_id }}（{{ afterSaleSummaryStatusText(o.after_sale_summary) || '-' }}）
           </span>
         </div>
 
@@ -63,17 +63,17 @@
         </div>
 
         <div class="flex justify-end mt-3 gap-2">
-          <button class="btn-outline !px-5 text-xs" @click="goDetail(o.id)">查看详情</button>
+          <button class="btn-outline !px-5 text-xs" @click="goDetail(o.id)">{{ $t('orderList.viewDetail') }}</button>
           <button
             class="btn-outline !px-5 text-xs"
             v-if="o.after_sale_summary?.latest_case_id"
             @click="goAfterSaleDetail(o.after_sale_summary.latest_case_id)"
           >
-            售后进度
+            {{ $t('orderList.afterSaleProgress') }}
           </button>
-          <button class="btn-primary !px-6 text-xs" v-if="o.status === 1" :disabled="actioningID === o.id" @click="pay(o)">去付款</button>
-          <button class="btn-outline !px-5 text-xs" v-if="canReview(o) && hasUnreviewed(o)" :disabled="actioningID === o.id" @click="review(o, 'root')">评价</button>
-          <button class="btn-outline !px-5 text-xs" v-if="canReview(o) && hasReviewed(o)" :disabled="actioningID === o.id" @click="review(o, 'append')">追加评价</button>
+          <button class="btn-primary !px-6 text-xs" v-if="o.status === 1" :disabled="actioningID === o.id" @click="pay(o)">{{ $t('orderList.pay') }}</button>
+          <button class="btn-outline !px-5 text-xs" v-if="canReview(o) && hasUnreviewed(o)" :disabled="actioningID === o.id" @click="review(o, 'root')">{{ $t('orderList.review') }}</button>
+          <button class="btn-outline !px-5 text-xs" v-if="canReview(o) && hasReviewed(o)" :disabled="actioningID === o.id" @click="review(o, 'append')">{{ $t('orderList.appendReview') }}</button>
         </div>
       </div>
     </div>
@@ -81,16 +81,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { get, post } from '@/api/request'
 import { afterSaleStatusLabel, hasReshipShipment, orderStatusLabel, shipmentPrimaryTime, shipmentStatusLabel } from '@/utils/order-status'
 
+const { t } = useI18n()
 const router = useRouter()
 const orders = ref<any[]>([])
 const activeTab = ref(0)
 const actioningID = ref(0)
-const tabs = ['全部', '待付款', '待发货', '待收货', '已完成']
+const tabs = computed(() => [t('orderList.all'), t('orderList.unpaid'), t('orderList.unshipped'), t('orderList.unreceived'), t('orderList.completed')])
 const statusValues = [0, 1, 2, 3, 4]
 
 const statusColors: Record<number, string> = {
@@ -102,7 +104,7 @@ const statusColors: Record<number, string> = {
 }
 const statusLabel = (s: number) => orderStatusLabel(s)
 const statusColor = (s: number) => statusColors[s] || 'bg-gray-50 text-gray-400'
-const payLabel = (m: string) => m === 'wechat' ? '微信支付' : m === 'alipay' ? '支付宝支付' : '未支付'
+const payLabel = (m: string) => m === 'wechat' ? t('orderList.wechatPay') : m === 'alipay' ? t('orderList.alipay') : t('orderList.unpaidStatus')
 const money = (v: number) => Number(v || 0).toFixed(2)
 const formatDate = (v?: string) => (v ? String(v).slice(0, 19).replace('T', ' ') : '-')
 
@@ -164,7 +166,7 @@ async function pay(order: any) {
     await post(`/api/v1/orders/${id}/pay`)
     await loadOrders()
   } catch (error: any) {
-    alert(error?.message || '支付失败')
+    alert(error?.message || t('orderReview.submitFailed'))
   } finally {
     actioningID.value = 0
   }

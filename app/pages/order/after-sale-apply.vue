@@ -1,11 +1,11 @@
 <template>
   <view class="min-h-screen bg-gray-50 pb-40rpx">
-    <u-navbar title="申请售后" :placeholder="true" />
+    <u-navbar :title="$t('afterSaleApply.title')" :placeholder="true" />
 
     <view v-if="detail.id" class="p-20rpx">
       <view class="bg-white rounded-20rpx p-24rpx mb-20rpx">
-        <text class="text-28rpx font-600 text-gray-800 block">订单 {{ detail.order_no }}</text>
-        <text class="text-22rpx text-gray-400 block mt-8rpx">请选择需要售后的商品及数量</text>
+        <text class="text-28rpx font-600 text-gray-800 block">{{ $t('afterSaleApply.order') }} {{ detail.order_no }}</text>
+        <text class="text-22rpx text-gray-400 block mt-8rpx">{{ $t('afterSaleApply.selectProducts') }}</text>
       </view>
 
       <view v-for="item in formItems" :key="item.order_item_id" class="bg-white rounded-20rpx p-24rpx mb-20rpx">
@@ -13,9 +13,9 @@
           <image :src="item.cover" mode="aspectFill" style="width: 120rpx; height: 120rpx; border-radius: 16rpx;" />
           <view class="flex-1 min-w-0">
             <text class="text-26rpx text-gray-800 block line-clamp-2">{{ item.title }}</text>
-            <text class="text-22rpx text-gray-400 block mt-8rpx">可退/换数量：{{ item.max_qty }}</text>
+            <text class="text-22rpx text-gray-400 block mt-8rpx">{{ $t('afterSaleApply.refundableQty') }}{{ item.max_qty }}</text>
             <view class="flex items-center mt-16rpx">
-              <text class="text-22rpx text-gray-500 mr-16rpx">申请数量</text>
+              <text class="text-22rpx text-gray-500 mr-16rpx">{{ $t('afterSaleApply.applyQty') }}</text>
               <u-number-box v-model="item.qty" :min="0" :max="item.max_qty" integer />
             </view>
           </view>
@@ -23,31 +23,31 @@
       </view>
 
       <view class="bg-white rounded-20rpx p-24rpx mb-20rpx">
-        <text class="text-26rpx font-600 text-gray-800 block mb-16rpx">售后类型</text>
+        <text class="text-26rpx font-600 text-gray-800 block mb-16rpx">{{ $t('afterSaleApply.afterSaleType') }}</text>
         <view class="flex gap-16rpx mb-24rpx">
           <view
             class="px-24rpx py-14rpx rounded-16rpx border"
             :class="form.case_type === 'return' ? 'border-red-300 bg-red-50 text-red-600' : 'border-gray-200 text-gray-600'"
             @click="form.case_type = 'return'"
           >
-            退货退款
+            {{ $t('afterSaleApply.refund') }}
           </view>
           <view
             class="px-24rpx py-14rpx rounded-16rpx border"
             :class="form.case_type === 'exchange' ? 'border-red-300 bg-red-50 text-red-600' : 'border-gray-200 text-gray-600'"
             @click="form.case_type = 'exchange'"
           >
-            换货
+            {{ $t('afterSaleApply.exchange') }}
           </view>
         </view>
 
-        <text class="text-26rpx font-600 text-gray-800 block mb-12rpx">售后原因</text>
-        <u-input v-model="form.reason" border="surround" placeholder="如：商品破损、尺寸不合适" />
+        <text class="text-26rpx font-600 text-gray-800 block mb-12rpx">{{ $t('afterSaleApply.reason') }}</text>
+        <u-input v-model="form.reason" border="surround" :placeholder="$t('afterSaleApply.reasonPlaceholder')" />
 
-        <text class="text-26rpx font-600 text-gray-800 block mb-12rpx mt-20rpx">补充说明</text>
-        <u-textarea v-model="form.apply_content" placeholder="可选：描述问题细节" :auto-height="true" maxlength="500" />
+        <text class="text-26rpx font-600 text-gray-800 block mb-12rpx mt-20rpx">{{ $t('afterSaleApply.description') }}</text>
+        <u-textarea v-model="form.apply_content" :placeholder="$t('afterSaleApply.descriptionPlaceholder')" :auto-height="true" maxlength="500" />
 
-        <text class="text-26rpx font-600 text-gray-800 block mb-12rpx mt-20rpx">凭证图片（最多9张）</text>
+        <text class="text-26rpx font-600 text-gray-800 block mb-12rpx mt-20rpx">{{ $t('afterSaleApply.evidenceImages') }}</text>
         <view class="flex flex-wrap gap-12rpx">
           <view
             v-for="(img, idx) in form.apply_images"
@@ -69,19 +69,22 @@
             class="w-150rpx h-150rpx rounded-16rpx border border-dashed border-gray-300 flex items-center justify-center text-24rpx text-gray-400 bg-gray-50"
             @click="chooseImages"
           >
-            + 添加
+            {{ $t('afterSaleApply.addImage') }}
           </view>
         </view>
       </view>
 
-      <u-button type="primary" shape="circle" :loading="submitting" :text="submitting ? '提交中...' : '提交售后申请'" @click="submit" />
+      <u-button type="primary" shape="circle" :loading="submitting" :text="submitting ? $t('afterSaleApply.submitting') : $t('afterSaleApply.submit')" @click="submit" />
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { get, post, upload } from '@/utils/request'
+
+const { t } = useI18n()
 
 const detail = ref<any>({})
 const submitting = ref(false)
@@ -132,7 +135,7 @@ function chooseFiles(limit: number): Promise<string[]> {
 async function chooseImages() {
   const remain = Math.max(0, 9 - form.value.apply_images.length)
   if (!remain) {
-    toast('最多上传 9 张图片')
+    toast(t('afterSaleApply.maxImages'))
     return
   }
   try {
@@ -145,7 +148,7 @@ async function chooseImages() {
       if (form.value.apply_images.length >= 9) break
     }
   } catch {
-    toast('图片上传失败')
+    toast(t('afterSaleApply.imageUploadFailed'))
   }
 }
 
@@ -159,7 +162,7 @@ async function submit() {
   if (submitting.value) return
   const reason = String(form.value.reason || '').trim()
   if (!reason) {
-    toast('请填写售后原因')
+    toast(t('afterSaleApply.reasonRequired'))
     return
   }
   const items = formItems.value
@@ -169,7 +172,7 @@ async function submit() {
     }))
     .filter((item: any) => item.qty > 0)
   if (!items.length) {
-    toast('请至少选择一件商品并填写数量')
+    toast(t('afterSaleApply.selectAtLeastOne'))
     return
   }
   submitting.value = true
@@ -182,7 +185,7 @@ async function submit() {
       items,
     })
     const caseID = Number(result?.id || 0)
-    uni.showToast({ title: '申请已提交', icon: 'success' })
+    uni.showToast({ title: t('afterSaleApply.submitted'), icon: 'success' })
     setTimeout(() => {
       if (caseID > 0) {
         uni.redirectTo({ url: `/pages/order/after-sale-detail?id=${caseID}` })
@@ -191,7 +194,7 @@ async function submit() {
       }
     }, 400)
   } catch (error: any) {
-    toast(error?.message || '提交失败')
+    toast(error?.message || t('afterSaleApply.submitFailed'))
   } finally {
     submitting.value = false
   }
@@ -209,4 +212,3 @@ onMounted(async () => {
   }))
 })
 </script>
-

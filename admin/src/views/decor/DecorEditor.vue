@@ -2,34 +2,34 @@
   <div>
     <div class="flex items-center justify-between mb-4">
       <div class="flex items-center gap-3">
-        <h2 class="text-xl font-semibold text-slate-800">首页装修</h2>
+        <h2 class="text-xl font-semibold text-slate-800">{{ $t('decor.title') }}</h2>
         <select v-model="currentVariantKey" @change="changeVariant"
           class="border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-slate-700 bg-white">
           <option v-for="v in variants" :key="v.variant_key" :value="v.variant_key">
-            {{ v.variant_name }}（{{ v.variant_key }}）{{ v.is_published ? ' · 已发布' : '' }}
+            {{ v.variant_name }}（{{ v.variant_key }}）{{ v.is_published ? ' · ' + $t('decor.published') : '' }}
           </option>
         </select>
         <button @click="copyVariant"
           class="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs hover:bg-slate-200 transition">
-          复制副本
+          {{ $t('decor.copyVariant') }}
         </button>
         <button @click="renameVariant"
           class="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs hover:bg-slate-200 transition">
-          重命名
+          {{ $t('decor.rename') }}
         </button>
         <button @click="deleteVariant"
           class="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs hover:bg-red-100 transition">
-          删除副本
+          {{ $t('decor.deleteVariant') }}
         </button>
       </div>
       <div class="flex gap-2">
         <button @click="save" :disabled="saving"
           class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm hover:bg-slate-200 transition">
-          {{ saving ? '保存中...' : '保存草稿' }}
+          {{ saving ? $t('common.saving') : $t('decor.saveDraft') }}
         </button>
         <button @click="publish"
           class="px-4 py-2 bg-blue-700 text-white rounded-xl text-sm hover:bg-blue-600 transition">
-          发布上线
+          {{ $t('decor.publish') }}
         </button>
       </div>
     </div>
@@ -37,18 +37,18 @@
     <div class="flex gap-4" style="height: calc(100vh - 160px); min-height: 600px">
       <!-- Component library -->
       <div class="w-48 bg-white rounded-xl border border-slate-100 p-4 shrink-0 overflow-y-auto">
-        <p class="text-xs font-medium text-slate-500 mb-3">组件库（拖拽到画布）</p>
+        <p class="text-xs font-medium text-slate-500 mb-3">{{ $t('decor.componentLib') }}</p>
         <div class="space-y-2">
           <div v-for="comp in componentLib" :key="comp.type"
             draggable="true" @dragstart="dragStart(comp)"
             class="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-xl cursor-grab hover:border-blue-300 hover:bg-blue-50 transition text-sm text-slate-700">
             <span>{{ comp.icon }}</span>
-            <span>{{ comp.title }}</span>
+            <span>{{ $t(comp.titleKey) }}</span>
           </div>
         </div>
 
         <!-- Component list in canvas -->
-        <p class="text-xs font-medium text-slate-500 mt-6 mb-3">画布组件</p>
+        <p class="text-xs font-medium text-slate-500 mt-6 mb-3">{{ $t('decor.canvasComponents') }}</p>
         <div class="space-y-1" @dragover.prevent @drop="onDrop">
           <div v-for="(c, i) in components" :key="c.id"
             @click="selectComp(i)"
@@ -62,7 +62,7 @@
             </div>
           </div>
           <div v-if="!components.length" class="text-center py-6 text-slate-300 text-xs border-2 border-dashed border-slate-200 rounded-lg">
-            拖拽组件到这里
+            {{ $t('decor.dropHere') }}
           </div>
         </div>
       </div>
@@ -70,11 +70,11 @@
       <!-- Center: iframe preview -->
       <div class="flex-1 flex flex-col bg-white rounded-xl border border-slate-100 overflow-hidden min-w-0">
         <div class="flex items-center justify-between px-4 py-2 border-b border-slate-100 shrink-0">
-          <span class="text-xs text-slate-500">实时预览</span>
+          <span class="text-xs text-slate-500">{{ $t('decor.preview') }}</span>
           <div class="flex items-center gap-2">
-            <span v-if="!previewReady" class="text-xs text-orange-500">等待 H5 就绪...</span>
-            <span v-else class="text-xs text-emerald-500">已连接</span>
-            <button @click="refreshPreview" class="text-xs text-blue-600 hover:underline">刷新</button>
+            <span v-if="!previewReady" class="text-xs text-orange-500">{{ $t('decor.waitingH5') }}</span>
+            <span v-else class="text-xs text-emerald-500">{{ $t('decor.connected') }}</span>
+            <button @click="refreshPreview" class="text-xs text-blue-600 hover:underline">{{ $t('common.refresh') }}</button>
           </div>
         </div>
         <div class="flex-1 flex items-start justify-center p-4 bg-slate-50 overflow-auto">
@@ -91,7 +91,7 @@
 
       <!-- Right: property editors -->
       <div class="w-80 bg-white rounded-xl border border-slate-100 p-4 shrink-0 overflow-y-auto">
-        <p class="text-xs font-medium text-slate-500 mb-3">属性配置</p>
+        <p class="text-xs font-medium text-slate-500 mb-3">{{ $t('decor.propertyConfig') }}</p>
         <div v-if="selectedComp">
           <div class="mb-4">
             <span class="text-sm font-medium text-slate-700">{{ compTitle(selectedComp.type) }}</span>
@@ -105,7 +105,7 @@
           <MarketingZoneEditor v-else-if="selectedComp.type === 'marketing_zone'" v-model="selectedComp.props" />
           <SpacerEditor       v-else-if="selectedComp.type === 'spacer'"        v-model="selectedComp.props" />
         </div>
-        <div v-else class="text-center py-8 text-slate-300 text-sm">选择组件编辑属性</div>
+        <div v-else class="text-center py-8 text-slate-300 text-sm">{{ $t('decor.selectComponent') }}</div>
       </div>
     </div>
   </div>
@@ -113,10 +113,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import request from '@/api/request'
 import { notify } from '@/utils/notify'
 import { confirmAction, promptText } from '@/utils/dialog'
-import { componentLib, compTitleMap, createDefaultProps } from '@/types/decor'
+import { componentLib, compTitleKeyMap, createDefaultProps } from '@/types/decor'
 
 import BannerEditor from './editors/BannerEditor.vue'
 import CategoryNavEditor from './editors/CategoryNavEditor.vue'
@@ -126,6 +127,8 @@ import ImageAdEditor from './editors/ImageAdEditor.vue'
 import RichTextEditor from './editors/RichTextEditor.vue'
 import MarketingZoneEditor from './editors/MarketingZoneEditor.vue'
 import SpacerEditor from './editors/SpacerEditor.vue'
+
+const { t } = useI18n()
 
 const components = ref<any[]>([])
 const variants = ref<any[]>([])
@@ -140,7 +143,10 @@ const previewUrl = import.meta.env.VITE_H5_PREVIEW_URL || 'http://localhost:5173
 
 let draggedComp: any = null
 
-const compTitle = (type: string) => compTitleMap[type] || type
+const compTitle = (type: string) => {
+  const key = compTitleKeyMap[type]
+  return key ? t(key) : type
+}
 
 const selectedComp = computed(() =>
   selectedIndex.value !== null ? components.value[selectedIndex.value] : null
@@ -233,7 +239,7 @@ async function publish() {
   await save()
   await request.post(`/decor/index/publish?variant=${encodeURIComponent(currentVariantKey.value)}`)
   await loadVariants()
-  notify('已发布上线（单活发布）')
+  notify(t('decor.publishedNote'))
 }
 
 async function loadVariants() {
@@ -242,7 +248,7 @@ async function loadVariants() {
   if (!variants.value.length) {
     variants.value = [{
       variant_key: 'default',
-      variant_name: '默认副本',
+      variant_name: t('decor.variantName', { key: 'default' }),
       is_published: false,
     }]
   }
@@ -272,14 +278,15 @@ function toVariantKey(raw: string) {
 }
 
 async function copyVariant() {
-  const keyRaw = promptText('请输入新副本标识（如 spring_festival_2027）')
+  const keyRaw = promptText(t('decor.promptKey'))
   if (!keyRaw) return
   const newVariantKey = toVariantKey(keyRaw)
   if (!newVariantKey) {
-    notify('副本标识不合法')
+    notify(t('decor.invalidKey'))
     return
   }
-  const newVariantName = promptText('请输入新副本名称', `副本 ${newVariantKey}`) || `副本 ${newVariantKey}`
+  const defaultName = t('decor.variantName', { key: newVariantKey })
+  const newVariantName = promptText(t('decor.promptName'), defaultName) || defaultName
   await request.post('/decor/index/copies', {
     from_variant_key: currentVariantKey.value,
     new_variant_key: newVariantKey,
@@ -292,7 +299,7 @@ async function copyVariant() {
 
 async function renameVariant() {
   const current = variants.value.find(v => v.variant_key === currentVariantKey.value)
-  const next = promptText('请输入副本名称', current?.variant_name || '')
+  const next = promptText(t('decor.promptName'), current?.variant_name || '')
   if (!next) return
   await request.put(`/decor/index/variants/${encodeURIComponent(currentVariantKey.value)}`, {
     variant_name: next,
@@ -302,10 +309,10 @@ async function renameVariant() {
 
 async function deleteVariant() {
   if (currentVariantKey.value === 'default') {
-    notify('默认副本不支持删除')
+    notify(t('decor.defaultNoDelete'))
     return
   }
-  if (!confirmAction(`确认删除副本 ${currentVariantKey.value}？`)) return
+  if (!confirmAction(t('decor.confirmDeleteVariant', { key: currentVariantKey.value }))) return
   await request.delete(`/decor/index/variants/${encodeURIComponent(currentVariantKey.value)}`)
   await loadVariants()
   await loadCurrentVariant()

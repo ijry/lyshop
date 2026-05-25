@@ -1,5 +1,8 @@
 import axios from 'axios'
 import type { AxiosRequestConfig } from 'axios'
+import { i18n } from '@/locales'
+
+const t = (key: string) => i18n.global.t(key)
 
 const MOCK_ENABLED = import.meta.env.VITE_MOCK === 'true'
 const BASE_URL = MOCK_ENABLED ? '' : (import.meta.env.VITE_API_URL || '')
@@ -15,7 +18,7 @@ http.interceptors.request.use(config => {
 http.interceptors.response.use(
   res => {
     const { code, msg, data } = res.data
-    if (code !== 0) return Promise.reject(new Error(msg || '请求失败'))
+    if (code !== 0) return Promise.reject(new Error(msg || t('api.requestFailed')))
     return data
   },
   err => Promise.reject(err)

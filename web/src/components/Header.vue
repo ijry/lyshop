@@ -25,11 +25,18 @@
 
       <!-- Actions -->
       <div class="flex items-center gap-4">
+        <!-- Language Switcher -->
+        <select :value="$i18n.locale" @change="switchLocale(($event.target as HTMLSelectElement).value)"
+          class="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-600 outline-none cursor-pointer">
+          <option value="zh-CN">中文</option>
+          <option value="en">English</option>
+        </select>
+
         <!-- Search -->
         <div class="hidden sm:flex items-center bg-gray-50 rounded-full px-4 py-2 w-56 hover:bg-gray-100 transition-colors cursor-pointer group"
           @click="$router.push('/products')">
           <div class="i-carbon-search text-gray-400 mr-2 text-base" />
-          <span class="text-sm text-gray-400 group-hover:text-gray-500">搜索商品</span>
+          <span class="text-sm text-gray-400 group-hover:text-gray-500">{{ $t('header.search') }}</span>
         </div>
 
         <!-- Cart -->
@@ -54,7 +61,7 @@
         <router-link v-else to="/login"
           class="px-4 py-2 text-xs text-white rounded-lg font-medium transition-colors cursor-pointer"
           :style="{ background: 'var(--color-primary, #dc2626)' }">
-          登录
+          {{ $t('header.login') }}
         </router-link>
       </div>
     </div>
@@ -63,20 +70,27 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
 import { useSiteStore } from '@/stores/site'
 
+const { t, locale } = useI18n()
 const cart = useCartStore()
 const auth = useAuthStore()
 const site = useSiteStore()
 const cartCount = computed(() => cart.count)
 
-const navs = [
-  { name: '首页', path: '/' },
-  { name: '全部商品', path: '/products' },
-  { name: '我的订单', path: '/orders' },
-]
+const navs = computed(() => [
+  { name: t('header.navHome'), path: '/' },
+  { name: t('header.navProducts'), path: '/products' },
+  { name: t('header.navOrders'), path: '/orders' },
+])
+
+function switchLocale(lang: string) {
+  locale.value = lang
+  localStorage.setItem('locale', lang)
+}
 </script>
 
 <style scoped>

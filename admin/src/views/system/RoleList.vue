@@ -1,10 +1,10 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-xl font-semibold text-slate-800">角色管理</h2>
+      <h2 class="text-xl font-semibold text-slate-800">{{ $t('system.role.title') }}</h2>
       <button @click="openCreate"
         class="bg-red-600 text-white px-4 py-2 rounded-xl text-sm hover:bg-red-700 transition">
-        + 新增角色
+        {{ $t('system.role.add') }}
       </button>
     </div>
 
@@ -20,13 +20,13 @@
           <span v-for="p in parsePerms(r.permissions)" :key="p"
             class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs">{{ p }}</span>
           <span v-if="parsePerms(r.permissions).length === 0"
-            class="text-slate-400 text-xs">无权限</span>
+            class="text-slate-400 text-xs">{{ $t('system.role.noPermission') }}</span>
         </div>
         <div class="flex gap-2">
           <button @click="openEdit(r)"
-            class="text-xs text-blue-600 hover:text-blue-800">编辑</button>
+            class="text-xs text-blue-600 hover:text-blue-800">{{ $t('common.edit') }}</button>
           <button v-if="r.id !== 1" @click="deleteRole(r.id)"
-            class="text-xs text-red-500 hover:text-red-700">删除</button>
+            class="text-xs text-red-500 hover:text-red-700">{{ $t('common.delete') }}</button>
         </div>
       </div>
     </div>
@@ -34,14 +34,14 @@
     <!-- Edit/Create dialog -->
     <div v-if="showDialog" class="fixed inset-0 bg-black/30 flex items-center justify-center z-50" @click.self="showDialog=false">
       <div class="bg-white rounded-2xl p-6 w-[520px] max-h-[80vh] overflow-y-auto shadow-xl">
-        <h3 class="text-lg font-semibold text-slate-800 mb-4">{{ editId ? '编辑角色' : '新增角色' }}</h3>
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">{{ editId ? $t('system.role.editTitle') : $t('system.role.addTitle') }}</h3>
         <div class="mb-4">
-          <label class="text-sm text-slate-600 mb-1 block">角色名称</label>
-          <input v-model="form.name" placeholder="如：客服、运营"
+          <label class="text-sm text-slate-600 mb-1 block">{{ $t('system.role.roleName') }}</label>
+          <input v-model="form.name" :placeholder="$t('system.role.roleNameHint')"
             class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500" />
         </div>
         <div class="mb-4">
-          <label class="text-sm text-slate-600 mb-2 block">权限配置</label>
+          <label class="text-sm text-slate-600 mb-2 block">{{ $t('system.role.permConfig') }}</label>
           <div class="border border-slate-200 rounded-xl p-4 max-h-64 overflow-y-auto">
             <div v-for="group in permGroups" :key="group.prefix" class="mb-3 last:mb-0">
               <p class="text-xs font-semibold text-slate-500 mb-1.5 uppercase">{{ group.prefix }}</p>
@@ -58,8 +58,8 @@
           </div>
         </div>
         <div class="flex gap-3">
-          <button @click="showDialog=false" class="flex-1 border border-slate-200 rounded-xl py-2.5 text-sm text-slate-600 hover:bg-slate-50">取消</button>
-          <button @click="save" class="flex-1 bg-red-600 text-white rounded-xl py-2.5 text-sm hover:bg-red-700">保存</button>
+          <button @click="showDialog=false" class="flex-1 border border-slate-200 rounded-xl py-2.5 text-sm text-slate-600 hover:bg-slate-50">{{ $t('common.cancel') }}</button>
+          <button @click="save" class="flex-1 bg-red-600 text-white rounded-xl py-2.5 text-sm hover:bg-red-700">{{ $t('common.save') }}</button>
         </div>
       </div>
     </div>
@@ -68,8 +68,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import request from '@/api/request'
 import { confirmAction } from '@/utils/dialog'
+
+const { t } = useI18n()
 
 const roles = ref<any[]>([])
 const allPerms = ref<string[]>([])
@@ -115,7 +118,7 @@ async function save() {
 }
 
 async function deleteRole(id: number) {
-  if (!confirmAction('确认删除？')) return
+  if (!confirmAction(t('common.confirmDelete'))) return
   await request.delete(`/roles/${id}`)
   loadData()
 }

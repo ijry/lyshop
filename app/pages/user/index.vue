@@ -6,8 +6,8 @@
           mode="aspectFill"
           style="width: 64px; height: 64px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.3);" />
         <view style="flex: 1;">
-          <text style="color: #fff; font-size: 20px; font-weight: 700; display: block;">{{ user.nickname || '未登录' }}</text>
-          <text style="color: rgba(255,255,255,0.7); font-size: 13px; margin-top: 4px; display: block;">{{ user.phone || '点击登录' }}</text>
+          <text style="color: #fff; font-size: 20px; font-weight: 700; display: block;">{{ user.nickname || $t('user.notLoggedIn') }}</text>
+          <text style="color: rgba(255,255,255,0.7); font-size: 13px; margin-top: 4px; display: block;">{{ user.phone || $t('user.clickToLogin') }}</text>
         </view>
         <view @click="uni.navigateTo({url:'/pages/message/index'})"
           style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; position: relative;">
@@ -26,9 +26,9 @@
 
     <view :style="{ margin: '-20px 16px 0', background: 'var(--app-card-bg)', borderRadius: '16px', padding: '20px', boxShadow: 'var(--app-shadow)' }">
       <view style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
-        <text :style="{ fontSize: '15px', fontWeight: '700', color: 'var(--app-text-primary)' }">我的订单</text>
+        <text :style="{ fontSize: '15px', fontWeight: '700', color: 'var(--app-text-primary)' }">{{ $t('user.myOrders') }}</text>
         <text @click="uni.switchTab({url:'/pages/order/list'})"
-          :style="{ fontSize: '12px', color: 'var(--app-text-placeholder)' }">全部订单 ></text>
+          :style="{ fontSize: '12px', color: 'var(--app-text-placeholder)' }">{{ $t('user.allOrders') }}</text>
       </view>
       <view style="display: flex; justify-content: space-around;">
         <view v-for="item in orderEntries" :key="item.label"
@@ -63,7 +63,7 @@
       <!-- Dark mode toggle -->
       <view :style="{ display: 'flex', alignItems: 'center', padding: '14px 20px', borderBottom: '1px solid var(--app-divider-color)' }">
         <u-icon name="setting" size="20" :color="iconColor" />
-        <text :style="{ flex: '1', marginLeft: '12px', fontSize: '14px', color: 'var(--app-text-secondary)' }">暗黑模式</text>
+        <text :style="{ flex: '1', marginLeft: '12px', fontSize: '14px', color: 'var(--app-text-secondary)' }">{{ $t('user.darkMode') }}</text>
         <view style="display: flex; align-items: center; gap: 8px;">
           <text :style="{ fontSize: '12px', color: 'var(--app-text-placeholder)' }">{{ themeModeLabel }}</text>
           <u-switch v-model="isDark" size="22" @change="onThemeToggle" />
@@ -85,7 +85,7 @@
       <view @click="presetExpanded = !presetExpanded"
         :style="{ display: 'flex', alignItems: 'center', padding: '14px 20px' }">
         <u-icon name="grid" size="20" :color="iconColor" />
-        <text :style="{ flex: '1', marginLeft: '12px', fontSize: '14px', color: 'var(--app-text-secondary)' }">切换演示行业</text>
+        <text :style="{ flex: '1', marginLeft: '12px', fontSize: '14px', color: 'var(--app-text-secondary)' }">{{ $t('user.switchPreset') }}</text>
         <text :style="{ fontSize: '12px', color: 'var(--app-text-placeholder)', marginRight: '4px' }">{{ presetCurrentName }}</text>
         <u-icon :name="presetExpanded ? 'arrow-up' : 'arrow-down'" size="14" :color="arrowColor" />
       </view>
@@ -109,7 +109,7 @@
     <view :style="{ margin: '16px 16px 40px', background: 'var(--app-card-bg)', borderRadius: '16px', overflow: 'hidden' }">
       <view @click="logout"
         :style="{ textAlign: 'center', padding: '14px', fontSize: '14px', color: 'var(--app-accent)' }">
-        退出登录
+        {{ $t('user.logout') }}
       </view>
     </view>
   </view>
@@ -117,13 +117,15 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { get } from '@/utils/request'
 import { useTheme } from '@/composables/useTheme'
 
+const { t } = useI18n()
 const { effectiveTheme, setTheme } = useTheme()
 
 const isDark = ref(effectiveTheme.value === 'dark')
-const themeModeLabel = computed(() => isDark.value ? '已开启' : '已关闭')
+const themeModeLabel = computed(() => isDark.value ? t('user.enabled') : t('user.disabled'))
 const iconColor = computed(() => effectiveTheme.value === 'dark' ? '#9ca3af' : '#666')
 const arrowColor = computed(() => effectiveTheme.value === 'dark' ? '#6b7280' : '#ccc')
 
@@ -134,42 +136,43 @@ function onThemeToggle(val: boolean) {
 const user = ref<any>({})
 const unreadTotal = ref(0)
 
-const orderEntries = [
-  { label: '待付款', icon: 'rmb-circle', badge: 0 },
-  { label: '待发货', icon: 'gift', badge: 0 },
-  { label: '待收货', icon: 'car', badge: 0 },
-  { label: '售后', icon: 'reload', badge: 0 },
-]
+const orderEntries = computed(() => [
+  { label: t('user.pendingPayment'), icon: 'rmb-circle', badge: 0 },
+  { label: t('user.pendingShipment'), icon: 'gift', badge: 0 },
+  { label: t('user.pendingReceipt'), icon: 'car', badge: 0 },
+  { label: t('user.afterSale'), icon: 'reload', badge: 0 },
+])
 
-const quickEntries = [
-  { label: '优惠券', icon: 'coupon', bg: '#fef2f2', color: '#dc2626',
+const quickEntries = computed(() => [
+  { label: t('user.coupon'), icon: 'coupon', bg: '#fef2f2', color: '#dc2626',
     action: () => uni.navigateTo({ url: '/pages/marketing/coupon?mode=claim' }) },
-  { label: '我的积分', icon: 'integral', bg: '#fff7ed', color: '#f97316',
+  { label: t('user.myPoints'), icon: 'integral', bg: '#fff7ed', color: '#f97316',
     action: () => uni.navigateTo({ url: '/pages/user/points' }) },
-  { label: '收货地址', icon: 'map', bg: '#eff6ff', color: '#3b82f6',
+  { label: t('user.shippingAddress'), icon: 'map', bg: '#eff6ff', color: '#3b82f6',
     action: () => uni.navigateTo({ url: '/pages/user/address' }) },
-  { label: '在线客服', icon: 'kefu-ermai', bg: '#f0fdf4', color: '#22c55e',
+  { label: t('user.onlineService'), icon: 'kefu-ermai', bg: '#f0fdf4', color: '#22c55e',
     action: () => uni.navigateTo({ url: '/pages/im/chat' }) },
-]
+])
 
-const menuCells = ref([
-  { label: '消息中心', icon: 'bell', value: '',
+const menuCellValues = ref<{ points: string; unread: string }>({ points: '', unread: '' })
+const menuCells = computed(() => [
+  { label: t('user.messageCenter'), icon: 'bell', value: menuCellValues.value.unread,
     action: () => uni.navigateTo({ url: '/pages/message/index' }) },
-  { label: '每日签到', icon: 'calendar', value: '',
+  { label: t('user.dailyCheckin'), icon: 'calendar', value: '',
     action: () => uni.navigateTo({ url: '/pages/checkin/index' }) },
-  { label: '收货地址', icon: 'map', value: '',
+  { label: t('user.myAddress'), icon: 'map', value: '',
     action: () => uni.navigateTo({ url: '/pages/user/address' }) },
-  { label: '我的优惠券', icon: 'coupon', value: '',
+  { label: t('user.myCoupons'), icon: 'coupon', value: '',
     action: () => uni.navigateTo({ url: '/pages/marketing/coupon' }) },
-  { label: '我的收藏', icon: 'heart', value: '',
+  { label: t('user.myFavorites'), icon: 'heart', value: '',
     action: () => uni.navigateTo({ url: '/pages/user/favorites' }) },
-  { label: '我的积分', icon: 'integral', value: '',
+  { label: t('user.myPointsMenu'), icon: 'integral', value: menuCellValues.value.points,
     action: () => uni.navigateTo({ url: '/pages/user/points' }) },
-  { label: '会员中心', icon: 'level', value: '',
+  { label: t('user.vipCenter'), icon: 'level', value: '',
     action: () => uni.navigateTo({ url: '/pages/user/vip' }) },
-  { label: '账号与安全', icon: 'lock', value: '',
+  { label: t('user.accountSecurity'), icon: 'lock', value: '',
     action: () => uni.navigateTo({ url: '/pages/user/security' }) },
-  { label: '联系客服', icon: 'kefu-ermai', value: '',
+  { label: t('user.contactService'), icon: 'kefu-ermai', value: '',
     action: () => uni.navigateTo({ url: '/pages/im/chat' }) },
 ])
 
@@ -213,13 +216,13 @@ onMounted(async () => {
   const data = await get<any>('/api/v1/user/profile')
   if (data) {
     user.value = data
-    menuCells.value[4].value = `${data.points || 0} 积分`
+    menuCellValues.value.points = `${data.points || 0} ${t('user.pointsUnit')}`
   }
   const unread = await get<any>('/api/v1/messages/unread')
   if (unread) {
     const total = Object.values(unread).reduce((s: number, v: any) => s + (v || 0), 0)
     unreadTotal.value = total as number
-    if (total > 0) menuCells.value[0].value = `${total} 条未读`
+    if (total > 0) menuCellValues.value.unread = `${total} ${t('user.unreadCount')}`
   }
 })
 </script>

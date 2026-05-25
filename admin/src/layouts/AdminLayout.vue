@@ -61,7 +61,7 @@
                 </router-link>
               </div>
             </template>
-            <div v-else class="px-3 py-2 text-xs text-slate-400">暂无菜单</div>
+            <div v-else class="px-3 py-2 text-xs text-slate-400">{{ $t('layout.noMenu') }}</div>
           </nav>
         </div>
       </template>
@@ -102,10 +102,20 @@
 
     <div class="flex-1 flex flex-col overflow-hidden">
       <header class="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-6 shrink-0 shadow-sm">
-        <span class="text-sm text-slate-500">{{ $route.name || '' }}</span>
-        <button @click="auth.logout()" class="text-sm text-slate-500 hover:text-slate-800 transition">
-          退出登录
-        </button>
+        <span class="text-sm text-slate-500">{{ $route.meta.titleKey ? $t($route.meta.titleKey as string) : ($route.name || '') }}</span>
+        <div class="flex items-center gap-4">
+          <select
+            :value="$i18n.locale"
+            class="text-sm border border-slate-200 rounded px-2 py-1 text-slate-600"
+            @change="switchLocale(($event.target as HTMLSelectElement).value)"
+          >
+            <option value="zh-CN">中文</option>
+            <option value="en">English</option>
+          </select>
+          <button @click="auth.logout()" class="text-sm text-slate-500 hover:text-slate-800 transition">
+            {{ $t('layout.logout') }}
+          </button>
+        </div>
       </header>
       <main class="flex-1 overflow-y-auto p-6">
         <router-view />
@@ -117,6 +127,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import {
   getMenus,
@@ -126,11 +137,17 @@ import {
   type AdminMenuResponse,
 } from '@/api/auth'
 
+const { locale } = useI18n()
 const auth = useAuthStore()
 const route = useRoute()
+
+function switchLocale(lang: string) {
+  locale.value = lang
+  localStorage.setItem('locale', lang)
+}
 const groupedMenus = ref<AdminMenuGroup[]>([])
 const legacyMenus = ref<AdminMenuItem[]>([])
-const dashboardMenu = ref({ title: '首页', path: '/dashboard' })
+const dashboardMenu = ref({ title: '', path: '/dashboard' })
 const homeTabKey = '__home__'
 const hoverGroupKey = ref('')
 

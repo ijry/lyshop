@@ -10,22 +10,22 @@
           ¥{{ product.origin_price }}
         </text>
         <view v-if="product.origin_price" class="bg-red-50 text-red-500 text-20rpx px-10rpx py-2rpx rounded-6rpx ml-8rpx">
-          省¥{{ (product.origin_price - product.price).toFixed(0) }}
+          {{ $t('productDetail.save') }}{{ (product.origin_price - product.price).toFixed(0) }}
         </view>
       </view>
       <text class="text-32rpx font-600 text-gray-800 block leading-44rpx">{{ product.title }}</text>
       <text v-if="product.subtitle" class="text-26rpx text-gray-500 mt-8rpx block">{{ product.subtitle }}</text>
       <view class="flex items-center mt-16rpx gap-20rpx">
-        <text class="text-24rpx text-gray-400">库存 {{ selectedSku?.stock ?? product.stock }}</text>
-        <text class="text-24rpx text-gray-400">销量 {{ product.sales }}</text>
-        <text class="text-24rpx text-gray-400">收藏 {{ product.favorite_count || 0 }}</text>
+        <text class="text-24rpx text-gray-400">{{ $t('productDetail.stock') }} {{ selectedSku?.stock ?? product.stock }}</text>
+        <text class="text-24rpx text-gray-400">{{ $t('productDetail.sales') }} {{ product.sales }}</text>
+        <text class="text-24rpx text-gray-400">{{ $t('productDetail.favorite') }} {{ product.favorite_count || 0 }}</text>
       </view>
     </view>
 
     <view class="h-16rpx bg-gray-50" />
 
     <view class="p-30rpx" v-if="skus.length">
-      <text class="text-28rpx font-600 text-gray-800 block mb-20rpx">规格选择</text>
+      <text class="text-28rpx font-600 text-gray-800 block mb-20rpx">{{ $t('productDetail.specSelect') }}</text>
       <view class="flex flex-wrap gap-16rpx">
         <view v-for="sku in skus" :key="sku.id"
           @click="selectedSku = sku"
@@ -34,7 +34,7 @@
             : 'border-gray-200 text-gray-600 bg-white'"
           class="px-24rpx py-14rpx border-1 rounded-12rpx text-26rpx">
           <text v-if="sku.attrs">{{ parseAttrs(sku.attrs) }}</text>
-          <text v-else>默认规格</text>
+          <text v-else>{{ $t('productDetail.defaultSpec') }}</text>
         </view>
       </view>
     </view>
@@ -51,33 +51,33 @@
           <image v-else-if="block.type === 'image'" :src="block.props?.url || ''" mode="widthFix" style="width:100%; border-radius: 12px;" />
         </view>
       </view>
-      <text v-else class="text-24rpx text-gray-400">暂无详情</text>
+      <text v-else class="text-24rpx text-gray-400">{{ $t('productDetail.noDetail') }}</text>
     </view>
 
     <view class="p-30rpx" v-else>
       <view class="bg-gray-50 rounded-16rpx p-20rpx mb-20rpx">
         <view class="flex items-center justify-between text-24rpx text-gray-500">
-          <text>商品评分</text>
+          <text>{{ $t('productDetail.productScore') }}</text>
           <text class="text-red-500 font-600">{{ reviewSummary.avg_product_score.toFixed(1) }}</text>
         </view>
         <view class="flex items-center justify-between text-24rpx text-gray-500 mt-8rpx">
-          <text>物流评分</text>
+          <text>{{ $t('productDetail.logisticsScore') }}</text>
           <text class="text-red-500 font-600">{{ reviewSummary.avg_logistics_score.toFixed(1) }}</text>
         </view>
-        <view class="text-22rpx text-gray-400 mt-10rpx">共 {{ reviewSummary.total }} 条评价</view>
+        <view class="text-22rpx text-gray-400 mt-10rpx">{{ $t('productDetail.total') }} {{ reviewSummary.total }} {{ $t('productDetail.reviewCount') }}</view>
       </view>
 
           <view v-if="reviews.length">
         <view v-for="rv in reviews" :key="rv.id" class="bg-white border border-gray-100 rounded-16rpx p-20rpx mb-16rpx">
           <view class="flex items-center justify-between mb-10rpx">
-            <text class="text-24rpx text-gray-700">{{ rv.user_nickname || '匿名用户' }}</text>
+            <text class="text-24rpx text-gray-700">{{ rv.user_nickname || $t('productDetail.anonymous') }}</text>
             <text class="text-22rpx text-gray-400">{{ formatDate(rv.created_at) }}</text>
           </view>
           <view class="flex items-center gap-12rpx mb-10rpx">
-            <text class="text-22rpx text-gray-500">商品 {{ rv.product_score }}</text>
-            <text class="text-22rpx text-gray-500">物流 {{ rv.logistics_score }}</text>
+            <text class="text-22rpx text-gray-500">{{ $t('productDetail.productScore') }} {{ rv.product_score }}</text>
+            <text class="text-22rpx text-gray-500">{{ $t('productDetail.logisticsScore') }} {{ rv.logistics_score }}</text>
           </view>
-          <text class="text-24rpx text-gray-700 leading-40rpx block">{{ rv.content || '用户未填写文字评价' }}</text>
+          <text class="text-24rpx text-gray-700 leading-40rpx block">{{ rv.content || $t('productDetail.noTextReview') }}</text>
           <view v-if="rv.images?.length" class="flex flex-wrap gap-10rpx mt-12rpx">
             <image
               v-for="(img, idx) in rv.images"
@@ -89,7 +89,7 @@
           </view>
           <view v-if="rv.appends?.length" class="mt-12rpx bg-gray-50 rounded-12rpx p-12rpx">
             <view v-for="ap in rv.appends" :key="ap.id" class="mb-10rpx last:mb-0">
-              <view class="text-22rpx text-gray-500 leading-34rpx">追加：{{ ap.content || '仅图片追评' }}</view>
+              <view class="text-22rpx text-gray-500 leading-34rpx">{{ $t('productDetail.append') }}{{ ap.content || $t('productDetail.imageOnlyAppend') }}</view>
               <view v-if="ap.images?.length" class="flex flex-wrap gap-10rpx mt-8rpx">
                 <image
                   v-for="(img, idx) in ap.images"
@@ -102,11 +102,11 @@
             </view>
           </view>
           <view v-if="rv.admin_reply" class="mt-12rpx bg-red-50 rounded-12rpx p-12rpx text-22rpx text-red-600">
-            商家回复：{{ rv.admin_reply.content }}
+            {{ $t('productDetail.merchantReply') }}{{ rv.admin_reply.content }}
           </view>
         </view>
       </view>
-      <view v-else class="text-center py-80rpx text-24rpx text-gray-400">暂无评价</view>
+      <view v-else class="text-center py-80rpx text-24rpx text-gray-400">{{ $t('productDetail.noReview') }}</view>
     </view>
 
     <view class="fixed bottom-0 left-0 right-0 z-100 flex items-center px-20rpx py-16rpx"
@@ -114,24 +114,24 @@
       <view class="flex items-center gap-30rpx mr-20rpx">
         <view class="flex flex-col items-center" @click="uni.navigateTo({url:'/pages/im/chat'})">
           <u-icon name="kefu-ermai" size="22" color="#666" />
-          <text class="text-20rpx text-gray-500 mt-4rpx">客服</text>
+          <text class="text-20rpx text-gray-500 mt-4rpx">{{ $t('productDetail.customerService') }}</text>
         </view>
         <view class="flex flex-col items-center" @click="uni.switchTab({url:'/pages/index/index'})">
           <u-icon name="home" size="22" color="#666" />
-          <text class="text-20rpx text-gray-500 mt-4rpx">首页</text>
+          <text class="text-20rpx text-gray-500 mt-4rpx">{{ $t('productDetail.homePage') }}</text>
         </view>
         <view class="flex flex-col items-center" @click="uni.switchTab({url:'/pages/cart/index'})">
           <u-icon name="shopping-cart" size="22" color="#666" />
-          <text class="text-20rpx text-gray-500 mt-4rpx">购物车</text>
+          <text class="text-20rpx text-gray-500 mt-4rpx">{{ $t('productDetail.cart') }}</text>
         </view>
         <view class="flex flex-col items-center" @click="toggleFavorite">
           <u-icon :name="product.is_favorited ? 'heart-fill' : 'heart'" size="22" :color="product.is_favorited ? '#ef4444' : '#666'" />
-          <text class="text-20rpx mt-4rpx" :style="{ color: product.is_favorited ? '#ef4444' : '#6b7280' }">{{ product.is_favorited ? '已收藏' : '收藏' }}</text>
+          <text class="text-20rpx mt-4rpx" :style="{ color: product.is_favorited ? '#ef4444' : '#6b7280' }">{{ product.is_favorited ? $t('productDetail.favorited') : $t('productDetail.favorite') }}</text>
         </view>
       </view>
       <view class="flex-1 flex gap-16rpx">
-        <u-button type="warning" text="加入购物车" @click="addCart" class="flex-1" shape="circle" />
-        <u-button type="primary" text="立即购买" @click="buyNow" class="flex-1" shape="circle" />
+        <u-button type="warning" :text="$t('productDetail.addToCart')" @click="addCart" class="flex-1" shape="circle" />
+        <u-button type="primary" :text="$t('productDetail.buyNow')" @click="buyNow" class="flex-1" shape="circle" />
       </view>
     </view>
   </view>
@@ -139,7 +139,10 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { del, get, post } from '@/utils/request'
+
+const { t } = useI18n()
 
 const product = ref<any>({})
 const skus = ref<any[]>([])
@@ -148,7 +151,7 @@ const images = ref<string[]>([])
 const reviews = ref<any[]>([])
 const reviewSummary = ref<any>({ avg_product_score: 0, avg_logistics_score: 0, total: 0 })
 const activeTab = ref(0)
-const detailTabs = [{ name: '详情' }, { name: '评价' }]
+const detailTabs = computed(() => [{ name: t('productDetail.detail') }, { name: t('productDetail.reviews') }])
 
 const detailBlocks = computed(() => {
   const detail = product.value?.detail
@@ -162,7 +165,7 @@ const detailBlocks = computed(() => {
 
 function parseAttrs(attrs: string) {
   try { return JSON.parse(attrs).map((a: any) => a.value).join(' ') }
-  catch { return '默认' }
+  catch { return t('productDetail.defaultSpec') }
 }
 
 function formatDate(v: string) {
@@ -197,14 +200,14 @@ onMounted(async () => {
 
 async function addCart() {
   const skuID = selectedSku.value?.id
-  if (!skuID) { uni.showToast({ title: '请选择规格', icon: 'none' }); return }
+  if (!skuID) { uni.showToast({ title: t('productDetail.selectSpec'), icon: 'none' }); return }
   await post('/api/v1/cart/add', { sku_id: skuID, qty: 1 })
-  uni.showToast({ title: '已加入购物车', icon: 'success' })
+  uni.showToast({ title: t('productDetail.addedToCart'), icon: 'success' })
 }
 
 function buyNow() {
   const skuID = selectedSku.value?.id
-  if (!skuID) { uni.showToast({ title: '请选择规格', icon: 'none' }); return }
+  if (!skuID) { uni.showToast({ title: t('productDetail.selectSpec'), icon: 'none' }); return }
   uni.navigateTo({ url: `/pages/order/confirm?sku_ids=${skuID}` })
 }
 
@@ -221,12 +224,12 @@ async function toggleFavorite() {
     await del(`/api/v1/products/${id}/favorite`)
     product.value.is_favorited = false
     product.value.favorite_count = Math.max(0, Number(product.value.favorite_count || 0) - 1)
-    uni.showToast({ title: '已取消收藏', icon: 'none' })
+    uni.showToast({ title: t('productDetail.unfavorited'), icon: 'none' })
     return
   }
   await post(`/api/v1/products/${id}/favorite`)
   product.value.is_favorited = true
   product.value.favorite_count = Number(product.value.favorite_count || 0) + 1
-  uni.showToast({ title: '收藏成功', icon: 'success' })
+  uni.showToast({ title: t('productDetail.favoriteSuccess'), icon: 'success' })
 }
 </script>

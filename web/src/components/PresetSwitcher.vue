@@ -9,7 +9,7 @@
       <div v-else class="mx-4 rounded-xl shadow-2xl overflow-hidden max-w-xs w-full"
         style="background: rgba(255,255,255,0.96); backdrop-filter: blur(12px);">
         <div class="px-3 pt-2.5 pb-1.5 flex items-center justify-between">
-          <span class="text-xs text-gray-400">切换演示行业</span>
+          <span class="text-xs text-gray-400">{{ $t('presetSwitcher.switchIndustry') }}</span>
           <span class="text-xs text-gray-400 px-1 cursor-pointer" @click="expanded = false">✕</span>
         </div>
         <div class="flex flex-wrap px-2 pb-2.5 gap-1.5">

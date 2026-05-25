@@ -6,34 +6,34 @@
         <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-600 to-red-500 flex-center mx-auto mb-4 shadow-lg shadow-red-600/20">
           <span class="text-white text-2xl font-bold">L</span>
         </div>
-        <h1 class="text-2xl font-bold text-gray-900">登录 LYShop</h1>
-        <p class="text-sm text-gray-500 mt-2">开源插件化商城</p>
+        <h1 class="text-2xl font-bold text-gray-900">{{ $t('login.title') }}</h1>
+        <p class="text-sm text-gray-500 mt-2">{{ $t('login.subtitle') }}</p>
       </div>
 
       <!-- Form -->
       <div class="card p-8">
         <div class="mb-5">
-          <label class="text-sm font-medium text-gray-700 mb-1.5 block">手机号</label>
-          <input v-model="form.phone" type="tel" maxlength="11" placeholder="请输入手机号" class="input-base" />
+          <label class="text-sm font-medium text-gray-700 mb-1.5 block">{{ $t('login.phone') }}</label>
+          <input v-model="form.phone" type="tel" maxlength="11" :placeholder="$t('login.phonePlaceholder')" class="input-base" />
         </div>
         <div class="mb-6">
-          <label class="text-sm font-medium text-gray-700 mb-1.5 block">验证码</label>
+          <label class="text-sm font-medium text-gray-700 mb-1.5 block">{{ $t('login.code') }}</label>
           <div class="flex gap-3">
-            <input v-model="form.code" type="text" maxlength="6" placeholder="请输入验证码" class="input-base flex-1" />
+            <input v-model="form.code" type="text" maxlength="6" :placeholder="$t('login.codePlaceholder')" class="input-base flex-1" />
             <button @click="sendCode" :disabled="countdown > 0"
               class="btn-outline whitespace-nowrap !px-4 text-xs"
               :class="countdown > 0 ? 'opacity-50 cursor-not-allowed' : ''">
-              {{ countdown > 0 ? `${countdown}s` : '获取验证码' }}
+              {{ countdown > 0 ? `${countdown}${$t('login.second')}` : $t('login.getCode') }}
             </button>
           </div>
         </div>
         <button @click="handleLogin" :disabled="loading"
           class="btn-primary w-full !py-3 !text-base">
-          {{ loading ? '登录中...' : '登 录' }}
+          {{ loading ? $t('login.submitting') : $t('login.submit') }}
         </button>
       </div>
 
-      <p class="text-center text-xs text-gray-400 mt-6">演示模式：输入任意手机号即可体验</p>
+      <p class="text-center text-xs text-gray-400 mt-6">{{ $t('login.demoTip') }}</p>
     </div>
   </div>
 </template>

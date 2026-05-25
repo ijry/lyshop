@@ -1,17 +1,17 @@
 <template>
   <view style="min-height: 100vh; background: #f5f5f5;">
-    <u-navbar title="我的积分" :placeholder="true" />
+    <u-navbar :title="$t('points.title')" :placeholder="true" />
 
     <!-- Points card -->
     <view style="margin: 16px; background: linear-gradient(135deg, #dc2626, #ef4444); border-radius: 16px; padding: 24px; color: #fff;">
-      <text style="font-size: 13px; opacity: 0.8;">当前积分</text>
+      <text style="font-size: 13px; opacity: 0.8;">{{ $t('points.current') }}</text>
       <text style="font-size: 40px; font-weight: 800; display: block; margin-top: 4px;">{{ points }}</text>
-      <text style="font-size: 12px; opacity: 0.6; margin-top: 8px; display: block;">100积分 = ¥1.00，下单时可抵扣</text>
+      <text style="font-size: 12px; opacity: 0.6; margin-top: 8px; display: block;">{{ $t('points.rule') }}</text>
     </view>
 
     <!-- Points log -->
     <view style="margin: 0 16px;">
-      <text style="font-size: 15px; font-weight: 700; color: #111; display: block; margin-bottom: 12px;">积分明细</text>
+      <text style="font-size: 15px; font-weight: 700; color: #111; display: block; margin-bottom: 12px;">{{ $t('points.history') }}</text>
 
       <view v-for="log in logs" :key="log.id"
         style="background: #fff; border-radius: 12px; padding: 14px 16px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 4px rgba(0,0,0,0.03);">
@@ -25,7 +25,7 @@
       </view>
 
       <view v-if="!logs.length" style="text-align: center; padding: 60px 0; color: #999; font-size: 14px;">
-        暂无积分记录
+        {{ $t('points.empty') }}
       </view>
     </view>
   </view>

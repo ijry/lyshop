@@ -1,11 +1,11 @@
 <template>
   <div class="max-w-5xl mx-auto px-6 py-8">
-    <h1 class="text-xl font-bold text-gray-900 mb-6">购物车</h1>
+    <h1 class="text-xl font-bold text-gray-900 mb-6">{{ $t('cart.title') }}</h1>
 
     <div v-if="!cart.items.length" class="card p-16 text-center">
       <div class="i-carbon-shopping-cart text-6xl text-gray-200 mx-auto mb-4" />
-      <p class="text-gray-400 mb-4">购物车还是空的</p>
-      <router-link to="/products" class="btn-primary inline-block">去逛逛</router-link>
+      <p class="text-gray-400 mb-4">{{ $t('cart.empty') }}</p>
+      <router-link to="/products" class="btn-primary inline-block">{{ $t('cart.goShopping') }}</router-link>
     </div>
 
     <div v-else class="flex flex-col lg:flex-row gap-6">
@@ -45,7 +45,7 @@
       <!-- Summary -->
       <div class="w-72 shrink-0">
         <div class="card p-5 sticky top-24">
-          <h3 class="text-sm font-semibold text-gray-800 mb-4">订单摘要</h3>
+          <h3 class="text-sm font-semibold text-gray-800 mb-4">{{ $t('cart.orderSummary') }}</h3>
           <div class="space-y-2 text-sm">
             <div class="flex-between">
               <button @click="toggleCheckAll" class="inline-flex items-center gap-2 text-gray-600 hover:text-gray-800">
@@ -53,25 +53,25 @@
                   :class="allChecked ? 'bg-red-500 border-red-500 text-white' : 'bg-white border-gray-300 text-transparent'">
                   <span class="i-carbon-checkmark" />
                 </span>
-                <span>全选</span>
+                <span>{{ $t('cart.selectAll') }}</span>
               </button>
             </div>
             <div class="flex-between text-gray-500">
-              <span>已选商品</span><span>{{ selectedCount }} 件</span>
+              <span>{{ $t('cart.selectedItems') }}</span><span>{{ selectedCount }} {{ $t('cart.unit') }}</span>
             </div>
             <div class="flex-between text-gray-500">
-              <span>运费</span><span class="text-green-600">免运费</span>
+              <span>{{ $t('cart.shipping') }}</span><span class="text-green-600">{{ $t('cart.freeShipping') }}</span>
             </div>
           </div>
           <div class="border-t border-gray-100 mt-4 pt-4">
             <div class="flex-between">
-              <span class="text-sm text-gray-600">合计</span>
+              <span class="text-sm text-gray-600">{{ $t('cart.total') }}</span>
               <span class="text-xl font-bold text-red-500">¥{{ selectedTotal.toFixed(2) }}</span>
             </div>
           </div>
           <button class="btn-primary w-full mt-4 !py-3 disabled:opacity-50 disabled:cursor-not-allowed"
             :disabled="selectedCount === 0" @click="checkout">
-            去结算 ({{ selectedCount }})
+            {{ $t('cart.checkout') }} ({{ selectedCount }})
           </button>
         </div>
       </div>
@@ -82,9 +82,11 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { get } from '@/api/request'
 import { useCartStore } from '@/stores/cart'
 
+const { t } = useI18n()
 const cart = useCartStore()
 const router = useRouter()
 const checkedSkuIds = ref<number[]>([])
@@ -102,7 +104,7 @@ const allChecked = computed(() =>
 
 function parseAttrs(attrs: string) {
   try { return JSON.parse(attrs).map((a: any) => a.value).join(' / ') }
-  catch { return '默认规格' }
+  catch { return t('cart.defaultSpec') }
 }
 
 function changeQty(item: any, delta: number) {
@@ -138,7 +140,7 @@ function removeItem(skuId: number) {
 
 function checkout() {
   if (!selectedCount.value) {
-    window.alert('请先勾选商品')
+    window.alert(t('cart.pleaseSelectItems'))
     return
   }
   router.push('/orders')

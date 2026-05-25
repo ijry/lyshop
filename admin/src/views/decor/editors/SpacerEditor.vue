@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-4">
     <div>
-      <label class="block text-xs text-slate-500 mb-1.5">高度 (rpx)</label>
+      <label class="block text-xs text-slate-500 mb-1.5">{{ $t('decor.spacer.height') }}</label>
       <div class="flex items-center gap-3">
         <input type="range" :value="modelValue.height" @input="update('height', Number(($event.target as HTMLInputElement).value))"
           min="4" max="200" step="4" class="flex-1 accent-blue-600" />
@@ -10,7 +10,7 @@
       </div>
     </div>
 
-    <ColorInput :modelValue="modelValue.background" @update:modelValue="update('background', $event)" label="背景色" />
+    <ColorInput :modelValue="modelValue.background" @update:modelValue="update('background', $event)" :label="$t('decor.spacer.bgColor')" />
   </div>
 </template>
 

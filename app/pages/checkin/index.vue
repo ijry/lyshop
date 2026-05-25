@@ -1,6 +1,6 @@
 <template>
   <view style="min-height: 100vh; background: linear-gradient(180deg, #dc2626 0%, #f5f5f5 35%);">
-    <u-navbar title="每日签到" :placeholder="true" :bg-color="'transparent'" title-color="#fff" />
+    <u-navbar :title="$t('checkin.title')" :placeholder="true" :bg-color="'transparent'" title-color="#fff" />
 
     <!-- Hero card -->
     <view style="margin: 0 16px 16px; padding: 28px 24px; position: relative; overflow: hidden;">
@@ -10,17 +10,17 @@
 
       <view style="display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1;">
         <view>
-          <text style="font-size: 14px; color: rgba(255,255,255,0.75);">已连续签到</text>
+          <text style="font-size: 14px; color: rgba(255,255,255,0.75);">{{ $t('checkin.consecutiveDays') }}</text>
           <view style="display: flex; align-items: baseline; gap: 4px; margin-top: 6px;">
             <text style="font-size: 52px; font-weight: 800; color: #fff; line-height: 1;">{{ status.consecutive_days || 0 }}</text>
-            <text style="font-size: 16px; color: rgba(255,255,255,0.6);">天</text>
+            <text style="font-size: 16px; color: rgba(255,255,255,0.6);">{{ $t('checkin.dayUnit') }}</text>
           </view>
           <view style="display: flex; align-items: center; gap: 12px; margin-top: 10px;">
             <view style="display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.12); border-radius: 20px; padding: 3px 10px;">
-              <text style="font-size: 11px; color: rgba(255,255,255,0.8);">本月 {{ status.month_count || 0 }} 天</text>
+              <text style="font-size: 11px; color: rgba(255,255,255,0.8);">{{ $t('checkin.thisMonth') }} {{ status.month_count || 0 }} {{ $t('checkin.dayUnit') }}</text>
             </view>
             <view style="display: flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.12); border-radius: 20px; padding: 3px 10px;">
-              <text style="font-size: 11px; color: rgba(255,255,255,0.8);">获得 {{ status.month_points || 0 }} 积分</text>
+              <text style="font-size: 11px; color: rgba(255,255,255,0.8);">{{ $t('checkin.earned') }} {{ status.month_points || 0 }} {{ $t('checkin.pointsUnit') }}</text>
             </view>
           </view>
         </view>
@@ -35,7 +35,7 @@
             transition: 'all 0.3s'
           }">
           <text :style="{ fontSize: '14px', fontWeight: '700', color: status.checked_today ? 'rgba(255,255,255,0.5)' : '#dc2626' }">
-            {{ status.checked_today ? '已签' : '签到' }}
+            {{ status.checked_today ? $t('checkin.checked') : $t('checkin.checkIn') }}
           </text>
           <text v-if="!status.checked_today" style="font-size: 10px; color: #f97316; margin-top: 2px; font-weight: 600;">+{{ nextPoints }}</text>
         </view>
@@ -45,8 +45,8 @@
     <!-- 7-day consecutive reward track -->
     <view style="margin: 0 16px 12px; background: #fff; border-radius: 20px; padding: 20px 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.04);">
       <view style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px;">
-        <text style="font-size: 15px; font-weight: 700; color: #111;">连续签到奖励</text>
-        <text style="font-size: 11px; color: #999;">连续7天额外奖励50积分</text>
+        <text style="font-size: 15px; font-weight: 700; color: #111;">{{ $t('checkin.consecutiveReward') }}</text>
+        <text style="font-size: 11px; color: #999;">{{ $t('checkin.bonusRule') }}</text>
       </view>
 
       <!-- Track line with dots -->
@@ -77,7 +77,7 @@
               <text :style="{ fontSize: '11px', fontWeight: d === 7 ? '700' : '500', color: (status.consecutive_days || 0) >= d ? '#dc2626' : '#999' }">
                 +{{ getPointsForDay(d) }}
               </text>
-              <text style="display: block; font-size: 9px; color: #ccc; margin-top: 1px;">第{{ d }}天</text>
+              <text style="display: block; font-size: 9px; color: #ccc; margin-top: 1px;">{{ $t('checkin.dayPrefix') }}{{ d }}{{ $t('checkin.dayUnit') }}</text>
             </view>
           </view>
         </view>
@@ -87,12 +87,12 @@
     <!-- Calendar -->
     <view style="margin: 0 16px 16px; background: #fff; border-radius: 20px; padding: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.04);">
       <view style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
-        <text style="font-size: 15px; font-weight: 700; color: #111;">{{ now.getFullYear() }}年{{ now.getMonth()+1 }}月</text>
-        <text style="font-size: 12px; color: #dc2626; font-weight: 600;">{{ status.month_count || 0 }}/{{ daysInMonth }} 天</text>
+        <text style="font-size: 15px; font-weight: 700; color: #111;">{{ $t('checkin.calendarTitle', { year: now.getFullYear(), month: now.getMonth()+1 }) }}</text>
+        <text style="font-size: 12px; color: #dc2626; font-weight: 600;">{{ status.month_count || 0 }}/{{ daysInMonth }} {{ $t('checkin.dayUnit') }}</text>
       </view>
       <!-- Weekday headers -->
       <view style="display: flex; margin-bottom: 8px;">
-        <view v-for="w in ['日','一','二','三','四','五','六']" :key="w"
+        <view v-for="w in $t('checkin.weekdays').split(',')" :key="w"
           style="flex: 1; text-align: center; font-size: 11px; color: #bbb; font-weight: 500;">
           {{ w }}
         </view>
@@ -121,23 +121,23 @@
 
     <!-- Rules card -->
     <view style="margin: 0 16px 30px; background: #fff; border-radius: 20px; padding: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.04);">
-      <text style="font-size: 15px; font-weight: 700; color: #111; display: block; margin-bottom: 12px;">签到规则</text>
+      <text style="font-size: 15px; font-weight: 700; color: #111; display: block; margin-bottom: 12px;">{{ $t('checkin.rules') }}</text>
       <view style="display: flex; flex-direction: column; gap: 8px;">
         <view style="display: flex; align-items: center; gap: 8px;">
           <view style="width: 6px; height: 6px; border-radius: 3px; background: #dc2626;" />
-          <text style="font-size: 13px; color: #666; line-height: 1.5;">每日签到可获得基础积分奖励</text>
+          <text style="font-size: 13px; color: #666; line-height: 1.5;">{{ $t('checkin.rule1') }}</text>
         </view>
         <view style="display: flex; align-items: center; gap: 8px;">
           <view style="width: 6px; height: 6px; border-radius: 3px; background: #f97316;" />
-          <text style="font-size: 13px; color: #666; line-height: 1.5;">连续签到天数越多，奖励积分越高</text>
+          <text style="font-size: 13px; color: #666; line-height: 1.5;">{{ $t('checkin.rule2') }}</text>
         </view>
         <view style="display: flex; align-items: center; gap: 8px;">
           <view style="width: 6px; height: 6px; border-radius: 3px; background: #eab308;" />
-          <text style="font-size: 13px; color: #666; line-height: 1.5;">中断签到后连续天数将重新计算</text>
+          <text style="font-size: 13px; color: #666; line-height: 1.5;">{{ $t('checkin.rule3') }}</text>
         </view>
         <view style="display: flex; align-items: center; gap: 8px;">
           <view style="width: 6px; height: 6px; border-radius: 3px; background: #22c55e;" />
-          <text style="font-size: 13px; color: #666; line-height: 1.5;">100积分 = ¥1.00，下单时可抵扣</text>
+          <text style="font-size: 13px; color: #666; line-height: 1.5;">{{ $t('checkin.rule4') }}</text>
         </view>
       </view>
     </view>
@@ -146,7 +146,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { get, post } from '@/utils/request'
+
+const { t } = useI18n()
 
 const status = ref<any>({})
 const rules = ref<any[]>([])
@@ -179,14 +182,14 @@ function isToday(day: number) { return day === now.getDate() }
 
 async function doCheckin() {
   if (status.value.checked_today) {
-    uni.showToast({ title: '今日已签到', icon: 'none' }); return
+    uni.showToast({ title: t('checkin.alreadyChecked'), icon: 'none' }); return
   }
   try {
     const data = await post<any>('/api/v1/checkin')
-    uni.showToast({ title: `签到成功！+${data.points}积分`, icon: 'success' })
+    uni.showToast({ title: `${t('checkin.checkIn')}！+${data.points}${t('checkin.pointsUnit')}`, icon: 'success' })
     await loadStatus()
   } catch (e: any) {
-    uni.showToast({ title: e.message || '签到失败', icon: 'none' })
+    uni.showToast({ title: e.message || t('afterSaleApply.submitFailed'), icon: 'none' })
   }
 }
 

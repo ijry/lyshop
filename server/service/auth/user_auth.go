@@ -30,10 +30,10 @@ func VerifySMSCode(ctx context.Context, phone, code string) error {
 	key := smsCodeKeyPrefix + phone
 	stored, err := cache.Client.Get(ctx, key).Result()
 	if err != nil {
-		return errors.New("验证码已过期")
+		return errors.New("auth.codeExpired")
 	}
 	if stored != code {
-		return errors.New("验证码错误")
+		return errors.New("auth.codeInvalid")
 	}
 	cache.Client.Del(ctx, key)
 	return nil
@@ -50,7 +50,7 @@ func SMSLogin(ctx context.Context, phone, code string) (string, error) {
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		user = model.User{
 			Phone:    phone,
-			Nickname: "用户" + phone[len(phone)-4:],
+			Nickname: "User" + phone[len(phone)-4:],
 			Status:   1,
 		}
 		if err2 := db.DB.WithContext(ctx).Create(&user).Error; err2 != nil {
@@ -61,7 +61,7 @@ func SMSLogin(ctx context.Context, phone, code string) (string, error) {
 	}
 
 	if user.Status == 0 {
-		return "", errors.New("账号已被禁用")
+		return "", errors.New("auth.accountDisabled")
 	}
 
 	return middleware.GenerateToken(user.ID, "user", nil)
@@ -76,18 +76,18 @@ func DeleteUserAccount(ctx context.Context, userID uint64, phone, code string) e
 	// Verify phone matches the user
 	var user model.User
 	if err := db.DB.WithContext(ctx).First(&user, userID).Error; err != nil {
-		return errors.New("用户不存在")
+		return errors.New("auth.userNotFound")
 	}
 	// Allow wx_ phone prefix (WeChat login users don't have real phone)
 	if user.Phone != phone && user.Phone != "wx_"+phone {
-		return errors.New("手机号与账号不匹配")
+		return errors.New("auth.phoneMismatch")
 	}
 
 	// Soft delete: set status=0 and anonymize
 	return db.DB.WithContext(ctx).Model(&user).Updates(map[string]any{
 		"status":   0,
 		"phone":    "deleted_" + fmt.Sprintf("%d", userID),
-		"nickname": "已注销用户",
+		"nickname": "Deleted User",
 		"avatar":   "",
 	}).Error
 }

@@ -7,7 +7,7 @@
     <view class="p-20rpx">
       <view v-if="!orders.length" class="flex flex-col items-center py-120rpx">
         <u-icon name="order" size="60" color="#ccc" />
-        <text class="text-gray-400 text-28rpx mt-20rpx">暂无订单</text>
+        <text class="text-gray-400 text-28rpx mt-20rpx">{{ $t('orderList.empty') }}</text>
       </view>
 
       <view
@@ -19,9 +19,9 @@
         <view class="flex items-center justify-between mb-20rpx">
           <view class="flex items-center" style="gap: 8px;">
             <text class="text-22rpx text-gray-400 font-mono">{{ o.order_no }}</text>
-            <text v-if="o.activity_type === 'seckill'" style="font-size: 10px; color: #dc2626; background: #fef2f2; padding: 1px 6px; border-radius: 4px;">秒杀</text>
-            <text v-else-if="o.activity_type === 'group_buy'" style="font-size: 10px; color: #2563eb; background: #eff6ff; padding: 1px 6px; border-radius: 4px;">拼团</text>
-            <text v-else-if="o.activity_type === 'bargain'" style="font-size: 10px; color: #16a34a; background: #f0fdf4; padding: 1px 6px; border-radius: 4px;">砍价</text>
+            <text v-if="o.activity_type === 'seckill'" style="font-size: 10px; color: #dc2626; background: #fef2f2; padding: 1px 6px; border-radius: 4px;">{{ $t('orderList.seckill') }}</text>
+            <text v-else-if="o.activity_type === 'group_buy'" style="font-size: 10px; color: #2563eb; background: #eff6ff; padding: 1px 6px; border-radius: 4px;">{{ $t('orderList.groupBuy') }}</text>
+            <text v-else-if="o.activity_type === 'bargain'" style="font-size: 10px; color: #16a34a; background: #f0fdf4; padding: 1px 6px; border-radius: 4px;">{{ $t('orderList.bargain') }}</text>
           </view>
           <text :class="statusColor(o.status)" class="text-24rpx font-500">{{ statusLabel(o.status) }}</text>
         </view>
@@ -41,10 +41,10 @@
             v-if="hasReship(o)"
             style="font-size: 10px; color: #c2410c; background: #fff7ed; padding: 1px 6px; border-radius: 4px;"
           >
-            含补发
+            {{ $t('orderList.includesReship') }}
           </text>
           <text v-if="o.latest_shipment?.tracking_no" class="text-22rpx text-gray-500">
-            最新物流：{{ shipmentStatusText(o.latest_shipment?.logistics_status, o.latest_shipment?.logistics_status_label) }} · {{ o.latest_shipment?.tracking_no }}
+            {{ $t('orderList.latestLogistics') }}{{ shipmentStatusText(o.latest_shipment?.logistics_status, o.latest_shipment?.logistics_status_label) }} · {{ o.latest_shipment?.tracking_no }}
           </text>
           <text v-if="shipmentPrimaryTime(o.latest_shipment)" class="text-22rpx text-gray-400">
             {{ formatDate(shipmentPrimaryTime(o.latest_shipment)) }}
@@ -55,10 +55,10 @@
             v-if="o.after_sale_summary?.has_open_case"
             style="font-size: 10px; color: #dc2626; background: #fef2f2; padding: 1px 6px; border-radius: 4px;"
           >
-            售后中
+            {{ $t('orderList.afterSaleInProgress') }}
           </text>
           <text class="text-22rpx text-gray-500">
-            最近售后单：#{{ o.after_sale_summary.latest_case_id }}（{{ afterSaleSummaryStatusText(o.after_sale_summary) || '-' }}）
+            {{ $t('orderList.recentAfterSale') }}{{ o.after_sale_summary.latest_case_id }}（{{ afterSaleSummaryStatusText(o.after_sale_summary) || '-' }}）
           </text>
         </view>
 
@@ -69,16 +69,16 @@
 
         <view class="flex justify-end gap-16rpx mt-24rpx">
           <view class="action-btn-wrap">
-            <u-button size="mini" plain text="查看详情" shape="circle" @click="goDetail(o.id)" />
+            <u-button size="mini" plain :text="$t('orderList.viewDetail')" shape="circle" @click="goDetail(o.id)" />
           </view>
           <view class="action-btn-wrap" v-if="o.after_sale_summary?.latest_case_id">
-            <u-button size="mini" plain text="售后进度" shape="circle" @click="goAfterSaleDetail(o.after_sale_summary.latest_case_id)" />
+            <u-button size="mini" plain :text="$t('orderList.afterSaleProgress')" shape="circle" @click="goAfterSaleDetail(o.after_sale_summary.latest_case_id)" />
           </view>
           <view class="action-btn-wrap" v-if="o.status === 1">
-            <u-button size="mini" type="primary" text="去付款" shape="circle" :loading="actioningID === o.id && actioningType === 'pay'" @click="toPay(o)" />
+            <u-button size="mini" type="primary" :text="$t('orderList.goPay')" shape="circle" :loading="actioningID === o.id && actioningType === 'pay'" @click="toPay(o)" />
           </view>
           <view class="action-btn-wrap" v-if="canReview(o) && hasUnreviewed(o)">
-            <u-button size="mini" type="success" text="评价" shape="circle" plain :loading="actioningID === o.id && actioningType === 'review'" @click="toReview(o, 'root')" />
+            <u-button size="mini" type="success" :text="$t('orderList.review')" shape="circle" plain :loading="actioningID === o.id && actioningType === 'review'" @click="toReview(o, 'root')" />
           </view>
         </view>
       </view>
@@ -87,19 +87,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { get, post } from '@/utils/request'
 import { afterSaleStatusLabel, hasReshipShipment, orderStatusLabel, shipmentPrimaryTime, shipmentStatusLabel } from '@/utils/order-status'
+
+const { t } = useI18n()
 
 const orders = ref<any[]>([])
 const activeTab = ref(0)
 const actioningID = ref<number>(0)
 const actioningType = ref<'pay' | 'review' | ''>('')
 
-const tabs = [
-  { name: '全部' }, { name: '待付款' }, { name: '待发货' },
-  { name: '待收货' }, { name: '已完成' }
-]
+const tabs = computed(() => [
+  { name: t('orderList.all') }, { name: t('orderList.pendingPayment') }, { name: t('orderList.pendingShipment') },
+  { name: t('orderList.pendingReceipt') }, { name: t('orderList.completed') }
+])
 const statusValues = [0, 1, 2, 3, 4]
 
 const statusColors: Record<number, string> = {
@@ -169,10 +172,10 @@ async function toPay(order: any) {
   actioningType.value = 'pay'
   try {
     await post(`/api/v1/orders/${id}/pay`)
-    uni.showToast({ title: '支付成功', icon: 'success' })
+    uni.showToast({ title: t('orderConfirm.orderSuccess'), icon: 'success' })
     await loadOrders()
   } catch {
-    uni.showToast({ title: '支付失败', icon: 'none' })
+    uni.showToast({ title: t('afterSaleApply.submitFailed'), icon: 'none' })
   } finally {
     actioningID.value = 0
     actioningType.value = ''

@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-4">
-    <ImageUpload :modelValue="modelValue.url" @update:modelValue="update('url', $event)" label="广告图片" />
-    <LinkPicker :modelValue="modelValue.link" @update:modelValue="update('link', $event)" label="跳转链接" />
+    <ImageUpload :modelValue="modelValue.url" @update:modelValue="update('url', $event)" :label="$t('decor.imageAd.image')" />
+    <LinkPicker :modelValue="modelValue.link" @update:modelValue="update('link', $event)" :label="$t('decor.imageAd.link')" />
   </div>
 </template>
 

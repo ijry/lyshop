@@ -1,16 +1,16 @@
 <template>
   <view class="min-h-screen bg-gray-50 pb-40rpx">
-    <u-navbar title="订单评价" :placeholder="true" />
+    <u-navbar :title="$t('orderReview.title')" :placeholder="true" />
 
     <view class="p-20rpx">
       <view class="bg-white rounded-20rpx p-24rpx mb-20rpx" v-if="meta.order_no">
-        <text class="text-28rpx font-600 text-gray-800 block mb-12rpx">订单 {{ meta.order_no }}</text>
+        <text class="text-28rpx font-600 text-gray-800 block mb-12rpx">{{ $t('orderReview.order') }} {{ meta.order_no }}</text>
         <view class="flex items-center justify-between text-24rpx text-gray-500" v-if="viewMode === 'root'">
-          <text>物流评分</text>
+          <text>{{ $t('orderReview.logisticsScore') }}</text>
           <up-rate v-model="logisticsScore" :count="5" size="20" active-color="#dc2626" />
         </view>
-        <text class="text-22rpx text-gray-400 block mt-12rpx" v-if="viewMode === 'root'">根评价提交后，才能继续追加评论。</text>
-        <text class="text-22rpx text-gray-400 block mt-12rpx" v-else>你正在追加已发布评价。</text>
+        <text class="text-22rpx text-gray-400 block mt-12rpx" v-if="viewMode === 'root'">{{ $t('orderReview.rootReviewFirst') }}</text>
+        <text class="text-22rpx text-gray-400 block mt-12rpx" v-else>{{ $t('orderReview.appendingPublished') }}</text>
       </view>
 
       <view v-if="viewMode === 'root'" v-for="item in items" :key="item.order_item_id" class="bg-white rounded-20rpx p-24rpx mb-20rpx">
@@ -18,20 +18,20 @@
           <image :src="item.product_cover" mode="aspectFill" style="width: 96rpx; height: 96rpx; border-radius: 12rpx;" />
           <view class="flex-1 min-w-0">
             <text class="text-28rpx font-500 text-gray-800 block truncate">{{ item.product_title }}</text>
-            <text class="text-22rpx text-gray-400 block mt-6rpx">订单商品ID：{{ item.order_item_id }}</text>
+            <text class="text-22rpx text-gray-400 block mt-6rpx">{{ $t('orderReview.orderProductId') }}{{ item.order_item_id }}</text>
           </view>
         </view>
 
         <view class="flex items-center justify-between mb-16rpx">
-          <text class="text-24rpx text-gray-500">商品评分</text>
+          <text class="text-24rpx text-gray-500">{{ $t('orderReview.productScore') }}</text>
           <up-rate v-model="item.product_score" :count="5" size="20" active-color="#dc2626" />
         </view>
 
-        <u-textarea v-model="item.content" placeholder="写点使用感受..." :auto-height="true" maxlength="500" />
+        <u-textarea v-model="item.content" :placeholder="$t('orderReview.writeReview')" :auto-height="true" maxlength="500" />
 
         <view class="mt-16rpx">
           <view class="flex items-center justify-between mb-12rpx">
-            <text class="text-24rpx text-gray-500">图片</text>
+            <text class="text-24rpx text-gray-500">{{ $t('orderReview.images') }}</text>
             <text class="text-22rpx text-gray-400">{{ item.images.length }}/9</text>
           </view>
           <view class="flex flex-wrap gap-12rpx">
@@ -60,19 +60,19 @@
               class="w-150rpx h-150rpx rounded-16rpx border border-dashed border-gray-300 flex items-center justify-center text-24rpx text-gray-400 bg-gray-50"
               @click="chooseImages(item.images)"
             >
-              + 添加
+              {{ $t('orderReview.addImage') }}
             </view>
           </view>
         </view>
       </view>
 
       <view v-if="viewMode === 'append' && canAppend" class="bg-white rounded-20rpx p-24rpx mb-20rpx">
-        <text class="text-28rpx font-600 text-gray-800 block mb-16rpx">追加评论</text>
-        <u-textarea v-model="appendContent" placeholder="追加评论内容" :auto-height="true" maxlength="500" />
+        <text class="text-28rpx font-600 text-gray-800 block mb-16rpx">{{ $t('orderReview.appendComment') }}</text>
+        <u-textarea v-model="appendContent" :placeholder="$t('orderReview.appendComment')" :auto-height="true" maxlength="500" />
 
         <view class="mt-16rpx">
           <view class="flex items-center justify-between mb-12rpx">
-            <text class="text-24rpx text-gray-500">追评图片</text>
+            <text class="text-24rpx text-gray-500">{{ $t('orderReview.appendImages') }}</text>
             <text class="text-22rpx text-gray-400">{{ appendImages.length }}/9</text>
           </view>
           <view class="flex flex-wrap gap-12rpx">
@@ -101,15 +101,15 @@
               class="w-150rpx h-150rpx rounded-16rpx border border-dashed border-gray-300 flex items-center justify-center text-24rpx text-gray-400 bg-gray-50"
               @click="chooseImages(appendImages)"
             >
-              + 添加
+              {{ $t('orderReview.addImage') }}
             </view>
           </view>
         </view>
       </view>
 
       <view v-else class="bg-white rounded-20rpx p-24rpx mb-20rpx">
-        <text class="text-28rpx font-600 text-gray-800 block mb-8rpx">追加评论</text>
-        <text class="text-24rpx text-gray-400">完成根评价后，才能追加评论。</text>
+        <text class="text-28rpx font-600 text-gray-800 block mb-8rpx">{{ $t('orderReview.appendComment') }}</text>
+        <text class="text-24rpx text-gray-400">{{ $t('orderReview.completeRootFirst') }}</text>
       </view>
 
       <u-button
@@ -126,7 +126,7 @@
         type="success"
         shape="circle"
         :loading="savingAppend"
-        text="提交追加评价"
+        :text="$t('orderReview.submitAppendReview')"
         @click="submitAppendReview"
       />
     </view>
@@ -135,7 +135,10 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { get, post, upload } from '@/utils/request'
+
+const { t } = useI18n()
 
 const meta = ref<any>({})
 const items = ref<any[]>([])
@@ -150,7 +153,7 @@ const targetItemID = ref(0)
 const viewMode = ref<'root' | 'append'>('root')
 
 const rootButtonText = computed(() => {
-  return items.value.some((item: any) => !item.has_review) ? '提交根评价' : '更新根评价'
+  return items.value.some((item: any) => !item.has_review) ? t('orderReview.submitRootReview') : t('orderReview.updateRootReview')
 })
 
 function toast(message: string) {
@@ -211,7 +214,7 @@ function chooseFiles(limit: number): Promise<string[]> {
 async function uploadImages(target: string[]) {
   const remain = Math.max(0, 9 - target.length)
   if (remain <= 0) {
-    toast('最多上传 9 张图片')
+    toast(t('orderReview.maxImages'))
     return
   }
   const files = await chooseFiles(remain)
@@ -229,7 +232,7 @@ async function chooseImages(target: string[]) {
   try {
     await uploadImages(target)
   } catch {
-    toast('图片上传失败')
+    toast(t('orderReview.imageUploadFailed'))
   }
 }
 
@@ -248,7 +251,7 @@ async function submitRootReview() {
   const createItems = items.value.filter((item: any) => !item.has_review)
   const editItems = items.value.filter((item: any) => item.has_review)
   if (!createItems.length && !editItems.length) {
-    toast('暂无可提交的根评价')
+    toast(t('orderReview.noRootReview'))
     return
   }
   savingRoot.value = true
@@ -278,9 +281,9 @@ async function submitRootReview() {
       })
     }
     await loadMeta(orderID.value)
-    toast('根评价已提交')
+    toast(t('orderReview.rootReviewSubmitted'))
   } catch (error: any) {
-    toast(error?.message || '提交失败')
+    toast(error?.message || t('afterSaleApply.submitFailed'))
   } finally {
     savingRoot.value = false
   }
@@ -290,17 +293,17 @@ async function submitAppendReview() {
   if (viewMode.value !== 'append') return
   if (savingAppend.value) return
   if (!canAppend.value) {
-    toast('请先完成根评价')
+    toast(t('orderReview.completeRootFirst'))
     return
   }
   const content = appendContent.value.trim()
   const itemsToAppend = items.value.length ? [items.value[0]] : []
   if (!content && appendImages.value.length === 0) {
-    toast('请填写追评内容或上传图片')
+    toast(t('orderReview.appendContentRequired'))
     return
   }
   if (!itemsToAppend.length) {
-    toast('没有可追加的评价')
+    toast(t('orderReview.noAppendable'))
     return
   }
   savingAppend.value = true
@@ -314,9 +317,9 @@ async function submitAppendReview() {
     appendContent.value = ''
     appendImages.value = []
     await loadMeta(orderID.value)
-    toast('追评已提交')
+    toast(t('orderReview.appendSubmitted'))
   } catch (error: any) {
-    toast(error?.message || '提交失败')
+    toast(error?.message || t('afterSaleApply.submitFailed'))
   } finally {
     savingAppend.value = false
   }

@@ -1,6 +1,6 @@
 <template>
   <view style="min-height: 100vh; background: #f5f5f5;">
-    <u-navbar title="收货地址" :placeholder="true" />
+    <u-navbar :title="$t('address.title')" :placeholder="true" />
 
     <view style="padding: 12px 16px 96px;">
       <view
@@ -18,10 +18,10 @@
               v-if="addr.is_default"
               style="background: #fef2f2; color: #dc2626; font-size: 11px; padding: 2px 8px; border-radius: 4px;"
             >
-              默认
+              {{ $t('address.default') }}
             </view>
-            <text style="font-size:12px;color:#3b82f6;" @click="openEditor(addr)">编辑</text>
-            <text style="font-size:12px;color:#ef4444;" @click="removeAddress(addr)">删除</text>
+            <text style="font-size:12px;color:#3b82f6;" @click="openEditor(addr)">{{ $t('address.edit') }}</text>
+            <text style="font-size:12px;color:#ef4444;" @click="removeAddress(addr)">{{ $t('address.delete') }}</text>
           </view>
         </view>
         <text style="font-size: 13px; color: #999; line-height: 1.5;">
@@ -30,14 +30,14 @@
       </view>
 
       <view v-if="!addresses.length" style="text-align: center; padding: 80px 0; color: #999; font-size: 14px;">
-        暂无收货地址
+        {{ $t('address.empty') }}
       </view>
     </view>
 
     <view style="padding: 16px; position: fixed; bottom: 0; left: 0; right: 0; background: #f5f5f5;">
       <u-button
         type="primary"
-        text="新增收货地址"
+        :text="$t('address.addNew')"
         shape="circle"
         :custom-style="{background: '#dc2626', borderColor: '#dc2626'}"
         @click="openEditor()"
@@ -46,23 +46,23 @@
 
     <u-popup :show="showEditor" mode="bottom" round="20" @close="closeEditor">
       <view style="padding: 20px 16px 24px;">
-        <text style="display: block; font-size: 16px; font-weight: 700; margin-bottom: 16px;">{{ editingID ? '编辑收货地址' : '新增收货地址' }}</text>
+        <text style="display: block; font-size: 16px; font-weight: 700; margin-bottom: 16px;">{{ editingID ? $t('address.edit') : $t('address.addNew') }}</text>
         <view style="display: flex; flex-direction: column; gap: 12px;">
-          <u-input v-model="form.name" placeholder="收货人姓名" border="surround" />
-          <u-input v-model="form.phone" placeholder="手机号" border="surround" maxlength="11" type="number" />
+          <u-input v-model="form.name" :placeholder="$t('address.recipientName')" border="surround" />
+          <u-input v-model="form.phone" :placeholder="$t('address.phone')" border="surround" maxlength="11" type="number" />
           <view @click="showRegionPicker = true">
-            <u-input :modelValue="regionText" placeholder="省/市/区" border="surround" readonly />
+            <u-input :modelValue="regionText" :placeholder="$t('address.region')" border="surround" readonly />
           </view>
-          <u-input v-model="form.detail" placeholder="详细地址" border="surround" />
+          <u-input v-model="form.detail" :placeholder="$t('address.detailAddress')" border="surround" />
           <view style="display: flex; align-items: center; justify-content: space-between;">
-            <text style="font-size: 13px; color: #666;">设为默认地址</text>
+            <text style="font-size: 13px; color: #666;">{{ $t('address.setDefault') }}</text>
             <u-switch v-model="defaultSwitch" activeColor="#dc2626" />
           </view>
         </view>
         <view style="display: flex; gap: 12px; margin-top: 18px;">
-          <u-button text="取消" shape="circle" @click="closeEditor" />
+          <u-button :text="$t('address.cancel')" shape="circle" @click="closeEditor" />
           <u-button
-            text="保存"
+            :text="$t('address.save')"
             type="primary"
             shape="circle"
             :loading="saving"
@@ -88,7 +88,10 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { del, get, post, put } from '@/utils/request'
+
+const { t } = useI18n()
 
 const addresses = ref<any[]>([])
 const showEditor = ref(false)
@@ -168,10 +171,10 @@ function onRegionConfirm(values: string[]) {
 }
 
 function validateForm() {
-  if (!form.value.name.trim()) return '请输入收货人姓名'
-  if (!/^1\d{10}$/.test(form.value.phone)) return '请输入正确手机号'
-  if (!form.value.province.trim() || !form.value.city.trim() || !form.value.district.trim()) return '请选择完整省市区'
-  if (!form.value.detail.trim()) return '请输入详细地址'
+  if (!form.value.name.trim()) return t('address.nameRequired')
+  if (!/^1\d{10}$/.test(form.value.phone)) return t('address.phoneInvalid')
+  if (!form.value.province.trim() || !form.value.city.trim() || !form.value.district.trim()) return t('address.regionRequired')
+  if (!form.value.detail.trim()) return t('address.addressRequired')
   return ''
 }
 
@@ -197,15 +200,15 @@ async function saveAddress() {
   try {
     if (editingID.value) {
       await put(`/api/v1/addresses/${editingID.value}`, payload)
-      uni.showToast({ title: '修改成功', icon: 'success' })
+      uni.showToast({ title: t('address.updateSuccess'), icon: 'success' })
     } else {
       await post('/api/v1/addresses', payload)
-      uni.showToast({ title: '新增成功', icon: 'success' })
+      uni.showToast({ title: t('address.addSuccess'), icon: 'success' })
     }
     await loadAddresses()
     closeEditor()
   } catch {
-    uni.showToast({ title: '保存失败，请稍后重试', icon: 'none' })
+    uni.showToast({ title: t('address.saveFailed'), icon: 'none' })
   } finally {
     saving.value = false
   }
@@ -216,10 +219,10 @@ async function removeAddress(addr: any) {
   if (!id) return
   try {
     await del(`/api/v1/addresses/${id}`)
-    uni.showToast({ title: '删除成功', icon: 'success' })
+    uni.showToast({ title: t('address.deleteSuccess'), icon: 'success' })
     await loadAddresses()
   } catch {
-    uni.showToast({ title: '删除失败', icon: 'none' })
+    uni.showToast({ title: t('address.deleteFailed'), icon: 'none' })
   }
 }
 

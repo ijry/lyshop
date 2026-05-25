@@ -1,12 +1,12 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-xl font-semibold text-slate-800">商品分类</h2>
+      <h2 class="text-xl font-semibold text-slate-800">{{ $t('category.title') }}</h2>
       <button
         class="px-4 py-2 bg-blue-700 text-white text-sm rounded-xl hover:bg-blue-600 transition"
         @click="openCreate"
       >
-        + 新增分类
+        {{ $t('category.add') }}
       </button>
     </div>
 
@@ -14,12 +14,12 @@
       <table class="w-full text-sm">
         <thead class="bg-slate-50 border-b border-slate-100">
           <tr>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">ID</th>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">分类名称</th>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">排序</th>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">状态</th>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">更新时间</th>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">操作</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('common.id') }}</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('category.name') }}</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('category.sort') }}</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('common.status') }}</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('category.updateTime') }}</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('common.action') }}</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-50">
@@ -32,20 +32,20 @@
                 :class="row.status === 1 ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-400'"
                 class="px-2 py-1 rounded-full text-xs"
               >
-                {{ row.status === 1 ? '启用' : '停用' }}
+                {{ row.status === 1 ? $t('common.enabled') : $t('common.disabled') }}
               </span>
             </td>
             <td class="px-4 py-3 text-slate-500">{{ formatDate(row.updated_at) }}</td>
             <td class="px-4 py-3">
-              <button class="text-blue-600 hover:underline text-xs mr-3" @click="openEdit(row)">编辑</button>
+              <button class="text-blue-600 hover:underline text-xs mr-3" @click="openEdit(row)">{{ $t('common.edit') }}</button>
               <button class="text-emerald-600 hover:underline text-xs mr-3" @click="toggleStatus(row)">
-                {{ row.status === 1 ? '停用' : '启用' }}
+                {{ row.status === 1 ? $t('common.disabled') : $t('common.enabled') }}
               </button>
-              <button class="text-red-500 hover:underline text-xs" @click="remove(row.id)">删除</button>
+              <button class="text-red-500 hover:underline text-xs" @click="remove(row.id)">{{ $t('common.delete') }}</button>
             </td>
           </tr>
           <tr v-if="!categories.length">
-            <td colspan="6" class="px-4 py-12 text-center text-slate-400">暂无分类</td>
+            <td colspan="6" class="px-4 py-12 text-center text-slate-400">{{ $t('category.noCategory') }}</td>
           </tr>
         </tbody>
       </table>
@@ -53,19 +53,19 @@
 
     <div v-if="showDialog" class="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4">
       <div class="w-full max-w-lg rounded-2xl bg-white shadow-xl p-6">
-        <h3 class="text-lg font-semibold text-slate-900 mb-4">{{ editingID ? '编辑分类' : '新增分类' }}</h3>
+        <h3 class="text-lg font-semibold text-slate-900 mb-4">{{ editingID ? $t('category.editTitle') : $t('category.addTitle') }}</h3>
         <div class="space-y-4">
           <div>
-            <label class="block text-sm text-slate-600 mb-1">分类名称</label>
+            <label class="block text-sm text-slate-600 mb-1">{{ $t('category.name') }}</label>
             <input
               v-model.trim="form.name"
               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500"
-              placeholder="请输入分类名称"
+              :placeholder="$t('category.namePlaceholder')"
             />
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-sm text-slate-600 mb-1">排序</label>
+              <label class="block text-sm text-slate-600 mb-1">{{ $t('category.sort') }}</label>
               <input
                 v-model.number="form.sort"
                 type="number"
@@ -74,22 +74,22 @@
               />
             </div>
             <div>
-              <label class="block text-sm text-slate-600 mb-1">状态</label>
+              <label class="block text-sm text-slate-600 mb-1">{{ $t('common.status') }}</label>
               <select
                 v-model.number="form.status"
                 class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500"
               >
-                <option :value="1">启用</option>
-                <option :value="0">停用</option>
+                <option :value="1">{{ $t('common.enabled') }}</option>
+                <option :value="0">{{ $t('common.disabled') }}</option>
               </select>
             </div>
           </div>
           <div>
-            <label class="block text-sm text-slate-600 mb-1">图标（可选）</label>
+            <label class="block text-sm text-slate-600 mb-1">{{ $t('category.icon') }}</label>
             <input
               v-model.trim="form.icon"
               class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500"
-              placeholder="图标 URL"
+              :placeholder="$t('category.iconUrl')"
             />
           </div>
         </div>
@@ -98,14 +98,14 @@
             class="flex-1 border border-slate-200 rounded-xl py-2.5 text-sm text-slate-600 hover:bg-slate-50"
             @click="closeDialog"
           >
-            取消
+            {{ $t('common.cancel') }}
           </button>
           <button
             class="flex-1 bg-blue-700 text-white rounded-xl py-2.5 text-sm hover:bg-blue-600 disabled:opacity-50"
             :disabled="saving"
             @click="submit"
           >
-            {{ saving ? '提交中...' : '保存' }}
+            {{ saving ? $t('common.submitting') : $t('common.save') }}
           </button>
         </div>
       </div>
@@ -115,9 +115,12 @@
 
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { createCategory, deleteCategory, getCategories, updateCategory } from '@/api/plugins'
 import { notify } from '@/utils/notify'
 import { confirmAction } from '@/utils/dialog'
+
+const { t } = useI18n()
 
 type CategoryRow = {
   id: number
@@ -180,7 +183,7 @@ function closeDialog() {
 async function submit() {
   const name = form.value.name.trim()
   if (!name) {
-    notify('请输入分类名称')
+    notify(t('category.nameRequired'))
     return
   }
   saving.value = true
@@ -211,7 +214,7 @@ async function toggleStatus(row: CategoryRow) {
 }
 
 async function remove(id: number) {
-  if (!confirmAction('确认删除该分类？')) return
+  if (!confirmAction(t('category.confirmDelete'))) return
   await deleteCategory(id)
   await loadCategories()
 }

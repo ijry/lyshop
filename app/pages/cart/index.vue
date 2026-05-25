@@ -3,8 +3,8 @@
     <!-- Empty state -->
     <view v-if="!items.length" class="flex flex-col items-center pt-200rpx">
       <u-icon name="shopping-cart" size="60" color="#ccc" />
-      <text class="text-gray-400 text-28rpx mt-24rpx mb-24rpx">购物车是空的</text>
-      <u-button text="去逛逛" size="small" type="primary"
+      <text class="text-gray-400 text-28rpx mt-24rpx mb-24rpx">{{ $t('cart.empty') }}</text>
+      <u-button :text="$t('cart.goShopping')" size="small" type="primary"
         @click="uni.switchTab({url:'/pages/product/list'})" />
     </view>
 
@@ -51,7 +51,7 @@
 
     <!-- Recommend -->
     <view style="padding: 12px 16px 20px;">
-      <text :style="{ fontSize: '15px', fontWeight: '700', color: 'var(--app-text-primary)', display: 'block', marginBottom: '12px' }">猜你喜欢</text>
+      <text :style="{ fontSize: '15px', fontWeight: '700', color: 'var(--app-text-primary)', display: 'block', marginBottom: '12px' }">{{ $t('cart.guessYouLike') }}</text>
       <view style="display: flex; flex-wrap: wrap; margin: 0 -5px;">
         <view v-for="p in recommends" :key="p.product_id"
           @click="uni.navigateTo({url:`/pages/product/detail?id=${p.product_id}`})"
@@ -73,8 +73,7 @@
     <!-- Bottom checkout bar -->
     <view v-if="items.length"
       class="fixed bottom-0 left-0 right-0 z-100 px-30rpx py-20rpx flex items-center justify-between"
-      :style="{ background: 'var(--app-card-bg)', borderTop: '1px solid var(--app-border-color)' }"
-      :style="{paddingBottom: 'calc(20rpx + env(safe-area-inset-bottom))'}">
+      :style="{ background: 'var(--app-card-bg)', borderTop: '1px solid var(--app-border-color)', paddingBottom: 'calc(20rpx + env(safe-area-inset-bottom))' }">
       <view class="flex items-center gap-24rpx">
         <view class="flex items-center" @click="toggleCheckAll">
           <view
@@ -83,14 +82,14 @@
           >
             <u-icon v-if="allChecked" name="checkmark" size="14" color="#fff" />
           </view>
-          <text class="text-24rpx text-gray-600">全选</text>
+          <text class="text-24rpx text-gray-600">{{ $t('cart.selectAll') }}</text>
         </view>
         <view class="flex items-baseline">
-          <text class="text-26rpx text-gray-500">合计：</text>
+          <text class="text-26rpx text-gray-500">{{ $t('cart.total') }}</text>
           <text class="text-36rpx text-red-500 font-700 ml-4rpx">¥{{ selectedTotal.toFixed(2) }}</text>
         </view>
       </view>
-      <u-button type="primary" :text="`结算(${selectedCount})`" shape="circle"
+      <u-button type="primary" :text="$t('cart.checkout') + selectedCount + ')'" shape="circle"
         :disabled="selectedCount === 0" :custom-style="{width: '220rpx'}" @click="checkout" />
     </view>
   </view>
@@ -98,7 +97,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { get, post } from '@/utils/request'
+
+const { t } = useI18n()
 
 const items = ref<any[]>([])
 const recommends = ref<any[]>([])
@@ -116,7 +118,7 @@ const allChecked = computed(() =>
 )
 
 function skuLabel(item: any) {
-  if (!item.sku?.attrs) return '默认规格'
+  if (!item.sku?.attrs) return t('cart.defaultSpec')
   try {
     const attrs = JSON.parse(item.sku.attrs)
     return attrs.map((a: any) => a.value).join(' / ')
@@ -163,7 +165,7 @@ function toggleCheckAll() {
 
 function checkout() {
   if (!checkedSkuIds.value.length) {
-    uni.showToast({ title: '请先勾选商品', icon: 'none' })
+    uni.showToast({ title: t('cart.selectFirst'), icon: 'none' })
     return
   }
   const ids = checkedSkuIds.value.join(',')

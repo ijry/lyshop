@@ -1,6 +1,6 @@
 <template>
   <view class="bg-gray-50 flex flex-col" style="height: 100vh; overflow: hidden;">
-    <u-navbar title="在线客服" :placeholder="true" />
+    <u-navbar :title="$t('chat.title')" :placeholder="true" />
 
     <!-- Messages -->
     <scroll-view
@@ -16,7 +16,7 @@
           <view class="w-120rpx h-120rpx rounded-full bg-blue-50 flex items-center justify-center mx-auto mb-20rpx">
             <u-icon name="chat" size="40" color="#1e40af" />
           </view>
-          <text class="text-gray-400 text-28rpx">您好！有什么可以帮您的？</text>
+          <text class="text-gray-400 text-28rpx">{{ $t('chat.greeting') }}</text>
         </view>
 
         <view v-for="m in messages" :key="m.id" class="mb-20rpx">
@@ -26,7 +26,7 @@
             <!-- Avatar -->
             <view :class="m.sender_type === 2 ? 'bg-blue-700' : 'bg-gray-300'"
               class="w-64rpx h-64rpx rounded-full flex-shrink-0 flex items-center justify-center">
-              <text class="text-white text-22rpx">{{ m.sender_type === 2 ? '客' : '我' }}</text>
+              <text class="text-white text-22rpx">{{ m.sender_type === 2 ? $t('chat.serviceAvatar') : $t('chat.userAvatar') }}</text>
             </view>
             <!-- Bubble -->
             <view :class="m.sender_type === 1
@@ -48,14 +48,14 @@
       :style="{paddingBottom: 'calc(16rpx + env(safe-area-inset-bottom))'}"
     >
       <view class="flex-1">
-        <u-input v-model="inputText" placeholder="输入消息..." border="surround" shape="circle"
+        <u-input v-model="inputText" :placeholder="$t('chat.inputPlaceholder')" border="surround" shape="circle"
           :maxlength="500"
           @confirm="sendMsg"
           confirmType="send"
           clearable
         />
       </view>
-      <u-button type="primary" text="发送" size="small" shape="circle"
+      <u-button type="primary" :text="$t('chat.send')" size="small" shape="circle"
         :disabled="!inputText.trim()" @click="sendMsg"
         :custom-style="{width: '120rpx'}" />
     </view>
@@ -64,7 +64,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { get } from '@/utils/request'
+
+const { t } = useI18n()
 
 const messages = ref<any[]>([])
 const inputText = ref('')
@@ -165,10 +168,10 @@ function sendMsg() {
 
 function scheduleLocalReply(content: string) {
   const replies = [
-    '您好，已收到您的消息，客服马上为您处理。',
-    '可以的，这个问题我们支持处理。',
-    '建议您在订单页查看物流进度，有问题我继续帮您。',
-    `关于“${content.slice(0, 8)}”，我这边继续为您跟进。`
+    t('chat.autoReply1'),
+    t('chat.autoReply2'),
+    t('chat.autoReply3'),
+    t('chat.autoReply4', { topic: content.slice(0, 8) }),
   ]
   setTimeout(() => {
     messages.value.push({

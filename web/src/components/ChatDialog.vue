@@ -6,15 +6,15 @@
       <div class="px-5 py-3 border-b border-gray-100 flex-between">
         <div class="flex items-center gap-2">
           <div class="w-2 h-2 bg-green-500 rounded-full" />
-          <span class="text-sm font-medium text-gray-700">客服在线</span>
+          <span class="text-sm font-medium text-gray-700">{{ $t('chatDialog.serviceOnline') }}</span>
         </div>
-        <button class="text-xs text-gray-400" @click="chat.close()">关闭</button>
+        <button class="text-xs text-gray-400" @click="chat.close()">{{ $t('chatDialog.close') }}</button>
       </div>
       <div ref="msgBox" class="flex-1 overflow-y-auto p-5 space-y-4 bg-gray-50">
         <div v-for="m in chat.messages" :key="m.id" :class="m.sender_type === 1 ? 'flex-row-reverse' : ''" class="flex items-end gap-3">
           <div :class="m.sender_type === 2 ? 'bg-red-600' : 'bg-gray-200'" class="w-8 h-8 rounded-full flex-center shrink-0">
             <span :class="m.sender_type === 2 ? 'text-white' : 'text-gray-600'" class="text-xs font-medium">
-              {{ m.sender_type === 2 ? '客' : '我' }}
+              {{ m.sender_type === 2 ? $t('chatDialog.agent') : $t('chatDialog.me') }}
             </span>
           </div>
           <div :class="m.sender_type === 1
@@ -26,8 +26,8 @@
         </div>
       </div>
       <div class="px-5 py-3 border-t border-gray-100 flex gap-3 bg-white">
-        <input v-model="chat.inputText" @keyup.enter="send" placeholder="输入消息..." class="input-base flex-1 !rounded-xl" />
-        <button @click="send" :disabled="!chat.inputText.trim()" class="btn-primary !px-6">发送</button>
+        <input v-model="chat.inputText" @keyup.enter="send" :placeholder="$t('chatDialog.inputPlaceholder')" class="input-base flex-1 !rounded-xl" />
+        <button @click="send" :disabled="!chat.inputText.trim()" class="btn-primary !px-6">{{ $t('chatDialog.send') }}</button>
       </div>
       </div>
     </div>

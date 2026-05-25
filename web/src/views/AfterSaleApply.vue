@@ -1,13 +1,13 @@
 <template>
   <div class="max-w-4xl mx-auto px-6 py-8" v-if="detail">
     <div class="flex items-center gap-3 mb-6">
-      <button class="text-slate-400 hover:text-slate-600 text-sm" @click="router.back()">← 返回</button>
-      <h1 class="text-xl font-bold text-gray-900">申请售后</h1>
+      <button class="text-slate-400 hover:text-slate-600 text-sm" @click="router.back()">← {{ $t('orderDetail.back') }}</button>
+      <h1 class="text-xl font-bold text-gray-900">{{ $t('afterSaleApply.title') }}</h1>
     </div>
 
     <div class="card p-5 mb-4">
-      <p class="text-sm text-gray-600">订单号：{{ detail.order_no }}</p>
-      <p class="text-xs text-gray-400 mt-1">请选择需要售后的商品及数量</p>
+      <p class="text-sm text-gray-600">{{ $t('afterSaleApply.orderNo') }}{{ detail.order_no }}</p>
+      <p class="text-xs text-gray-400 mt-1">{{ $t('afterSaleApply.selectItemsTip') }}</p>
     </div>
 
     <div class="space-y-4 mb-4">
@@ -16,9 +16,9 @@
           <img :src="item.cover" class="w-14 h-14 rounded-lg object-cover" />
           <div class="flex-1 min-w-0">
             <p class="text-sm text-gray-800 truncate">{{ item.title }}</p>
-            <p class="text-xs text-gray-400 mt-1">可退/换数量：{{ item.max_qty }}</p>
+            <p class="text-xs text-gray-400 mt-1">{{ $t('afterSaleApply.refundableQty') }}{{ item.max_qty }}</p>
             <div class="flex items-center gap-3 mt-3">
-              <label class="text-xs text-gray-500">申请数量</label>
+              <label class="text-xs text-gray-500">{{ $t('afterSaleApply.applyQty') }}</label>
               <input
                 type="number"
                 min="0"
@@ -34,37 +34,37 @@
 
     <div class="card p-5 mb-4">
       <div class="mb-3">
-        <p class="text-sm text-gray-700 mb-2">售后类型</p>
+        <p class="text-sm text-gray-700 mb-2">{{ $t('afterSaleApply.type') }}</p>
         <div class="flex gap-3">
           <button
             class="px-4 py-2 rounded-lg text-sm border"
             :class="form.case_type === 'return' ? 'border-red-300 bg-red-50 text-red-600' : 'border-gray-200 text-gray-600'"
             @click="form.case_type = 'return'"
           >
-            退货退款
+            {{ $t('afterSaleApply.typeRefund') }}
           </button>
           <button
             class="px-4 py-2 rounded-lg text-sm border"
             :class="form.case_type === 'exchange' ? 'border-red-300 bg-red-50 text-red-600' : 'border-gray-200 text-gray-600'"
             @click="form.case_type = 'exchange'"
           >
-            换货
+            {{ $t('afterSaleApply.typeExchange') }}
           </button>
         </div>
       </div>
 
       <div class="mb-3">
-        <p class="text-sm text-gray-700 mb-2">售后原因</p>
-        <input v-model="form.reason" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" placeholder="如：商品破损、尺寸不合适" />
+        <p class="text-sm text-gray-700 mb-2">{{ $t('afterSaleApply.reason') }}</p>
+        <input v-model="form.reason" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" :placeholder="$t('afterSaleApply.reasonPlaceholder')" />
       </div>
 
       <div class="mb-3">
-        <p class="text-sm text-gray-700 mb-2">补充说明</p>
-        <textarea v-model="form.apply_content" class="w-full min-h-[88px] border border-gray-200 rounded-lg px-3 py-2 text-sm" placeholder="可选：描述问题细节" />
+        <p class="text-sm text-gray-700 mb-2">{{ $t('afterSaleApply.description') }}</p>
+        <textarea v-model="form.apply_content" class="w-full min-h-[88px] border border-gray-200 rounded-lg px-3 py-2 text-sm" :placeholder="$t('afterSaleApply.descriptionPlaceholder')" />
       </div>
 
       <div>
-        <p class="text-sm text-gray-700 mb-2">凭证图片（最多9张）</p>
+        <p class="text-sm text-gray-700 mb-2">{{ $t('afterSaleApply.images') }}</p>
         <div class="flex flex-wrap gap-2">
           <div v-for="(img, idx) in form.apply_images" :key="img + idx" class="relative w-20 h-20">
             <img :src="img" class="w-20 h-20 rounded-lg object-cover border border-gray-100 cursor-pointer" @click="previewImage(img)" />
@@ -75,14 +75,14 @@
             class="w-20 h-20 rounded-lg border border-dashed border-gray-300 text-xs text-gray-500 hover:border-gray-400"
             @click="pickImages"
           >
-            + 添加
+            {{ $t('afterSaleApply.addImage') }}
           </button>
         </div>
       </div>
     </div>
 
     <button class="btn-primary w-full !py-3" :disabled="submitting" @click="submit">
-      {{ submitting ? '提交中...' : '提交售后申请' }}
+      {{ submitting ? $t('afterSaleApply.submitting') : $t('afterSaleApply.submit') }}
     </button>
   </div>
 </template>
@@ -90,8 +90,10 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { get, post, upload } from '@/api/request'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const detail = ref<any>(null)
@@ -148,7 +150,7 @@ async function submit() {
   if (submitting.value) return
   const reason = String(form.value.reason || '').trim()
   if (!reason) {
-    alertMsg('请填写售后原因')
+    alertMsg(t('afterSaleApply.reasonRequired'))
     return
   }
   const items = formItems.value
@@ -158,7 +160,7 @@ async function submit() {
     }))
     .filter((item: any) => item.qty > 0)
   if (!items.length) {
-    alertMsg('请至少选择一件商品并填写数量')
+    alertMsg(t('afterSaleApply.itemRequired'))
     return
   }
   submitting.value = true
@@ -171,14 +173,14 @@ async function submit() {
       items,
     })
     const caseID = Number(result?.id || 0)
-    alertMsg('售后申请已提交')
+    alertMsg(t('afterSaleApply.success'))
     if (caseID > 0) {
       router.replace(`/after-sales/${caseID}`)
     } else {
       router.replace(`/orders/${route.params.id}`)
     }
   } catch (error: any) {
-    alertMsg(error?.message || '提交失败')
+    alertMsg(error?.message || t('afterSaleApply.failed'))
   } finally {
     submitting.value = false
   }

@@ -12,45 +12,45 @@ const router = createRouter({
       meta: { requiresAuth: true },
       children: [
         { path: '', redirect: '/dashboard' },
-        { path: 'dashboard', name: '首页', component: () => import('@/views/Dashboard.vue') },
+        { path: 'dashboard', name: 'nav.home', component: () => import('@/views/Dashboard.vue'), meta: { titleKey: 'nav.home' } },
         // Product
-        { path: 'product/list',    name: '商品列表', component: () => import('@/views/product/ProductList.vue') },
-        { path: 'product/category',name: '商品分类', component: () => import('@/views/product/CategoryList.vue') },
-        { path: 'product/form',    name: '新增商品', component: () => import('@/views/product/ProductForm.vue') },
-        { path: 'product/form/:id',name: '编辑商品', component: () => import('@/views/product/ProductForm.vue') },
+        { path: 'product/list',    name: 'nav.productList', component: () => import('@/views/product/ProductList.vue'), meta: { titleKey: 'nav.productList' } },
+        { path: 'product/category',name: 'nav.productCategory', component: () => import('@/views/product/CategoryList.vue'), meta: { titleKey: 'nav.productCategory' } },
+        { path: 'product/form',    name: 'nav.productAdd', component: () => import('@/views/product/ProductForm.vue'), meta: { titleKey: 'nav.productAdd' } },
+        { path: 'product/form/:id',name: 'nav.productEdit', component: () => import('@/views/product/ProductForm.vue'), meta: { titleKey: 'nav.productEdit' } },
         // Order
-        { path: 'order/list', name: '订单列表', component: () => import('@/views/order/OrderList.vue') },
-        { path: 'order/detail/:id', name: '订单详情', component: () => import('@/views/order/OrderDetail.vue') },
-        { path: 'order/after-sale/list', name: '售后列表', component: () => import('@/views/order/AfterSaleList.vue') },
-        { path: 'order/after-sale/detail/:id', name: '售后详情', component: () => import('@/views/order/AfterSaleDetail.vue') },
-        { path: 'review/list', name: '评价列表', component: () => import('@/views/review/ReviewList.vue') },
+        { path: 'order/list', name: 'nav.orderList', component: () => import('@/views/order/OrderList.vue'), meta: { titleKey: 'nav.orderList' } },
+        { path: 'order/detail/:id', name: 'nav.orderDetail', component: () => import('@/views/order/OrderDetail.vue'), meta: { titleKey: 'nav.orderDetail' } },
+        { path: 'order/after-sale/list', name: 'nav.afterSaleList', component: () => import('@/views/order/AfterSaleList.vue'), meta: { titleKey: 'nav.afterSaleList' } },
+        { path: 'order/after-sale/detail/:id', name: 'nav.afterSaleDetail', component: () => import('@/views/order/AfterSaleDetail.vue'), meta: { titleKey: 'nav.afterSaleDetail' } },
+        { path: 'review/list', name: 'nav.reviewList', component: () => import('@/views/review/ReviewList.vue'), meta: { titleKey: 'nav.reviewList' } },
         // WMS
-        { path: 'wms/stock', name: '库存管理', component: () => import('@/views/wms/StockList.vue') },
+        { path: 'wms/stock', name: 'nav.stockManage', component: () => import('@/views/wms/StockList.vue'), meta: { titleKey: 'nav.stockManage' } },
         // Marketing
-        { path: 'marketing/coupon',   name: '优惠券管理', component: () => import('@/views/marketing/CouponList.vue') },
+        { path: 'marketing/coupon',   name: 'nav.couponManage', component: () => import('@/views/marketing/CouponList.vue'), meta: { titleKey: 'nav.couponManage' } },
         // VIP
-        { path: 'vip/plans', name: '会员套餐', component: () => import('@/views/vip/PlanList.vue') },
-        { path: 'vip/levels', name: '会员等级', component: () => import('@/views/vip/LevelList.vue') },
-        { path: 'vip/coupon-rules', name: '会员领券规则', component: () => import('@/views/vip/CouponRuleList.vue') },
-        { path: 'vip/sku-prices', name: '会员SKU价', component: () => import('@/views/vip/SkuPriceList.vue') },
+        { path: 'vip/plans', name: 'nav.vipPlan', component: () => import('@/views/vip/PlanList.vue'), meta: { titleKey: 'nav.vipPlan' } },
+        { path: 'vip/levels', name: 'nav.vipLevel', component: () => import('@/views/vip/LevelList.vue'), meta: { titleKey: 'nav.vipLevel' } },
+        { path: 'vip/coupon-rules', name: 'nav.vipCouponRule', component: () => import('@/views/vip/CouponRuleList.vue'), meta: { titleKey: 'nav.vipCouponRule' } },
+        { path: 'vip/sku-prices', name: 'nav.vipSkuPrice', component: () => import('@/views/vip/SkuPriceList.vue'), meta: { titleKey: 'nav.vipSkuPrice' } },
         // System
-        { path: 'system/site',   name: '站点设置', component: () => import('@/views/system/SiteSettings.vue') },
-        { path: 'system/config', name: '配置中心', component: () => import('@/views/system/PaymentConfig.vue') },
-        { path: 'system/admins', name: '管理员管理', component: () => import('@/views/system/AdminList.vue') },
-        { path: 'system/roles',  name: '角色管理', component: () => import('@/views/system/RoleList.vue') },
+        { path: 'system/site',   name: 'nav.siteSettings', component: () => import('@/views/system/SiteSettings.vue'), meta: { titleKey: 'nav.siteSettings' } },
+        { path: 'system/config', name: 'nav.configCenter', component: () => import('@/views/system/PaymentConfig.vue'), meta: { titleKey: 'nav.configCenter' } },
+        { path: 'system/admins', name: 'nav.adminManage', component: () => import('@/views/system/AdminList.vue'), meta: { titleKey: 'nav.adminManage' } },
+        { path: 'system/roles',  name: 'nav.roleManage', component: () => import('@/views/system/RoleList.vue'), meta: { titleKey: 'nav.roleManage' } },
         // IM
-        { path: 'im/sessions',  name: '客服会话', component: () => import('@/views/im/SessionList.vue') },
+        { path: 'im/sessions',  name: 'nav.imSession', component: () => import('@/views/im/SessionList.vue'), meta: { titleKey: 'nav.imSession' } },
         // AI
-        { path: 'ai/tasks',     name: 'AI生图',   component: () => import('@/views/ai/ImageGen.vue') },
-        { path: 'ai/models',    name: 'AI模型配置', component: () => import('@/views/ai/ImageGen.vue') },
+        { path: 'ai/tasks',     name: 'nav.aiImageGen',   component: () => import('@/views/ai/ImageGen.vue'), meta: { titleKey: 'nav.aiImageGen' } },
+        { path: 'ai/models',    name: 'nav.aiModelConfig', component: () => import('@/views/ai/ImageGen.vue'), meta: { titleKey: 'nav.aiModelConfig' } },
         // Decor
-        { path: 'decor/index',  name: '首页装修', component: () => import('@/views/decor/DecorEditor.vue') },
+        { path: 'decor/index',  name: 'nav.decorEditor', component: () => import('@/views/decor/DecorEditor.vue'), meta: { titleKey: 'nav.decorEditor' } },
         // Checkin
-        { path: 'checkin/rules', name: '签到规则', component: () => import('@/views/checkin/CheckinRules.vue') },
-        { path: 'checkin/logs',  name: '签到记录', component: () => import('@/views/checkin/CheckinLogs.vue') },
+        { path: 'checkin/rules', name: 'nav.checkinRules', component: () => import('@/views/checkin/CheckinRules.vue'), meta: { titleKey: 'nav.checkinRules' } },
+        { path: 'checkin/logs',  name: 'nav.checkinLogs', component: () => import('@/views/checkin/CheckinLogs.vue'), meta: { titleKey: 'nav.checkinLogs' } },
         // Message
-        { path: 'message/list', name: '消息列表', component: () => import('@/views/message/MessageList.vue') },
-        { path: 'message/send', name: '发送消息', component: () => import('@/views/message/MessageSend.vue') },
+        { path: 'message/list', name: 'nav.messageList', component: () => import('@/views/message/MessageList.vue'), meta: { titleKey: 'nav.messageList' } },
+        { path: 'message/send', name: 'nav.messageSend', component: () => import('@/views/message/MessageSend.vue'), meta: { titleKey: 'nav.messageSend' } },
       ]
     }
   ]

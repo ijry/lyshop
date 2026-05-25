@@ -1,8 +1,8 @@
 <template>
   <div>
-    <h2 class="text-xl font-semibold text-slate-800 mb-6">站点设置</h2>
+    <h2 class="text-xl font-semibold text-slate-800 mb-6">{{ $t('system.site.title') }}</h2>
 
-    <div v-if="loading" class="text-center py-12 text-slate-400">加载中...</div>
+    <div v-if="loading" class="text-center py-12 text-slate-400">{{ $t('common.loading') }}</div>
 
     <div v-else class="flex gap-6">
       <!-- Section tabs -->
@@ -24,33 +24,33 @@
           <!-- 基本信息 -->
           <div v-show="activeSection === 'basic'" class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1.5">站点名称</label>
-              <input v-model="form.site_name" type="text" placeholder="LYShop"
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ $t('system.site.siteName') }}</label>
+              <input v-model="form.site_name" type="text" :placeholder="$t('system.site.siteNameDefault')"
                 class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1.5">站点Logo URL</label>
-              <input v-model="form.site_logo" type="text" placeholder="留空则使用站点名首字母"
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ $t('system.site.logoUrl') }}</label>
+              <input v-model="form.site_logo" type="text" :placeholder="$t('system.site.logoHint')"
                 class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1.5">SEO 标题</label>
-              <input v-model="form.seo_title" type="text" placeholder="页面 title 标签"
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ $t('system.site.seoTitle') }}</label>
+              <input v-model="form.seo_title" type="text" :placeholder="$t('system.site.seoTitleHint')"
                 class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1.5">SEO 关键词</label>
-              <input v-model="form.seo_keywords" type="text" placeholder="多个关键词用英文逗号分隔"
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ $t('system.site.seoKeywords') }}</label>
+              <input v-model="form.seo_keywords" type="text" :placeholder="$t('system.site.seoKeywordsHint')"
                 class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1.5">SEO 描述</label>
-              <textarea v-model="form.seo_description" rows="3" placeholder="搜索引擎描述"
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ $t('system.site.seoDesc') }}</label>
+              <textarea v-model="form.seo_description" rows="3" :placeholder="$t('system.site.seoDescHint')"
                 class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm resize-y focus:outline-none focus:border-red-500" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1.5">ICP 备案号</label>
-              <input v-model="form.icp" type="text" placeholder="如：京ICP备XXXXXXXX号"
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ $t('system.site.icp') }}</label>
+              <input v-model="form.icp" type="text" :placeholder="$t('system.site.icpHint')"
                 class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500" />
             </div>
           </div>
@@ -58,29 +58,29 @@
           <!-- Hero 配置 -->
           <div v-show="activeSection === 'hero'" class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1.5">角标文字</label>
-              <input v-model="form.hero_badge" type="text" placeholder="限时秒杀进行中"
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ $t('system.site.badge') }}</label>
+              <input v-model="form.hero_badge" type="text" :placeholder="$t('system.site.badgeDefault')"
                 class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1.5">主标题</label>
-              <textarea v-model="form.hero_title" rows="2" placeholder="精选好物\n品质生活从这里开始"
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ $t('system.site.heroTitle') }}</label>
+              <textarea v-model="form.hero_title" rows="2" :placeholder="$t('system.site.heroTitleDefault')"
                 class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm resize-y focus:outline-none focus:border-red-500" />
-              <p class="text-xs text-slate-400 mt-1">用 \n 换行</p>
+              <p class="text-xs text-slate-400 mt-1">{{ $t('system.site.heroTitleHint') }}</p>
             </div>
             <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1.5">副标题</label>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ $t('system.site.heroSubtitle') }}</label>
               <input v-model="form.hero_subtitle" type="text"
                 class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500" />
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1.5">按钮文字</label>
-                <input v-model="form.hero_btn_text" type="text" placeholder="立即选购"
+                <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ $t('system.site.heroBtnText') }}</label>
+                <input v-model="form.hero_btn_text" type="text" :placeholder="$t('system.site.heroBtnTextDefault')"
                   class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500" />
               </div>
               <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1.5">按钮链接</label>
+                <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ $t('system.site.heroBtnLink') }}</label>
                 <input v-model="form.hero_btn_link" type="text" placeholder="/products"
                   class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500" />
               </div>
@@ -98,16 +98,16 @@
 
           <!-- 主题色 -->
           <div v-show="activeSection === 'theme'" class="space-y-5">
-            <p class="text-sm text-slate-500 mb-2">配置 PC 端主题色，保存后前端实时生效。</p>
+            <p class="text-sm text-slate-500 mb-2">{{ $t('system.site.themeColorHint') }}</p>
             <div class="grid grid-cols-2 gap-x-8 gap-y-4">
-              <ColorInput v-model="form.color_primary" label="主色" />
-              <ColorInput v-model="form.color_primary_light" label="主色（浅）" />
-              <ColorInput v-model="form.color_primary_dark" label="主色（深）" />
-              <ColorInput v-model="form.color_price" label="价格色" />
-              <ColorInput v-model="form.color_hero_from" label="Hero渐变起" />
-              <ColorInput v-model="form.color_hero_to" label="Hero渐变止" />
-              <ColorInput v-model="form.color_bg_page" label="页面背景" />
-              <ColorInput v-model="form.color_bg_footer" label="底栏背景" />
+              <ColorInput v-model="form.color_primary" :label="$t('system.site.colorPrimary')" />
+              <ColorInput v-model="form.color_primary_light" :label="$t('system.site.colorPrimaryLight')" />
+              <ColorInput v-model="form.color_primary_dark" :label="$t('system.site.colorPrimaryDark')" />
+              <ColorInput v-model="form.color_price" :label="$t('system.site.colorPrice')" />
+              <ColorInput v-model="form.color_hero_from" :label="$t('system.site.colorHeroFrom')" />
+              <ColorInput v-model="form.color_hero_to" :label="$t('system.site.colorHeroTo')" />
+              <ColorInput v-model="form.color_bg_page" :label="$t('system.site.colorPageBg')" />
+              <ColorInput v-model="form.color_bg_footer" :label="$t('system.site.colorFooterBg')" />
             </div>
             <!-- Theme preview -->
             <div class="mt-4 p-4 rounded-xl border border-slate-200" :style="{ background: form.color_bg_page }">
@@ -127,7 +127,7 @@
           <div class="flex items-center gap-3 mt-6 pt-4 border-t border-slate-100">
             <button @click="save" :disabled="saving"
               class="px-6 py-2.5 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 transition disabled:opacity-40">
-              {{ saving ? '保存中...' : '保存设置' }}
+              {{ saving ? $t('common.saving') : $t('system.site.saveSettings') }}
             </button>
             <span v-if="savedMsg" class="text-sm text-green-600">{{ savedMsg }}</span>
           </div>
@@ -139,13 +139,16 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import request from '@/api/request'
 import ColorInput from '@/views/decor/widgets/ColorInput.vue'
 
+const { t } = useI18n()
+
 const sections = [
-  { key: 'basic', title: '基本信息' },
-  { key: 'hero', title: '首页 Hero' },
-  { key: 'theme', title: '主题色（PC）' },
+  { key: 'basic', title: t('system.site.basicInfo') },
+  { key: 'hero', title: t('system.site.hero') },
+  { key: 'theme', title: t('system.site.themeColor') },
 ]
 
 const activeSection = ref('basic')
@@ -180,10 +183,10 @@ async function save() {
   saving.value = true
   try {
     await request.put('/site-settings', { ...form })
-    savedMsg.value = '保存成功'
+    savedMsg.value = t('common.saveSuccess')
     setTimeout(() => savedMsg.value = '', 2000)
   } catch (e: any) {
-    savedMsg.value = '保存失败: ' + (e.message || '')
+    savedMsg.value = t('system.site.saveFailed') + (e.message || '')
   } finally {
     saving.value = false
   }

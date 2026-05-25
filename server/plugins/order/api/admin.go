@@ -31,7 +31,7 @@ func adminListOrders(c *gin.Context) {
 	status, _ := strconv.ParseInt(c.Query("status"), 10, 8)
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	size, _ := strconv.Atoi(c.DefaultQuery("size", "20"))
-	list, total, err := ordersvc.AdminListOrders(c.Request.Context(), int8(status), page, size)
+	list, total, err := ordersvc.AdminListOrders(c, int8(status), page, size)
 	if err != nil {
 		response.Fail(c, 500, err.Error())
 		return
@@ -41,7 +41,7 @@ func adminListOrders(c *gin.Context) {
 
 func adminGetOrderDetail(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	detail, err := ordersvc.AdminGetOrderDetail(c.Request.Context(), id)
+	detail, err := ordersvc.AdminGetOrderDetail(c, id)
 	if err != nil {
 		response.Fail(c, 404, err.Error())
 		return
@@ -104,7 +104,7 @@ func adminListAfterSales(c *gin.Context) {
 	orderID, _ := strconv.ParseUint(c.Query("order_id"), 10, 64)
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	size, _ := strconv.Atoi(c.DefaultQuery("size", "20"))
-	list, total, err := ordersvc.ListAfterSales(c.Request.Context(), status, caseType, orderID, page, size)
+	list, total, err := ordersvc.ListAfterSales(c, status, caseType, orderID, page, size)
 	if err != nil {
 		response.Fail(c, 500, err.Error())
 		return
@@ -114,7 +114,7 @@ func adminListAfterSales(c *gin.Context) {
 
 func adminGetAfterSaleDetail(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	detail, err := ordersvc.GetAfterSale(c.Request.Context(), id)
+	detail, err := ordersvc.GetAfterSale(c, id)
 	if err != nil {
 		response.Fail(c, 404, err.Error())
 		return

@@ -3,16 +3,16 @@
     <view class="login-shell">
       <view class="brand-block">
         <image src="/static/lyshop-wordmark.svg" mode="aspectFit" class="brand-logo" />
-        <text class="brand-slogan">开源插件化商城</text>
+        <text class="brand-slogan">{{ $t('login.slogan') }}</text>
       </view>
 
       <view class="login-card">
         <view class="field-wrap">
-          <text class="field-label">手机号</text>
+          <text class="field-label">{{ $t('login.phone') }}</text>
           <view class="field-shell">
             <u-input
               v-model="form.phone"
-              placeholder="请输入手机号"
+              :placeholder="$t('login.phonePlaceholder')"
               type="number"
               :maxlength="11"
               border="none"
@@ -23,12 +23,12 @@
         </view>
 
         <view class="field-wrap">
-          <text class="field-label">验证码</text>
+          <text class="field-label">{{ $t('login.verifyCode') }}</text>
           <view class="verify-row">
             <view class="field-shell code-input">
               <u-input
                 v-model="form.code"
-                placeholder="请输入验证码"
+                :placeholder="$t('login.codePlaceholder')"
                 type="number"
                 :maxlength="6"
                 border="none"
@@ -40,7 +40,7 @@
               class="code-btn"
               size="small"
               :disabled="codeBtnDisabled"
-              :text="countdown > 0 ? `${countdown}s` : '获取验证码'"
+              :text="countdown > 0 ? `${countdown}s` : $t('login.getCode')"
               @click="sendCode"
               type="primary"
               plain
@@ -55,7 +55,7 @@
           type="primary"
           :loading="loading"
           :disabled="loginDisabled"
-          text="登 录"
+          :text="$t('login.submit')"
           @click="handleLogin"
           shape="circle"
           :custom-style="submitButtonStyle"
@@ -63,7 +63,7 @@
       </view>
 
       <view class="demo-tip">
-        <text>演示模式：输入任意手机号即可体验</text>
+        <text>{{ $t('login.demoHint') }}</text>
       </view>
     </view>
   </view>
@@ -71,7 +71,10 @@
 
 <script setup lang="ts">
 import { computed, onUnmounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { post } from '@/utils/request'
+
+const { t } = useI18n()
 
 const form = ref({ phone: '', code: '' })
 const loading = ref(false)
@@ -110,7 +113,7 @@ function clearCountdownTimer() {
 
 function assertPhoneValid() {
   if (!isPhoneValid.value) {
-    uni.showToast({ title: '手机号格式不正确', icon: 'none' })
+    uni.showToast({ title: t('login.phoneInvalid'), icon: 'none' })
     return false
   }
   return true
@@ -141,7 +144,7 @@ async function sendCode() {
 async function handleLogin() {
   if (!assertPhoneValid()) return
   if (form.value.code.length !== 6) {
-    uni.showToast({ title: '请输入6位验证码', icon: 'none' })
+    uni.showToast({ title: t('login.codeInvalid'), icon: 'none' })
     return
   }
   if (loading.value) return

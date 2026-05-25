@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-xl font-semibold text-slate-800">售后列表</h2>
+      <h2 class="text-xl font-semibold text-slate-800">{{ $t('afterSale.list.title') }}</h2>
     </div>
 
     <div class="flex gap-2 mb-4 flex-wrap">
@@ -20,12 +20,12 @@
       <table class="w-full text-sm">
         <thead class="bg-slate-50 border-b border-slate-100">
           <tr>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">售后单号</th>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">类型</th>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">订单</th>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">状态</th>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">申请时间</th>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">操作</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('afterSale.list.caseNo') }}</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('afterSale.list.type') }}</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('afterSale.list.order') }}</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('common.status') }}</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('afterSale.list.applyTime') }}</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('common.action') }}</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-50">
@@ -35,10 +35,10 @@
             <td class="px-4 py-3 text-slate-600">#{{ item.order_id }}</td>
             <td class="px-4 py-3"><span class="px-2 py-1 rounded-full text-xs bg-slate-100 text-slate-600">{{ statusText(item.status, item.status_label) }}</span></td>
             <td class="px-4 py-3 text-xs text-slate-400">{{ formatDate(item.created_at) }}</td>
-            <td class="px-4 py-3"><button class="text-blue-600 hover:underline text-xs" @click="goDetail(item.id)">查看</button></td>
+            <td class="px-4 py-3"><button class="text-blue-600 hover:underline text-xs" @click="goDetail(item.id)">{{ $t('common.view') }}</button></td>
           </tr>
           <tr v-if="!list.length">
-            <td colspan="6" class="px-4 py-12 text-center text-slate-400">暂无售后单</td>
+            <td colspan="6" class="px-4 py-12 text-center text-slate-400">{{ $t('afterSale.list.noData') }}</td>
           </tr>
         </tbody>
       </table>
@@ -47,27 +47,29 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { getAfterSales } from '@/api/plugins'
 import { afterSaleStatusLabel } from '@/utils/order-status'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const list = ref<any[]>([])
 const activeStatus = ref('')
 
-const tabs = [
-  { label: '全部', value: '' },
-  { label: '申请中', value: 'applied' },
-  { label: '待用户回寄', value: 'approved_wait_user_return' },
-  { label: '用户回寄中', value: 'user_returning' },
-  { label: '待退款', value: 'refund_pending' },
-  { label: '待补发', value: 'reship_pending' },
-  { label: '已完结', value: 'completed' },
-]
+const tabs = computed(() => [
+  { label: t('afterSale.list.all'), value: '' },
+  { label: t('afterSale.list.applied'), value: 'applied' },
+  { label: t('afterSale.list.waitReturn'), value: 'approved_wait_user_return' },
+  { label: t('afterSale.list.returning'), value: 'user_returning' },
+  { label: t('afterSale.list.waitRefund'), value: 'refund_pending' },
+  { label: t('afterSale.list.waitReship'), value: 'reship_pending' },
+  { label: t('afterSale.list.completed'), value: 'completed' },
+])
 
-const typeLabel = (v: string) => v === 'exchange' ? '换货' : '退货'
+const typeLabel = (v: string) => v === 'exchange' ? t('afterSale.list.exchange') : t('afterSale.list.return')
 const statusLabel = (v: string) => afterSaleStatusLabel(v)
 const formatDate = (v?: string) => v ? String(v).slice(0, 19).replace('T', ' ') : '-'
 

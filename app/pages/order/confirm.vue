@@ -1,19 +1,19 @@
 <template>
   <view class="min-h-screen bg-gray-50 pb-140rpx">
-    <u-navbar title="确认订单" :placeholder="true" />
+    <u-navbar :title="$t('orderConfirm.title')" :placeholder="true" />
 
     <!-- Address -->
     <view class="bg-white mx-20rpx mt-20rpx rounded-20rpx p-30rpx"
       style="box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);">
       <view class="flex items-center justify-between mb-16rpx">
-        <text class="text-28rpx font-600 text-gray-800">收货地址</text>
+        <text class="text-28rpx font-600 text-gray-800">{{ $t('orderConfirm.shippingAddress') }}</text>
         <view class="flex items-center gap-20rpx">
-          <text v-if="address" class="text-22rpx text-blue-500" @click="openAddressEditor(address)">编辑</text>
+          <text v-if="address" class="text-22rpx text-blue-500" @click="openAddressEditor(address)">{{ $t('orderConfirm.edit') }}</text>
           <u-icon name="arrow-right" size="16" color="#999" />
         </view>
       </view>
       <view v-if="!address" class="text-center py-20rpx">
-        <u-button size="small" text="添加收货地址" @click="openAddressEditor()" type="primary" plain shape="circle" />
+        <u-button size="small" :text="$t('orderConfirm.addAddress')" @click="openAddressEditor()" type="primary" plain shape="circle" />
       </view>
       <view v-else>
         <view class="flex items-center gap-16rpx">
@@ -29,7 +29,7 @@
     <!-- Payment method -->
     <view class="bg-white mx-20rpx mt-20rpx rounded-20rpx p-30rpx"
       style="box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);">
-      <text class="text-28rpx font-600 text-gray-800 block mb-20rpx">支付方式</text>
+      <text class="text-28rpx font-600 text-gray-800 block mb-20rpx">{{ $t('orderConfirm.paymentMethod') }}</text>
       <view class="flex gap-20rpx">
         <view v-for="m in payMethods" :key="m.value"
           @click="payMethod = m.value"
@@ -45,43 +45,43 @@
     <!-- Remark -->
     <view class="bg-white mx-20rpx mt-20rpx rounded-20rpx p-30rpx"
       style="box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);">
-      <u-input v-model="remark" placeholder="备注（选填）" border="none" />
+      <u-input v-model="remark" :placeholder="$t('orderConfirm.remark')" border="none" />
     </view>
 
     <!-- Bottom bar -->
     <view class="fixed bottom-0 left-0 right-0 z-100 bg-white border-t-1 border-gray-100 px-30rpx py-20rpx flex items-center justify-between"
       :style="{paddingBottom: 'calc(20rpx + env(safe-area-inset-bottom))'}">
       <view class="flex items-baseline">
-        <text class="text-26rpx text-gray-500">应付：</text>
+        <text class="text-26rpx text-gray-500">{{ $t('orderConfirm.amountDue') }}</text>
         <text class="text-36rpx text-red-500 font-700">¥--</text>
       </view>
-      <u-button type="primary" text="提交订单" :loading="submitting" @click="submit"
+      <u-button type="primary" :text="$t('orderConfirm.submitOrder')" :loading="submitting" @click="submit"
         shape="circle" :custom-style="{width: '240rpx'}" />
     </view>
 
     <!-- Address popup -->
     <u-popup :show="showAddressForm" mode="bottom" round="20" @close="closeAddressEditor">
       <view class="p-40rpx">
-        <text class="text-32rpx font-600 text-gray-800 block mb-30rpx">{{ editingAddressID ? '编辑收货地址' : '添加收货地址' }}</text>
+        <text class="text-32rpx font-600 text-gray-800 block mb-30rpx">{{ editingAddressID ? $t('orderConfirm.editAddress') : $t('orderConfirm.addNewAddress') }}</text>
         <view class="mb-24rpx">
-          <u-input v-model="addrForm.name" placeholder="收货人姓名" border="surround" shape="circle" />
+          <u-input v-model="addrForm.name" :placeholder="$t('orderConfirm.recipientName')" border="surround" shape="circle" />
         </view>
         <view class="mb-24rpx">
-          <u-input v-model="addrForm.phone" placeholder="手机号" type="number" border="surround" shape="circle" />
+          <u-input v-model="addrForm.phone" :placeholder="$t('orderConfirm.phone')" type="number" border="surround" shape="circle" />
         </view>
         <view class="mb-24rpx">
           <view @click="showRegionPicker = true">
-            <u-input :modelValue="regionText" placeholder="省/市/区" border="surround" shape="circle" readonly />
+            <u-input :modelValue="regionText" :placeholder="$t('orderConfirm.region')" border="surround" shape="circle" readonly />
           </view>
         </view>
         <view class="mb-30rpx">
-          <u-input v-model="addrForm.detail" placeholder="详细地址" border="surround" shape="circle" />
+          <u-input v-model="addrForm.detail" :placeholder="$t('orderConfirm.detailAddress')" border="surround" shape="circle" />
         </view>
         <view class="flex items-center justify-between mb-30rpx">
-          <text class="text-24rpx text-gray-500">设为默认地址</text>
+          <text class="text-24rpx text-gray-500">{{ $t('orderConfirm.setDefault') }}</text>
           <u-switch v-model="isDefault" />
         </view>
-        <u-button type="primary" text="保存地址" @click="saveAddress" shape="circle" />
+        <u-button type="primary" :text="$t('orderConfirm.saveAddress')" @click="saveAddress" shape="circle" />
       </view>
     </u-popup>
 
@@ -100,7 +100,10 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { get, post, put } from '@/utils/request'
+
+const { t } = useI18n()
 
 const address = ref<any>(null)
 const payMethod = ref('wechat')
@@ -132,10 +135,10 @@ const regionOptions = [
 ]
 const regionText = computed(() => [addrForm.value.province, addrForm.value.city, addrForm.value.district].filter(Boolean).join(' / '))
 
-const payMethods = [
-  { label: '微信支付', value: 'wechat' },
-  { label: '支付宝', value: 'alipay' },
-]
+const payMethods = computed(() => [
+  { label: t('orderConfirm.wechatPay'), value: 'wechat' },
+  { label: t('orderConfirm.alipay'), value: 'alipay' },
+])
 
 let skuIds: number[] = []
 
@@ -197,10 +200,10 @@ function onRegionConfirm(values: string[]) {
 }
 
 function validateAddress() {
-  if (!addrForm.value.name.trim()) return '请输入收货人姓名'
-  if (!/^1\d{10}$/.test(addrForm.value.phone)) return '请输入正确手机号'
-  if (!addrForm.value.province || !addrForm.value.city || !addrForm.value.district) return '请选择省市区'
-  if (!addrForm.value.detail.trim()) return '请输入详细地址'
+  if (!addrForm.value.name.trim()) return t('orderConfirm.nameRequired')
+  if (!/^1\d{10}$/.test(addrForm.value.phone)) return t('orderConfirm.phoneInvalid')
+  if (!addrForm.value.province || !addrForm.value.city || !addrForm.value.district) return t('orderConfirm.regionRequired')
+  if (!addrForm.value.detail.trim()) return t('orderConfirm.addressRequired')
   return ''
 }
 
@@ -220,12 +223,12 @@ async function saveAddress() {
     await loadAddresses()
     closeAddressEditor()
   } catch {
-    uni.showToast({ title: '地址保存失败', icon: 'none' })
+    uni.showToast({ title: t('orderConfirm.saveFailed'), icon: 'none' })
   }
 }
 
 async function submit() {
-  if (!address.value) { uni.showToast({ title: '请添加收货地址', icon: 'none' }); return }
+  if (!address.value) { uni.showToast({ title: t('orderConfirm.addressRequired2'), icon: 'none' }); return }
   submitting.value = true
   try {
     await post<any>('/api/v1/orders', {
@@ -234,7 +237,7 @@ async function submit() {
       sku_ids: skuIds,
       remark: remark.value
     })
-    uni.showToast({ title: '下单成功', icon: 'success' })
+    uni.showToast({ title: t('orderConfirm.orderSuccess'), icon: 'success' })
     setTimeout(() => uni.switchTab({ url: '/pages/order/list' }), 1000)
   } catch {} finally {
     submitting.value = false

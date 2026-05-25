@@ -96,8 +96,8 @@ func normalizeName(name string) string {
 
 // Common validation errors.
 var (
-	ErrMissingCompany    = errors.New("请选择快递公司")
-	ErrMissingTrackingNo = errors.New("请填写快递单号")
-	ErrMissingRiderName  = errors.New("请填写骑手名称")
-	ErrMissingRiderPhone = errors.New("请填写骑手电话")
+	ErrMissingCompany    = errors.New("delivery.err.expressRequired")
+	ErrMissingTrackingNo = errors.New("delivery.err.trackingRequired")
+	ErrMissingRiderName  = errors.New("delivery.err.riderNameRequired")
+	ErrMissingRiderPhone = errors.New("delivery.err.riderPhoneRequired")
 )

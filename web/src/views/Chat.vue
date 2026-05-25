@@ -1,14 +1,14 @@
 <template>
   <div class="max-w-3xl mx-auto px-6 py-8">
-    <h1 class="text-xl font-bold text-gray-900 mb-6">在线客服</h1>
+    <h1 class="text-xl font-bold text-gray-900 mb-6">{{ $t('chat.title') }}</h1>
     <div class="card flex flex-col" style="height: 600px;">
       <!-- Header -->
       <div class="px-5 py-3 border-b border-gray-100 flex-between">
         <div class="flex items-center gap-2">
           <div class="w-2 h-2 bg-green-500 rounded-full" />
-          <span class="text-sm font-medium text-gray-700">客服在线</span>
+          <span class="text-sm font-medium text-gray-700">{{ $t('chat.serviceOnline') }}</span>
         </div>
-        <span class="text-xs text-gray-400">会话 #1</span>
+        <span class="text-xs text-gray-400">{{ $t('chat.sessionName') }}</span>
       </div>
 
       <!-- Messages -->
@@ -18,7 +18,7 @@
           <div class="w-16 h-16 rounded-full bg-red-50 flex-center mb-3">
             <div class="i-carbon-chat text-3xl text-red-500" />
           </div>
-          <p class="text-gray-400 text-sm">您好！有什么可以帮您的？</p>
+          <p class="text-gray-400 text-sm">{{ $t('chat.welcomeMessage') }}</p>
         </div>
 
         <div v-for="m in messages" :key="m.id"
@@ -27,7 +27,7 @@
           <div :class="m.sender_type === 2 ? 'bg-red-600' : 'bg-gray-200'"
             class="w-8 h-8 rounded-full flex-center shrink-0">
             <span :class="m.sender_type === 2 ? 'text-white' : 'text-gray-600'" class="text-xs font-medium">
-              {{ m.sender_type === 2 ? '客' : '我' }}
+              {{ m.sender_type === 2 ? $t('chat.agent') : $t('chat.me') }}
             </span>
           </div>
           <div :class="m.sender_type === 1
@@ -42,9 +42,9 @@
       <!-- Input -->
       <div class="px-5 py-3 border-t border-gray-100 flex gap-3">
         <input v-model="inputText" @keyup.enter="send"
-          placeholder="输入消息..."
+          :placeholder="$t('chat.inputPlaceholder')"
           class="input-base flex-1 !rounded-xl" />
-        <button @click="send" :disabled="!inputText.trim()" class="btn-primary !px-6">发送</button>
+        <button @click="send" :disabled="!inputText.trim()" class="btn-primary !px-6">{{ $t('chat.send') }}</button>
       </div>
     </div>
   </div>

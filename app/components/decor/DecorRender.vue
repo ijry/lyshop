@@ -65,7 +65,7 @@
           style="display: flex; align-items: center; justify-content: space-between; padding: 16px 4px 12px;"
         >
           <text style="font-size: 16px; font-weight: 700; color: #111827;">{{ comp.props.title }}</text>
-          <text style="font-size: 12px; color: #9ca3af;">查看全部 ></text>
+          <text style="font-size: 12px; color: #9ca3af;">{{ $t('decor.viewAll') }}</text>
         </view>
         <u-waterfall
           :key="`${comp.id}-${waterfallVersions[comp.id] || 0}`"
@@ -95,7 +95,7 @@
                   </text>
                   <view style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px;">
                     <text style="font-size: 16px; color: #dc2626; font-weight: 700;">¥{{ product.price }}</text>
-                    <text style="font-size: 10px; color: #9ca3af;">{{ product.sales || 0 }}付款</text>
+                    <text style="font-size: 10px; color: #9ca3af;">{{ product.sales || 0 }}{{ $t('decor.pay') }}</text>
                   </view>
                 </view>
               </view>
@@ -124,7 +124,7 @@
                   </text>
                   <view style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px;">
                     <text style="font-size: 16px; color: #dc2626; font-weight: 700;">¥{{ product.price }}</text>
-                    <text style="font-size: 10px; color: #9ca3af;">{{ product.sales || 0 }}付款</text>
+                    <text style="font-size: 10px; color: #9ca3af;">{{ product.sales || 0 }}{{ $t('decor.pay') }}</text>
                   </view>
                 </view>
               </view>
@@ -143,7 +143,7 @@
         />
       </view>
 
-      <!-- Grid 宫格 -->
+      <!-- Grid -->
       <view v-else-if="comp.type === 'grid'" class="bg-white mb-16rpx py-20rpx">
         <view :style="{ display: 'flex', flexWrap: 'wrap' }">
           <view v-for="item in (comp.props?.items || [])" :key="item.title"
@@ -170,10 +170,10 @@
         <view style="border-radius: 12px; padding: 16px 20px; background: linear-gradient(135deg, #dc2626 0%, #ea580c 100%);">
           <view style="display: flex; align-items: center; justify-content: space-between;">
             <view>
-              <text style="color: #fff; font-size: 17px; font-weight: 700;">限时秒杀</text>
-              <text style="color: rgba(255,255,255,0.8); font-size: 11px; margin-left: 8px;">抢购进行中</text>
+              <text style="color: #fff; font-size: 17px; font-weight: 700;">{{ $t('decor.seckill') }}</text>
+              <text style="color: rgba(255,255,255,0.8); font-size: 11px; margin-left: 8px;">{{ $t('decor.seckillOngoing') }}</text>
             </view>
-            <text style="color: rgba(255,255,255,0.8); font-size: 12px;">更多 ></text>
+            <text style="color: rgba(255,255,255,0.8); font-size: 12px;">{{ $t('decor.more') }}</text>
           </view>
         </view>
       </view>

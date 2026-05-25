@@ -17,16 +17,16 @@ func AdminLogin(ctx context.Context, username, password string) (string, error) 
 	var admin model.Admin
 	err := db.DB.WithContext(ctx).Where("username = ?", username).First(&admin).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return "", errors.New("用户名或密码错误")
+		return "", errors.New("auth.credentialsInvalid")
 	}
 	if err != nil {
 		return "", err
 	}
 	if admin.Status == 0 {
-		return "", errors.New("账号已被禁用")
+		return "", errors.New("auth.accountDisabled")
 	}
 	if err = bcrypt.CompareHashAndPassword([]byte(admin.Password), []byte(password)); err != nil {
-		return "", errors.New("用户名或密码错误")
+		return "", errors.New("auth.credentialsInvalid")
 	}
 
 	var role model.Role

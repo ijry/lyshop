@@ -1,11 +1,11 @@
 <template>
   <view class="min-h-screen bg-gray-50 p-20rpx">
     <view v-if="loading && !favorites.length" class="flex justify-center py-80rpx">
-      <u-loading-icon text="加载中..." />
+      <u-loading-icon :text="$t('favorites.loading')" />
     </view>
 
     <view v-else-if="!favorites.length" class="text-center py-120rpx text-gray-400 text-28rpx">
-      暂无收藏商品
+      {{ $t('favorites.empty') }}
     </view>
 
     <view v-else>
@@ -30,12 +30,12 @@
               <text class="text-red-600 text-30rpx font-700">¥{{ item.price }}</text>
               <text v-if="item.origin_price" class="text-22rpx text-gray-400 line-through ml-10rpx">¥{{ item.origin_price }}</text>
             </view>
-            <u-button type="error" plain size="mini" text="取消收藏" @click="unfavorite(item, index)" />
+            <u-button type="error" plain size="mini" :text="$t('favorites.unfavorite')" @click="unfavorite(item, index)" />
           </view>
         </view>
       </view>
-      <view v-if="loading" class="text-center py-20rpx text-24rpx text-gray-400">加载中...</view>
-      <view v-else-if="finished" class="text-center py-20rpx text-24rpx text-gray-400">没有更多了</view>
+      <view v-if="loading" class="text-center py-20rpx text-24rpx text-gray-400">{{ $t('favorites.loading') }}</view>
+      <view v-else-if="finished" class="text-center py-20rpx text-24rpx text-gray-400">{{ $t('favorites.noMore') }}</view>
     </view>
   </view>
 </template>

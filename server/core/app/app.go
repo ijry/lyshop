@@ -13,6 +13,7 @@ import (
 	"github.com/ijry/lyshop/core/cache"
 	"github.com/ijry/lyshop/core/db"
 	driverStorage "github.com/ijry/lyshop/core/driver/storage"
+	"github.com/ijry/lyshop/core/i18n"
 	"github.com/ijry/lyshop/core/middleware"
 	"github.com/ijry/lyshop/core/plugin"
 	"github.com/ijry/lyshop/core/response"
@@ -50,6 +51,7 @@ func Init(cfgPath string) error {
 func Run() error {
 	r := gin.New()
 	r.Use(middleware.Logger(), middleware.CORS(), gin.Recovery())
+	r.Use(i18n.LocaleMiddleware())
 
 	// Public route groups (no auth)
 	front := r.Group("/api/v1")
@@ -134,7 +136,7 @@ func Run() error {
 	adminAuth.POST("/upload", func(c *gin.Context) {
 		fh, err := c.FormFile("file")
 		if err != nil {
-			response.Fail(c, 400, "请选择文件")
+			response.Fail(c, 400, i18n.T(c, "upload.err.fileRequired"))
 			return
 		}
 		driverName := strings.TrimSpace(c.Query("driver"))

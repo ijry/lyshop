@@ -1,11 +1,11 @@
 <template>
   <view style="min-height: 100vh; background: #f5f5f5;">
-    <u-navbar title="砍价免费拿" :placeholder="true" />
+    <u-navbar :title="$t('bargain.title')" :placeholder="true" />
 
     <!-- Header -->
     <view style="background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); padding: 20px 16px;">
-      <text style="color: #fff; font-size: 18px; font-weight: 700;">邀请好友砍价</text>
-      <text style="color: rgba(255,255,255,0.7); font-size: 12px; display: block; margin-top: 4px;">好友越多砍得越多，最低可砍至底价</text>
+      <text style="color: #fff; font-size: 18px; font-weight: 700;">{{ $t('bargain.subtitle') }}</text>
+      <text style="color: rgba(255,255,255,0.7); font-size: 12px; display: block; margin-top: 4px;">{{ $t('bargain.description') }}</text>
     </view>
 
     <!-- Product list -->
@@ -18,16 +18,16 @@
           <view style="flex: 1; margin-left: 12px;">
             <text style="font-size: 14px; color: #111; font-weight: 500; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ p.title }}</text>
             <view style="display: flex; align-items: baseline; gap: 6px; margin-top: 6px;">
-              <text style="font-size: 12px; color: #999;">原价</text>
+              <text style="font-size: 12px; color: #999;">{{ $t('bargain.originalPrice') }}</text>
               <text style="font-size: 14px; color: #999; text-decoration: line-through;">¥{{ p.origin_price }}</text>
-              <text style="font-size: 12px; color: #16a34a;">底价 ¥{{ p.floor_price }}</text>
+              <text style="font-size: 12px; color: #16a34a;">{{ $t('bargain.floorPrice') }} ¥{{ p.floor_price }}</text>
             </view>
           </view>
         </view>
         <!-- Progress -->
         <view style="margin-top: 12px;">
           <view style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-            <text style="font-size: 12px; color: #666;">已有 {{ p.current_helpers }}/{{ p.max_helpers }} 人帮砍</text>
+            <text style="font-size: 12px; color: #666;">{{ p.current_helpers }}/{{ p.max_helpers }} {{ $t('bargain.helpersCount') }}</text>
             <text style="font-size: 12px; color: #16a34a; font-weight: 600;">{{ Math.floor((p.current_helpers / p.max_helpers) * 100) }}%</text>
           </view>
           <view style="height: 8px; background: #dcfce7; border-radius: 4px; overflow: hidden;">
@@ -36,13 +36,13 @@
         </view>
         <view style="display: flex; justify-content: flex-end; margin-top: 10px;">
           <view style="background: #16a34a; color: #fff; font-size: 13px; padding: 6px 20px; border-radius: 14px; font-weight: 600;">
-            帮TA砍价
+            {{ $t('bargain.helpBargain') }}
           </view>
         </view>
       </view>
 
       <view v-if="!products.length" style="text-align: center; padding: 60px 0; color: #999;">
-        暂无砍价活动
+        {{ $t('bargain.empty') }}
       </view>
     </view>
   </view>

@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	driverStorage "github.com/ijry/lyshop/core/driver/storage"
+	"github.com/ijry/lyshop/core/i18n"
 	"github.com/ijry/lyshop/core/middleware"
 	"github.com/ijry/lyshop/core/response"
 	ordermodel "github.com/ijry/lyshop/plugins/order/model"
@@ -159,7 +160,7 @@ func myOrders(c *gin.Context) {
 	status, _ := strconv.ParseInt(c.Query("status"), 10, 8)
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	size, _ := strconv.Atoi(c.DefaultQuery("size", "20"))
-	list, total, err := ordersvc.ListOrders(c.Request.Context(), userID.(uint64), int8(status), page, size)
+	list, total, err := ordersvc.ListOrders(c, userID.(uint64), int8(status), page, size)
 	if err != nil {
 		response.Fail(c, 500, err.Error())
 		return
@@ -170,7 +171,7 @@ func myOrders(c *gin.Context) {
 func myOrderDetail(c *gin.Context) {
 	userID, _ := c.Get("user_id")
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	detail, err := ordersvc.GetOrderDetail(c.Request.Context(), userID.(uint64), id)
+	detail, err := ordersvc.GetOrderDetail(c, userID.(uint64), id)
 	if err != nil {
 		response.Fail(c, 404, err.Error())
 		return
@@ -182,7 +183,7 @@ func myShipmentTracks(c *gin.Context) {
 	userID, _ := c.Get("user_id")
 	orderID, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	shipmentID, _ := strconv.ParseUint(c.Param("shipment_id"), 10, 64)
-	if _, err := ordersvc.GetOrderDetail(c.Request.Context(), userID.(uint64), orderID); err != nil {
+	if _, err := ordersvc.GetOrderDetail(c, userID.(uint64), orderID); err != nil {
 		response.Fail(c, 404, err.Error())
 		return
 	}
@@ -258,13 +259,13 @@ func createAfterSale(c *gin.Context) {
 func myAfterSaleDetail(c *gin.Context) {
 	userID, _ := c.Get("user_id")
 	caseID, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	detail, err := ordersvc.GetAfterSale(c.Request.Context(), caseID)
+	detail, err := ordersvc.GetAfterSale(c, caseID)
 	if err != nil {
 		response.Fail(c, 404, err.Error())
 		return
 	}
 	if detail.UserID != userID.(uint64) {
-		response.Fail(c, 403, "无权限访问该售后单")
+		response.Fail(c, 403, i18n.T(c, "auth.noPermission"))
 		return
 	}
 	response.OK(c, detail)
@@ -282,13 +283,13 @@ func myAfterSaleReturnShipment(c *gin.Context) {
 		response.Fail(c, 400, err.Error())
 		return
 	}
-	detail, err := ordersvc.GetAfterSale(c.Request.Context(), caseID)
+	detail, err := ordersvc.GetAfterSale(c, caseID)
 	if err != nil {
 		response.Fail(c, 404, err.Error())
 		return
 	}
 	if detail.UserID != userID.(uint64) {
-		response.Fail(c, 403, "无权限操作该售后单")
+		response.Fail(c, 403, i18n.T(c, "auth.noPermission"))
 		return
 	}
 	if err := ordersvc.SubmitReturnShipment(c.Request.Context(), caseID, ordersvc.SubmitReturnShipmentReq{
@@ -306,7 +307,7 @@ func myAfterSaleReturnShipment(c *gin.Context) {
 func frontUploadFile(c *gin.Context) {
 	fh, err := c.FormFile("file")
 	if err != nil {
-		response.Fail(c, 400, "请选择文件")
+		response.Fail(c, 400, i18n.T(c, "upload.err.fileRequired"))
 		return
 	}
 	driverName := strings.TrimSpace(c.Query("driver"))
@@ -358,7 +359,7 @@ func reviewOrder(c *gin.Context) {
 		})
 	}
 	if len(items) == 0 {
-		detail, err := ordersvc.GetOrderDetail(c.Request.Context(), userID.(uint64), id)
+		detail, err := ordersvc.GetOrderDetail(c, userID.(uint64), id)
 		if err != nil {
 			response.Fail(c, 404, err.Error())
 			return

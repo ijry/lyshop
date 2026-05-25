@@ -2,7 +2,7 @@
   <div class="space-y-4">
     <!-- Height -->
     <div>
-      <label class="block text-xs text-slate-500 mb-1.5">轮播高度 (px)</label>
+      <label class="block text-xs text-slate-500 mb-1.5">{{ $t('decor.banner.height') }}</label>
       <div class="flex items-center gap-3">
         <input type="range" :value="modelValue.height" @input="updateField('height', Number(($event.target as HTMLInputElement).value))"
           min="150" max="600" step="10" class="flex-1 accent-blue-600" />
@@ -14,15 +14,15 @@
     <!-- Image list -->
     <div>
       <div class="flex items-center justify-between mb-2">
-        <label class="text-xs text-slate-500">轮播图片 ({{ modelValue.images.length }})</label>
-        <button @click="addImage" class="text-xs text-blue-600 hover:underline">+ 添加</button>
+        <label class="text-xs text-slate-500">{{ $t('decor.banner.images', { count: modelValue.images.length }) }}</label>
+        <button @click="addImage" class="text-xs text-blue-600 hover:underline">{{ $t('decor.banner.add') }}</button>
       </div>
 
       <div class="space-y-2">
         <div v-for="(img, idx) in modelValue.images" :key="idx"
           class="border border-slate-200 rounded-lg p-3 space-y-2.5">
           <div class="flex items-center justify-between">
-            <span class="text-xs text-slate-400">图片 {{ idx + 1 }}</span>
+            <span class="text-xs text-slate-400">{{ $t('decor.banner.imageLabel', { idx: idx + 1 }) }}</span>
             <div class="flex gap-0.5">
               <button @click="moveImage(idx, -1)" :disabled="idx === 0"
                 class="px-1.5 py-1 text-xs text-slate-400 hover:text-slate-600 disabled:opacity-30">↑</button>
@@ -41,24 +41,24 @@
             </div>
             <div v-else
               class="w-20 h-12 rounded-lg border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-300 text-xs shrink-0">
-              暂无
+              {{ $t('common.noImage') }}
             </div>
             <div class="flex flex-col gap-1">
               <button @click="triggerUpload(idx)" :disabled="uploading === idx"
                 class="px-2.5 py-1 text-xs bg-slate-100 rounded-lg hover:bg-slate-200 transition disabled:opacity-50">
-                {{ uploading === idx ? '上传中...' : '上传' }}
+                {{ uploading === idx ? $t('common.uploading') : $t('common.upload') }}
               </button>
             </div>
           </div>
 
           <!-- Link picker -->
-          <LinkPicker :modelValue="img.link" @update:modelValue="updateImage(idx, 'link', $event)" label="跳转链接" />
+          <LinkPicker :modelValue="img.link" @update:modelValue="updateImage(idx, 'link', $event)" :label="$t('decor.banner.link')" />
         </div>
       </div>
 
       <div v-if="!modelValue.images.length"
         class="text-center py-4 text-xs text-slate-300 border-2 border-dashed border-slate-200 rounded-lg">
-        暂无轮播图，点击上方添加
+        {{ $t('decor.banner.empty') }}
       </div>
     </div>
 

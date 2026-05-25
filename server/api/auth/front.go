@@ -1,7 +1,10 @@
 package auth
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
+	"github.com/ijry/lyshop/core/i18n"
 	"github.com/ijry/lyshop/core/middleware"
 	"github.com/ijry/lyshop/core/response"
 	authsvc "github.com/ijry/lyshop/service/auth"
@@ -21,12 +24,12 @@ func sendSMSCode(c *gin.Context) {
 		Phone string `json:"phone" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.Fail(c, 400, "手机号不能为空")
+		response.Fail(c, 400, i18n.T(c, "auth.phoneRequired"))
 		return
 	}
 	code, err := authsvc.SendSMSCode(c.Request.Context(), req.Phone)
 	if err != nil {
-		response.Fail(c, 500, "发送失败: "+err.Error())
+		response.Fail(c, 500, fmt.Sprintf(i18n.T(c, "auth.sendFailed"), err.Error()))
 		return
 	}
 	// dev_code is included for development/testing; remove or gate behind debug mode in production

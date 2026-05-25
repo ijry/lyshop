@@ -1,6 +1,6 @@
 <template>
   <view style="min-height: 100vh; background: #f5f5f5;">
-    <u-navbar title="消息中心" :placeholder="true" />
+    <u-navbar :title="$t('message.title')" :placeholder="true" />
 
     <view style="padding: 12px 16px;">
       <view v-for="g in groups" :key="g.key"
@@ -26,17 +26,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { get } from '@/utils/request'
+
+const { t } = useI18n()
 
 const unread = ref<Record<string, number>>({})
 
-const groups = [
-  { key: 'system', title: '系统通知', desc: '系统公告、升级通知', icon: '🔔', bg: '#fef2f2' },
-  { key: 'order', title: '订单消息', desc: '发货、签收、售后通知', icon: '📦', bg: '#eff6ff' },
-  { key: 'marketing', title: '营销消息', desc: '优惠券、活动、促销通知', icon: '🏷️', bg: '#fff7ed' },
-  { key: 'im', title: '客服消息', desc: '客服回复通知', icon: '💬', bg: '#f0fdf4' },
-]
+const groups = computed(() => [
+  { key: 'system', title: t('message.system'), desc: t('message.systemDesc'), icon: '🔔', bg: '#fef2f2' },
+  { key: 'order', title: t('message.order'), desc: t('message.orderDesc'), icon: '📦', bg: '#eff6ff' },
+  { key: 'marketing', title: t('message.marketing'), desc: t('message.marketingDesc'), icon: '🏷️', bg: '#fff7ed' },
+  { key: 'im', title: t('message.service'), desc: t('message.serviceDesc'), icon: '💬', bg: '#f0fdf4' },
+])
 
 onMounted(async () => {
   const data = await get<any>('/api/v1/messages/unread')

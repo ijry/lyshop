@@ -1,31 +1,31 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-6">
-      <h2 class="text-xl font-semibold text-slate-800">库存管理</h2>
+      <h2 class="text-xl font-semibold text-slate-800">{{ $t('stock.title') }}</h2>
     </div>
 
     <!-- Warehouse selector -->
     <div class="bg-white rounded-xl shadow-sm p-4 mb-4 flex gap-3 border border-slate-100">
       <select v-model="warehouseID" @change="loadStocks"
         class="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none">
-        <option value="">全部仓库</option>
+        <option value="">{{ $t('stock.allWarehouse') }}</option>
         <option v-for="w in warehouses" :key="w.id" :value="w.id">{{ w.name }}</option>
       </select>
       <button @click="showInbound = true"
-        class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-500 transition">入库</button>
+        class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-500 transition">{{ $t('stock.inbound') }}</button>
       <button @click="showOutbound = true"
-        class="px-4 py-2 bg-orange-500 text-white text-sm rounded-lg hover:bg-orange-400 transition">出库</button>
+        class="px-4 py-2 bg-orange-500 text-white text-sm rounded-lg hover:bg-orange-400 transition">{{ $t('stock.outbound') }}</button>
     </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
       <table class="w-full text-sm">
         <thead class="bg-slate-50 border-b border-slate-100">
           <tr>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">仓库ID</th>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">SKU ID</th>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">库存</th>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">安全库存</th>
-            <th class="px-4 py-3 text-left text-slate-500 font-medium">状态</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('stock.warehouseId') }}</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('stock.skuId') }}</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('stock.stockQty') }}</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('stock.safetyStock') }}</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('common.status') }}</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-50">
@@ -37,12 +37,12 @@
             <td class="px-4 py-3">
               <span :class="s.qty <= s.safe_qty ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-600'"
                 class="px-2 py-1 rounded-full text-xs">
-                {{ s.qty <= s.safe_qty ? '库存预警' : '正常' }}
+                {{ s.qty <= s.safe_qty ? $t('stock.warning') : $t('stock.normal') }}
               </span>
             </td>
           </tr>
           <tr v-if="!stocks.length">
-            <td colspan="5" class="px-4 py-12 text-center text-slate-400">暂无库存数据</td>
+            <td colspan="5" class="px-4 py-12 text-center text-slate-400">{{ $t('stock.noData') }}</td>
           </tr>
         </tbody>
       </table>
@@ -52,19 +52,19 @@
     <div v-if="showInbound || showOutbound"
       class="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div class="bg-white rounded-2xl p-6 w-80 shadow-xl">
-        <h3 class="font-semibold text-slate-800 mb-4">{{ showInbound ? '入库' : '出库' }}</h3>
+        <h3 class="font-semibold text-slate-800 mb-4">{{ showInbound ? $t('stock.inbound') : $t('stock.outbound') }}</h3>
         <div class="space-y-3">
-          <input v-model.number="opForm.warehouse_id" type="number" placeholder="仓库ID"
+          <input v-model.number="opForm.warehouse_id" type="number" :placeholder="$t('stock.warehouseId')"
             class="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm" />
-          <input v-model.number="opForm.sku_id" type="number" placeholder="SKU ID"
+          <input v-model.number="opForm.sku_id" type="number" :placeholder="$t('stock.skuId')"
             class="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm" />
-          <input v-model.number="opForm.qty" type="number" placeholder="数量"
+          <input v-model.number="opForm.qty" type="number" :placeholder="$t('stock.quantity')"
             class="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm" />
         </div>
         <div class="flex gap-3 mt-4">
-          <button @click="submitOp" class="flex-1 bg-blue-700 text-white py-2 rounded-xl text-sm hover:bg-blue-600">确认</button>
+          <button @click="submitOp" class="flex-1 bg-blue-700 text-white py-2 rounded-xl text-sm hover:bg-blue-600">{{ $t('common.confirm') }}</button>
           <button @click="showInbound = showOutbound = false"
-            class="flex-1 bg-slate-100 text-slate-600 py-2 rounded-xl text-sm hover:bg-slate-200">取消</button>
+            class="flex-1 bg-slate-100 text-slate-600 py-2 rounded-xl text-sm hover:bg-slate-200">{{ $t('common.cancel') }}</button>
         </div>
       </div>
     </div>

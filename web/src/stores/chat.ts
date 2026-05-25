@@ -1,4 +1,7 @@
 import { defineStore } from 'pinia'
+import { i18n } from '@/locales'
+
+const t = (key: string) => i18n.global.t(key)
 
 export const useChatStore = defineStore('chat', {
   state: () => ({
@@ -12,7 +15,7 @@ export const useChatStore = defineStore('chat', {
       this.source = source
       this.show = true
       if (!this.messages.length) {
-        this.messages.push({ id: Date.now(), sender_type: 2, content: '您好，有什么可以帮您？' })
+        this.messages.push({ id: Date.now(), sender_type: 2, content: t('chatStore.welcome') })
       }
     },
     close() {
@@ -26,7 +29,7 @@ export const useChatStore = defineStore('chat', {
         this.messages.push({
           id: Date.now() + 1,
           sender_type: 2,
-          content: '已收到，我这边继续帮您跟进。'
+          content: t('chatStore.followUp')
         })
       }, 400)
     },

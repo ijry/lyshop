@@ -1,11 +1,11 @@
 <template>
   <div>
-    <h2 class="text-xl font-semibold text-slate-800 mb-6">配置中心</h2>
+    <h2 class="text-xl font-semibold text-slate-800 mb-6">{{ $t('system.config.title') }}</h2>
 
-    <div v-if="loading" class="text-center py-12 text-slate-400">加载中...</div>
+    <div v-if="loading" class="text-center py-12 text-slate-400">{{ $t('common.loading') }}</div>
 
     <div v-else-if="!schemas.length" class="text-center py-12 text-slate-400">
-      暂无可配置的插件
+      {{ $t('system.config.noPlugin') }}
     </div>
 
     <div v-else class="flex gap-6">
@@ -25,15 +25,15 @@
       <div class="flex-1 max-w-xl" v-if="activeSchema">
         <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
           <div class="flex items-center justify-between mb-5">
-            <h3 class="text-base font-semibold text-slate-800">{{ activeSchema.title }} 配置</h3>
-            <span class="text-xs text-slate-400">插件: {{ activeSchema.plugin }}</span>
+            <h3 class="text-base font-semibold text-slate-800">{{ $t('system.config.pluginConfig', { title: activeSchema.title }) }}</h3>
+            <span class="text-xs text-slate-400">{{ $t('system.config.pluginLabel', { plugin: activeSchema.plugin }) }}</span>
           </div>
 
           <div class="space-y-4">
             <div v-for="field in activeSchema.fields" :key="field.key">
               <label class="block text-sm font-medium text-slate-700 mb-1.5">
                 {{ field.label }}
-                <span v-if="field.required" class="text-red-500 ml-0.5">*</span>
+                <span v-if="field.required" class="text-red-500 ml-0.5">{{ $t('system.config.required') }}</span>
               </label>
 
               <!-- select -->
@@ -47,7 +47,7 @@
                 <input type="checkbox" :id="field.key" v-model="configValues[field.key]"
                   true-value="true" false-value="false"
                   class="w-4 h-4 accent-red-600" />
-                <label :for="field.key" class="text-sm text-slate-600">{{ configValues[field.key] === 'true' ? '已开启' : '已关闭' }}</label>
+                <label :for="field.key" class="text-sm text-slate-600">{{ configValues[field.key] === 'true' ? $t('system.config.switchOn') : $t('system.config.switchOff') }}</label>
               </div>
 
               <!-- textarea -->
@@ -62,7 +62,7 @@
                   class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm pr-10 focus:outline-none focus:border-red-500" />
                 <button @click="showPw[field.key] = !showPw[field.key]"
                   class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs">
-                  {{ showPw[field.key] ? '隐藏' : '显示' }}
+                  {{ showPw[field.key] ? $t('system.config.hidePw') : $t('system.config.showPw') }}
                 </button>
               </div>
 
@@ -77,7 +77,7 @@
           <div class="flex items-center gap-3 mt-6">
             <button @click="save" :disabled="saving"
               class="px-6 py-2.5 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 transition disabled:opacity-40">
-              {{ saving ? '保存中...' : '保存配置' }}
+              {{ saving ? $t('common.saving') : $t('system.config.save') }}
             </button>
             <span v-if="savedMsg" class="text-sm text-green-600">{{ savedMsg }}</span>
           </div>
@@ -89,7 +89,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import request from '@/api/request'
+
+const { t } = useI18n()
 
 interface ConfigField {
   key: string; label: string; type: string;
@@ -130,10 +133,10 @@ async function save() {
   saving.value = true
   try {
     await request.put(`/config/${activePlugin.value}`, configValues.value)
-    savedMsg.value = '保存成功'
+    savedMsg.value = t('common.saveSuccess')
     setTimeout(() => savedMsg.value = '', 2000)
   } catch (e: any) {
-    savedMsg.value = '保存失败: ' + (e.message || '')
+    savedMsg.value = t('system.config.saveFailed') + (e.message || '')
   } finally {
     saving.value = false
   }
