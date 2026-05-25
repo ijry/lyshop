@@ -1,6 +1,6 @@
 <template>
   <div class="flex h-screen bg-slate-50">
-    <aside class="w-80 bg-slate-900 text-slate-100 flex flex-col shrink-0">
+    <aside class="w-64 bg-slate-900 text-slate-100 flex flex-col shrink-0">
       <div class="h-16 flex items-center px-6 gap-3 border-b border-slate-800">
         <img src="/lyshop-mark.svg" alt="LYShop" class="h-9 w-9 shrink-0" />
         <span class="text-lg font-bold text-white tracking-wide">LYShop</span>
@@ -20,10 +20,10 @@
               {{ group.title }}
             </button>
           </div>
-          <nav class="flex-1 overflow-y-auto py-4 px-3 sidebar-scroll">
+          <nav class="flex-1 overflow-y-auto py-4 px-3 bg-slate-100 sidebar-scroll-light">
             <template v-if="activeGroupMenus.length">
               <div v-for="menu in activeGroupMenus" :key="menu.path" class="mb-2">
-                <div v-if="menu.children?.length" class="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <div v-if="menu.children?.length" class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   {{ menu.title }}
                 </div>
                 <template v-if="menu.children?.length">
@@ -31,7 +31,7 @@
                     v-for="child in menu.children"
                     :key="child.path"
                     :to="child.path"
-                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition"
+                    class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition"
                     active-class="!bg-red-600 !text-white"
                   >
                     <span>{{ child.title }}</span>
@@ -40,14 +40,14 @@
                 <router-link
                   v-else
                   :to="menu.path"
-                  class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition"
+                  class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition"
                   active-class="!bg-red-600 !text-white"
                 >
                   <span>{{ menu.title }}</span>
                 </router-link>
               </div>
             </template>
-            <div v-else class="px-3 py-2 text-xs text-slate-500">暂无菜单</div>
+            <div v-else class="px-3 py-2 text-xs text-slate-400">暂无菜单</div>
           </nav>
         </div>
       </template>
@@ -241,5 +241,26 @@ onMounted(async () => {
 
 .sidebar-scroll::-webkit-scrollbar-thumb:hover {
   background: #64748b;
+}
+
+.sidebar-scroll-light {
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.sidebar-scroll-light::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sidebar-scroll-light::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.sidebar-scroll-light::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.sidebar-scroll-light::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 </style>
