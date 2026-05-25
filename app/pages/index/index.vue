@@ -29,13 +29,33 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { get } from '@/utils/request'
 import DecorRender from '@/components/decor/DecorRender.vue'
 
 const components = ref<any[]>([])
+const isPreview = ref(false)
+
+function onPreviewMessage(e: MessageEvent) {
+  if (e.data?.type === 'DECOR_PREVIEW_UPDATE' && e.data?.source === 'lyshop-admin') {
+    components.value = e.data.components || []
+  }
+}
 
 onMounted(async () => {
+  // Check if in admin preview iframe mode
+  const params = new URLSearchParams(window.location.search)
+  if (params.get('preview') === '1') {
+    isPreview.value = true
+    window.addEventListener('message', onPreviewMessage)
+    // Signal readiness to admin
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: 'DECOR_PREVIEW_READY', source: 'lyshop-app' }, '*')
+    }
+    return
+  }
+
+  // Normal mode: fetch from API
   const data = await get<any>('/api/v1/index/decor')
   if (data?.components) {
     if (Array.isArray(data.components)) {
@@ -75,6 +95,12 @@ onMounted(async () => {
       },
       { type: 'product_grid', id: 'default_grid', props: { source: 'hot', limit: 10, columns: 2 } }
     ]
+  }
+})
+
+onUnmounted(() => {
+  if (isPreview.value) {
+    window.removeEventListener('message', onPreviewMessage)
   }
 })
 </script>

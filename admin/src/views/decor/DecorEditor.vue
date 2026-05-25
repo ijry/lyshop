@@ -34,9 +34,9 @@
       </div>
     </div>
 
-    <div class="flex gap-4 h-full" style="min-height: 600px">
+    <div class="flex gap-4" style="height: calc(100vh - 160px); min-height: 600px">
       <!-- Component library -->
-      <div class="w-52 bg-white rounded-xl border border-slate-100 p-4 shrink-0">
+      <div class="w-48 bg-white rounded-xl border border-slate-100 p-4 shrink-0 overflow-y-auto">
         <p class="text-xs font-medium text-slate-500 mb-3">组件库（拖拽到画布）</p>
         <div class="space-y-2">
           <div v-for="comp in componentLib" :key="comp.type"
@@ -46,47 +46,64 @@
             <span>{{ comp.title }}</span>
           </div>
         </div>
-      </div>
 
-      <!-- Canvas -->
-      <div class="flex-1 bg-white rounded-xl border border-slate-100 p-4 overflow-y-auto"
-        @dragover.prevent @drop="onDrop">
-        <p class="text-xs text-slate-400 text-center mb-4">拖拽组件到此处</p>
-        <div class="max-w-sm mx-auto space-y-2">
+        <!-- Component list in canvas -->
+        <p class="text-xs font-medium text-slate-500 mt-6 mb-3">画布组件</p>
+        <div class="space-y-1" @dragover.prevent @drop="onDrop">
           <div v-for="(c, i) in components" :key="c.id"
             @click="selectComp(i)"
-            :class="selectedIndex === i ? 'ring-2 ring-blue-500' : 'hover:ring-1 hover:ring-slate-300'"
-            class="relative bg-slate-50 rounded-xl p-3 cursor-pointer transition">
-            <div class="flex justify-between items-center">
-              <span class="text-sm text-slate-700 font-medium">{{ compTitle(c.type) }}</span>
-              <div class="flex gap-1">
-                <button @click.stop="moveUp(i)" :disabled="i===0" class="text-slate-400 hover:text-slate-600 text-xs px-1">↑</button>
-                <button @click.stop="moveDown(i)" :disabled="i===components.length-1" class="text-slate-400 hover:text-slate-600 text-xs px-1">↓</button>
-                <button @click.stop="remove(i)" class="text-red-400 hover:text-red-600 text-xs px-1">×</button>
-              </div>
+            :class="selectedIndex === i ? 'bg-blue-50 border-blue-400 text-blue-700' : 'border-slate-200 text-slate-600 hover:border-slate-300'"
+            class="flex items-center justify-between px-2.5 py-1.5 border rounded-lg cursor-pointer transition text-xs">
+            <span class="truncate">{{ compTitle(c.type) }}</span>
+            <div class="flex gap-0.5 shrink-0">
+              <button @click.stop="moveUp(i)" :disabled="i===0" class="text-slate-400 hover:text-slate-600 px-0.5 disabled:opacity-30">↑</button>
+              <button @click.stop="moveDown(i)" :disabled="i===components.length-1" class="text-slate-400 hover:text-slate-600 px-0.5 disabled:opacity-30">↓</button>
+              <button @click.stop="remove(i)" class="text-red-400 hover:text-red-600 px-0.5">×</button>
             </div>
-            <p class="text-xs text-slate-400 mt-1">{{ compPreview(c) }}</p>
           </div>
-          <div v-if="!components.length" class="text-center py-16 text-slate-300 text-sm border-2 border-dashed border-slate-200 rounded-xl">
+          <div v-if="!components.length" class="text-center py-6 text-slate-300 text-xs border-2 border-dashed border-slate-200 rounded-lg">
             拖拽组件到这里
           </div>
         </div>
       </div>
 
-      <!-- Props panel -->
-      <div class="w-64 bg-white rounded-xl border border-slate-100 p-4 shrink-0">
+      <!-- Center: iframe preview -->
+      <div class="flex-1 flex flex-col bg-white rounded-xl border border-slate-100 overflow-hidden min-w-0">
+        <div class="flex items-center justify-between px-4 py-2 border-b border-slate-100 shrink-0">
+          <span class="text-xs text-slate-500">实时预览</span>
+          <div class="flex items-center gap-2">
+            <span v-if="!previewReady" class="text-xs text-orange-500">等待 H5 就绪...</span>
+            <span v-else class="text-xs text-emerald-500">已连接</span>
+            <button @click="refreshPreview" class="text-xs text-blue-600 hover:underline">刷新</button>
+          </div>
+        </div>
+        <div class="flex-1 flex items-start justify-center p-4 bg-slate-50 overflow-auto">
+          <div class="w-[375px] h-[667px] border border-slate-200 rounded-2xl overflow-hidden shadow-lg bg-white shrink-0">
+            <iframe
+              ref="previewIframe"
+              :src="previewUrl"
+              class="w-full h-full border-none"
+              @load="onIframeLoad"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: property editors -->
+      <div class="w-80 bg-white rounded-xl border border-slate-100 p-4 shrink-0 overflow-y-auto">
         <p class="text-xs font-medium text-slate-500 mb-3">属性配置</p>
-        <div v-if="selectedComp" class="space-y-3">
-          <div>
-            <label class="block text-xs text-slate-500 mb-1">组件类型</label>
+        <div v-if="selectedComp">
+          <div class="mb-4">
             <span class="text-sm font-medium text-slate-700">{{ compTitle(selectedComp.type) }}</span>
           </div>
-          <div>
-            <label class="block text-xs text-slate-500 mb-1">JSON 属性</label>
-            <textarea v-model="propsJson" rows="10"
-              class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono resize-none focus:outline-none focus:border-blue-400"
-              @change="updateProps" />
-          </div>
+          <BannerEditor       v-if="selectedComp.type === 'banner'"          v-model="selectedComp.props" />
+          <CategoryNavEditor  v-else-if="selectedComp.type === 'category_nav'"  v-model="selectedComp.props" />
+          <ProductGridEditor  v-else-if="selectedComp.type === 'product_grid'"  v-model="selectedComp.props" />
+          <NoticeEditor       v-else-if="selectedComp.type === 'notice'"        v-model="selectedComp.props" />
+          <ImageAdEditor      v-else-if="selectedComp.type === 'image_ad'"      v-model="selectedComp.props" />
+          <RichTextEditor     v-else-if="selectedComp.type === 'rich_text'"     v-model="selectedComp.props" />
+          <MarketingZoneEditor v-else-if="selectedComp.type === 'marketing_zone'" v-model="selectedComp.props" />
+          <SpacerEditor       v-else-if="selectedComp.type === 'spacer'"        v-model="selectedComp.props" />
         </div>
         <div v-else class="text-center py-8 text-slate-300 text-sm">选择组件编辑属性</div>
       </div>
@@ -95,45 +112,41 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import request from '@/api/request'
 import { notify } from '@/utils/notify'
 import { confirmAction, promptText } from '@/utils/dialog'
+import { componentLib, compTitleMap, createDefaultProps } from '@/types/decor'
+
+import BannerEditor from './editors/BannerEditor.vue'
+import CategoryNavEditor from './editors/CategoryNavEditor.vue'
+import ProductGridEditor from './editors/ProductGridEditor.vue'
+import NoticeEditor from './editors/NoticeEditor.vue'
+import ImageAdEditor from './editors/ImageAdEditor.vue'
+import RichTextEditor from './editors/RichTextEditor.vue'
+import MarketingZoneEditor from './editors/MarketingZoneEditor.vue'
+import SpacerEditor from './editors/SpacerEditor.vue'
 
 const components = ref<any[]>([])
 const variants = ref<any[]>([])
 const currentVariantKey = ref('default')
 const selectedIndex = ref<number | null>(null)
 const saving = ref(false)
-const propsJson = ref('')
+
+// iframe preview state
+const previewIframe = ref<HTMLIFrameElement>()
+const previewReady = ref(false)
+const previewUrl = import.meta.env.VITE_H5_PREVIEW_URL || 'http://localhost:5173/?preview=1'
 
 let draggedComp: any = null
 
-const componentLib = [
-  { type: 'banner',          title: '轮播图',   icon: '🖼' },
-  { type: 'category_nav',    title: '分类导航', icon: '📂' },
-  { type: 'product_grid',    title: '商品列表', icon: '🛍' },
-  { type: 'notice',          title: '公告栏',   icon: '📢' },
-  { type: 'image_ad',        title: '广告图',   icon: '🎯' },
-  { type: 'rich_text',       title: '富文本',   icon: '📝' },
-  { type: 'marketing_zone',  title: '营销区块', icon: '🏷' },
-  { type: 'spacer',          title: '间距',     icon: '↕' },
-]
-
-const compTitles: Record<string, string> = Object.fromEntries(componentLib.map(c => [c.type, c.title]))
-const compTitle = (type: string) => compTitles[type] || type
-
-const compPreview = (c: any) => {
-  if (c.type === 'banner') return `${c.props?.images?.length || 0} 张图片`
-  if (c.type === 'product_grid') return `来源: ${c.props?.source || 'hot'}, 限 ${c.props?.limit || 10} 条`
-  if (c.type === 'notice') return `${c.props?.items?.length || (c.props?.text ? 1 : 0)} 条公告`
-  return JSON.stringify(c.props || {}).slice(0, 40)
-}
+const compTitle = (type: string) => compTitleMap[type] || type
 
 const selectedComp = computed(() =>
   selectedIndex.value !== null ? components.value[selectedIndex.value] : null
 )
 
+// ---- Drag & Drop ----
 function dragStart(comp: any) { draggedComp = comp }
 
 function onDrop() {
@@ -141,45 +154,14 @@ function onDrop() {
   components.value.push({
     type: draggedComp.type,
     id: `c_${Date.now()}`,
-    props: defaultProps(draggedComp.type),
+    props: createDefaultProps(draggedComp.type),
   })
   draggedComp = null
 }
 
-function defaultProps(type: string): any {
-  const defaults: Record<string, any> = {
-    banner:       { images: [], height: 350 },
-    category_nav: { items: [] },
-    product_grid: { source: 'hot', limit: 10, columns: 2 },
-    notice:       {
-      items: [
-        { text: '欢迎来到 LYShop', link: '/pages/index/index' },
-        { text: '新人下单立减，优惠券限时领取', link: '/pages/marketing/coupon' },
-        { text: '精选好物每日上新，支持多端下单', link: '/pages/product/list' },
-      ],
-      color: '#f97316',
-      bgColor: '#fff7ed',
-      duration: 2500,
-      mode: 'link',
-    },
-    image_ad:     { url: '', link: '' },
-    rich_text:    { content: '' },
-    marketing_zone: { type: 'seckill' },
-    spacer:       { height: 16, background: '#ffffff' },
-  }
-  return defaults[type] || {}
-}
-
+// ---- Component operations ----
 function selectComp(i: number) {
   selectedIndex.value = i
-  propsJson.value = JSON.stringify(components.value[i].props, null, 2)
-}
-
-function updateProps() {
-  if (selectedIndex.value === null) return
-  try {
-    components.value[selectedIndex.value].props = JSON.parse(propsJson.value)
-  } catch {}
 }
 
 function moveUp(i: number) {
@@ -187,6 +169,7 @@ function moveUp(i: number) {
   const arr = [...components.value]
   ;[arr[i-1], arr[i]] = [arr[i], arr[i-1]]
   components.value = arr
+  if (selectedIndex.value === i) selectedIndex.value = i - 1
 }
 
 function moveDown(i: number) {
@@ -194,6 +177,7 @@ function moveDown(i: number) {
   const arr = [...components.value]
   ;[arr[i], arr[i+1]] = [arr[i+1], arr[i]]
   components.value = arr
+  if (selectedIndex.value === i) selectedIndex.value = i + 1
 }
 
 function remove(i: number) {
@@ -201,6 +185,42 @@ function remove(i: number) {
   if (selectedIndex.value === i) selectedIndex.value = null
 }
 
+// ---- iframe preview ----
+function sendPreviewUpdate() {
+  if (!previewReady.value || !previewIframe.value?.contentWindow) return
+  previewIframe.value.contentWindow.postMessage({
+    type: 'DECOR_PREVIEW_UPDATE',
+    source: 'lyshop-admin',
+    components: JSON.parse(JSON.stringify(components.value)),
+  }, '*')
+}
+
+function onPreviewMessage(e: MessageEvent) {
+  if (e.data?.type === 'DECOR_PREVIEW_READY' && e.data?.source === 'lyshop-app') {
+    previewReady.value = true
+    sendPreviewUpdate()
+  }
+}
+
+function onIframeLoad() {
+  // iframe might reload, reset readiness
+  previewReady.value = false
+}
+
+function refreshPreview() {
+  previewReady.value = false
+  if (previewIframe.value) {
+    previewIframe.value.src = previewUrl
+  }
+}
+
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
+watch(components, () => {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  debounceTimer = setTimeout(sendPreviewUpdate, 300)
+}, { deep: true })
+
+// ---- Variant management ----
 async function save() {
   saving.value = true
   try {
@@ -241,7 +261,6 @@ async function loadCurrentVariant() {
     components.value = []
   }
   selectedIndex.value = null
-  propsJson.value = ''
 }
 
 async function changeVariant() {
@@ -293,7 +312,13 @@ async function deleteVariant() {
 }
 
 onMounted(async () => {
+  window.addEventListener('message', onPreviewMessage)
   await loadVariants()
   await loadCurrentVariant()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('message', onPreviewMessage)
+  if (debounceTimer) clearTimeout(debounceTimer)
 })
 </script>
