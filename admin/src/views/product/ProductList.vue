@@ -102,9 +102,15 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { getProducts, getCategories, deleteProduct } from '@/api/plugins'
-import { getMenus } from '@/api/auth'
+import {
+  getMenus,
+  type AdminMenuGroupedResponse,
+  type AdminMenuItem,
+  type AdminMenuResponse,
+} from '@/api/auth'
 import ReviewManager from '@/components/review/ReviewManager.vue'
 import { useAuthStore } from '@/stores/auth'
+import { confirmAction } from '@/utils/dialog'
 
 const products = ref<any[]>([])
 const categories = ref<any[]>([])
@@ -124,6 +130,15 @@ function hasReviewMenu(rows: any[]): boolean {
   return false
 }
 
+function isGroupedResponse(data: AdminMenuResponse): data is AdminMenuGroupedResponse {
+  return !!data && !Array.isArray(data) && Array.isArray((data as AdminMenuGroupedResponse).groups)
+}
+
+function flattenMenus(rows: AdminMenuItem[]): AdminMenuItem[] {
+  const list = Array.isArray(rows) ? rows : []
+  return list.flatMap((row) => [row, ...flattenMenus(row.children || [])])
+}
+
 async function loadProducts() {
   const data: any = await getProducts(query.value)
   products.value = data.list || []
@@ -131,7 +146,7 @@ async function loadProducts() {
 }
 
 async function remove(id: number) {
-  if (!confirm('确认删除该商品？')) return
+  if (!confirmAction('确认删除该商品？')) return
   await deleteProduct(id)
   loadProducts()
 }
@@ -151,8 +166,11 @@ onMounted(async () => {
   getCategories().then((d: any) => categories.value = d || [])
   const canByPermission = auth.hasPermission('order:view')
   try {
-    const menus: any[] = await getMenus()
-    canManageReview.value = canByPermission || hasReviewMenu(menus)
+    const data = await getMenus()
+    const menuRows = isGroupedResponse(data)
+      ? flattenMenus(data.groups.flatMap((group) => group.menus || []))
+      : (Array.isArray(data) ? data : [])
+    canManageReview.value = canByPermission || hasReviewMenu(menuRows as any[])
   } catch {
     canManageReview.value = canByPermission
   }

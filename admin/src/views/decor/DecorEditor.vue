@@ -97,6 +97,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import request from '@/api/request'
+import { notify } from '@/utils/notify'
+import { confirmAction, promptText } from '@/utils/dialog'
 
 const components = ref<any[]>([])
 const variants = ref<any[]>([])
@@ -211,7 +213,7 @@ async function publish() {
   await save()
   await request.post(`/decor/index/publish?variant=${encodeURIComponent(currentVariantKey.value)}`)
   await loadVariants()
-  alert('已发布上线（单活发布）')
+  notify('已发布上线（单活发布）')
 }
 
 async function loadVariants() {
@@ -251,14 +253,14 @@ function toVariantKey(raw: string) {
 }
 
 async function copyVariant() {
-  const keyRaw = prompt('请输入新副本标识（如 spring_festival_2027）')
+  const keyRaw = promptText('请输入新副本标识（如 spring_festival_2027）')
   if (!keyRaw) return
   const newVariantKey = toVariantKey(keyRaw)
   if (!newVariantKey) {
-    alert('副本标识不合法')
+    notify('副本标识不合法')
     return
   }
-  const newVariantName = prompt('请输入新副本名称', `副本 ${newVariantKey}`) || `副本 ${newVariantKey}`
+  const newVariantName = promptText('请输入新副本名称', `副本 ${newVariantKey}`) || `副本 ${newVariantKey}`
   await request.post('/decor/index/copies', {
     from_variant_key: currentVariantKey.value,
     new_variant_key: newVariantKey,
@@ -271,7 +273,7 @@ async function copyVariant() {
 
 async function renameVariant() {
   const current = variants.value.find(v => v.variant_key === currentVariantKey.value)
-  const next = prompt('请输入副本名称', current?.variant_name || '')
+  const next = promptText('请输入副本名称', current?.variant_name || '')
   if (!next) return
   await request.put(`/decor/index/variants/${encodeURIComponent(currentVariantKey.value)}`, {
     variant_name: next,
@@ -281,10 +283,10 @@ async function renameVariant() {
 
 async function deleteVariant() {
   if (currentVariantKey.value === 'default') {
-    alert('默认副本不支持删除')
+    notify('默认副本不支持删除')
     return
   }
-  if (!confirm(`确认删除副本 ${currentVariantKey.value}？`)) return
+  if (!confirmAction(`确认删除副本 ${currentVariantKey.value}？`)) return
   await request.delete(`/decor/index/variants/${encodeURIComponent(currentVariantKey.value)}`)
   await loadVariants()
   await loadCurrentVariant()

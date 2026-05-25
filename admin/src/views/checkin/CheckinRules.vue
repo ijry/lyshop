@@ -41,6 +41,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import request from '@/api/request'
+import { notify } from '@/utils/notify'
 
 const rules = ref<any[]>([])
 
@@ -50,7 +51,7 @@ function addRule() {
 
 async function save() {
   await request.put('/checkin/rules', rules.value)
-  alert('保存成功')
+  notify('保存成功')
 }
 
 onMounted(async () => {

@@ -70,6 +70,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import request from '@/api/request'
+import { confirmAction } from '@/utils/dialog'
 
 const admins = ref<any[]>([])
 const roles = ref<any[]>([])
@@ -93,7 +94,7 @@ async function createAdmin() {
 }
 
 async function deleteAdmin(id: number) {
-  if (!confirm('确认删除？')) return
+  if (!confirmAction('确认删除？')) return
   await request.delete(`/admins/${id}`)
   loadData()
 }

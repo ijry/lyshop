@@ -39,12 +39,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import request from '@/api/request'
+import { notify } from '@/utils/notify'
 
 const form = ref({ group: 'system', user_id: 0, title: '', content: '' })
 
 async function send() {
   await request.post('/messages/send', form.value)
-  alert('发送成功')
+  notify('发送成功')
   form.value = { group: 'system', user_id: 0, title: '', content: '' }
 }
 </script>

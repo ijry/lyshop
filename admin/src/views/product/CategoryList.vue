@@ -116,6 +116,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { createCategory, deleteCategory, getCategories, updateCategory } from '@/api/plugins'
+import { notify } from '@/utils/notify'
+import { confirmAction } from '@/utils/dialog'
 
 type CategoryRow = {
   id: number
@@ -178,7 +180,7 @@ function closeDialog() {
 async function submit() {
   const name = form.value.name.trim()
   if (!name) {
-    alert('请输入分类名称')
+    notify('请输入分类名称')
     return
   }
   saving.value = true
@@ -209,7 +211,7 @@ async function toggleStatus(row: CategoryRow) {
 }
 
 async function remove(id: number) {
-  if (!confirm('确认删除该分类？')) return
+  if (!confirmAction('确认删除该分类？')) return
   await deleteCategory(id)
   await loadCategories()
 }

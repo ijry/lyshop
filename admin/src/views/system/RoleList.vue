@@ -69,6 +69,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import request from '@/api/request'
+import { confirmAction } from '@/utils/dialog'
 
 const roles = ref<any[]>([])
 const allPerms = ref<string[]>([])
@@ -114,7 +115,7 @@ async function save() {
 }
 
 async function deleteRole(id: number) {
-  if (!confirm('确认删除？')) return
+  if (!confirmAction('确认删除？')) return
   await request.delete(`/roles/${id}`)
   loadData()
 }

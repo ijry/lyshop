@@ -118,6 +118,7 @@ import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getOrderDetail, getShipmentTracks, shipOrder, syncShipment } from '@/api/plugins'
 import { afterSaleStatusLabel, orderStatusLabel, shipmentPrimaryTime, shipmentStatusLabel, shipmentTimeLabel, shipmentTitle } from '@/utils/order-status'
+import { notify } from '@/utils/notify'
 
 const route = useRoute()
 const router = useRouter()
@@ -182,7 +183,7 @@ async function syncShip(shipmentID: number) {
 
 async function submitShip() {
   if (!shipForm.value.company) {
-    alert('请选择快递公司')
+    notify('请选择快递公司')
     return
   }
   await shipOrder(Number(route.params.id), {

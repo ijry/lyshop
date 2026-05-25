@@ -104,6 +104,7 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { getOrders, shipOrder } from '@/api/plugins'
 import { afterSaleStatusLabel, hasReshipShipment, orderStatusLabel, shipmentPrimaryTime, shipmentStatusLabel } from '@/utils/order-status'
+import { promptText } from '@/utils/dialog'
 
 const router = useRouter()
 const orders = ref<any[]>([])
@@ -171,7 +172,7 @@ async function loadOrders() {
 }
 
 async function ship(id: number) {
-  const no = prompt('请输入快递单号')
+  const no = promptText('请输入快递单号')
   if (!no) return
   await shipOrder(id, { tracking_no: no })
   await loadOrders()
