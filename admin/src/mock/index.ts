@@ -39,6 +39,22 @@ const decorVariantsSource: any[] = [
     published_at: '2026-05-25T10:00:00Z',
   },
 ]
+const vipPlansSource: any[] = [
+  { id: 1, name: '月卡', months: 1, price: 19.9, status: 1 },
+  { id: 2, name: '季卡', months: 3, price: 49.9, status: 1 },
+]
+const vipLevelsSource: any[] = [
+  { id: 1, name: '银卡', growth_min: 0, discount_rate: 0.98 },
+  { id: 2, name: '金卡', growth_min: 1000, discount_rate: 0.95 },
+]
+const vipCouponRulesSource: any[] = [
+  { id: 1, name: '银卡月券', coupon_name: '满99减10', monthly_limit: 1 },
+  { id: 2, name: '金卡月券', coupon_name: '满199减30', monthly_limit: 2 },
+]
+const vipSkuPricesSource: any[] = [
+  { id: 1, sku_id: 1001, level_name: '银卡', vip_price: 88 },
+  { id: 2, sku_id: 1001, level_name: '金卡', vip_price: 82 },
+]
 
 function clone<T>(v: T): T {
   return JSON.parse(JSON.stringify(v))
@@ -387,6 +403,20 @@ const routes: Record<string, any> = {
         ],
       },
       {
+        key: 'vip',
+        title: '会员',
+        icon: 'award',
+        sort: 45,
+        menus: [
+          { title: '会员中心', icon: 'award', path: '/vip', sort: 10, children: [
+            { title: '会员套餐', path: '/vip/plans' },
+            { title: '会员等级', path: '/vip/levels' },
+            { title: '会员领券规则', path: '/vip/coupon-rules' },
+            { title: '会员SKU价', path: '/vip/sku-prices' },
+          ]},
+        ],
+      },
+      {
         key: 'wms',
         title: '仓储',
         icon: 'warehouse',
@@ -465,6 +495,15 @@ const routes: Record<string, any> = {
     ],
     total: 3, page: 1, size: 20,
   },
+  'GET /admin/api/vip/plans': { list: vipPlansSource, total: vipPlansSource.length, page: 1, size: 20 },
+  'GET /admin/api/vip/levels': { list: vipLevelsSource, total: vipLevelsSource.length, page: 1, size: 20 },
+  'GET /admin/api/vip/coupon-rules': { list: vipCouponRulesSource, total: vipCouponRulesSource.length, page: 1, size: 20 },
+  'GET /admin/api/vip/sku-prices': { list: vipSkuPricesSource, total: vipSkuPricesSource.length, page: 1, size: 20 },
+  'GET /api/v1/vip/profile': { is_vip: true, level_name: '金卡', growth_value: 1280, expire_at: '2026-12-31' },
+  'GET /api/v1/vip/coupons/monthly': [
+    { rule_id: 1, name: '银卡月券', coupon_name: '满99减10', claimed: 0, monthly_limit: 1 },
+    { rule_id: 2, name: '金卡月券', coupon_name: '满199减30', claimed: 1, monthly_limit: 2 },
+  ],
 
   // IM
   'GET /admin/api/im/sessions': [
@@ -589,6 +628,41 @@ const routes: Record<string, any> = {
 export function matchMock(method: string, url: string, params?: Record<string, any>): { matched: boolean; data?: any } {
   const key = `${method.toUpperCase()} ${url}`
   const query = params || {}
+  const vipCrud = (path: string, source: any[]) => {
+    if (key === `GET ${path}`) return { matched: true, data: { list: clone(source), total: source.length, page: 1, size: 20 } }
+    if (key === `POST ${path}`) {
+      const nextID = Math.max(0, ...source.map((item: any) => Number(item.id || 0))) + 1
+      source.push({ id: nextID, ...(params || {}) })
+      return { matched: true, data: null }
+    }
+    if (key.startsWith(`PUT ${path}/`)) {
+      const id = Number(url.split('/').pop() || 0)
+      const target = source.find((item: any) => Number(item.id || 0) === id)
+      if (target) Object.assign(target, params || {})
+      return { matched: true, data: null }
+    }
+    if (key.startsWith(`DELETE ${path}/`)) {
+      const id = Number(url.split('/').pop() || 0)
+      const idx = source.findIndex((item: any) => Number(item.id || 0) === id)
+      if (idx >= 0) source.splice(idx, 1)
+      return { matched: true, data: null }
+    }
+    return null
+  }
+  if (key === 'POST /api/v1/vip/coupons/monthly/1/claim' || key === 'POST /api/v1/vip/coupons/monthly/2/claim') {
+    const ruleID = Number(url.split('/')[6] || 0)
+    const target = (routes['GET /api/v1/vip/coupons/monthly'] as any[]).find((item: any) => Number(item.rule_id) === ruleID)
+    if (target && target.claimed < target.monthly_limit) target.claimed += 1
+    return { matched: true, data: { success: true } }
+  }
+  const vipPlanResult = vipCrud('/admin/api/vip/plans', vipPlansSource)
+  if (vipPlanResult) return vipPlanResult
+  const vipLevelResult = vipCrud('/admin/api/vip/levels', vipLevelsSource)
+  if (vipLevelResult) return vipLevelResult
+  const vipRuleResult = vipCrud('/admin/api/vip/coupon-rules', vipCouponRulesSource)
+  if (vipRuleResult) return vipRuleResult
+  const vipSkuResult = vipCrud('/admin/api/vip/sku-prices', vipSkuPricesSource)
+  if (vipSkuResult) return vipSkuResult
   if (key === 'GET /admin/api/categories') {
     return { matched: true, data: clone(categoriesSource) }
   }

@@ -28,6 +28,11 @@ const router = createRouter({
         { path: 'wms/stock', name: '库存管理', component: () => import('@/views/wms/StockList.vue') },
         // Marketing
         { path: 'marketing/coupon',   name: '优惠券管理', component: () => import('@/views/marketing/CouponList.vue') },
+        // VIP
+        { path: 'vip/plans', name: '会员套餐', component: () => import('@/views/vip/PlanList.vue') },
+        { path: 'vip/levels', name: '会员等级', component: () => import('@/views/vip/LevelList.vue') },
+        { path: 'vip/coupon-rules', name: '会员领券规则', component: () => import('@/views/vip/CouponRuleList.vue') },
+        { path: 'vip/sku-prices', name: '会员SKU价', component: () => import('@/views/vip/SkuPriceList.vue') },
         // System
         { path: 'system/config', name: '配置中心', component: () => import('@/views/system/PaymentConfig.vue') },
         { path: 'system/admins', name: '管理员管理', component: () => import('@/views/system/AdminList.vue') },

@@ -28,6 +28,7 @@
     { "path": "pages/user/favorites",       "style": { "navigationBarTitleText": "我的收藏" } },
     { "path": "pages/user/address",         "style": { "navigationBarTitleText": "收货地址" } },
     { "path": "pages/user/points",          "style": { "navigationBarTitleText": "我的积分" } },
+    { "path": "pages/user/vip",             "style": { "navigationBarTitleText": "会员中心" } },
     { "path": "pages/message/index",        "style": { "navigationBarTitleText": "消息中心" } },
     { "path": "pages/message/list",         "style": { "navigationBarTitleText": "消息列表" } },
     { "path": "pages/checkin/index",        "style": { "navigationBarTitleText": "每日签到" } },

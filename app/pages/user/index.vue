@@ -117,6 +117,8 @@ const menuCells = ref([
     action: () => uni.navigateTo({ url: '/pages/user/favorites' }) },
   { label: '我的积分', icon: 'integral', value: '',
     action: () => uni.navigateTo({ url: '/pages/user/points' }) },
+  { label: '会员中心', icon: 'level', value: '',
+    action: () => uni.navigateTo({ url: '/pages/user/vip' }) },
   { label: '账号与安全', icon: 'lock', value: '',
     action: () => uni.navigateTo({ url: '/pages/user/security' }) },
   { label: '联系客服', icon: 'kefu-ermai', value: '',
