@@ -74,11 +74,11 @@ const channels = [
     <section class="section intro-band">
       <div class="container split">
         <div>
-          <span class="section-kicker">真实演示截图</span>
+          <span class="section-kicker">产品界面预览</span>
           <h2>首页直接展示可运行的商城能力</h2>
         </div>
         <p>
-          截图由 docs-site 脚本从演示模式自动生成，不依赖远程服务。首页展示的不是概念图，而是当前仓库里可构建、可访问的 PC 与 H5 演示界面。
+          PC 商城与移动端商城覆盖商品浏览、营销入口、订单管理和客服触达等核心流程，让访问者可以直观看到系统落地后的业务界面。
         </p>
       </div>
     </section>

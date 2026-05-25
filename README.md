@@ -6,6 +6,8 @@
 [![Docs](https://github.com/ijry/lyshop/actions/workflows/docs.yml/badge.svg)](https://ijry.github.io/lyshop/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-red.svg)](LICENSE)
 
+![LYShop 零云商城官网首页](assets/showcase/docs-home-hero.png)
+
 ## 在线演示
 
 - [PC 商城演示](https://ijry.github.io/lyshop/web-demo/)
