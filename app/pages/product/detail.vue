@@ -110,8 +110,7 @@
     </view>
 
     <view class="fixed bottom-0 left-0 right-0 z-100 flex items-center px-20rpx py-16rpx"
-      :style="{ background: 'var(--app-card-bg)', borderTop: '1px solid var(--app-border-color)' }"
-      :style="{paddingBottom: 'calc(16rpx + env(safe-area-inset-bottom))'}">
+      :style="{ background: 'var(--app-card-bg)', borderTop: '1px solid var(--app-border-color)', paddingBottom: 'calc(16rpx + env(safe-area-inset-bottom))' }">
       <view class="flex items-center gap-30rpx mr-20rpx">
         <view class="flex flex-col items-center" @click="uni.navigateTo({url:'/pages/im/chat'})">
           <u-icon name="kefu-ermai" size="22" color="#666" />

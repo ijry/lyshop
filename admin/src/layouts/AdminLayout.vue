@@ -166,22 +166,6 @@ const sortedGroupedMenus = computed(() => {
   })
 })
 
-const tabGroups = computed<AdminMenuGroup[]>(() => [
-  {
-    key: homeTabKey,
-    title: dashboardMenu.value.title,
-    sort: -1,
-    menus: [
-      {
-        title: dashboardMenu.value.title,
-        path: dashboardMenu.value.path,
-        sort: -1,
-      },
-    ],
-  },
-  ...sortedGroupedMenus.value,
-])
-
 const visibleLegacyMenus = computed(() =>
   legacyMenus.value.filter((item) => item.path !== dashboardMenu.value.path),
 )
