@@ -52,18 +52,24 @@ func adminGetOrderDetail(c *gin.Context) {
 func adminShipOrder(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	var req struct {
+		DeliveryType    string `json:"delivery_type"`
 		TrackingNo      string `json:"tracking_no"`
 		ShipType        string `json:"ship_type"`
 		AfterSaleCaseID uint64 `json:"after_sale_case_id"`
 		Company         string `json:"company"`
+		RiderName       string `json:"rider_name"`
+		RiderPhone      string `json:"rider_phone"`
 		Remark          string `json:"remark"`
 	}
 	c.ShouldBindJSON(&req)
 	if err := ordersvc.ShipOrder(c.Request.Context(), id, ordersvc.ShipOrderReq{
+		DeliveryType:    req.DeliveryType,
 		ShipType:        req.ShipType,
 		AfterSaleCaseID: req.AfterSaleCaseID,
 		Company:         req.Company,
 		TrackingNo:      req.TrackingNo,
+		RiderName:       req.RiderName,
+		RiderPhone:      req.RiderPhone,
 		Remark:          req.Remark,
 	}); err != nil {
 		response.Fail(c, 500, err.Error())

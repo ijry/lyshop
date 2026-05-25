@@ -1,0 +1,11 @@
+{
+  "name": "delivery_express",
+  "title": "快递配送",
+  "version": "1.0.0",
+  "description": "快递配送驱动（顺丰/中通/圆通等）",
+  "author": "lyshop",
+  "depends": [],
+  "menus": [],
+  "permissions": [],
+  "config_items": []
+}

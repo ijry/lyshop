@@ -45,6 +45,9 @@ export const getReviews = (params?: any) => request.get('/reviews', { params })
 export const getReviewDetail = (id: number) => request.get(`/reviews/${id}`)
 export const replyReview = (id: number, content: string) => request.post(`/reviews/${id}/reply`, { content })
 
+// ---- Delivery ----
+export const getDeliveryMode = () => request.get<never, { mode: string }>('/delivery/mode')
+
 // ---- WMS ----
 export const getWarehouses = () => request.get('/wms/warehouses')
 export const createWarehouse = (data: any) => request.post('/wms/warehouses', data)

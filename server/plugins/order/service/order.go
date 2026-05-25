@@ -51,6 +51,7 @@ type OrderItemView struct {
 
 type OrderShipmentView struct {
 	ordermodel.OrderShipment
+	DeliveryTypeLabel    string `json:"delivery_type_label,omitempty"`
 	DirectionLabel       string `json:"direction_label,omitempty"`
 	BizTypeLabel         string `json:"biz_type_label,omitempty"`
 	LogisticsStatusLabel string `json:"logistics_status_label,omitempty"`
@@ -64,6 +65,7 @@ func buildOrderShipmentViews(rows []ordermodel.OrderShipment) []OrderShipmentVie
 	for _, row := range rows {
 		result = append(result, OrderShipmentView{
 			OrderShipment:        row,
+			DeliveryTypeLabel:    deliveryTypeLabel(row.DeliveryType),
 			DirectionLabel:       shipmentDirectionLabel(row.Direction),
 			BizTypeLabel:         shipmentBizTypeLabel(row.BizType),
 			LogisticsStatusLabel: shipmentStatusLabel(row.LogisticsStatus),
@@ -299,18 +301,31 @@ func ListOrders(ctx context.Context, userID uint64, status int8, page, size int)
 }
 
 type ShipOrderReq struct {
+	DeliveryType    string `json:"delivery_type"`
 	ShipType        string `json:"ship_type"`
 	AfterSaleCaseID uint64 `json:"after_sale_case_id"`
 	Company         string `json:"company"`
 	TrackingNo      string `json:"tracking_no"`
+	RiderName       string `json:"rider_name"`
+	RiderPhone      string `json:"rider_phone"`
 	Remark          string `json:"remark"`
 }
 
 // ShipOrder marks an order as shipped or reshipped (admin action).
 func ShipOrder(ctx context.Context, orderID uint64, req ShipOrderReq) error {
-	req.TrackingNo = strings.TrimSpace(req.TrackingNo)
-	if req.TrackingNo == "" {
-		return errors.New("请填写快递单号")
+	deliveryType := normalizeDeliveryType(req.DeliveryType)
+	if deliveryType == string(ordermodel.DeliveryTypeLocal) {
+		if strings.TrimSpace(req.RiderName) == "" {
+			return errors.New("请填写骑手名称")
+		}
+		if strings.TrimSpace(req.RiderPhone) == "" {
+			return errors.New("请填写骑手电话")
+		}
+	} else {
+		req.TrackingNo = strings.TrimSpace(req.TrackingNo)
+		if req.TrackingNo == "" {
+			return errors.New("请填写快递单号")
+		}
 	}
 	shipType := strings.ToLower(strings.TrimSpace(req.ShipType))
 	if shipType == "" {
@@ -357,10 +372,13 @@ func ShipOrder(ctx context.Context, orderID uint64, req ShipOrderReq) error {
 		shipmentRow, err := createShipmentTx(tx, CreateShipmentReq{
 			OrderID:         orderID,
 			AfterSaleCaseID: req.AfterSaleCaseID,
+			DeliveryType:    deliveryType,
 			ShipType:        shipType,
 			Direction:       string(ordermodel.ShipmentDirectionOutbound),
 			Company:         req.Company,
 			TrackingNo:      req.TrackingNo,
+			RiderName:       req.RiderName,
+			RiderPhone:      req.RiderPhone,
 			Remark:          req.Remark,
 			CreatedByType:   "admin",
 			CreatedByID:     0,
@@ -369,7 +387,10 @@ func ShipOrder(ctx context.Context, orderID uint64, req ShipOrderReq) error {
 			return err
 		}
 		createdShipmentID = shipmentRow.ID
-		updates := map[string]any{"tracking_no": req.TrackingNo}
+		updates := map[string]any{}
+		if req.TrackingNo != "" {
+			updates["tracking_no"] = req.TrackingNo
+		}
 		if shipType == string(ordermodel.ShipmentBizTypeInitial) {
 			updates["status"] = ordermodel.OrderStatusShipped
 		}
@@ -384,7 +405,7 @@ func ShipOrder(ctx context.Context, orderID uint64, req ShipOrderReq) error {
 	if err != nil {
 		return err
 	}
-	if createdShipmentID > 0 {
+	if createdShipmentID > 0 && deliveryType != string(ordermodel.DeliveryTypeLocal) {
 		go func(id uint64) {
 			_ = SyncShipmentTracks(context.Background(), id, SyncShipmentReq{Manual: false})
 		}(createdShipmentID)

@@ -40,9 +40,17 @@
               </p>
               <div v-if="hasShipmentSummary(o)" class="flex items-center flex-wrap gap-1 mt-1">
                 <span v-if="hasReship(o)" class="text-[11px] px-2 py-0.5 rounded-full bg-orange-50 text-orange-600">含补发</span>
-                <span v-if="o.latest_shipment?.tracking_no" class="text-xs text-slate-500">
-                  最新物流：{{ shipmentStatusText(o.latest_shipment?.logistics_status, o.latest_shipment?.logistics_status_label) }} · {{ o.latest_shipment?.tracking_no }}
-                </span>
+                <template v-if="o.latest_shipment?.delivery_type === 'local'">
+                  <span class="text-[11px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600">同城配送</span>
+                  <span v-if="o.latest_shipment?.rider_name" class="text-xs text-slate-500">
+                    骑手：{{ o.latest_shipment.rider_name }}
+                  </span>
+                </template>
+                <template v-else>
+                  <span v-if="o.latest_shipment?.tracking_no" class="text-xs text-slate-500">
+                    最新物流：{{ shipmentStatusText(o.latest_shipment?.logistics_status, o.latest_shipment?.logistics_status_label) }} · {{ o.latest_shipment?.tracking_no }}
+                  </span>
+                </template>
                 <span v-if="shipmentPrimaryTime(o.latest_shipment)" class="text-xs text-slate-400">
                   {{ formatDate(shipmentPrimaryTime(o.latest_shipment)) }}
                 </span>
@@ -79,7 +87,7 @@
             <td class="px-4 py-3">
               <div class="flex flex-col gap-2 items-start">
                 <button class="text-blue-600 hover:underline text-xs" @click="goDetail(o.id)">查看详情</button>
-                <button v-if="o.status === 2" @click="ship(o.id)" class="text-emerald-600 hover:underline text-xs">发货</button>
+                <button v-if="o.status === 2" @click="goDetail(o.id)" class="text-emerald-600 hover:underline text-xs">发货</button>
                 <button
                   v-if="o.after_sale_summary?.latest_case_id"
                   @click="goAfterSaleDetail(o.after_sale_summary.latest_case_id)"
@@ -102,9 +110,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { getOrders, shipOrder } from '@/api/plugins'
+import { getOrders } from '@/api/plugins'
 import { afterSaleStatusLabel, hasReshipShipment, orderStatusLabel, shipmentPrimaryTime, shipmentStatusLabel } from '@/utils/order-status'
-import { promptText } from '@/utils/dialog'
 
 const router = useRouter()
 const orders = ref<any[]>([])
@@ -169,13 +176,6 @@ function onTabChange(status: number) {
 async function loadOrders() {
   const data: any = await getOrders({ status: activeStatus.value || undefined, page: 1, size: 20 })
   orders.value = data?.list || []
-}
-
-async function ship(id: number) {
-  const no = promptText('请输入快递单号')
-  if (!no) return
-  await shipOrder(id, { tracking_no: no })
-  await loadOrders()
 }
 
 onMounted(loadOrders)

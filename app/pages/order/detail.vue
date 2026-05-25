@@ -46,15 +46,21 @@
         <view v-if="detail.shipments?.length" class="space-y-12rpx">
           <view v-for="ship in detail.shipments" :key="ship.id" class="border border-gray-100 rounded-16rpx p-16rpx">
             <text class="text-24rpx text-gray-700 block">{{ shipmentTitle(ship) }}</text>
-            <text class="text-22rpx text-gray-500 block mt-6rpx">{{ ship.company || '未填公司' }} · {{ ship.tracking_no || '-' }}</text>
-            <text class="text-22rpx text-gray-500 block mt-6rpx">渠道：{{ logisticsProviderLabel(ship.channel_provider) }}</text>
+            <template v-if="ship.delivery_type === 'local'">
+              <text class="text-22rpx text-gray-500 block mt-6rpx">骑手：{{ ship.rider_name || '-' }}</text>
+              <text class="text-22rpx text-gray-500 block mt-6rpx">骑手电话：{{ ship.rider_phone || '-' }}</text>
+            </template>
+            <template v-else>
+              <text class="text-22rpx text-gray-500 block mt-6rpx">{{ ship.company || '未填公司' }} · {{ ship.tracking_no || '-' }}</text>
+              <text class="text-22rpx text-gray-500 block mt-6rpx">渠道：{{ logisticsProviderLabel(ship.channel_provider) }}</text>
+            </template>
             <text class="text-22rpx text-gray-500 block mt-6rpx">状态：{{ shipmentStatusText(ship.logistics_status, ship.logistics_status_label) }}</text>
             <text v-if="shipmentPrimaryTime(ship)" class="text-22rpx text-gray-500 block mt-6rpx">
               {{ shipmentTimeLabel(ship) }}：{{ formatDate(shipmentPrimaryTime(ship)) }}
             </text>
             <text v-if="ship.after_sale_case_id" class="text-22rpx text-gray-500 block mt-6rpx">关联售后单：#{{ ship.after_sale_case_id }}</text>
             <text v-if="ship.remark" class="text-22rpx text-gray-500 block mt-6rpx">备注：{{ ship.remark }}</text>
-            <view v-if="tracksMap[ship.id]?.length" class="mt-12rpx border-t border-gray-100 pt-12rpx">
+            <view v-if="ship.delivery_type !== 'local' && tracksMap[ship.id]?.length" class="mt-12rpx border-t border-gray-100 pt-12rpx">
               <text class="text-22rpx text-gray-500 block mb-8rpx">轨迹节点</text>
               <text v-for="track in tracksMap[ship.id]" :key="track.id" class="text-22rpx text-gray-500 block mt-6rpx">
                 {{ formatDate(track.event_time) }} · {{ track.status_text }}<text v-if="track.location">（{{ track.location }}）</text>
@@ -209,7 +215,7 @@ onMounted(async () => {
   detail.value = await get<any>(`/api/v1/orders/${query.id}`)
   tracksMap.value = {}
   for (const shipment of detail.value?.shipments || []) {
-    if (!shipment?.id) continue
+    if (!shipment?.id || shipment.delivery_type === 'local') continue
     const rows = await get<any[]>(`/api/v1/orders/${query.id}/shipments/${shipment.id}/tracks`)
     tracksMap.value[Number(shipment.id)] = Array.isArray(rows) ? rows : []
   }

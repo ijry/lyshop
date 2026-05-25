@@ -1,0 +1,23 @@
+{
+  "name": "delivery_router",
+  "title": "配送路由",
+  "version": "1.0.0",
+  "description": "配置店铺派送模式（快递/同城/混合）",
+  "author": "lyshop",
+  "depends": ["order"],
+  "menus": [],
+  "permissions": [],
+  "config_items": [
+    {
+      "key": "delivery_mode",
+      "label": "派送模式",
+      "type": "select",
+      "required": true,
+      "options": [
+        { "label": "快递配送", "value": "express" },
+        { "label": "同城配送", "value": "local" },
+        { "label": "混合模式（快递+同城）", "value": "both" }
+      ]
+    }
+  ]
+}

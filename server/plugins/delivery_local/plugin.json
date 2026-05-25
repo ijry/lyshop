@@ -1,0 +1,14 @@
+{
+  "name": "delivery_local",
+  "title": "同城配送",
+  "version": "1.0.0",
+  "description": "同城配送驱动（骑手配送）",
+  "author": "lyshop",
+  "depends": [],
+  "menus": [],
+  "permissions": [],
+  "config_items": [
+    { "key": "default_rider_name", "label": "默认骑手名称", "type": "text", "required": false, "placeholder": "留空则每次发货手动填写" },
+    { "key": "default_rider_phone", "label": "默认骑手电话", "type": "text", "required": false, "placeholder": "留空则每次发货手动填写" }
+  ]
+}

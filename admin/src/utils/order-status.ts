@@ -20,6 +20,11 @@ export const AFTER_SALE_STATUS_LABELS: Record<string, string> = {
   closed: '已关闭',
 }
 
+export const DELIVERY_TYPE_LABELS: Record<string, string> = {
+  express: '快递配送',
+  local: '同城配送',
+}
+
 export const SHIPMENT_STATUS_LABELS: Record<string, string> = {
   pending: '待揽收',
   shipped: '已发货',
@@ -49,6 +54,11 @@ export function afterSaleStatusLabel(status: string | undefined | null) {
   return AFTER_SALE_STATUS_LABELS[value] || value
 }
 
+export function deliveryTypeLabel(type_: string | undefined | null) {
+  const value = String(type_ || 'express')
+  return DELIVERY_TYPE_LABELS[value] || value
+}
+
 export function shipmentStatusLabel(status: string | undefined | null) {
   const value = String(status || '')
   return SHIPMENT_STATUS_LABELS[value] || value
@@ -65,7 +75,8 @@ export function shipmentBizTypeLabel(bizType: string | undefined | null) {
 }
 
 export function shipmentTitle(shipment: any) {
-  return `${shipmentDirectionLabel(shipment?.direction)} · ${shipmentBizTypeLabel(shipment?.biz_type)}`
+  const dt = deliveryTypeLabel(shipment?.delivery_type)
+  return `${dt} · ${shipmentDirectionLabel(shipment?.direction)} · ${shipmentBizTypeLabel(shipment?.biz_type)}`
 }
 
 export function shipmentPrimaryTime(shipment: any) {

@@ -31,15 +31,21 @@
             <div v-for="ship in detail.shipments" :key="ship.id" class="border border-slate-100 rounded-lg p-3">
               <div class="flex items-center justify-between gap-3">
                 <p class="text-sm text-slate-700">{{ shipmentTitle(ship) }}</p>
-                <button data-test="sync-shipment" class="text-xs text-blue-600 hover:underline" @click="syncShip(ship.id)">刷新物流</button>
+                <button v-if="ship.delivery_type !== 'local'" data-test="sync-shipment" class="text-xs text-blue-600 hover:underline" @click="syncShip(ship.id)">刷新物流</button>
               </div>
-              <p class="text-xs text-slate-400 mt-1">{{ ship.company || '未填公司' }} · {{ ship.tracking_no }}</p>
-              <p class="text-xs text-slate-400 mt-1">渠道：{{ ship.channel_provider || '待绑定' }}</p>
+              <template v-if="ship.delivery_type === 'local'">
+                <p class="text-xs text-slate-400 mt-1">骑手：{{ ship.rider_name || '-' }}</p>
+                <p class="text-xs text-slate-400 mt-1">骑手电话：{{ ship.rider_phone || '-' }}</p>
+              </template>
+              <template v-else>
+                <p class="text-xs text-slate-400 mt-1">{{ ship.company || '未填公司' }} · {{ ship.tracking_no }}</p>
+                <p class="text-xs text-slate-400 mt-1">渠道：{{ ship.channel_provider || '待绑定' }}</p>
+              </template>
               <p class="text-xs text-slate-400 mt-1">状态：{{ shipmentStatusText(ship.logistics_status, ship.logistics_status_label) }}</p>
               <p v-if="shipmentPrimaryTime(ship)" class="text-xs text-slate-400 mt-1">{{ shipmentTimeLabel(ship) }}：{{ formatDate(shipmentPrimaryTime(ship)) }}</p>
               <p v-if="ship.after_sale_case_id" class="text-xs text-slate-400 mt-1">关联售后单：#{{ ship.after_sale_case_id }}</p>
               <p v-if="ship.remark" class="text-xs text-slate-400 mt-1">备注：{{ ship.remark }}</p>
-              <div v-if="tracksMap[ship.id]?.length" class="mt-3 border-t border-slate-100 pt-3 space-y-2">
+              <div v-if="ship.delivery_type !== 'local' && tracksMap[ship.id]?.length" class="mt-3 border-t border-slate-100 pt-3 space-y-2">
                 <p class="text-xs text-slate-500">轨迹节点</p>
                 <div v-for="track in tracksMap[ship.id]" :key="track.id" class="text-xs text-slate-500">
                   <span>{{ formatDate(track.event_time) }}</span>
@@ -97,11 +103,27 @@
             <option value="initial">首发</option>
             <option value="reship">补发</option>
           </select>
-          <select v-model="shipForm.company" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm">
-            <option value="">请选择快递公司</option>
-            <option v-for="item in courierOptions" :key="item.code" :value="item.code">{{ item.name }}（{{ item.code }}）</option>
-          </select>
-          <input v-model="shipForm.tracking_no" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="快递单号" />
+          <div v-if="storeDeliveryMode === 'both'" class="flex gap-3">
+            <label class="flex items-center gap-1.5 text-sm text-slate-600 cursor-pointer">
+              <input type="radio" v-model="shipForm.delivery_type" value="express" class="accent-blue-600" />
+              快递配送
+            </label>
+            <label class="flex items-center gap-1.5 text-sm text-slate-600 cursor-pointer">
+              <input type="radio" v-model="shipForm.delivery_type" value="local" class="accent-blue-600" />
+              同城配送
+            </label>
+          </div>
+          <template v-if="shipForm.delivery_type === 'express'">
+            <select v-model="shipForm.company" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm">
+              <option value="">请选择快递公司</option>
+              <option v-for="item in courierOptions" :key="item.code" :value="item.code">{{ item.name }}（{{ item.code }}）</option>
+            </select>
+            <input v-model="shipForm.tracking_no" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="快递单号" />
+          </template>
+          <template v-else>
+            <input v-model="shipForm.rider_name" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="骑手名称" />
+            <input v-model="shipForm.rider_phone" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="骑手电话" />
+          </template>
           <input v-if="shipForm.ship_type === 'reship'" v-model="shipForm.after_sale_case_id" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="售后单ID" />
         </div>
         <div class="flex gap-3 mt-5">
@@ -116,7 +138,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getOrderDetail, getShipmentTracks, shipOrder, syncShipment } from '@/api/plugins'
+import { getDeliveryMode, getOrderDetail, getShipmentTracks, shipOrder, syncShipment } from '@/api/plugins'
 import { afterSaleStatusLabel, orderStatusLabel, shipmentPrimaryTime, shipmentStatusLabel, shipmentTimeLabel, shipmentTitle } from '@/utils/order-status'
 import { notify } from '@/utils/notify'
 
@@ -125,10 +147,14 @@ const router = useRouter()
 const detail = ref<any>(null)
 const tracksMap = ref<Record<number, any[]>>({})
 const showShipDialog = ref(false)
+const storeDeliveryMode = ref('express')
 const shipForm = ref<any>({
   ship_type: 'initial',
+  delivery_type: 'express',
   company: 'SF',
   tracking_no: '',
+  rider_name: '',
+  rider_phone: '',
   after_sale_case_id: '',
 })
 const courierOptions = [
@@ -165,12 +191,23 @@ function goAfterSaleDetail(id: number) {
   router.push(`/order/after-sale/detail/${id}`)
 }
 
+async function loadDeliveryMode() {
+  try {
+    const data: any = await getDeliveryMode()
+    const mode = data?.mode || 'express'
+    storeDeliveryMode.value = mode
+    shipForm.value.delivery_type = mode === 'both' ? 'express' : mode
+  } catch {
+    storeDeliveryMode.value = 'express'
+  }
+}
+
 async function loadDetail() {
   detail.value = await getOrderDetail(Number(route.params.id))
   tracksMap.value = {}
   const shipments = Array.isArray(detail.value?.shipments) ? detail.value.shipments : []
   for (const shipment of shipments) {
-    if (!shipment?.id) continue
+    if (!shipment?.id || shipment.delivery_type === 'local') continue
     const rows: any = await getShipmentTracks(Number(route.params.id), Number(shipment.id))
     tracksMap.value[Number(shipment.id)] = Array.isArray(rows) ? rows : []
   }
@@ -182,19 +219,41 @@ async function syncShip(shipmentID: number) {
 }
 
 async function submitShip() {
-  if (!shipForm.value.company) {
-    notify('请选择快递公司')
-    return
+  const form = shipForm.value
+  if (form.delivery_type === 'express') {
+    if (!form.company) {
+      notify('请选择快递公司')
+      return
+    }
+    if (!form.tracking_no?.trim()) {
+      notify('请填写快递单号')
+      return
+    }
+  } else {
+    if (!form.rider_name?.trim()) {
+      notify('请填写骑手名称')
+      return
+    }
+    if (!form.rider_phone?.trim()) {
+      notify('请填写骑手电话')
+      return
+    }
   }
   await shipOrder(Number(route.params.id), {
-    ship_type: shipForm.value.ship_type,
-    company: shipForm.value.company,
-    tracking_no: shipForm.value.tracking_no,
-    after_sale_case_id: shipForm.value.after_sale_case_id ? Number(shipForm.value.after_sale_case_id) : undefined,
+    delivery_type: form.delivery_type,
+    ship_type: form.ship_type,
+    company: form.delivery_type === 'express' ? form.company : undefined,
+    tracking_no: form.delivery_type === 'express' ? form.tracking_no : undefined,
+    rider_name: form.delivery_type === 'local' ? form.rider_name : undefined,
+    rider_phone: form.delivery_type === 'local' ? form.rider_phone : undefined,
+    after_sale_case_id: form.after_sale_case_id ? Number(form.after_sale_case_id) : undefined,
   })
   showShipDialog.value = false
   await loadDetail()
 }
 
-onMounted(loadDetail)
+onMounted(() => {
+  loadDeliveryMode()
+  loadDetail()
+})
 </script>

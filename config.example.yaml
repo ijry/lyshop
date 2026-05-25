@@ -28,6 +28,10 @@ plugins:
     - message
     # Marketing extensions
     - checkin
+    # Delivery drivers + router
+    - delivery_express
+    - delivery_local
+    - delivery_router
     # Logistics drivers + router
     - logistics_kuaidi100
     - logistics_kdniao

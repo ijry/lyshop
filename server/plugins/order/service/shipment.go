@@ -20,10 +20,13 @@ import (
 type CreateShipmentReq struct {
 	OrderID         uint64
 	AfterSaleCaseID uint64
+	DeliveryType    string
 	ShipType        string
 	Direction       string
 	Company         string
 	TrackingNo      string
+	RiderName       string
+	RiderPhone      string
 	Remark          string
 	CreatedByType   string
 	CreatedByID     uint64
@@ -61,28 +64,57 @@ func normalizeOperatorType(op string) string {
 	}
 }
 
+func normalizeDeliveryType(dt string) string {
+	switch strings.ToLower(strings.TrimSpace(dt)) {
+	case string(ordermodel.DeliveryTypeLocal):
+		return string(ordermodel.DeliveryTypeLocal)
+	default:
+		return string(ordermodel.DeliveryTypeExpress)
+	}
+}
+
 func createShipmentTx(tx *gorm.DB, req CreateShipmentReq) (*ordermodel.OrderShipment, error) {
 	if req.OrderID == 0 {
 		return nil, errors.New("订单不存在")
 	}
-	trackingNo := strings.TrimSpace(req.TrackingNo)
-	if trackingNo == "" {
-		return nil, errors.New("请填写快递单号")
-	}
-	company := strings.ToUpper(strings.TrimSpace(req.Company))
-	if company == "" {
-		return nil, errors.New("请选择快递公司")
-	}
+	deliveryType := normalizeDeliveryType(req.DeliveryType)
 	shipDirection := normalizeShipmentDirection(req.Direction)
 	shipBizType := normalizeShipmentBizType(req.ShipType, shipDirection)
+
+	var company, trackingNo, riderName, riderPhone string
+	if deliveryType == string(ordermodel.DeliveryTypeLocal) {
+		riderName = strings.TrimSpace(req.RiderName)
+		if riderName == "" {
+			return nil, errors.New("请填写骑手名称")
+		}
+		riderPhone = strings.TrimSpace(req.RiderPhone)
+		if riderPhone == "" {
+			return nil, errors.New("请填写骑手电话")
+		}
+		company = strings.TrimSpace(req.Company)
+		trackingNo = strings.TrimSpace(req.TrackingNo)
+	} else {
+		trackingNo = strings.TrimSpace(req.TrackingNo)
+		if trackingNo == "" {
+			return nil, errors.New("请填写快递单号")
+		}
+		company = strings.ToUpper(strings.TrimSpace(req.Company))
+		if company == "" {
+			return nil, errors.New("请选择快递公司")
+		}
+	}
+
 	now := time.Now()
 	row := &ordermodel.OrderShipment{
 		OrderID:         req.OrderID,
 		AfterSaleCaseID: req.AfterSaleCaseID,
+		DeliveryType:    deliveryType,
 		Direction:       shipDirection,
 		BizType:         shipBizType,
 		Company:         company,
 		TrackingNo:      trackingNo,
+		RiderName:       riderName,
+		RiderPhone:      riderPhone,
 		LogisticsStatus: string(ordermodel.ShipmentStatusShipped),
 		Remark:          strings.TrimSpace(req.Remark),
 		ShippedAt:       &now,
@@ -159,6 +191,11 @@ func SyncShipmentTracks(ctx context.Context, shipmentID uint64, _ SyncShipmentRe
 			return err
 		}
 
+		// Local delivery does not need logistics tracking sync.
+		if shipment.DeliveryType == string(ordermodel.DeliveryTypeLocal) {
+			return nil
+		}
+
 		driver, provider, err := logisticsDriver.ResolveByPinnedOrFallback(shipment.ChannelProvider)
 		if err != nil {
 			return markShipmentSyncFail(ctx, tx, &shipment, provider, err, 0)
@@ -204,6 +241,7 @@ func PollAndSyncShipments(ctx context.Context, limit int) (int, error) {
 	}
 	var rows []ordermodel.OrderShipment
 	if err := db.DB.WithContext(ctx).
+		Where("delivery_type <> ?", string(ordermodel.DeliveryTypeLocal)).
 		Where("tracking_no <> ''").
 		Where("logistics_status <> ?", string(ordermodel.ShipmentStatusSigned)).
 		Order("id desc").

@@ -21,6 +21,13 @@ const (
 	ShipmentBizTypeReturn  ShipmentBizType = "return"
 )
 
+type DeliveryType string
+
+const (
+	DeliveryTypeExpress DeliveryType = "express"
+	DeliveryTypeLocal   DeliveryType = "local"
+)
+
 type ShipmentStatus string
 
 const (
@@ -35,10 +42,13 @@ type OrderShipment struct {
 	model.Base
 	OrderID         uint64     `gorm:"not null;index"                                json:"order_id"`
 	AfterSaleCaseID uint64     `gorm:"index"                                         json:"after_sale_case_id"`
+	DeliveryType    string     `gorm:"size:16;not null;default:'express';index"      json:"delivery_type"`
 	Direction       string     `gorm:"size:16;not null;index"                        json:"direction"`
 	BizType         string     `gorm:"size:16;not null;index"                        json:"biz_type"`
 	Company         string     `gorm:"size:64"                                       json:"company"`
 	TrackingNo      string     `gorm:"size:128;index"                                json:"tracking_no"`
+	RiderName       string     `gorm:"size:64"                                       json:"rider_name"`
+	RiderPhone      string     `gorm:"size:32"                                       json:"rider_phone"`
 	ChannelProvider string     `gorm:"size:32;index"                                 json:"channel_provider"`
 	LogisticsStatus string     `gorm:"size:32;not null;default:'pending'"            json:"logistics_status"`
 	LastQueryAt     *time.Time `json:"last_query_at"`

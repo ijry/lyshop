@@ -32,6 +32,11 @@ var afterSaleStatusLabels = map[string]string{
 	"closed":                    "已关闭",
 }
 
+var deliveryTypeLabels = map[string]string{
+	"express": "快递配送",
+	"local":   "同城配送",
+}
+
 var shipmentStatusLabels = map[string]string{
 	"pending":    "待揽收",
 	"shipped":    "已发货",
@@ -60,6 +65,17 @@ var afterSaleActionLabels = map[string]string{
 	"reship":      "补发",
 	"complete":    "完结",
 	"close":       "关闭",
+}
+
+func deliveryTypeLabel(dt string) string {
+	value := strings.TrimSpace(dt)
+	if label, ok := deliveryTypeLabels[value]; ok {
+		return label
+	}
+	if value == "" {
+		return "快递配送"
+	}
+	return value
 }
 
 func orderStatusLabel(status int8) string {
