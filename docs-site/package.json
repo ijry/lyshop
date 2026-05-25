@@ -4,12 +4,16 @@
   "version": "1.0.0",
   "scripts": {
     "demo:build": "node ../app/scripts/build-demo.js",
+    "web-demo:build": "node scripts/build-web-demo.js",
+    "showcase:capture": "node scripts/capture-showcase.js",
+    "showcase:build": "npm run demo:build && npm run web-demo:build && npm run showcase:capture",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
-    "docs:build-with-demo": "npm run demo:build && npm run docs:build",
+    "docs:build-with-demo": "npm run showcase:build && npm run docs:build",
     "docs:preview": "vitepress preview docs"
   },
   "devDependencies": {
+    "playwright": "^1.53.0",
     "vitepress": "^1.6.4"
   }
 }
