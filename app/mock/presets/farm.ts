@@ -1,4 +1,4 @@
-import type { MockPreset } from './types'
+import type { MockPreset, SiteSettings } from './types'
 
 export const farm: MockPreset = {
   key: 'farm',
@@ -184,6 +184,28 @@ export const farm: MockPreset = {
         props: { source: 'hot', limit: 8, columns: 2, title: '田间精选' },
       },
     ],
+  },
+  siteSettings: {
+    site_name: '田园优选',
+    site_logo: '',
+    seo_title: '田园优选 - 田间到餐桌 自然的味道',
+    seo_keywords: '农产品,特产,有机,土特产,绿色食品',
+    seo_description: '田间到餐桌，精选各地优质农产品特产，绿色有机，自然纯正。',
+    icp: '',
+    hero_badge: '应季新品，产地直发',
+    hero_title: '田间到餐桌\\n自然的味道',
+    hero_subtitle: '精选各地优质农产品，绿色有机，从田间到您的餐桌。',
+    hero_btn_text: '逛逛好货',
+    hero_btn_link: '/products',
+    color_primary: '#15803d',
+    color_primary_light: '#16a34a',
+    color_primary_dark: '#166534',
+    color_bg_page: '#f0fdf4',
+    color_bg_header: 'rgba(255,255,255,0.8)',
+    color_bg_footer: '#f0fdf4',
+    color_price: '#15803d',
+    color_hero_from: '#166534',
+    color_hero_to: '#14532d',
   },
   seckills: {
     list: [

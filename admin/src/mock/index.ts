@@ -434,6 +434,7 @@ const routes: Record<string, any> = {
         sort: 60,
         menus: [
           { title: '系统设置', icon: 'settings', path: '/system', sort: 10, children: [
+            { title: '站点设置', path: '/system/site' },
             { title: '配置中心', path: '/system/config' },
             { title: '管理员管理', path: '/system/admins' },
             { title: '角色管理', path: '/system/roles' },
@@ -578,6 +579,20 @@ const routes: Record<string, any> = {
     ]},
   ],
   'GET /admin/api/config/': { app_id: '', mch_id: '', api_key: '' },
+
+  // Site Settings
+  'GET /admin/api/site-settings': {
+    site_name: 'LYShop', site_logo: '',
+    seo_title: 'LYShop - 开源商城', seo_keywords: '商城,电商,开源', seo_description: '开源插件化商城系统',
+    icp: '',
+    hero_badge: '限时秒杀进行中', hero_title: '精选好物\\n品质生活从这里开始',
+    hero_subtitle: '数千款精选商品，正品保障，极速发货，让购物更简单。',
+    hero_btn_text: '立即选购', hero_btn_link: '/products',
+    color_primary: '#dc2626', color_primary_light: '#ef4444', color_primary_dark: '#b91c1c',
+    color_bg_page: '#f9fafb', color_bg_header: 'rgba(255,255,255,0.8)', color_bg_footer: '#f9fafb',
+    color_price: '#ef4444', color_hero_from: '#b91c1c', color_hero_to: '#991b1b',
+  },
+  'PUT /admin/api/site-settings': { success: true },
 
   // Checkin
   'GET /admin/api/checkin/rules': [

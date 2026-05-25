@@ -1,4 +1,4 @@
-import type { MockPreset } from './types'
+import type { MockPreset, SiteSettings } from './types'
 
 export const jewelry: MockPreset = {
   key: 'jewelry',
@@ -184,6 +184,28 @@ export const jewelry: MockPreset = {
         props: { source: 'hot', limit: 8, columns: 2, title: '臻品推荐' },
       },
     ],
+  },
+  siteSettings: {
+    site_name: '璀璨珠宝',
+    site_logo: '',
+    seo_title: '璀璨珠宝 - 臻品珠宝 璀璨人生',
+    seo_keywords: '珠宝,黄金,钻石,翡翠,首饰',
+    seo_description: '臻品珠宝商城，黄金钻石翡翠，匠心工艺，品质之选。',
+    icp: '',
+    hero_badge: '新品上市，限时特惠',
+    hero_title: '臻品珠宝\\n璀璨人生',
+    hero_subtitle: '匠心工艺，甄选全球珍品，让每一刻都闪耀。',
+    hero_btn_text: '探索臻品',
+    hero_btn_link: '/products',
+    color_primary: '#b45309',
+    color_primary_light: '#d97706',
+    color_primary_dark: '#92400e',
+    color_bg_page: '#fffbeb',
+    color_bg_header: 'rgba(255,255,255,0.8)',
+    color_bg_footer: '#fffbeb',
+    color_price: '#b45309',
+    color_hero_from: '#92400e',
+    color_hero_to: '#78350f',
   },
   seckills: {
     list: [

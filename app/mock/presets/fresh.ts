@@ -138,6 +138,29 @@ export const fresh: MockPreset = {
     ],
   },
 
+  siteSettings: {
+    site_name: '鲜到家',
+    site_logo: '',
+    seo_title: '鲜到家 - 产地直供 冷链配送',
+    seo_keywords: '生鲜,水果,蔬菜,冷链配送,产地直供',
+    seo_description: '产地直供生鲜平台，冷链配送到家，新鲜看得见。',
+    icp: '',
+    hero_badge: '产地直供，冷链配送到家',
+    hero_title: '产地直供\\n鲜到你家',
+    hero_subtitle: '每日精选时令水果蔬菜，冷链极速配送，新鲜看得见。',
+    hero_btn_text: '立即抢鲜',
+    hero_btn_link: '/products',
+    color_primary: '#16a34a',
+    color_primary_light: '#22c55e',
+    color_primary_dark: '#15803d',
+    color_bg_page: '#f0fdf4',
+    color_bg_header: 'rgba(255,255,255,0.8)',
+    color_bg_footer: '#f0fdf4',
+    color_price: '#16a34a',
+    color_hero_from: '#15803d',
+    color_hero_to: '#166534',
+  },
+
   seckills: {
     list: [
       {

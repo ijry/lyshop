@@ -1,4 +1,4 @@
-import type { MockPreset } from './types'
+import type { MockPreset, SiteSettings } from './types'
 
 export const cake: MockPreset = {
   key: 'cake',
@@ -188,6 +188,29 @@ export const cake: MockPreset = {
         props: { source: 'hot', limit: 8, columns: 2, title: '甜蜜精选' },
       },
     ],
+  },
+
+  siteSettings: {
+    site_name: '甜蜜工坊',
+    site_logo: '',
+    seo_title: '甜蜜工坊 - 甜蜜手作 幸福味道',
+    seo_keywords: '蛋糕,烘焙,甜品,面包,下午茶',
+    seo_description: '手工烘焙甜品商城，新鲜现做，甜蜜配送到家。',
+    icp: '',
+    hero_badge: '每日现烤，新鲜直送',
+    hero_title: '甜蜜手作\\n幸福味道',
+    hero_subtitle: '精选原料，手工制作，每一口都是幸福的味道。',
+    hero_btn_text: '选蛋糕',
+    hero_btn_link: '/products',
+    color_primary: '#db2777',
+    color_primary_light: '#ec4899',
+    color_primary_dark: '#be185d',
+    color_bg_page: '#fdf2f8',
+    color_bg_header: 'rgba(255,255,255,0.8)',
+    color_bg_footer: '#fdf2f8',
+    color_price: '#db2777',
+    color_hero_from: '#be185d',
+    color_hero_to: '#9d174d',
   },
 
   seckills: {

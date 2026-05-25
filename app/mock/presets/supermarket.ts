@@ -1,4 +1,4 @@
-import type { MockPreset } from './types'
+import type { MockPreset, SiteSettings } from './types'
 
 export const supermarket: MockPreset = {
   key: 'supermarket',
@@ -135,6 +135,29 @@ export const supermarket: MockPreset = {
         props: { source: 'hot', limit: 8, columns: 2, title: '热销推荐' },
       },
     ],
+  },
+
+  siteSettings: {
+    site_name: '惠选超市',
+    site_logo: '',
+    seo_title: '惠选超市 - 新鲜到家 实惠每天',
+    seo_keywords: '超市,日用百货,零食饮料,生活用品',
+    seo_description: '线上商超，日用百货一站购齐，新鲜到家。',
+    icp: '',
+    hero_badge: '会员日全场满99减10',
+    hero_title: '新鲜到家\\n实惠每天',
+    hero_subtitle: '日用百货一站购齐，品质保障，1小时极速达。',
+    hero_btn_text: '去逛逛',
+    hero_btn_link: '/products',
+    color_primary: '#f97316',
+    color_primary_light: '#fb923c',
+    color_primary_dark: '#ea580c',
+    color_bg_page: '#fffbf5',
+    color_bg_header: 'rgba(255,255,255,0.8)',
+    color_bg_footer: '#fffbf5',
+    color_price: '#f97316',
+    color_hero_from: '#ea580c',
+    color_hero_to: '#c2410c',
   },
 
   seckills: {

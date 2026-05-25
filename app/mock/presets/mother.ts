@@ -1,4 +1,4 @@
-import type { MockPreset } from './types'
+import type { MockPreset, SiteSettings } from './types'
 
 export const mother: MockPreset = {
   key: 'mother',
@@ -188,6 +188,29 @@ export const mother: MockPreset = {
         props: { source: 'hot', limit: 8, columns: 2, title: '宝妈精选' },
       },
     ],
+  },
+
+  siteSettings: {
+    site_name: '宝贝优选',
+    site_logo: '',
+    seo_title: '宝贝优选 - 安心之选 呵护成长',
+    seo_keywords: '母婴,奶粉,纸尿裤,婴儿用品,童装',
+    seo_description: '母婴亲子购物平台，全球大牌精选，安心呵护宝宝成长。',
+    icp: '',
+    hero_badge: '大牌正品，安心之选',
+    hero_title: '安心之选\\n呵护成长',
+    hero_subtitle: '全球母婴大牌精选，品质保障，呵护宝宝每一步成长。',
+    hero_btn_text: '为宝宝选购',
+    hero_btn_link: '/products',
+    color_primary: '#7c3aed',
+    color_primary_light: '#8b5cf6',
+    color_primary_dark: '#6d28d9',
+    color_bg_page: '#faf5ff',
+    color_bg_header: 'rgba(255,255,255,0.8)',
+    color_bg_footer: '#faf5ff',
+    color_price: '#7c3aed',
+    color_hero_from: '#6d28d9',
+    color_hero_to: '#5b21b6',
   },
 
   seckills: {

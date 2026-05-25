@@ -34,6 +34,7 @@ const router = createRouter({
         { path: 'vip/coupon-rules', name: '会员领券规则', component: () => import('@/views/vip/CouponRuleList.vue') },
         { path: 'vip/sku-prices', name: '会员SKU价', component: () => import('@/views/vip/SkuPriceList.vue') },
         // System
+        { path: 'system/site',   name: '站点设置', component: () => import('@/views/system/SiteSettings.vue') },
         { path: 'system/config', name: '配置中心', component: () => import('@/views/system/PaymentConfig.vue') },
         { path: 'system/admins', name: '管理员管理', component: () => import('@/views/system/AdminList.vue') },
         { path: 'system/roles',  name: '角色管理', component: () => import('@/views/system/RoleList.vue') },
