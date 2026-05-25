@@ -80,6 +80,32 @@
       </view>
     </view>
 
+    <!-- Demo preset switcher (mock mode only) -->
+    <view v-if="isMock" :style="{ margin: '12px 16px', background: 'var(--app-card-bg)', borderRadius: '16px', overflow: 'hidden', boxShadow: 'var(--app-shadow-sm)' }">
+      <view @click="presetExpanded = !presetExpanded"
+        :style="{ display: 'flex', alignItems: 'center', padding: '14px 20px' }">
+        <u-icon name="grid" size="20" :color="iconColor" />
+        <text :style="{ flex: '1', marginLeft: '12px', fontSize: '14px', color: 'var(--app-text-secondary)' }">切换演示行业</text>
+        <text :style="{ fontSize: '12px', color: 'var(--app-text-placeholder)', marginRight: '4px' }">{{ presetCurrentName }}</text>
+        <u-icon :name="presetExpanded ? 'arrow-up' : 'arrow-down'" size="14" :color="arrowColor" />
+      </view>
+      <view v-if="presetExpanded" :style="{ padding: '0 16px 16px' }">
+        <view style="display: flex; flex-wrap: wrap; gap: 10px;">
+          <view v-for="p in presetList" :key="p.key"
+            @click="switchPreset(p.key)"
+            :style="{
+              padding: '8px 16px',
+              borderRadius: '20px',
+              fontSize: '13px',
+              background: p.key === presetActiveKey ? '#1d4ed8' : 'var(--app-page-bg)',
+              color: p.key === presetActiveKey ? '#fff' : 'var(--app-text-secondary)',
+            }">
+            {{ p.name }}
+          </view>
+        </view>
+      </view>
+    </view>
+
     <view :style="{ margin: '16px 16px 40px', background: 'var(--app-card-bg)', borderRadius: '16px', overflow: 'hidden' }">
       <view @click="logout"
         :style="{ textAlign: 'center', padding: '14px', fontSize: '14px', color: 'var(--app-accent)' }">
@@ -147,12 +173,43 @@ const menuCells = ref([
     action: () => uni.navigateTo({ url: '/pages/im/chat' }) },
 ])
 
+// Demo preset switching (mock mode only)
+const isMock = import.meta.env.VITE_MOCK === 'true'
+const presetExpanded = ref(false)
+const presetList = ref<Array<{ key: string; name: string }>>([])
+const presetActiveKey = ref('')
+const presetCurrentName = ref('')
+
+function switchPreset(key: string) {
+  if (key === presetActiveKey.value) {
+    presetExpanded.value = false
+    return
+  }
+  const url = new URL(window.location.href)
+  if (key === 'mall') {
+    url.searchParams.delete('demo')
+  } else {
+    url.searchParams.set('demo', key)
+  }
+  window.location.href = url.toString()
+}
+
 function logout() {
   uni.removeStorageSync('user_token')
   uni.reLaunch({ url: '/pages/login/index' })
 }
 
 onMounted(async () => {
+  // Load demo presets if in mock mode
+  if (isMock) {
+    try {
+      const { listPresets, getPresetKey } = await import('@/mock/presets/index')
+      presetList.value = listPresets()
+      presetActiveKey.value = getPresetKey()
+      presetCurrentName.value = presetList.value.find(p => p.key === presetActiveKey.value)?.name || presetActiveKey.value
+    } catch {}
+  }
+
   const data = await get<any>('/api/v1/user/profile')
   if (data) {
     user.value = data

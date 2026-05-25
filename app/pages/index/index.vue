@@ -26,8 +26,6 @@
       </view>
     </view>
 
-    <!-- Demo preset switcher -->
-    <PresetSwitcher />
   </view>
 </template>
 
@@ -35,7 +33,6 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { get } from '@/utils/request'
 import DecorRender from '@/components/decor/DecorRender.vue'
-import PresetSwitcher from '@/components/demo/PresetSwitcher.vue'
 
 const components = ref<any[]>([])
 const isPreview = ref(false)
