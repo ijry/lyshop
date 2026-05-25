@@ -321,46 +321,97 @@ const routes: Record<string, any> = {
   // Auth
   'POST /admin/api/auth/login': { token: 'demo_admin_token' },
 
-  // Menus (dynamically generated from enabled plugins)
-  'GET /admin/api/menus': [
-    { title: '商品管理', icon: 'box', path: '/product', sort: 10, children: [
-      { title: '商品列表', path: '/product/list' },
-      { title: '商品分类', path: '/product/category' },
-      { title: '新增商品', path: '/product/form' },
-    ]},
-    { title: '订单管理', icon: 'shopping-cart', path: '/order', sort: 20, children: [
-      { title: '订单列表', path: '/order/list' },
-      { title: '售后列表', path: '/order/after-sale/list' },
-    ]},
-    { title: '评价管理', icon: 'star', path: '/review', sort: 21, children: [
-      { title: '评价列表', path: '/review/list' },
-    ]},
-    { title: '仓储管理', icon: 'warehouse', path: '/wms', sort: 30, children: [
-      { title: '库存管理', path: '/wms/stock' },
-    ]},
-    { title: '营销管理', icon: 'tag', path: '/marketing', sort: 40, children: [
-      { title: '优惠券管理', path: '/marketing/coupon' },
-    ]},
-    { title: '客服中心', icon: 'message-circle', path: '/im', sort: 50, children: [
-      { title: '客服会话', path: '/im/sessions' },
-    ]},
-    { title: '店铺装修', icon: 'layout', path: '/decor', sort: 70, children: [
-      { title: '首页装修', path: '/decor/index' },
-    ]},
-    { title: '签到管理', icon: 'calendar', path: '/checkin', sort: 75, children: [
-      { title: '签到规则', path: '/checkin/rules' },
-      { title: '签到记录', path: '/checkin/logs' },
-    ]},
-    { title: '消息管理', icon: 'bell', path: '/message', sort: 80, children: [
-      { title: '消息列表', path: '/message/list' },
-      { title: '发送消息', path: '/message/send' },
-    ]},
-    { title: '系统设置', icon: 'settings', path: '/system', sort: 90, children: [
-      { title: '配置中心', path: '/system/config' },
-      { title: '管理员管理', path: '/system/admins' },
-      { title: '角色管理', path: '/system/roles' },
-    ]},
-  ],
+  // Menus (grouped tabs + menus, dashboard is fixed and not grouped)
+  'GET /admin/api/menus': {
+    dashboard: { title: 'Dashboard', path: '/dashboard' },
+    groups: [
+      {
+        key: 'product',
+        title: '商品',
+        icon: 'box',
+        sort: 10,
+        menus: [
+          { title: '商品管理', icon: 'box', path: '/product', sort: 10, children: [
+            { title: '商品列表', path: '/product/list' },
+            { title: '商品分类', path: '/product/category' },
+            { title: '新增商品', path: '/product/form' },
+          ]},
+          { title: '评价管理', icon: 'star', path: '/review', sort: 20, children: [
+            { title: '评价列表', path: '/review/list' },
+          ]},
+          { title: '店铺装修', icon: 'layout', path: '/decor', sort: 30, children: [
+            { title: '首页装修', path: '/decor/index' },
+          ]},
+        ],
+      },
+      {
+        key: 'order',
+        title: '订单',
+        icon: 'shopping-cart',
+        sort: 20,
+        menus: [
+          { title: '订单管理', icon: 'shopping-cart', path: '/order', sort: 10, children: [
+            { title: '订单列表', path: '/order/list' },
+            { title: '售后列表', path: '/order/after-sale/list' },
+          ]},
+        ],
+      },
+      {
+        key: 'user',
+        title: '用户',
+        icon: 'users',
+        sort: 30,
+        menus: [
+          { title: '客服中心', icon: 'message-circle', path: '/im', sort: 10, children: [
+            { title: '客服会话', path: '/im/sessions' },
+          ]},
+          { title: '消息管理', icon: 'bell', path: '/message', sort: 20, children: [
+            { title: '消息列表', path: '/message/list' },
+            { title: '发送消息', path: '/message/send' },
+          ]},
+          { title: '签到管理', icon: 'calendar', path: '/checkin', sort: 30, children: [
+            { title: '签到规则', path: '/checkin/rules' },
+            { title: '签到记录', path: '/checkin/logs' },
+          ]},
+        ],
+      },
+      {
+        key: 'marketing',
+        title: '营销',
+        icon: 'tag',
+        sort: 40,
+        menus: [
+          { title: '营销管理', icon: 'tag', path: '/marketing', sort: 10, children: [
+            { title: '优惠券管理', path: '/marketing/coupon' },
+          ]},
+        ],
+      },
+      {
+        key: 'wms',
+        title: '仓储',
+        icon: 'warehouse',
+        sort: 50,
+        menus: [
+          { title: '仓储管理', icon: 'warehouse', path: '/wms', sort: 10, children: [
+            { title: '库存管理', path: '/wms/stock' },
+          ]},
+        ],
+      },
+      {
+        key: 'system',
+        title: '系统',
+        icon: 'settings',
+        sort: 60,
+        menus: [
+          { title: '系统设置', icon: 'settings', path: '/system', sort: 10, children: [
+            { title: '配置中心', path: '/system/config' },
+            { title: '管理员管理', path: '/system/admins' },
+            { title: '角色管理', path: '/system/roles' },
+          ]},
+        ],
+      },
+    ],
+  },
 
   // Dashboard
   'GET /admin/api/dashboard': {

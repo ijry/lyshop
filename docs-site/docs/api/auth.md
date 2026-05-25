@@ -9,6 +9,47 @@
 - `POST /api/auth/login`
 - `POST /api/auth/logout`
 - `GET /api/auth/profile`
+- `GET /admin/api/menus`
+
+## 管理后台菜单接口（分组导航）
+
+### 请求
+
+- `GET /admin/api/menus`
+
+### 响应示例（当前结构）
+
+```json
+{
+  "dashboard": { "title": "Dashboard", "path": "/dashboard" },
+  "groups": [
+    {
+      "key": "product",
+      "title": "商品",
+      "icon": "box",
+      "sort": 10,
+      "menus": [
+        {
+          "title": "商品管理",
+          "path": "/product",
+          "children": [{ "title": "商品列表", "path": "/product/list" }]
+        }
+      ]
+    }
+  ]
+}
+```
+
+### 字段说明
+
+- `dashboard`：固定入口菜单，不属于任何分组。
+- `groups[]`：一级分组（如商品、订单、用户、系统、营销、仓储）。
+- `groups[].menus[]`：分组下菜单树，兼容原有 `title/path/icon/sort/children` 结构。
+
+### 兼容说明
+
+- 兼容期内，旧版后端可能仍返回“菜单数组”结构。
+- 前端应优先识别 `groups` 字段使用新分组渲染；若不存在则降级为旧单列渲染。
 
 ## 请求示例
 
