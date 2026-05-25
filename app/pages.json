@@ -24,6 +24,7 @@
     { "path": "pages/marketing/bargain",    "style": { "navigationBarTitleText": "砍价免费拿" } },
     { "path": "pages/im/chat",              "style": { "navigationBarTitleText": "在线客服", "navigationBarBackgroundColor": "#ffffff" } },
     { "path": "pages/user/index",           "style": { "navigationBarTitleText": "个人中心", "navigationStyle": "custom" } },
+    { "path": "pages/user/security",        "style": { "navigationBarTitleText": "账号与安全" } },
     { "path": "pages/user/address",         "style": { "navigationBarTitleText": "收货地址" } },
     { "path": "pages/user/points",          "style": { "navigationBarTitleText": "我的积分" } },
     { "path": "pages/message/index",        "style": { "navigationBarTitleText": "消息中心" } },
