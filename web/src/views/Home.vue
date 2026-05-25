@@ -69,6 +69,8 @@
         </div>
       </div>
     </section>
+
+    <PresetSwitcher />
   </div>
 </template>
 
@@ -76,6 +78,7 @@
 import { ref, onMounted } from 'vue'
 import { get } from '@/api/request'
 import ProductCard from '@/components/ProductCard.vue'
+import PresetSwitcher from '@/components/PresetSwitcher.vue'
 
 const categories = ref<any[]>([])
 const products = ref<any[]>([])

@@ -4,19 +4,22 @@
  * Data is the `data` field inside { code: 0, msg: "success", data: ... }.
  */
 
-import indexDecor from './data/index-decor.json'
-import categories from './data/categories.json'
-import products from './data/products.json'
-import productDetail from './data/product-detail.json'
-import cart from './data/cart.json'
-import orders from './data/orders.json'
+import { getPreset } from './presets/index'
 import userCoupons from './data/user-coupons.json'
-import seckills from './data/seckills.json'
-import groupBuy from './data/group-buy.json'
-import bargain from './data/bargain.json'
-import recommend from './data/recommend.json'
 import userProfile from './data/user-profile.json'
 import addresses from './data/addresses.json'
+
+const preset = getPreset()
+const indexDecor = preset.indexDecor
+const categories = preset.categories
+const products = preset.products
+const productDetail = preset.productDetail
+const seckills = preset.seckills
+const groupBuy = preset.groupBuy
+const bargain = preset.bargain
+const recommend = preset.recommend
+const cart = preset.cart
+const orders = preset.orders
 import { afterSaleStatusLabel, shipmentStatusLabel } from '../utils/order-status'
 
 function parseQuery(url: string) {
