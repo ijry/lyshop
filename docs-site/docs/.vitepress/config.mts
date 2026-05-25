@@ -35,7 +35,8 @@ export default defineConfig({
           { text: "管理后台演示（admin/admin123）", link: "/admin-demo/index.html", target: "_blank" },
           { text: "H5 移动端演示（右下角浮窗）", link: "/" }
         ]
-      }
+      },
+      { text: "AI花絮", link: "/ai-notes/" }
     ],
     sidebar: {
       "/guide/": [
@@ -70,6 +71,17 @@ export default defineConfig({
         {
           text: "二次开发",
           items: [{ text: "扩展指南", link: "/dev/secondary-development" }]
+        }
+      ],
+      "/ai-notes/": [
+        {
+          text: "AI花絮",
+          items: [
+            { text: "导读", link: "/ai-notes/" },
+            { text: "能力总览", link: "/ai-notes/capabilities" },
+            { text: "接口速查", link: "/ai-notes/api" },
+            { text: "演进记录", link: "/ai-notes/evolution" }
+          ]
         }
       ]
     },
