@@ -113,6 +113,8 @@ const menuCells = ref([
     action: () => uni.navigateTo({ url: '/pages/user/address' }) },
   { label: '我的优惠券', icon: 'coupon', value: '',
     action: () => uni.navigateTo({ url: '/pages/marketing/coupon' }) },
+  { label: '我的收藏', icon: 'heart', value: '',
+    action: () => uni.navigateTo({ url: '/pages/user/favorites' }) },
   { label: '我的积分', icon: 'integral', value: '',
     action: () => uni.navigateTo({ url: '/pages/user/points' }) },
   { label: '账号与安全', icon: 'lock', value: '',

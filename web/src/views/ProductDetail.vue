@@ -34,6 +34,7 @@
           <div class="flex gap-4 mt-2 text-xs text-gray-500">
             <span>库存 {{ selectedSku?.stock ?? product.stock }}</span>
             <span>已售 {{ product.sales }}</span>
+            <span>收藏 {{ product.favorite_count || 0 }}</span>
           </div>
         </div>
 
@@ -68,6 +69,10 @@
           <button @click="openChat" class="btn-outline !py-3 flex-center gap-2 w-36">
             <div class="i-carbon-chat text-lg" />
             客服
+          </button>
+          <button @click="toggleFavorite" class="btn-outline !py-3 flex-center gap-2 w-36">
+            <div :class="product.is_favorited ? 'i-carbon-favorite-filled text-red-500' : 'i-carbon-favorite'" />
+            {{ product.is_favorited ? '已收藏' : '收藏' }}
           </button>
           <button @click="addToCart" class="btn-outline flex-1 !py-3 flex-center gap-2">
             <div class="i-carbon-shopping-cart" />
@@ -144,12 +149,14 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { get, post } from '@/api/request'
+import { del, get, post } from '@/api/request'
 import { useChatStore } from '@/stores/chat'
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
 const router = useRouter()
 const chat = useChatStore()
+const auth = useAuthStore()
 const product = ref<any>({})
 const skus = ref<any[]>([])
 const selectedSku = ref<any>(null)
@@ -196,6 +203,25 @@ function buyNow() {
 
 function openChat() {
   chat.open('product_detail')
+}
+
+async function toggleFavorite() {
+  if (!auth.isLoggedIn) {
+    router.push('/login')
+    return
+  }
+  const id = Number(product.value?.id || 0)
+  if (!id) return
+  const favored = !!product.value?.is_favorited
+  if (favored) {
+    await del(`/api/v1/products/${id}/favorite`)
+    product.value.is_favorited = false
+    product.value.favorite_count = Math.max(0, Number(product.value.favorite_count || 0) - 1)
+    return
+  }
+  await post(`/api/v1/products/${id}/favorite`)
+  product.value.is_favorited = true
+  product.value.favorite_count = Number(product.value.favorite_count || 0) + 1
 }
 
 function formatDate(v: string) {

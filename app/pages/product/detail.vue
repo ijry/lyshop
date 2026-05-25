@@ -18,6 +18,7 @@
       <view class="flex items-center mt-16rpx gap-20rpx">
         <text class="text-24rpx text-gray-400">库存 {{ selectedSku?.stock ?? product.stock }}</text>
         <text class="text-24rpx text-gray-400">销量 {{ product.sales }}</text>
+        <text class="text-24rpx text-gray-400">收藏 {{ product.favorite_count || 0 }}</text>
       </view>
     </view>
 
@@ -123,6 +124,10 @@
           <u-icon name="shopping-cart" size="22" color="#666" />
           <text class="text-20rpx text-gray-500 mt-4rpx">购物车</text>
         </view>
+        <view class="flex flex-col items-center" @click="toggleFavorite">
+          <u-icon :name="product.is_favorited ? 'heart-fill' : 'heart'" size="22" :color="product.is_favorited ? '#ef4444' : '#666'" />
+          <text class="text-20rpx mt-4rpx" :style="{ color: product.is_favorited ? '#ef4444' : '#6b7280' }">{{ product.is_favorited ? '已收藏' : '收藏' }}</text>
+        </view>
       </view>
       <view class="flex-1 flex gap-16rpx">
         <u-button type="warning" text="加入购物车" @click="addCart" class="flex-1" shape="circle" />
@@ -134,7 +139,7 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
-import { get, post } from '@/utils/request'
+import { del, get, post } from '@/utils/request'
 
 const product = ref<any>({})
 const skus = ref<any[]>([])
@@ -201,5 +206,27 @@ function buyNow() {
   const skuID = selectedSku.value?.id
   if (!skuID) { uni.showToast({ title: '请选择规格', icon: 'none' }); return }
   uni.navigateTo({ url: `/pages/order/confirm?sku_ids=${skuID}` })
+}
+
+async function toggleFavorite() {
+  const token = uni.getStorageSync('user_token')
+  if (!token) {
+    uni.navigateTo({ url: '/pages/login/index' })
+    return
+  }
+  const id = Number(product.value?.id || 0)
+  if (!id) return
+  const favored = !!product.value?.is_favorited
+  if (favored) {
+    await del(`/api/v1/products/${id}/favorite`)
+    product.value.is_favorited = false
+    product.value.favorite_count = Math.max(0, Number(product.value.favorite_count || 0) - 1)
+    uni.showToast({ title: '已取消收藏', icon: 'none' })
+    return
+  }
+  await post(`/api/v1/products/${id}/favorite`)
+  product.value.is_favorited = true
+  product.value.favorite_count = Number(product.value.favorite_count || 0) + 1
+  uni.showToast({ title: '收藏成功', icon: 'success' })
 }
 </script>

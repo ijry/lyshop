@@ -22,6 +22,7 @@ let replySeq = 20000
 let afterSaleSeq = 8000
 const afterSalesSource: any[] = []
 const categoriesSource: any[] = clone(Array.isArray(categories) ? categories : [])
+const productListSource: any[] = clone(Array.isArray((products as any)?.list) ? (products as any).list : [])
 let categorySeq = Math.max(0, ...categoriesSource.map((item: any) => Number(item?.id || 0)))
 const decorVariantsSource: any[] = [
   {
@@ -41,6 +42,12 @@ const decorVariantsSource: any[] = [
 
 function clone<T>(v: T): T {
   return JSON.parse(JSON.stringify(v))
+}
+
+for (const item of productListSource) {
+  if (item.favorite_count === undefined || item.favorite_count === null) {
+    item.favorite_count = Math.max(0, Math.floor(Number(item.sales || 0) / 8))
+  }
 }
 
 function withAfterSaleLabels(row: any) {
@@ -373,8 +380,8 @@ const routes: Record<string, any> = {
   },
 
   // Products
-  'GET /admin/api/products': products,
-  'GET /admin/api/products/': productDetail,
+  'GET /admin/api/products': { list: productListSource, total: productListSource.length, page: 1, size: 20 },
+  'GET /admin/api/products/': { ...productDetail, favorite_count: Number((productDetail as any)?.favorite_count || 0) },
   'POST /admin/api/products': { id: 100 },
 
   // Orders

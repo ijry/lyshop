@@ -29,6 +29,7 @@
             <th class="px-4 py-3 text-left text-slate-500 font-medium">商品</th>
             <th class="px-4 py-3 text-left text-slate-500 font-medium">价格</th>
             <th class="px-4 py-3 text-left text-slate-500 font-medium">库存</th>
+            <th class="px-4 py-3 text-left text-slate-500 font-medium">收藏数</th>
             <th class="px-4 py-3 text-left text-slate-500 font-medium">状态</th>
             <th class="px-4 py-3 text-left text-slate-500 font-medium">操作</th>
           </tr>
@@ -45,6 +46,7 @@
             </td>
             <td class="px-4 py-3 text-slate-700">¥{{ p.price }}</td>
             <td class="px-4 py-3 text-slate-700">{{ p.stock }}</td>
+            <td class="px-4 py-3 text-slate-700">{{ p.favorite_count || 0 }}</td>
             <td class="px-4 py-3">
               <span :class="p.status===1 ? 'text-green-600 bg-green-50' : 'text-slate-400 bg-slate-100'"
                 class="px-2 py-1 rounded-full text-xs">
@@ -54,11 +56,18 @@
             <td class="px-4 py-3">
               <router-link :to="`/product/form/${p.id}`"
                 class="text-blue-600 hover:underline text-xs mr-3">编辑</router-link>
+              <button
+                v-if="canManageReview"
+                @click="openReview(p)"
+                class="text-emerald-600 hover:underline text-xs mr-3"
+              >
+                管理评价
+              </button>
               <button @click="remove(p.id)" class="text-red-500 hover:underline text-xs">删除</button>
             </td>
           </tr>
           <tr v-if="!products.length">
-            <td colspan="6" class="px-4 py-12 text-center text-slate-400">暂无商品</td>
+            <td colspan="7" class="px-4 py-12 text-center text-slate-400">暂无商品</td>
           </tr>
         </tbody>
       </table>
@@ -73,17 +82,47 @@
         </div>
       </div>
     </div>
+
+    <div v-if="showReviewModal && reviewProduct" class="fixed inset-0 bg-black/35 flex items-center justify-center z-50" @click.self="closeReview">
+      <div class="bg-white rounded-xl w-[1120px] max-w-[96vw] max-h-[92vh] overflow-auto p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-semibold text-slate-800">管理评价 - {{ reviewProduct.title }}（ID: {{ reviewProduct.id }}）</h3>
+          <button class="text-slate-400 hover:text-slate-600" @click="closeReview">关闭</button>
+        </div>
+        <ReviewManager
+          :show-title="false"
+          :show-product-filter="false"
+          :fixed-product-id="Number(reviewProduct.id || 0)"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { getProducts, getCategories, deleteProduct } from '@/api/plugins'
+import { getMenus } from '@/api/auth'
+import ReviewManager from '@/components/review/ReviewManager.vue'
+import { useAuthStore } from '@/stores/auth'
 
 const products = ref<any[]>([])
 const categories = ref<any[]>([])
 const total = ref(0)
 const query = ref({ keyword: '', category_id: '', page: 1, size: 20 })
+const showReviewModal = ref(false)
+const reviewProduct = ref<any>(null)
+const canManageReview = ref(false)
+const auth = useAuthStore()
+
+function hasReviewMenu(rows: any[]): boolean {
+  const list = Array.isArray(rows) ? rows : []
+  for (const row of list) {
+    if (String(row?.path || '') === '/review/list') return true
+    if (hasReviewMenu(row?.children || [])) return true
+  }
+  return false
+}
 
 async function loadProducts() {
   const data: any = await getProducts(query.value)
@@ -97,8 +136,26 @@ async function remove(id: number) {
   loadProducts()
 }
 
-onMounted(() => {
+function openReview(product: any) {
+  if (!canManageReview.value) return
+  reviewProduct.value = product
+  showReviewModal.value = true
+}
+
+function closeReview() {
+  showReviewModal.value = false
+  reviewProduct.value = null
+}
+
+onMounted(async () => {
   getCategories().then((d: any) => categories.value = d || [])
+  const canByPermission = auth.hasPermission('order:view')
+  try {
+    const menus: any[] = await getMenus()
+    canManageReview.value = canByPermission || hasReviewMenu(menus)
+  } catch {
+    canManageReview.value = canByPermission
+  }
   loadProducts()
 })
 </script>

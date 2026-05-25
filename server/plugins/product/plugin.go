@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 
 	"github.com/gin-gonic/gin"
+	"github.com/ijry/lyshop/core/plugin"
 	productapi "github.com/ijry/lyshop/plugins/product/api"
 	productmodel "github.com/ijry/lyshop/plugins/product/model"
-	"github.com/ijry/lyshop/core/plugin"
 	"gorm.io/gorm"
 )
 
@@ -39,6 +39,7 @@ func (p *productPlugin) Migrate(db *gorm.DB) error {
 		&productmodel.Product{},
 		&productmodel.ProductSku{},
 		&productmodel.ProductImage{},
+		&productmodel.ProductFavorite{},
 	)
 }
 

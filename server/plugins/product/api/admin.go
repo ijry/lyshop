@@ -69,7 +69,7 @@ func adminDeleteCategory(c *gin.Context) {
 func adminListProducts(c *gin.Context) {
 	var q productsvc.ProductListQuery
 	c.ShouldBindQuery(&q)
-	list, total, err := productsvc.ListProducts(c.Request.Context(), q)
+	list, total, err := productsvc.ListProducts(c.Request.Context(), q, 0)
 	if err != nil {
 		response.Fail(c, 500, err.Error())
 		return
@@ -79,7 +79,7 @@ func adminListProducts(c *gin.Context) {
 
 func adminGetProduct(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	detail, err := productsvc.GetProduct(c.Request.Context(), id)
+	detail, err := productsvc.GetProduct(c.Request.Context(), id, 0)
 	if err != nil {
 		response.Fail(c, 10002, err.Error())
 		return

@@ -28,12 +28,25 @@ function parseQuery(url: string) {
 const orderListSource = Array.isArray((orders as any)?.list)
   ? JSON.parse(JSON.stringify((orders as any).list))
   : []
+const userCouponSource = Array.isArray(userCoupons)
+  ? JSON.parse(JSON.stringify(userCoupons))
+  : []
+const claimableCouponSource = [
+  { id: 1, name: '新人满100减20', type: 1, min_amount: 100, discount: 20, per_limit: 1, total_count: 1000, claimed_count: 120, claimed_by_me: 1, can_claim: false, status: 1 },
+  { id: 2, name: '全场9折券', type: 2, min_amount: 0, discount: 0.9, per_limit: 1, total_count: 500, claimed_count: 80, claimed_by_me: 0, can_claim: true, status: 1 },
+  { id: 3, name: '无门槛5元券', type: 3, min_amount: 0, discount: 5, per_limit: 2, total_count: 2000, claimed_count: 650, claimed_by_me: 0, can_claim: true, status: 1 },
+]
 const addressListSource = Array.isArray(addresses)
   ? JSON.parse(JSON.stringify(addresses))
   : []
 let afterSaleSeq = 8000
 const afterSalesSource: any[] = []
 const productDetailSource = JSON.parse(JSON.stringify(productDetail as any))
+const productListSource = Array.isArray((products as any)?.list)
+  ? JSON.parse(JSON.stringify((products as any).list))
+  : []
+const favoriteAtMap = new Map<number, string>()
+const productFavoriteCountMap = new Map<number, number>()
 const productReviewMap = new Map<number, any[]>()
 const reviewIndexMap = new Map<number, any>()
 let reviewSeq = 5000
@@ -65,6 +78,75 @@ const shipmentBizTypeLabels: Record<string, string> = {
 
 function clone<T>(v: T): T {
   return JSON.parse(JSON.stringify(v))
+}
+
+function buildProductIndex() {
+  for (const item of productListSource) {
+    const id = Number(item?.id || 0)
+    if (id <= 0) continue
+    productFavoriteCountMap.set(id, Number(item?.favorite_count || 0))
+  }
+  const detailID = Number(productDetailSource?.id || 0)
+  if (detailID > 0 && !productFavoriteCountMap.has(detailID)) {
+    productFavoriteCountMap.set(detailID, Number(productDetailSource?.favorite_count || 0))
+  }
+}
+
+function enrichFavoriteFields(row: any) {
+  const id = Number(row?.id || 0)
+  const count = productFavoriteCountMap.get(id) ?? Number(row?.favorite_count || 0)
+  return {
+    ...row,
+    favorite_count: Math.max(0, count),
+    is_favorited: favoriteAtMap.has(id),
+  }
+}
+
+function findProductByID(id: number) {
+  if (id <= 0) return null
+  const hit = productListSource.find((item: any) => Number(item?.id || 0) === id)
+  if (hit) return hit
+  if (Number(productDetailSource?.id || 0) === id) return productDetailSource
+  return null
+}
+
+function favoriteProductByID(id: number) {
+  if (id <= 0) return
+  if (favoriteAtMap.has(id)) return
+  favoriteAtMap.set(id, new Date().toISOString())
+  const prev = productFavoriteCountMap.get(id) ?? Number(findProductByID(id)?.favorite_count || 0)
+  productFavoriteCountMap.set(id, prev + 1)
+}
+
+function unfavoriteProductByID(id: number) {
+  if (id <= 0) return
+  if (!favoriteAtMap.has(id)) return
+  favoriteAtMap.delete(id)
+  const prev = productFavoriteCountMap.get(id) ?? Number(findProductByID(id)?.favorite_count || 0)
+  productFavoriteCountMap.set(id, Math.max(0, prev - 1))
+}
+
+function listUserFavorites(page = 1, size = 20) {
+  const rows = Array.from(favoriteAtMap.entries())
+    .sort((a, b) => String(b[1]).localeCompare(String(a[1])))
+    .map(([id, favoritedAt]) => {
+      const source = findProductByID(Number(id))
+      if (!source) return null
+      return {
+        ...enrichFavoriteFields(clone(source)),
+        favorited_at: favoritedAt,
+      }
+    })
+    .filter(Boolean) as any[]
+  const safePage = Math.max(1, Number(page) || 1)
+  const safeSize = Math.max(1, Number(size) || 20)
+  const offset = (safePage - 1) * safeSize
+  return {
+    list: rows.slice(offset, offset + safeSize),
+    total: rows.length,
+    page: safePage,
+    size: safeSize,
+  }
 }
 
 function nextReviewID() {
@@ -269,6 +351,7 @@ function hydrateReviewsFromOrders() {
   }
 }
 
+buildProductIndex()
 hydrateReviewsFromOrders()
 if (orderListSource[1]) {
   const seedCaseID = ++afterSaleSeq
@@ -558,13 +641,11 @@ function removeAddress(id: number) {
 const routes: Record<string, any> = {
   'GET /api/v1/index/decor': indexDecor,
   'GET /api/v1/categories': categories,
-  'GET /api/v1/products': products,
+  'GET /api/v1/products': { list: productListSource, total: productListSource.length, page: 1, size: 20 },
   'GET /api/v1/products/recommend': recommend,
-  'GET /api/v1/products/': productDetailSource,
   'GET /api/v1/cart': cart,
   'GET /api/v1/orders': orders,
   'GET /api/v1/orders/': orderListSource[0] || null,
-  'GET /api/v1/user/coupons': userCoupons,
   'GET /api/v1/user/profile': userProfile,
   'GET /api/v1/user/points/logs': {
     list: [
@@ -617,8 +698,58 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     return { matched: true, data: listOrders(status) }
   }
 
+  if (upperMethod === 'POST' && /^\/api\/v1\/products\/\d+\/favorite$/.test(path)) {
+    const id = Number(path.split('/')[4] || 0)
+    favoriteProductByID(id)
+    return { matched: true, data: null }
+  }
+  if (upperMethod === 'DELETE' && /^\/api\/v1\/products\/\d+\/favorite$/.test(path)) {
+    const id = Number(path.split('/')[4] || 0)
+    unfavoriteProductByID(id)
+    return { matched: true, data: null }
+  }
+  if (upperMethod === 'GET' && path === '/api/v1/user/favorites') {
+    return { matched: true, data: listUserFavorites(Number(query.page || 1), Number(query.size || 20)) }
+  }
+
   if (upperMethod === 'POST' && path === '/api/v1/addresses') {
     return { matched: true, data: upsertAddress(params || {}) }
+  }
+  if (upperMethod === 'GET' && path === '/api/v1/coupons') {
+    return { matched: true, data: claimableCouponSource.map((item) => ({ ...item })) }
+  }
+  if (upperMethod === 'POST' && /^\/api\/v1\/coupons\/\d+\/claim$/.test(path)) {
+    const couponID = Number(path.split('/')[4] || 0)
+    const target = claimableCouponSource.find((item) => Number(item.id) === couponID)
+    if (target && target.can_claim) {
+      target.claimed_count = Number(target.claimed_count || 0) + 1
+      target.claimed_by_me = Number(target.claimed_by_me || 0) + 1
+      const limitReached = target.per_limit > 0 && Number(target.claimed_by_me || 0) >= target.per_limit
+      const soldOut = target.total_count > 0 && Number(target.claimed_count || 0) >= target.total_count
+      target.can_claim = !(limitReached || soldOut)
+      const nextID = Math.max(0, ...userCouponSource.map((item: any) => Number(item.id || 0))) + 1
+      userCouponSource.unshift({
+        id: nextID,
+        coupon_id: couponID,
+        user_id: 1,
+        status: 1,
+        used_at: null,
+        order_id: 0,
+        created_at: new Date().toISOString(),
+        coupon: {
+          id: target.id,
+          name: target.name,
+          type: target.type,
+          min_amount: target.min_amount,
+          discount: target.discount,
+          end_at: null,
+        },
+      })
+    }
+    return { matched: true, data: null }
+  }
+  if (upperMethod === 'GET' && path === '/api/v1/user/coupons') {
+    return { matched: true, data: userCouponSource.map((item: any) => ({ ...item })) }
   }
   if (upperMethod === 'PUT' && path.startsWith('/api/v1/addresses/')) {
     const id = Number(path.split('/').pop() || 0)
@@ -764,6 +895,20 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     ensureOrderExt(detail)
     return { matched: true, data: JSON.parse(JSON.stringify(detail)) }
   }
+  if (upperMethod === 'GET' && /^\/api\/v1\/products\/\d+$/.test(path)) {
+    const id = Number(path.split('/').pop() || 0)
+    const source = findProductByID(id)
+    if (!source) return { matched: true, data: null }
+    const detail = Number(productDetailSource?.id || 0) === id
+      ? clone(productDetailSource)
+      : {
+          ...clone(source),
+          skus: [],
+          images: [],
+          detail: { version: 1, blocks: [] },
+        }
+    return { matched: true, data: enrichFavoriteFields(detail) }
+  }
   if (upperMethod === 'GET' && path.startsWith('/api/v1/products/') && path.endsWith('/reviews')) {
     const productID = Number(path.split('/')[4] || 0)
     const page = Number(query.page || 1)
@@ -775,7 +920,7 @@ export function matchMock(method: string, url: string, params?: Record<string, a
   if (key in routes) {
     const data = routes[key]
     if (upperMethod === 'GET' && path === '/api/v1/products') {
-      const sourceList = Array.isArray(data?.list) ? data.list : []
+      const sourceList = productListSource.slice()
       const keyword = String(query.keyword || '').trim().toLowerCase()
       const categoryID = Number(query.category_id || 0)
       const page = Number(query.page || 1)
@@ -788,8 +933,8 @@ export function matchMock(method: string, url: string, params?: Record<string, a
         list = list.filter((item: any) => Number(item.category_id) === categoryID)
       }
       const offset = Math.max(page - 1, 0) * Math.max(size, 1)
-      const pageList = list.slice(offset, offset + size)
-      return { matched: true, data: { ...data, list: pageList, total: list.length, page, size } }
+      const pageList = list.slice(offset, offset + size).map((item: any) => enrichFavoriteFields(clone(item)))
+      return { matched: true, data: { list: pageList, total: list.length, page, size } }
     }
     return { matched: true, data }
   }

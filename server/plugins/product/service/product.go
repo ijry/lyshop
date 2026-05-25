@@ -17,10 +17,16 @@ type ProductListQuery struct {
 	Size       int    `form:"size"`
 }
 
+type ProductListItem struct {
+	productmodel.Product
+	IsFavorited bool `json:"is_favorited"`
+}
+
 type ProductDetail struct {
 	productmodel.Product
-	SKUs   []productmodel.ProductSku   `json:"skus"`
-	Images []productmodel.ProductImage `json:"images"`
+	SKUs        []productmodel.ProductSku   `json:"skus"`
+	Images      []productmodel.ProductImage `json:"images"`
+	IsFavorited bool                        `json:"is_favorited"`
 }
 
 var defaultDetailJSON = json.RawMessage(`{"version":1,"blocks":[]}`)
@@ -46,7 +52,7 @@ func normalizeDetail(raw json.RawMessage) json.RawMessage {
 	return normalized
 }
 
-func ListProducts(ctx context.Context, q ProductListQuery) ([]productmodel.Product, int64, error) {
+func ListProducts(ctx context.Context, q ProductListQuery, userID uint64) ([]ProductListItem, int64, error) {
 	if q.Page <= 0 {
 		q.Page = 1
 	}
@@ -61,11 +67,31 @@ func ListProducts(ctx context.Context, q ProductListQuery) ([]productmodel.Produ
 		tx = tx.Where("title LIKE ?", "%"+q.Keyword+"%")
 	}
 	var total int64
-	tx.Count(&total)
+	if err := tx.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
 	var list []productmodel.Product
 	err := tx.Order("sort desc, id desc").
 		Offset((q.Page - 1) * q.Size).Limit(q.Size).Find(&list).Error
-	return list, total, err
+	if err != nil {
+		return nil, 0, err
+	}
+	ids := make([]uint64, 0, len(list))
+	for _, item := range list {
+		ids = append(ids, item.ID)
+	}
+	favoritedSet, err := getFavoritedProductIDSet(ctx, userID, ids)
+	if err != nil {
+		return nil, 0, err
+	}
+	items := make([]ProductListItem, 0, len(list))
+	for _, item := range list {
+		items = append(items, ProductListItem{
+			Product:     item,
+			IsFavorited: userID > 0 && hasProductID(favoritedSet, item.ID),
+		})
+	}
+	return items, total, nil
 }
 
 func ListRecommendProducts(ctx context.Context, limit int) ([]productmodel.Product, error) {
@@ -85,7 +111,7 @@ func ListRecommendProducts(ctx context.Context, limit int) ([]productmodel.Produ
 	return list, err
 }
 
-func GetProduct(ctx context.Context, id uint64) (*ProductDetail, error) {
+func GetProduct(ctx context.Context, id uint64, userID uint64) (*ProductDetail, error) {
 	var p productmodel.Product
 	if err := db.DB.WithContext(ctx).First(&p, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -97,6 +123,11 @@ func GetProduct(ctx context.Context, id uint64) (*ProductDetail, error) {
 	detail := &ProductDetail{Product: p}
 	db.DB.WithContext(ctx).Where("product_id = ?", id).Find(&detail.SKUs)
 	db.DB.WithContext(ctx).Where("product_id = ?", id).Order("sort asc").Find(&detail.Images)
+	favoritedSet, err := getFavoritedProductIDSet(ctx, userID, []uint64{id})
+	if err != nil {
+		return nil, err
+	}
+	detail.IsFavorited = userID > 0 && hasProductID(favoritedSet, id)
 	return detail, nil
 }
 
@@ -158,4 +189,9 @@ func ReplaceProductImages(ctx context.Context, productID uint64, images []produc
 		}
 		return nil
 	})
+}
+
+func hasProductID(set map[uint64]struct{}, productID uint64) bool {
+	_, ok := set[productID]
+	return ok
 }

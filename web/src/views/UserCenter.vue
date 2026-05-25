@@ -75,6 +75,28 @@
           <div v-else class="text-center py-8 text-gray-400 text-sm">暂无优惠券</div>
         </div>
 
+        <!-- Favorites -->
+        <div v-if="activeMenu === 'overview' || activeMenu === 'favorites'" class="card p-6 mb-4">
+          <div class="flex-between mb-4">
+            <h3 class="text-base font-bold text-gray-900">我的收藏</h3>
+            <span class="text-xs text-gray-400">共 {{ favoriteTotal }} 件</span>
+          </div>
+          <div v-if="favorites.length" class="space-y-3">
+            <div v-for="item in favorites" :key="item.id" class="border border-gray-100 rounded-xl p-3 flex gap-3">
+              <img :src="item.cover" class="w-16 h-16 rounded-lg object-cover border border-gray-100 cursor-pointer" @click="toProductDetail(item.id)" />
+              <div class="flex-1 min-w-0">
+                <p class="text-sm text-gray-800 font-medium truncate cursor-pointer" @click="toProductDetail(item.id)">{{ item.title }}</p>
+                <p class="text-xs text-gray-400 mt-1">收藏 {{ item.favorite_count || 0 }}</p>
+                <div class="flex-between mt-2">
+                  <span class="text-sm text-red-500 font-semibold">¥{{ item.price }}</span>
+                  <button class="text-xs text-red-500 hover:underline" @click="unfavorite(item.id)">取消收藏</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-else class="text-center py-8 text-gray-400 text-sm">暂无收藏商品</div>
+        </div>
+
         <!-- Points log -->
         <div v-if="activeMenu === 'overview' || activeMenu === 'points'" class="card p-6 mb-4">
           <h3 class="text-base font-bold text-gray-900 mb-4">积分明细</h3>
@@ -149,13 +171,17 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { del, get, post, put } from '@/api/request'
 
 const user = ref<any>({})
 const coupons = ref<any[]>([])
 const pointsLogs = ref<any[]>([])
 const addresses = ref<any[]>([])
+const favorites = ref<any[]>([])
+const favoriteTotal = ref(0)
 const activeMenu = ref('overview')
+const router = useRouter()
 const showAddressDialog = ref(false)
 const savingAddress = ref(false)
 const editingAddressID = ref(0)
@@ -172,6 +198,7 @@ const addressForm = ref({
 const menuItems = [
   { key: 'overview', label: '账户总览', icon: 'i-carbon-dashboard', action: () => activeMenu.value = 'overview' },
   { key: 'coupons', label: '我的优惠券', icon: 'i-carbon-ticket', action: () => activeMenu.value = 'coupons' },
+  { key: 'favorites', label: '我的收藏', icon: 'i-carbon-favorite', action: () => activeMenu.value = 'favorites' },
   { key: 'points', label: '我的积分', icon: 'i-carbon-star', action: () => activeMenu.value = 'points' },
   { key: 'addresses', label: '收货地址', icon: 'i-carbon-location', action: () => activeMenu.value = 'addresses' },
 ]
@@ -184,16 +211,19 @@ const orderStatuses = [
 ]
 
 onMounted(async () => {
-  const [profile, couponData, pointsData, addrData] = await Promise.all([
+  const [profile, couponData, pointsData, addrData, favoriteData] = await Promise.all([
     get<any>('/api/v1/user/profile'),
     get<any>('/api/v1/user/coupons'),
     get<any>('/api/v1/user/points/logs'),
     get<any[]>('/api/v1/addresses'),
+    get<any>('/api/v1/user/favorites', { page: 1, size: 12 }),
   ])
   user.value = profile || {}
   coupons.value = couponData || []
   pointsLogs.value = pointsData?.list || []
   addresses.value = addrData || []
+  favorites.value = Array.isArray(favoriteData?.list) ? favoriteData.list : []
+  favoriteTotal.value = Number(favoriteData?.total || 0)
 })
 
 function resetAddressForm() {
@@ -287,5 +317,21 @@ async function removeAddress(addr: any) {
   } catch (error: any) {
     alert(error?.message || '删除失败')
   }
+}
+
+async function unfavorite(productID: number) {
+  const id = Number(productID || 0)
+  if (!id) return
+  try {
+    await del(`/api/v1/products/${id}/favorite`)
+    favorites.value = favorites.value.filter((row: any) => Number(row.id) !== id)
+    favoriteTotal.value = Math.max(0, favoriteTotal.value - 1)
+  } catch (error: any) {
+    alert(error?.message || '取消收藏失败')
+  }
+}
+
+function toProductDetail(id: number) {
+  router.push(`/product/${id}`)
 }
 </script>
