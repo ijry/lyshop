@@ -42,6 +42,8 @@ func (p *orderPlugin) Migrate(db *gorm.DB) error {
 		&ordermodel.OrderReviewAppend{},
 		&ordermodel.OrderReviewReply{},
 		&ordermodel.OrderShipment{},
+		&ordermodel.OrderShipmentTrack{},
+		&ordermodel.OrderShipmentSyncLog{},
 		&ordermodel.AfterSaleCase{},
 		&ordermodel.AfterSaleCaseItem{},
 		&ordermodel.AfterSaleLog{},

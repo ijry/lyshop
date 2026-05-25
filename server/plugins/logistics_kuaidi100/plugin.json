@@ -1,0 +1,16 @@
+{
+  "name": "logistics_kuaidi100",
+  "title": "快递100",
+  "version": "1.0.0",
+  "description": "快递100物流轨迹驱动",
+  "author": "lyshop",
+  "depends": [],
+  "menus": [],
+  "permissions": [],
+  "config_items": [
+    { "key": "api_url", "label": "查询地址", "type": "text", "required": false, "placeholder": "https://poll.kuaidi100.com/poll/query.do" },
+    { "key": "customer", "label": "Customer", "type": "text", "required": true },
+    { "key": "key", "label": "Key", "type": "password", "required": true }
+  ]
+}
+

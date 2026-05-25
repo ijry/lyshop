@@ -1,0 +1,16 @@
+{
+  "name": "logistics_kdniao",
+  "title": "快递鸟",
+  "version": "1.0.0",
+  "description": "快递鸟物流轨迹驱动",
+  "author": "lyshop",
+  "depends": [],
+  "menus": [],
+  "permissions": [],
+  "config_items": [
+    { "key": "api_url", "label": "查询地址", "type": "text", "required": false, "placeholder": "https://api.kdniao.com/Ebusiness/EbusinessOrderHandle.aspx" },
+    { "key": "ebusiness_id", "label": "EBusinessID", "type": "text", "required": true },
+    { "key": "api_key", "label": "APIKey", "type": "password", "required": true }
+  ]
+}
+

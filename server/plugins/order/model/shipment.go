@@ -39,7 +39,11 @@ type OrderShipment struct {
 	BizType         string     `gorm:"size:16;not null;index"                        json:"biz_type"`
 	Company         string     `gorm:"size:64"                                       json:"company"`
 	TrackingNo      string     `gorm:"size:128;index"                                json:"tracking_no"`
+	ChannelProvider string     `gorm:"size:32;index"                                 json:"channel_provider"`
 	LogisticsStatus string     `gorm:"size:32;not null;default:'pending'"            json:"logistics_status"`
+	LastQueryAt     *time.Time `json:"last_query_at"`
+	LastSyncOKAt    *time.Time `json:"last_sync_ok_at"`
+	SyncFailCount   int        `gorm:"not null;default:0"                            json:"sync_fail_count"`
 	Remark          string     `gorm:"size:255"                                      json:"remark"`
 	ShippedAt       *time.Time `json:"shipped_at"`
 	SignedAt        *time.Time `json:"signed_at"`

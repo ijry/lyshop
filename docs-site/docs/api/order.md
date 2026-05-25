@@ -73,7 +73,46 @@
 
 - `ship_type=initial`：首发，保持原有发货语义并更新订单状态为待收货。
 - `ship_type=reship`：补发，需传 `after_sale_case_id`，用于换货售后补发闭环。
+- `company` 建议传标准快递公司编码（如 `SF/ZTO/YTO/STO/YD/JD/EMS/DBL/JT`），后台发货页使用下拉字典维护，避免手填错误。
 - 每次发货都会写入 `shipments` 轨迹，`tracking_no` 仍保留最近单号以兼容旧端。
+
+## 物流驱动化升级（快递100 / 快递鸟）
+
+- 系统新增物流驱动机制，支持 `kuaidi100` 与 `kdniao` 两个渠道。
+- 运单首次同步按“主驱动 -> 备驱动”顺序尝试；首次成功后会写入 `channel_provider` 并固定后续同步渠道。
+- 运单同步同时维护：
+  - `order_shipments` 最新状态字段（如 `logistics_status`、`signed_at`）
+  - `order_shipment_tracks` 轨迹节点明细（时间线展示与审计）
+
+### 后台手动刷新接口
+
+- `POST /admin/api/orders/:id/shipments/:shipment_id/sync`
+  - 作用：按运单触发一次立即同步
+
+### 轨迹查询接口
+
+- `GET /admin/api/orders/:id/shipments/:shipment_id/tracks`
+  - 作用：后台查看完整轨迹节点
+- `GET /api/v1/orders/:id/shipments/:shipment_id/tracks`
+  - 作用：用户侧查看完整轨迹节点
+
+轨迹节点返回示例：
+
+```json
+[
+  {
+    "id": 101,
+    "shipment_id": 12,
+    "provider": "kuaidi100",
+    "track_hash": "8b8a2d...",
+    "status_code": "in_transit",
+    "status_text": "快件已到达杭州转运中心",
+    "event_time": "2026-05-25T12:00:00+08:00",
+    "location": "杭州",
+    "raw_payload": {}
+  }
+]
+```
 
 ## 售后接口（退货/换货）
 
@@ -152,3 +191,9 @@
 - 数据库会新增售后与物流相关表，需执行服务启动时的插件迁移。
 - 文件上传仍复用统一 `POST /api/v1/upload`（前台）与 `POST /admin/api/upload`（后台）入口；若启用云存储，需先在后台完成对应插件配置（Endpoint/Region/Bucket/密钥/域名）。
 - 系统支持同时启用多个存储驱动，并在 `storage_router` 插件配置默认驱动；请求也可通过 `driver` 参数临时指定驱动（`local/oss/cos/qiniu`，兼容 `aliyun_oss/qcloud_cos/qiniu_kodo`）。
+- 新增物流路由插件配置项（`logistics_router`）：
+  - `enabled`：物流路由总开关
+  - `primary_driver` / `secondary_driver`：主备驱动
+  - `polling_enabled`：自动轮询开关
+  - `polling_interval_seconds`：轮询频率（秒）
+  - `polling_batch_size`：单批处理数量

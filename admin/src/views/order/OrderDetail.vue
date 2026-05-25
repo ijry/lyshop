@@ -29,12 +29,25 @@
           </div>
           <div v-if="detail.shipments?.length" class="space-y-3">
             <div v-for="ship in detail.shipments" :key="ship.id" class="border border-slate-100 rounded-lg p-3">
-              <p class="text-sm text-slate-700">{{ shipmentTitle(ship) }}</p>
+              <div class="flex items-center justify-between gap-3">
+                <p class="text-sm text-slate-700">{{ shipmentTitle(ship) }}</p>
+                <button data-test="sync-shipment" class="text-xs text-blue-600 hover:underline" @click="syncShip(ship.id)">刷新物流</button>
+              </div>
               <p class="text-xs text-slate-400 mt-1">{{ ship.company || '未填公司' }} · {{ ship.tracking_no }}</p>
+              <p class="text-xs text-slate-400 mt-1">渠道：{{ ship.channel_provider || '待绑定' }}</p>
               <p class="text-xs text-slate-400 mt-1">状态：{{ shipmentStatusLabel(ship.logistics_status) }}</p>
               <p v-if="shipmentPrimaryTime(ship)" class="text-xs text-slate-400 mt-1">{{ shipmentTimeLabel(ship) }}：{{ formatDate(shipmentPrimaryTime(ship)) }}</p>
               <p v-if="ship.after_sale_case_id" class="text-xs text-slate-400 mt-1">关联售后单：#{{ ship.after_sale_case_id }}</p>
               <p v-if="ship.remark" class="text-xs text-slate-400 mt-1">备注：{{ ship.remark }}</p>
+              <div v-if="tracksMap[ship.id]?.length" class="mt-3 border-t border-slate-100 pt-3 space-y-2">
+                <p class="text-xs text-slate-500">轨迹节点</p>
+                <div v-for="track in tracksMap[ship.id]" :key="track.id" class="text-xs text-slate-500">
+                  <span>{{ formatDate(track.event_time) }}</span>
+                  <span class="mx-1">·</span>
+                  <span>{{ track.status_text }}</span>
+                  <span v-if="track.location">（{{ track.location }}）</span>
+                </div>
+              </div>
             </div>
           </div>
           <p v-else class="text-slate-400 text-sm">暂无物流轨迹</p>
@@ -84,7 +97,10 @@
             <option value="initial">首发</option>
             <option value="reship">补发</option>
           </select>
-          <input v-model="shipForm.company" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="快递公司" />
+          <select v-model="shipForm.company" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm">
+            <option value="">请选择快递公司</option>
+            <option v-for="item in courierOptions" :key="item.code" :value="item.code">{{ item.name }}（{{ item.code }}）</option>
+          </select>
           <input v-model="shipForm.tracking_no" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="快递单号" />
           <input v-if="shipForm.ship_type === 'reship'" v-model="shipForm.after_sale_case_id" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" placeholder="售后单ID" />
         </div>
@@ -100,19 +116,31 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getOrderDetail, shipOrder } from '@/api/plugins'
+import { getOrderDetail, getShipmentTracks, shipOrder, syncShipment } from '@/api/plugins'
 import { afterSaleStatusLabel, orderStatusLabel, shipmentPrimaryTime, shipmentStatusLabel, shipmentTimeLabel, shipmentTitle } from '@/utils/order-status'
 
 const route = useRoute()
 const router = useRouter()
 const detail = ref<any>(null)
+const tracksMap = ref<Record<number, any[]>>({})
 const showShipDialog = ref(false)
 const shipForm = ref<any>({
   ship_type: 'initial',
-  company: '',
+  company: 'SF',
   tracking_no: '',
   after_sale_case_id: '',
 })
+const courierOptions = [
+  { code: 'SF', name: '顺丰速运' },
+  { code: 'ZTO', name: '中通快递' },
+  { code: 'YTO', name: '圆通速递' },
+  { code: 'STO', name: '申通快递' },
+  { code: 'YD', name: '韵达速递' },
+  { code: 'JD', name: '京东物流' },
+  { code: 'EMS', name: '中国邮政 EMS' },
+  { code: 'DBL', name: '德邦快递' },
+  { code: 'JT', name: '极兔速递' },
+]
 
 const statusLabel = (s: number) => orderStatusLabel(s) || '未知'
 const payLabel = (m: string) => m === 'wechat' ? '微信支付' : m === 'alipay' ? '支付宝支付' : '未支付'
@@ -132,9 +160,25 @@ function goAfterSaleDetail(id: number) {
 
 async function loadDetail() {
   detail.value = await getOrderDetail(Number(route.params.id))
+  tracksMap.value = {}
+  const shipments = Array.isArray(detail.value?.shipments) ? detail.value.shipments : []
+  for (const shipment of shipments) {
+    if (!shipment?.id) continue
+    const rows: any = await getShipmentTracks(Number(route.params.id), Number(shipment.id))
+    tracksMap.value[Number(shipment.id)] = Array.isArray(rows) ? rows : []
+  }
+}
+
+async function syncShip(shipmentID: number) {
+  await syncShipment(Number(route.params.id), shipmentID)
+  await loadDetail()
 }
 
 async function submitShip() {
+  if (!shipForm.value.company) {
+    alert('请选择快递公司')
+    return
+  }
   await shipOrder(Number(route.params.id), {
     ship_type: shipForm.value.ship_type,
     company: shipForm.value.company,

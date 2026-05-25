@@ -1,0 +1,19 @@
+{
+  "name": "logistics_router",
+  "title": "物流路由",
+  "version": "1.0.0",
+  "description": "物流主备路由与自动轮询调度",
+  "author": "lyshop",
+  "depends": ["order"],
+  "menus": [],
+  "permissions": [],
+  "config_items": [
+    { "key": "enabled", "label": "启用物流路由", "type": "switch", "required": false },
+    { "key": "primary_driver", "label": "主驱动", "type": "select", "required": true, "options": [ { "label": "快递100", "value": "kuaidi100" }, { "label": "快递鸟", "value": "kdniao" } ] },
+    { "key": "secondary_driver", "label": "备驱动", "type": "select", "required": true, "options": [ { "label": "快递鸟", "value": "kdniao" }, { "label": "快递100", "value": "kuaidi100" } ] },
+    { "key": "polling_enabled", "label": "开启自动轮询", "type": "switch", "required": false },
+    { "key": "polling_interval_seconds", "label": "轮询频率(秒)", "type": "number", "required": false, "placeholder": "300" },
+    { "key": "polling_batch_size", "label": "单批处理数", "type": "number", "required": false, "placeholder": "100" }
+  ]
+}
+

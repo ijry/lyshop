@@ -39,6 +39,11 @@ export const SHIPMENT_DIRECTION_LABELS: Record<string, string> = {
   inbound: '回寄',
 }
 
+export const LOGISTICS_PROVIDER_LABELS: Record<string, string> = {
+  kuaidi100: '快递100',
+  kdniao: '快递鸟',
+}
+
 export function orderStatusLabel(status: number | string | undefined | null) {
   const key = Number(status || 0)
   return ORDER_STATUS_LABELS[key] || String(status || '')
@@ -62,6 +67,13 @@ export function shipmentDirectionLabel(direction: string | undefined | null) {
 export function shipmentBizTypeLabel(bizType: string | undefined | null) {
   const value = String(bizType || '')
   return SHIPMENT_BIZ_TYPE_LABELS[value] || value
+}
+
+export function logisticsProviderLabel(provider: string | undefined | null) {
+  const code = String(provider || '').trim()
+  if (!code) return '待绑定'
+  const name = LOGISTICS_PROVIDER_LABELS[code]
+  return name ? `${name}（${code}）` : code
 }
 
 export function shipmentTitle(shipment: any) {

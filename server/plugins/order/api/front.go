@@ -29,6 +29,7 @@ func RegisterFrontRoutes(g *gin.RouterGroup) {
 	auth.POST("/orders", createOrder)
 	auth.GET("/orders", myOrders)
 	auth.GET("/orders/:id", myOrderDetail)
+	auth.GET("/orders/:id/shipments/:shipment_id/tracks", myShipmentTracks)
 	auth.POST("/orders/:id/after-sales", createAfterSale)
 	auth.GET("/orders/:id/review", myOrderReviewMeta)
 	auth.GET("/after-sales/:id", myAfterSaleDetail)
@@ -175,6 +176,22 @@ func myOrderDetail(c *gin.Context) {
 		return
 	}
 	response.OK(c, detail)
+}
+
+func myShipmentTracks(c *gin.Context) {
+	userID, _ := c.Get("user_id")
+	orderID, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	shipmentID, _ := strconv.ParseUint(c.Param("shipment_id"), 10, 64)
+	if _, err := ordersvc.GetOrderDetail(c.Request.Context(), userID.(uint64), orderID); err != nil {
+		response.Fail(c, 404, err.Error())
+		return
+	}
+	rows, err := ordersvc.ListShipmentTracks(c.Request.Context(), orderID, shipmentID)
+	if err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, rows)
 }
 
 func payOrder(c *gin.Context) {

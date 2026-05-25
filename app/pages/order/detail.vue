@@ -47,12 +47,19 @@
           <view v-for="ship in detail.shipments" :key="ship.id" class="border border-gray-100 rounded-16rpx p-16rpx">
             <text class="text-24rpx text-gray-700 block">{{ shipmentTitle(ship) }}</text>
             <text class="text-22rpx text-gray-500 block mt-6rpx">{{ ship.company || '未填公司' }} · {{ ship.tracking_no || '-' }}</text>
+            <text class="text-22rpx text-gray-500 block mt-6rpx">渠道：{{ logisticsProviderLabel(ship.channel_provider) }}</text>
             <text class="text-22rpx text-gray-500 block mt-6rpx">状态：{{ shipmentStatusLabel(ship.logistics_status) }}</text>
             <text v-if="shipmentPrimaryTime(ship)" class="text-22rpx text-gray-500 block mt-6rpx">
               {{ shipmentTimeLabel(ship) }}：{{ formatDate(shipmentPrimaryTime(ship)) }}
             </text>
             <text v-if="ship.after_sale_case_id" class="text-22rpx text-gray-500 block mt-6rpx">关联售后单：#{{ ship.after_sale_case_id }}</text>
             <text v-if="ship.remark" class="text-22rpx text-gray-500 block mt-6rpx">备注：{{ ship.remark }}</text>
+            <view v-if="tracksMap[ship.id]?.length" class="mt-12rpx border-t border-gray-100 pt-12rpx">
+              <text class="text-22rpx text-gray-500 block mb-8rpx">轨迹节点</text>
+              <text v-for="track in tracksMap[ship.id]" :key="track.id" class="text-22rpx text-gray-500 block mt-6rpx">
+                {{ formatDate(track.event_time) }} · {{ track.status_text }}<text v-if="track.location">（{{ track.location }}）</text>
+              </text>
+            </view>
           </view>
         </view>
         <text v-else class="text-24rpx text-gray-400">暂无物流轨迹</text>
@@ -142,6 +149,7 @@ import { ref, onMounted } from 'vue'
 import { get } from '@/utils/request'
 import {
   afterSaleStatusLabel,
+  logisticsProviderLabel,
   orderStatusLabel,
   shipmentPrimaryTime,
   shipmentStatusLabel,
@@ -150,6 +158,7 @@ import {
 } from '@/utils/order-status'
 
 const detail = ref<any>({})
+const tracksMap = ref<Record<number, any[]>>({})
 const reviewItems = ref<any[]>([])
 const statusColors: Record<number, string> = { 1: 'text-orange-500', 2: 'text-blue-500', 3: 'text-purple-500', 4: 'text-green-500', 5: 'text-red-500' }
 const statusLabel = (s: number) => orderStatusLabel(s)
@@ -192,6 +201,12 @@ onMounted(async () => {
   const pages = getCurrentPages()
   const query = (pages[pages.length - 1] as any).options
   detail.value = await get<any>(`/api/v1/orders/${query.id}`)
+  tracksMap.value = {}
+  for (const shipment of detail.value?.shipments || []) {
+    if (!shipment?.id) continue
+    const rows = await get<any[]>(`/api/v1/orders/${query.id}/shipments/${shipment.id}/tracks`)
+    tracksMap.value[Number(shipment.id)] = Array.isArray(rows) ? rows : []
+  }
   reviewItems.value = []
   for (const item of detail.value?.items || []) {
     if (item.review) {

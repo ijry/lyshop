@@ -290,7 +290,8 @@ func ShipOrder(ctx context.Context, orderID uint64, req ShipOrderReq) error {
 	if shipType != string(ordermodel.ShipmentBizTypeInitial) && shipType != string(ordermodel.ShipmentBizTypeReship) {
 		return errors.New("不支持的发货类型")
 	}
-	return db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	var createdShipmentID uint64
+	err := db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var order ordermodel.Order
 		if err := tx.Where("id = ?", orderID).First(&order).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -324,7 +325,7 @@ func ShipOrder(ctx context.Context, orderID uint64, req ShipOrderReq) error {
 				return err
 			}
 		}
-		if _, err := createShipmentTx(tx, CreateShipmentReq{
+		shipmentRow, err := createShipmentTx(tx, CreateShipmentReq{
 			OrderID:         orderID,
 			AfterSaleCaseID: req.AfterSaleCaseID,
 			ShipType:        shipType,
@@ -334,9 +335,11 @@ func ShipOrder(ctx context.Context, orderID uint64, req ShipOrderReq) error {
 			Remark:          req.Remark,
 			CreatedByType:   "admin",
 			CreatedByID:     0,
-		}); err != nil {
+		})
+		if err != nil {
 			return err
 		}
+		createdShipmentID = shipmentRow.ID
 		updates := map[string]any{"tracking_no": req.TrackingNo}
 		if shipType == string(ordermodel.ShipmentBizTypeInitial) {
 			updates["status"] = ordermodel.OrderStatusShipped
@@ -349,6 +352,15 @@ func ShipOrder(ctx context.Context, orderID uint64, req ShipOrderReq) error {
 		}
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+	if createdShipmentID > 0 {
+		go func(id uint64) {
+			_ = SyncShipmentTracks(context.Background(), id, SyncShipmentReq{Manual: false})
+		}(createdShipmentID)
+	}
+	return nil
 }
 
 // CreateAddress saves a new address for a user.

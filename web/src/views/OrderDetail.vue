@@ -30,12 +30,19 @@
             <div v-for="ship in detail.shipments" :key="ship.id" class="border border-gray-100 rounded-lg p-3">
               <p class="text-sm text-gray-700">{{ shipmentTitle(ship) }}</p>
               <p class="text-xs text-gray-500 mt-1">{{ ship.company || '未填公司' }} · {{ ship.tracking_no || '-' }}</p>
+              <p class="text-xs text-gray-500 mt-1">渠道：{{ logisticsProviderLabel(ship.channel_provider) }}</p>
               <p class="text-xs text-gray-500 mt-1">状态：{{ shipmentStatusLabel(ship.logistics_status) }}</p>
               <p v-if="shipmentPrimaryTime(ship)" class="text-xs text-gray-500 mt-1">
                 {{ shipmentTimeLabel(ship) }}：{{ formatDate(shipmentPrimaryTime(ship)) }}
               </p>
               <p v-if="ship.after_sale_case_id" class="text-xs text-gray-500 mt-1">关联售后单：#{{ ship.after_sale_case_id }}</p>
               <p v-if="ship.remark" class="text-xs text-gray-500 mt-1">备注：{{ ship.remark }}</p>
+              <div v-if="tracksMap[ship.id]?.length" class="mt-3 border-t border-gray-100 pt-3 space-y-1">
+                <p class="text-xs text-gray-500">轨迹节点</p>
+                <p v-for="track in tracksMap[ship.id]" :key="track.id" class="text-xs text-gray-500">
+                  {{ formatDate(track.event_time) }} · {{ track.status_text }}<span v-if="track.location">（{{ track.location }}）</span>
+                </p>
+              </div>
             </div>
           </div>
           <p v-else class="text-sm text-gray-400">暂无物流轨迹</p>
@@ -131,6 +138,7 @@ import { get } from '@/api/request'
 import {
   afterSaleStatusLabel,
   orderStatusLabel,
+  logisticsProviderLabel,
   shipmentPrimaryTime,
   shipmentStatusLabel,
   shipmentTimeLabel,
@@ -140,6 +148,7 @@ import {
 const route = useRoute()
 const router = useRouter()
 const detail = ref<any>(null)
+const tracksMap = ref<Record<number, any[]>>({})
 const reviewItems = ref<any[]>([])
 const hasReviewed = ref(false)
 const hasUnreviewed = ref(false)
@@ -179,6 +188,12 @@ function goAfterSaleDetail(id: number) {
 
 onMounted(async () => {
   detail.value = await get<any>(`/api/v1/orders/${route.params.id}`)
+  tracksMap.value = {}
+  for (const shipment of detail.value?.shipments || []) {
+    if (!shipment?.id) continue
+    const rows = await get<any[]>(`/api/v1/orders/${route.params.id}/shipments/${shipment.id}/tracks`)
+    tracksMap.value[Number(shipment.id)] = Array.isArray(rows) ? rows : []
+  }
   reviewItems.value = []
   for (const item of detail.value?.items || []) {
     if (item.review) {

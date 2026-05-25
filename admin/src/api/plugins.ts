@@ -30,6 +30,10 @@ export const getOrders = (params?: any) => request.get('/orders', { params })
 export const getOrderDetail = (id: number) => request.get(`/orders/${id}`)
 export const shipOrder = (id: number, data: any) =>
   request.put(`/orders/${id}/ship`, data)
+export const syncShipment = (orderID: number, shipmentID: number) =>
+  request.post(`/orders/${orderID}/shipments/${shipmentID}/sync`)
+export const getShipmentTracks = (orderID: number, shipmentID: number) =>
+  request.get(`/orders/${orderID}/shipments/${shipmentID}/tracks`)
 export const getAfterSales = (params?: any) => request.get('/after-sales', { params })
 export const getAfterSaleDetail = (id: number) => request.get(`/after-sales/${id}`)
 export const auditAfterSale = (id: number, data: any) => request.post(`/after-sales/${id}/audit`, data)

@@ -13,6 +13,8 @@ func RegisterAdminRoutes(g *gin.RouterGroup) {
 	g.GET("/orders", middleware.RequirePermission("order:view"), adminListOrders)
 	g.GET("/orders/:id", middleware.RequirePermission("order:view"), adminGetOrderDetail)
 	g.PUT("/orders/:id/ship", middleware.RequirePermission("order:ship"), adminShipOrder)
+	g.POST("/orders/:id/shipments/:shipment_id/sync", middleware.RequirePermission("order:ship"), adminSyncShipment)
+	g.GET("/orders/:id/shipments/:shipment_id/tracks", middleware.RequirePermission("order:view"), adminGetShipmentTracks)
 	g.GET("/after-sales", middleware.RequirePermission("order:view"), adminListAfterSales)
 	g.GET("/after-sales/:id", middleware.RequirePermission("order:view"), adminGetAfterSaleDetail)
 	g.POST("/after-sales/:id/audit", middleware.RequirePermission("order:ship"), adminAuditAfterSale)
@@ -68,6 +70,26 @@ func adminShipOrder(c *gin.Context) {
 		return
 	}
 	response.OK(c, nil)
+}
+
+func adminSyncShipment(c *gin.Context) {
+	shipmentID, _ := strconv.ParseUint(c.Param("shipment_id"), 10, 64)
+	if err := ordersvc.SyncShipmentTracks(c.Request.Context(), shipmentID, ordersvc.SyncShipmentReq{Manual: true}); err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, nil)
+}
+
+func adminGetShipmentTracks(c *gin.Context) {
+	orderID, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	shipmentID, _ := strconv.ParseUint(c.Param("shipment_id"), 10, 64)
+	rows, err := ordersvc.ListShipmentTracks(c.Request.Context(), orderID, shipmentID)
+	if err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, rows)
 }
 
 func adminListAfterSales(c *gin.Context) {
