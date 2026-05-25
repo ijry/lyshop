@@ -51,10 +51,11 @@ onMounted(async () => {
         id: 'default_banner',
         props: {
           images: [
-            { url: '/static/lyshop-wordmark.svg', link: '/pages/product/list' },
-            { url: '/static/lyshop-mark.svg', link: '/pages/marketing/coupon?mode=claim' },
+            { url: '/static/demo/banner-electronics.png', link: '/pages/product/list?category_id=1' },
+            { url: '/static/demo/banner-fashion.png', link: '/pages/marketing/coupon?mode=claim' },
+            { url: '/static/demo/banner-home.png', link: '/pages/product/list?category_id=3' },
           ],
-          height: 300
+          height: 340
         }
       },
       {
