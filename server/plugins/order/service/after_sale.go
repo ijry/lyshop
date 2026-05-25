@@ -13,6 +13,7 @@ import (
 	"gorm.io/gorm/clause"
 
 	ordermodel "github.com/ijry/lyshop/plugins/order/model"
+	vipsvc "github.com/ijry/lyshop/plugins/vip/service"
 )
 
 type AfterSaleItemReq struct {
@@ -493,6 +494,9 @@ func MarkRefund(ctx context.Context, caseID uint64, req MarkRefundReq) error {
 			"amount":    amount,
 			"refund_no": refundNo,
 		}); err != nil {
+			return err
+		}
+		if err := vipsvc.RollbackGrowthForRefundTx(tx, caseRow.UserID, caseRow.OrderID, caseRow.ID, amount); err != nil {
 			return err
 		}
 		return refreshOrderStatusByAfterSaleTx(tx, caseRow.OrderID)

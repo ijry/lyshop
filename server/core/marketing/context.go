@@ -9,11 +9,12 @@ type OrderItem struct {
 	Qty       int
 	// Filled by activity calculators if hit
 	ActivityPrice float64 // 0 means no activity price
+	VipPrice      float64 // 0 means no vip price
 }
 
 // AppliedRule records a discount that was applied.
 type AppliedRule struct {
-	Type     string  `json:"type"`     // activity|coupon|full_reduce|points|distribution
+	Type     string  `json:"type"`     // activity|vip|coupon|full_reduce|points|distribution
 	Name     string  `json:"name"`     // human-readable label
 	Discount float64 `json:"discount"` // positive number
 }
@@ -28,15 +29,19 @@ type Commission struct {
 // PriceContext flows through the entire pipeline.
 type PriceContext struct {
 	// Input
-	UserID     uint64
-	Items      []OrderItem
-	CouponIDs  []uint64 // coupons the user chose to use
-	ActivityID uint64   // specific activity (0 = auto-detect)
-	PointsUse  int      // points the user wants to spend
+	UserID          uint64
+	Items           []OrderItem
+	CouponIDs       []uint64 // coupons the user chose to use
+	ActivityID      uint64   // specific activity (0 = auto-detect)
+	PointsUse       int      // points the user wants to spend
+	IsVIP           bool
+	VIPLevelID      uint64
+	ItemVIPDiscount map[uint64]float64 // sku_id -> discount amount
 
 	// Computed (filled step by step)
 	GoodsAmount        float64 // sum of original prices
 	ActivityDiscount   float64
+	VipDiscount        float64
 	FullReduceDiscount float64
 	CouponDiscount     float64
 	PointsDiscount     float64

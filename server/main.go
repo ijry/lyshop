@@ -25,6 +25,7 @@ import (
 	_ "github.com/ijry/lyshop/plugins/storage_oss"
 	_ "github.com/ijry/lyshop/plugins/storage_qiniu"
 	_ "github.com/ijry/lyshop/plugins/storage_router"
+	_ "github.com/ijry/lyshop/plugins/vip"
 	_ "github.com/ijry/lyshop/plugins/wechat_auth"
 	_ "github.com/ijry/lyshop/plugins/wechat_pay"
 	_ "github.com/ijry/lyshop/plugins/wms"

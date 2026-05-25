@@ -42,6 +42,7 @@ func Calculate(ctx *PriceContext) error {
 		// Recompute FinalAmount after each step
 		ctx.FinalAmount = ctx.GoodsAmount -
 			ctx.ActivityDiscount -
+			ctx.VipDiscount -
 			ctx.FullReduceDiscount -
 			ctx.CouponDiscount -
 			ctx.PointsDiscount

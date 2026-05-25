@@ -33,7 +33,7 @@ func (c *FullReduceCalculator) Calculate(ctx *marketing.PriceContext) (bool, err
 		mktmodel.ActivityTypeFullSave, now, now).Find(&activities)
 
 	// Current subtotal after activity discounts
-	subtotal := ctx.GoodsAmount - ctx.ActivityDiscount
+	subtotal := ctx.GoodsAmount - ctx.ActivityDiscount - ctx.VipDiscount
 
 	for _, act := range activities {
 		var rules []fullReduceRule

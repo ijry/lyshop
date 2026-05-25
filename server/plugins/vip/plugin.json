@@ -1,0 +1,23 @@
+{
+  "name": "vip",
+  "title": "会员插件",
+  "version": "1.0.0",
+  "description": "会员计划、等级成长、月度领券、会员价",
+  "author": "lyshop",
+  "depends": ["product", "order", "marketing"],
+  "menus": [
+    {
+      "title": "会员管理",
+      "icon": "award",
+      "path": "/vip",
+      "sort": 45,
+      "children": [
+        { "title": "会员计划", "path": "/vip/plans", "permission": "vip:view" },
+        { "title": "会员等级", "path": "/vip/levels", "permission": "vip:view" },
+        { "title": "月领券规则", "path": "/vip/coupon-rules", "permission": "vip:view" },
+        { "title": "会员价", "path": "/vip/sku-prices", "permission": "vip:view" }
+      ]
+    }
+  ],
+  "permissions": ["vip:view", "vip:edit"]
+}

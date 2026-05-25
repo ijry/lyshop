@@ -24,7 +24,7 @@ func (c *CouponCalculator) Calculate(ctx *marketing.PriceContext) (bool, error) 
 	}
 
 	now := time.Now()
-	subtotal := ctx.GoodsAmount - ctx.ActivityDiscount - ctx.FullReduceDiscount
+	subtotal := ctx.GoodsAmount - ctx.ActivityDiscount - ctx.VipDiscount - ctx.FullReduceDiscount
 
 	// Load coupon_users + coupons
 	var couponUsers []mktmodel.CouponUser

@@ -12,7 +12,9 @@ import (
 	"github.com/ijry/lyshop/core/marketing"
 	ordermodel "github.com/ijry/lyshop/plugins/order/model"
 	productmodel "github.com/ijry/lyshop/plugins/product/model"
+	vipsvc "github.com/ijry/lyshop/plugins/vip/service"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // CreateOrderReq is the request payload to create an order.
@@ -131,6 +133,10 @@ func CreateOrder(ctx context.Context, req CreateOrderReq) (*ordermodel.Order, er
 		CouponIDs: req.CouponIDs,
 		PointsUse: req.PointsUse,
 	}
+	if asset, err := vipsvc.GetActiveAsset(ctx, req.UserID, time.Now()); err == nil && asset != nil {
+		pCtx.IsVIP = true
+		pCtx.VIPLevelID = asset.CurrentLevelID
+	}
 	if err := marketing.Calculate(pCtx); err != nil {
 		return nil, fmt.Errorf("价格计算失败: %w", err)
 	}
@@ -143,7 +149,7 @@ func CreateOrder(ctx context.Context, req CreateOrderReq) (*ordermodel.Order, er
 		Status:          ordermodel.OrderStatusPending,
 		PaymentMethod:   req.PaymentMethod,
 		GoodsAmount:     pCtx.GoodsAmount,
-		DiscountAmount:  pCtx.ActivityDiscount + pCtx.FullReduceDiscount + pCtx.CouponDiscount + pCtx.PointsDiscount,
+		DiscountAmount:  pCtx.ActivityDiscount + pCtx.VipDiscount + pCtx.FullReduceDiscount + pCtx.CouponDiscount + pCtx.PointsDiscount,
 		TotalAmount:     pCtx.FinalAmount,
 		AddressSnapshot: addrJSON,
 		Remark:          req.Remark + string(rulesJSON),
@@ -475,20 +481,30 @@ func DeleteAddress(ctx context.Context, userID, id uint64) error {
 }
 
 func PayOrder(ctx context.Context, userID, orderID uint64) error {
-	now := time.Now()
-	res := db.DB.WithContext(ctx).Model(&ordermodel.Order{}).
-		Where("id = ? AND user_id = ? AND status = ?", orderID, userID, ordermodel.OrderStatusPending).
-		Updates(map[string]any{
+	return db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var order ordermodel.Order
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("id = ? AND user_id = ?", orderID, userID).
+			First(&order).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return errors.New("订单不存在或当前状态不可支付")
+			}
+			return err
+		}
+		if order.Status != ordermodel.OrderStatusPending {
+			return errors.New("订单不存在或当前状态不可支付")
+		}
+
+		now := time.Now()
+		if err := tx.Model(&ordermodel.Order{}).Where("id = ?", order.ID).Updates(map[string]any{
 			"status":  ordermodel.OrderStatusPaid,
 			"paid_at": &now,
-		})
-	if res.Error != nil {
-		return res.Error
-	}
-	if res.RowsAffected == 0 {
-		return errors.New("订单不存在或当前状态不可支付")
-	}
-	return nil
+		}).Error; err != nil {
+			return err
+		}
+
+		return vipsvc.GrantGrowthForPaidOrderTx(tx, userID, order.ID, order.TotalAmount)
+	})
 }
 
 func ReviewOrder(ctx context.Context, userID, orderID uint64, content string) error {
