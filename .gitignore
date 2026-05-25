@@ -26,6 +26,7 @@ web/dist/
 .vscode/
 *.swp
 .claude/
+.agents/
 docs-site/docs/public/demo/
 docs-site/docs/public/web-demo/
 docs-site/docs/public/admin-demo/

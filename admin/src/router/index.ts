@@ -12,7 +12,7 @@ const router = createRouter({
       meta: { requiresAuth: true },
       children: [
         { path: '', redirect: '/dashboard' },
-        { path: 'dashboard', component: () => import('@/views/Dashboard.vue') },
+        { path: 'dashboard', name: '首页', component: () => import('@/views/Dashboard.vue') },
         // Product
         { path: 'product/list',    name: '商品列表', component: () => import('@/views/product/ProductList.vue') },
         { path: 'product/category',name: '商品分类', component: () => import('@/views/product/CategoryList.vue') },

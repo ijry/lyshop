@@ -6,32 +6,21 @@
         <span class="text-lg font-bold text-white tracking-wide">LYShop</span>
       </div>
       <template v-if="sortedGroupedMenus.length">
-        <div class="flex-1 min-h-0 flex">
-          <div
-            class="w-24 border-r border-slate-800 px-2 py-3 overflow-y-auto sidebar-scroll"
-            @mouseleave="handleGroupMouseLeave"
-          >
+        <div class="flex-1 min-h-0 flex" @mouseleave="clearPreviewGroup">
+          <div class="w-24 border-r border-slate-800 px-2 py-3 overflow-y-auto sidebar-scroll">
             <button
-              v-for="group in sortedGroupedMenus"
+              v-for="group in tabGroups"
               :key="group.key"
               class="w-full mb-2 px-2 py-2 rounded-lg text-xs transition"
               :class="activeGroupKey === group.key
                 ? 'bg-slate-700 text-white'
                 : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
               @mouseenter="previewGroup(group.key)"
-              @click="lockGroup(group.key)"
             >
               {{ group.title }}
             </button>
           </div>
           <nav class="flex-1 overflow-y-auto py-4 px-3 sidebar-scroll">
-            <router-link
-              :to="dashboardMenu.path"
-              class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition mb-2"
-              active-class="!bg-red-600 !text-white"
-            >
-              <span>{{ dashboardMenu.title }}</span>
-            </router-link>
             <template v-if="activeGroupMenus.length">
               <div v-for="menu in activeGroupMenus" :key="menu.path" class="mb-2">
                 <div v-if="menu.children?.length" class="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
@@ -127,9 +116,9 @@ const auth = useAuthStore()
 const route = useRoute()
 const groupedMenus = ref<AdminMenuGroup[]>([])
 const legacyMenus = ref<AdminMenuItem[]>([])
-const dashboardMenu = ref({ title: 'Dashboard', path: '/dashboard' })
+const dashboardMenu = ref({ title: '首页', path: '/dashboard' })
+const homeTabKey = '__home__'
 const hoverGroupKey = ref('')
-const lockedGroupKey = ref('')
 
 function sortBySortAndPath<T extends { sort?: number; path?: string }>(list: T[]): T[] {
   return [...list].sort((left, right) => {
@@ -163,12 +152,29 @@ const sortedGroupedMenus = computed(() => {
   })
 })
 
+const tabGroups = computed<AdminMenuGroup[]>(() => [
+  {
+    key: homeTabKey,
+    title: dashboardMenu.value.title,
+    sort: -1,
+    menus: [
+      {
+        title: dashboardMenu.value.title,
+        path: dashboardMenu.value.path,
+        sort: -1,
+      },
+    ],
+  },
+  ...sortedGroupedMenus.value,
+])
+
 const visibleLegacyMenus = computed(() =>
   legacyMenus.value.filter((item) => item.path !== dashboardMenu.value.path),
 )
 
 const routeMatchedGroupKey = computed(() => {
   const currentPath = route.path
+  if (currentPath === dashboardMenu.value.path) return homeTabKey
   for (const group of sortedGroupedMenus.value) {
     if (group.menus.some((menu) => menuContainsPath(menu, currentPath))) return group.key
   }
@@ -176,11 +182,11 @@ const routeMatchedGroupKey = computed(() => {
 })
 
 const activeGroupKey = computed(() =>
-  hoverGroupKey.value || lockedGroupKey.value || routeMatchedGroupKey.value || sortedGroupedMenus.value[0]?.key || '',
+  hoverGroupKey.value || routeMatchedGroupKey.value || tabGroups.value[0]?.key || '',
 )
 
 const activeGroupMenus = computed(() => {
-  const found = sortedGroupedMenus.value.find((group) => group.key === activeGroupKey.value)
+  const found = tabGroups.value.find((group) => group.key === activeGroupKey.value)
   return found?.menus || []
 })
 
@@ -188,11 +194,7 @@ function previewGroup(groupKey: string) {
   hoverGroupKey.value = groupKey
 }
 
-function lockGroup(groupKey: string) {
-  lockedGroupKey.value = groupKey
-}
-
-function handleGroupMouseLeave() {
+function clearPreviewGroup() {
   hoverGroupKey.value = ''
 }
 

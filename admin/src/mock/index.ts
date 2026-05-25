@@ -337,9 +337,9 @@ const routes: Record<string, any> = {
   // Auth
   'POST /admin/api/auth/login': { token: 'demo_admin_token' },
 
-  // Menus (grouped tabs + menus, dashboard is fixed and not grouped)
+  // Menus (首页提升为一级 TAB，其余按分组返回)
   'GET /admin/api/menus': {
-    dashboard: { title: 'Dashboard', path: '/dashboard' },
+    dashboard: { title: '首页', path: '/dashboard' },
     groups: [
       {
         key: 'product',
