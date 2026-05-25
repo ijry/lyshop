@@ -1,16 +1,25 @@
 # 营销接口
 
-## 说明
+## 功能说明
 
-营销模块用于优惠券、秒杀、积分与活动配置。
+营销模块用于优惠券、秒杀、拼团、砍价与积分等能力。  
+本次调整补齐了 C 端“可领取优惠券列表”能力，用于首页/活动入口直达领券区。
 
-## 典型接口
+## 接口变化
 
-- `GET /api/marketing/coupon/list`
-- `POST /api/marketing/coupon/receive`
-- `GET /api/marketing/activity/list`
-- `GET /api/marketing/points/rule`
+### C 端（需登录）
 
-## 说明
+- `GET /api/v1/coupons`：获取当前可领取优惠券列表（仅返回启用且在有效期内的券）。
+- `POST /api/v1/coupons/:id/claim`：领取指定优惠券。
+- `GET /api/v1/user/coupons`：获取我的优惠券列表。
 
-营销类接口通常依赖用户身份、活动时间与库存限制。
+### 既有接口（无变更）
+
+- `GET /api/v1/marketing/seckills`
+- `GET /api/v1/user/points/logs`
+
+## 部署或配置影响
+
+- 无新增环境变量。
+- 无数据库结构变更。
+- 仅涉及后端路由与前端页面交互逻辑更新。

@@ -95,7 +95,7 @@ const orderEntries = [
 
 const quickEntries = [
   { label: '优惠券', icon: 'coupon', bg: '#fef2f2', color: '#dc2626',
-    action: () => uni.navigateTo({ url: '/pages/marketing/coupon' }) },
+    action: () => uni.navigateTo({ url: '/pages/marketing/coupon?mode=claim' }) },
   { label: '我的积分', icon: 'integral', bg: '#fff7ed', color: '#f97316',
     action: () => uni.navigateTo({ url: '/pages/user/points' }) },
   { label: '收货地址', icon: 'map', bg: '#eff6ff', color: '#3b82f6',

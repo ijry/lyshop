@@ -52,7 +52,7 @@ onMounted(async () => {
         props: {
           images: [
             { url: '/static/lyshop-wordmark.svg', link: '/pages/product/list' },
-            { url: '/static/lyshop-mark.svg', link: '/pages/marketing/coupon' },
+            { url: '/static/lyshop-mark.svg', link: '/pages/marketing/coupon?mode=claim' },
           ],
           height: 300
         }
@@ -63,7 +63,7 @@ onMounted(async () => {
         props: {
           items: [
             { text: '欢迎来到 LYShop', link: '/pages/index/index' },
-            { text: '新人优惠券限时领取', link: '/pages/marketing/coupon' },
+            { text: '新人优惠券限时领取', link: '/pages/marketing/coupon?mode=claim' },
             { text: '热卖商品持续上新', link: '/pages/product/list' }
           ],
           color: '#f97316',

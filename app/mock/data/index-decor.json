@@ -7,7 +7,7 @@
         "images": [
           { "url": "/static/lyshop-wordmark.svg", "link": "" },
           { "url": "/static/lyshop-mark.svg", "link": "/pages/product/list" },
-          { "url": "/static/lyshop-wordmark.svg", "link": "/pages/marketing/coupon" }
+          { "url": "/static/lyshop-wordmark.svg", "link": "/pages/marketing/coupon?mode=claim" }
         ],
         "height": 340
       }
@@ -34,7 +34,7 @@
           { "title": "秒杀", "icon": "⚡", "bg": "#fef2f2", "link": "/pages/marketing/seckill" },
           { "title": "拼团", "icon": "👥", "bg": "#eff6ff", "link": "/pages/marketing/group-buy" },
           { "title": "砍价", "icon": "🔪", "bg": "#f0fdf4", "link": "/pages/marketing/bargain" },
-          { "title": "优惠券", "icon": "🏷️", "bg": "#fff7ed", "link": "/pages/marketing/coupon" },
+          { "title": "优惠券", "icon": "🏷️", "bg": "#fff7ed", "link": "/pages/marketing/coupon?mode=claim" },
           { "title": "积分", "icon": "⭐", "bg": "#fefce8", "link": "/pages/user/points" },
           { "title": "签到", "icon": "📅", "bg": "#faf5ff", "link": "/pages/checkin/index" },
           { "title": "收藏", "icon": "❤️", "bg": "#fff1f2", "link": "" },
@@ -48,7 +48,7 @@
       "props": {
         "items": [
           { "text": "618年中大促：全场满300减50，限时3天！", "link": "" },
-          { "text": "新人下单立减20元，优惠券限时领取", "link": "/pages/marketing/coupon" },
+          { "text": "新人下单立减20元，优惠券限时领取", "link": "/pages/marketing/coupon?mode=claim" },
           { "text": "精选好物每日上新，多端同步下单", "link": "/pages/product/list" }
         ],
         "color": "#f97316",

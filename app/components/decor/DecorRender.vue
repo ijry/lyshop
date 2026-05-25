@@ -21,7 +21,7 @@
             <view
               v-for="item in (comp.props?.items || [])"
               :key="item.title"
-              @click="item.link && uni.navigateTo({ url: item.link })"
+              @click="openLink(item.link)"
               style="display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0; width: 65px;"
             >
               <view
@@ -139,7 +139,7 @@
           :src="comp.props.url"
           mode="widthFix"
           style="width: 100%; border-radius: 12px; display: block;"
-          @click="comp.props.link && uni.navigateTo({ url: comp.props.link })"
+          @click="openLink(comp.props.link)"
         />
       </view>
 
@@ -147,7 +147,7 @@
       <view v-else-if="comp.type === 'grid'" class="bg-white mb-16rpx py-20rpx">
         <view :style="{ display: 'flex', flexWrap: 'wrap' }">
           <view v-for="item in (comp.props?.items || [])" :key="item.title"
-            @click="item.link && uni.navigateTo({url: item.link})"
+            @click="openLink(item.link)"
             :style="{ width: (100 / (comp.props?.columns || 4)) + '%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', padding: '10px 0', cursor: 'pointer' }">
             <view :style="{ width: '44px', height: '44px', borderRadius: '12px', background: item.bg || '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }">
               {{ item.icon }}
@@ -204,9 +204,34 @@ function bannerList(comp: any) {
     .filter(Boolean)
 }
 
+function normalizeMarketingLink(link: string) {
+  if (!link) return ''
+  if (!link.startsWith('/pages/marketing/coupon')) return link
+  if (link.includes('mode=')) return link
+  return link.includes('?') ? `${link}&mode=claim` : `${link}?mode=claim`
+}
+
+function openLink(link: string) {
+  const target = normalizeMarketingLink(link || '')
+  if (!target) return
+  const [path] = target.split('?')
+  const tabPages = [
+    '/pages/index/index',
+    '/pages/product/list',
+    '/pages/cart/index',
+    '/pages/order/list',
+    '/pages/user/index',
+  ]
+  if (tabPages.includes(path)) {
+    uni.switchTab({ url: path })
+    return
+  }
+  uni.navigateTo({ url: target })
+}
+
 function onBannerClick(comp: any, index: number) {
   const item = bannerList(comp)[index]
-  if (item?.link) uni.navigateTo({ url: item.link })
+  openLink(item?.link || '')
 }
 
 function noticeTexts(comp: any) {
@@ -224,11 +249,11 @@ function onNoticeClick(comp: any, index: number) {
   if (Array.isArray(items) && items.length) {
     const item = items[index]
     const link = typeof item === 'object' ? item?.link : ''
-    if (link) uni.navigateTo({ url: link })
+    openLink(link)
     return
   }
   const links = comp.props?.links
-  if (Array.isArray(links) && links[index]) uni.navigateTo({ url: links[index] })
+  if (Array.isArray(links) && links[index]) openLink(links[index])
 }
 
 function openProduct(id: string | number) {

@@ -14,6 +14,7 @@ func RegisterFrontRoutes(g *gin.RouterGroup) {
 
 	auth := g.Group("")
 	auth.Use(middleware.RequireAuth)
+	auth.GET("/coupons", listClaimableCoupons)
 	auth.POST("/coupons/:id/claim", claimCoupon)
 	auth.GET("/user/coupons", listUserCoupons)
 	auth.GET("/user/points/logs", listPointsLogs)
@@ -36,6 +37,18 @@ func claimCoupon(c *gin.Context) {
 		return
 	}
 	response.OK(c, nil)
+}
+
+func listClaimableCoupons(c *gin.Context) {
+	userID, _ := c.Get("user_id")
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	size, _ := strconv.Atoi(c.DefaultQuery("size", "20"))
+	list, err := mktsvc.ListClaimableCoupons(c.Request.Context(), userID.(uint64), page, size)
+	if err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, list)
 }
 
 func listUserCoupons(c *gin.Context) {
