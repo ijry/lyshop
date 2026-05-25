@@ -41,7 +41,7 @@
               <div v-if="hasShipmentSummary(o)" class="flex items-center flex-wrap gap-1 mt-1">
                 <span v-if="hasReship(o)" class="text-[11px] px-2 py-0.5 rounded-full bg-orange-50 text-orange-600">含补发</span>
                 <span v-if="o.latest_shipment?.tracking_no" class="text-xs text-slate-500">
-                  最新物流：{{ shipmentStatusLabel(o.latest_shipment?.logistics_status) }} · {{ o.latest_shipment?.tracking_no }}
+                  最新物流：{{ shipmentStatusText(o.latest_shipment?.logistics_status, o.latest_shipment?.logistics_status_label) }} · {{ o.latest_shipment?.tracking_no }}
                 </span>
                 <span v-if="shipmentPrimaryTime(o.latest_shipment)" class="text-xs text-slate-400">
                   {{ formatDate(shipmentPrimaryTime(o.latest_shipment)) }}
@@ -130,6 +130,12 @@ const statusClass = (s: number) => statusColors[s] || 'bg-slate-50 text-slate-40
 const payLabel = (m: string) => m === 'wechat' ? '微信支付' : m === 'alipay' ? '支付宝支付' : '未支付'
 const money = (v: number) => Number(v || 0).toFixed(2)
 const formatDate = (v?: string) => v ? String(v).slice(0, 19).replace('T', ' ') : '-'
+
+function shipmentStatusText(status: string, label?: string) {
+  const mapped = String(label || '').trim()
+  if (mapped) return mapped
+  return shipmentStatusLabel(status)
+}
 
 function afterSaleSummaryStatusText(summary: any) {
   const label = String(summary?.latest_status_label || '').trim()

@@ -35,7 +35,7 @@
               </div>
               <p class="text-xs text-slate-400 mt-1">{{ ship.company || '未填公司' }} · {{ ship.tracking_no }}</p>
               <p class="text-xs text-slate-400 mt-1">渠道：{{ ship.channel_provider || '待绑定' }}</p>
-              <p class="text-xs text-slate-400 mt-1">状态：{{ shipmentStatusLabel(ship.logistics_status) }}</p>
+              <p class="text-xs text-slate-400 mt-1">状态：{{ shipmentStatusText(ship.logistics_status, ship.logistics_status_label) }}</p>
               <p v-if="shipmentPrimaryTime(ship)" class="text-xs text-slate-400 mt-1">{{ shipmentTimeLabel(ship) }}：{{ formatDate(shipmentPrimaryTime(ship)) }}</p>
               <p v-if="ship.after_sale_case_id" class="text-xs text-slate-400 mt-1">关联售后单：#{{ ship.after_sale_case_id }}</p>
               <p v-if="ship.remark" class="text-xs text-slate-400 mt-1">备注：{{ ship.remark }}</p>
@@ -146,6 +146,12 @@ const statusLabel = (s: number) => orderStatusLabel(s) || '未知'
 const payLabel = (m: string) => m === 'wechat' ? '微信支付' : m === 'alipay' ? '支付宝支付' : '未支付'
 const money = (v: number) => Number(v || 0).toFixed(2)
 const formatDate = (v?: string) => v ? String(v).slice(0, 19).replace('T', ' ') : '-'
+
+function shipmentStatusText(status: string, label?: string) {
+  const mapped = String(label || '').trim()
+  if (mapped) return mapped
+  return shipmentStatusLabel(status)
+}
 
 function afterSaleSummaryStatusText(summary: any) {
   const label = String(summary?.latest_status_label || '').trim()

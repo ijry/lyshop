@@ -8,6 +8,15 @@ import productDetail from '../../../app/mock/data/product-detail.json'
 import { afterSaleStatusLabel, shipmentStatusLabel } from '../utils/order-status'
 
 const orderListSource = (orders as any)?.list || []
+const shipmentDirectionLabels: Record<string, string> = {
+  outbound: '寄出',
+  inbound: '回寄',
+}
+const shipmentBizTypeLabels: Record<string, string> = {
+  initial: '首发',
+  reship: '补发',
+  return: '回寄',
+}
 const toNumber = (v: any) => Number(v || 0)
 let replySeq = 20000
 let afterSaleSeq = 8000
@@ -66,6 +75,15 @@ function statusOpen(status: string) {
   return !['completed', 'rejected', 'closed'].includes(status)
 }
 
+function withOrderShipmentLabels(ship: any) {
+  return {
+    ...ship,
+    direction_label: shipmentDirectionLabels[String(ship?.direction || '')] || String(ship?.direction || ''),
+    biz_type_label: shipmentBizTypeLabels[String(ship?.biz_type || '')] || String(ship?.biz_type || ''),
+    logistics_status_label: shipmentStatusLabel(ship?.logistics_status),
+  }
+}
+
 function buildAfterSaleSummary(orderID: number) {
   const rows = afterSalesSource
     .filter((row: any) => Number(row.order_id) === Number(orderID))
@@ -110,6 +128,7 @@ function ensureOrderExt(order: any) {
       created_at: order.paid_at || order.created_at,
     }] : []
   }
+  order.shipments = order.shipments.map((ship: any) => withOrderShipmentLabels(ship))
   order.latest_shipment = order.shipments?.[0] || null
   order.after_sale_summary = buildAfterSaleSummary(Number(order.id))
 }

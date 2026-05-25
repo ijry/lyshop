@@ -35,16 +35,39 @@ type AmountBreakdown struct {
 
 type OrderView struct {
 	ordermodel.Order
-	Items            []OrderItemView            `json:"items"`
-	AmountBreakdown  AmountBreakdown            `json:"amount_breakdown"`
-	Shipments        []ordermodel.OrderShipment `json:"shipments,omitempty"`
-	LatestShipment   *ordermodel.OrderShipment  `json:"latest_shipment,omitempty"`
-	AfterSaleSummary *AfterSaleSummary          `json:"after_sale_summary,omitempty"`
+	Items            []OrderItemView     `json:"items"`
+	AmountBreakdown  AmountBreakdown     `json:"amount_breakdown"`
+	Shipments        []OrderShipmentView `json:"shipments,omitempty"`
+	LatestShipment   *OrderShipmentView  `json:"latest_shipment,omitempty"`
+	AfterSaleSummary *AfterSaleSummary   `json:"after_sale_summary,omitempty"`
 }
 
 type OrderItemView struct {
 	ordermodel.OrderItem
 	Review *ReviewView `json:"review,omitempty"`
+}
+
+type OrderShipmentView struct {
+	ordermodel.OrderShipment
+	DirectionLabel       string `json:"direction_label,omitempty"`
+	BizTypeLabel         string `json:"biz_type_label,omitempty"`
+	LogisticsStatusLabel string `json:"logistics_status_label,omitempty"`
+}
+
+func buildOrderShipmentViews(rows []ordermodel.OrderShipment) []OrderShipmentView {
+	if len(rows) == 0 {
+		return []OrderShipmentView{}
+	}
+	result := make([]OrderShipmentView, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, OrderShipmentView{
+			OrderShipment:        row,
+			DirectionLabel:       shipmentDirectionLabel(row.Direction),
+			BizTypeLabel:         shipmentBizTypeLabel(row.BizType),
+			LogisticsStatusLabel: shipmentStatusLabel(row.LogisticsStatus),
+		})
+	}
+	return result
 }
 
 func generateOrderNo() string {
@@ -224,8 +247,8 @@ func buildOrderViews(ctx context.Context, orders []ordermodel.Order) ([]OrderVie
 				Review:    reviewPtr,
 			})
 		}
-		var latestShipment *ordermodel.OrderShipment
-		orderShipments := shipmentsMap[item.ID]
+		var latestShipment *OrderShipmentView
+		orderShipments := buildOrderShipmentViews(shipmentsMap[item.ID])
 		if len(orderShipments) > 0 {
 			first := orderShipments[0]
 			latestShipment = &first

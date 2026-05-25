@@ -43,7 +43,8 @@
 - 列表与详情统一返回 `items` 和 `amount_breakdown`，用于展示商品明细与价格体系。
 - 订单列表/详情升级返回 `shipments`、`latest_shipment`、`after_sale_summary`，并继续保留 `tracking_no` 兼容旧前端。
 - `after_sale_summary` 兼容返回 `latest_status_label`，用于“最近售后单”优先直显中文状态；无该字段时可回退 `latest_status` 本地映射。
-- `shipments` 单条轨迹包含方向（`direction`）、业务类型（`biz_type`）、物流状态（`logistics_status`）、时间字段（`shipped_at/signed_at/created_at`）、备注（`remark`）和关联售后单（`after_sale_case_id`）。
+- `shipments` 单条轨迹包含方向（`direction`）、业务类型（`biz_type`）、物流状态（`logistics_status`）、时间字段（`shipped_at/signed_at/created_at`）、备注（`remark`）和关联售后单（`after_sale_case_id`），并兼容返回 `direction_label`、`biz_type_label`、`logistics_status_label`。
+- `latest_shipment` 与 `shipments` 字段口径一致，同样兼容返回上述标签字段，便于列表快速展示中文物流摘要。
 - 前台与后台订单列表均可直接使用 `latest_shipment` 展示最新物流状态，并通过 `shipments[*].biz_type=reship` 标注补发摘要。
 - 前台与后台建议统一维护状态文案映射：订单状态、售后状态、物流状态与日志状态流转文案应保持一致。
 - 售后相关查询接口在保留枚举字段的同时，兼容返回可读标签字段（`*_label`），用于前端直接展示中文文案。

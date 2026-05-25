@@ -48,7 +48,7 @@
             <text class="text-24rpx text-gray-700 block">{{ shipmentTitle(ship) }}</text>
             <text class="text-22rpx text-gray-500 block mt-6rpx">{{ ship.company || '未填公司' }} · {{ ship.tracking_no || '-' }}</text>
             <text class="text-22rpx text-gray-500 block mt-6rpx">渠道：{{ logisticsProviderLabel(ship.channel_provider) }}</text>
-            <text class="text-22rpx text-gray-500 block mt-6rpx">状态：{{ shipmentStatusLabel(ship.logistics_status) }}</text>
+            <text class="text-22rpx text-gray-500 block mt-6rpx">状态：{{ shipmentStatusText(ship.logistics_status, ship.logistics_status_label) }}</text>
             <text v-if="shipmentPrimaryTime(ship)" class="text-22rpx text-gray-500 block mt-6rpx">
               {{ shipmentTimeLabel(ship) }}：{{ formatDate(shipmentPrimaryTime(ship)) }}
             </text>
@@ -168,6 +168,12 @@ const money = (v: number) => Number(v || 0).toFixed(2)
 const formatDate = (v?: string) => v ? String(v).slice(0, 19).replace('T', ' ') : '-'
 const hasReviewed = ref(false)
 const hasUnreviewed = ref(false)
+
+function shipmentStatusText(status: string, label?: string) {
+  const mapped = String(label || '').trim()
+  if (mapped) return mapped
+  return shipmentStatusLabel(status)
+}
 
 function afterSaleSummaryStatusText(summary: any) {
   const label = String(summary?.latest_status_label || '').trim()
