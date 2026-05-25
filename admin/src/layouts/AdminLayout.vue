@@ -1,9 +1,13 @@
 <template>
   <div class="flex h-screen bg-slate-50">
     <aside class="w-64 bg-slate-900 text-slate-100 flex flex-col shrink-0">
-      <div class="h-16 flex items-center px-6 gap-3 border-b border-slate-800">
-        <img src="/lyshop-mark.svg" alt="LYShop" class="h-9 w-9 shrink-0" />
-        <span class="text-lg font-bold text-white tracking-wide">LYShop</span>
+      <div class="h-16 flex border-b border-slate-800 shrink-0">
+        <div class="w-24 shrink-0 flex items-center justify-center border-r border-slate-800">
+          <img src="/lyshop-mark.svg" alt="LYShop" class="h-9 w-9" />
+        </div>
+        <div class="flex-1 flex items-center px-3 bg-slate-100">
+          <span class="text-lg font-bold text-slate-800 tracking-wide">LYShop</span>
+        </div>
       </div>
       <template v-if="sortedGroupedMenus.length">
         <div class="flex-1 min-h-0 flex" @mouseleave="clearPreviewGroup">
