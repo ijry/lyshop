@@ -1,77 +1,124 @@
 <template>
-  <view class="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-40rpx">
-    <view class="w-full" style="max-width: 680rpx;">
-      <!-- Logo -->
-      <view class="flex flex-col items-center mb-80rpx">
-        <image src="/static/lyshop-wordmark.svg" mode="aspectFit" class="w-320rpx h-120rpx mb-16rpx" />
-        <text class="text-26rpx text-gray-400 mt-8rpx">开源插件化商城</text>
+  <view class="login-page">
+    <view class="login-shell">
+      <view class="brand-block">
+        <image src="/static/lyshop-wordmark.svg" mode="aspectFit" class="brand-logo" />
+        <text class="brand-slogan">开源插件化商城</text>
       </view>
 
-      <!-- Form -->
-      <view class="bg-white rounded-24rpx p-40rpx" style="box-shadow: 0 4rpx 24rpx rgba(0,0,0,0.06);">
-        <view class="mb-30rpx">
-          <u-input
-            v-model="form.phone"
-            placeholder="请输入手机号"
-            type="number"
-            :maxlength="11"
-            border="surround"
-            shape="circle"
-            prefixIcon="phone"
-          />
-        </view>
-        <view class="flex items-center gap-16rpx mb-40rpx">
-          <view class="flex-1">
+      <view class="login-card">
+        <view class="field-wrap">
+          <text class="field-label">手机号</text>
+          <view class="field-shell">
             <u-input
-              v-model="form.code"
-              placeholder="验证码"
+              v-model="form.phone"
+              placeholder="请输入手机号"
               type="number"
-              :maxlength="6"
-              border="surround"
+              :maxlength="11"
+              border="none"
               shape="circle"
-              prefixIcon="lock"
+              prefixIcon="phone"
             />
           </view>
-          <u-button
-            size="small"
-            :disabled="countdown > 0"
-            :text="countdown > 0 ? `${countdown}s` : '获取验证码'"
-            @click="sendCode"
-            type="primary"
-            plain
-            shape="circle"
-          />
         </view>
+
+        <view class="field-wrap">
+          <text class="field-label">验证码</text>
+          <view class="verify-row">
+            <view class="field-shell code-input">
+              <u-input
+                v-model="form.code"
+                placeholder="请输入验证码"
+                type="number"
+                :maxlength="6"
+                border="none"
+                shape="circle"
+                prefixIcon="lock"
+              />
+            </view>
+            <u-button
+              class="code-btn"
+              size="small"
+              :disabled="codeBtnDisabled"
+              :text="countdown > 0 ? `${countdown}s` : '获取验证码'"
+              @click="sendCode"
+              type="primary"
+              plain
+              shape="circle"
+              :custom-style="codeButtonStyle"
+            />
+          </view>
+        </view>
+
         <u-button
+          class="submit-btn"
           type="primary"
           :loading="loading"
+          :disabled="loginDisabled"
           text="登 录"
           @click="handleLogin"
           shape="circle"
-          :custom-style="{height: '88rpx', fontSize: '30rpx'}"
+          :custom-style="submitButtonStyle"
         />
       </view>
 
-      <view class="mt-40rpx text-center">
-        <text class="text-24rpx text-gray-400">演示模式：输入任意手机号即可体验</text>
+      <view class="demo-tip">
+        <text>演示模式：输入任意手机号即可体验</text>
       </view>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, onUnmounted, ref } from 'vue'
 import { post } from '@/utils/request'
 
 const form = ref({ phone: '', code: '' })
 const loading = ref(false)
 const countdown = ref(0)
 
-async function sendCode() {
-  if (!form.value.phone || form.value.phone.length !== 11) {
-    uni.showToast({ title: '请输入正确手机号', icon: 'none' })
-    return
+let countdownTimer: ReturnType<typeof setInterval> | null = null
+
+const isPhoneValid = computed(() => /^1\d{10}$/.test(form.value.phone))
+const codeBtnDisabled = computed(() => countdown.value > 0 || !isPhoneValid.value)
+const loginDisabled = computed(() => loading.value || !isPhoneValid.value || form.value.code.length !== 6)
+
+const codeButtonStyle = computed(() => ({
+  height: '72rpx',
+  minWidth: '220rpx',
+  fontSize: '24rpx',
+  color: codeBtnDisabled.value ? '#94A3B8' : '#2A4DBF',
+  borderColor: codeBtnDisabled.value ? '#D5DEED' : '#3F62D9',
+  background: codeBtnDisabled.value ? '#EEF2FA' : '#F7F9FF'
+}))
+
+const submitButtonStyle = computed(() => ({
+  height: '90rpx',
+  fontSize: '30rpx',
+  color: '#FFFFFF',
+  border: 'none',
+  background: loginDisabled.value ? '#A9B8DE' : 'linear-gradient(135deg, #3B61DA 0%, #2347B7 100%)',
+  boxShadow: loginDisabled.value ? 'none' : '0 12rpx 24rpx rgba(39, 74, 184, 0.28)'
+}))
+
+function clearCountdownTimer() {
+  if (countdownTimer) {
+    clearInterval(countdownTimer)
+    countdownTimer = null
   }
+}
+
+function assertPhoneValid() {
+  if (!isPhoneValid.value) {
+    uni.showToast({ title: '手机号格式不正确', icon: 'none' })
+    return false
+  }
+  return true
+}
+
+async function sendCode() {
+  if (!assertPhoneValid()) return
+  if (countdown.value > 0) return
   try {
     const data = await post<{ dev_code: string }>('/api/v1/auth/sms/send', {
       phone: form.value.phone
@@ -80,12 +127,25 @@ async function sendCode() {
   } catch {}
 
   countdown.value = 60
-  const t = setInterval(() => {
-    if (--countdown.value <= 0) clearInterval(t)
+  clearCountdownTimer()
+  countdownTimer = setInterval(() => {
+    if (countdown.value <= 1) {
+      countdown.value = 0
+      clearCountdownTimer()
+      return
+    }
+    countdown.value -= 1
   }, 1000)
 }
 
 async function handleLogin() {
+  if (!assertPhoneValid()) return
+  if (form.value.code.length !== 6) {
+    uni.showToast({ title: '请输入6位验证码', icon: 'none' })
+    return
+  }
+  if (loading.value) return
+
   loading.value = true
   try {
     const data = await post<{ token: string }>('/api/v1/auth/sms/login', form.value)
@@ -95,4 +155,119 @@ async function handleLogin() {
     loading.value = false
   }
 }
+
+onUnmounted(() => {
+  clearCountdownTimer()
+})
 </script>
+
+<style scoped lang="scss">
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 56rpx 40rpx;
+  background: linear-gradient(180deg, #f8faff 0%, #f2f5fb 100%);
+}
+
+.login-shell {
+  width: 100%;
+  max-width: 680rpx;
+}
+
+.brand-block {
+  margin-bottom: 68rpx;
+  text-align: center;
+}
+
+.brand-logo {
+  width: 320rpx;
+  height: 120rpx;
+  margin: 0 auto;
+}
+
+.brand-slogan {
+  display: block;
+  margin-top: 12rpx;
+  color: #7384a8;
+  font-size: 26rpx;
+}
+
+.login-card {
+  padding: 40rpx;
+  border-radius: 28rpx;
+  background: #ffffff;
+  box-shadow: 0 20rpx 48rpx rgba(36, 76, 168, 0.08), inset 0 2rpx 0 rgba(255, 255, 255, 0.65);
+}
+
+.field-wrap + .field-wrap {
+  margin-top: 26rpx;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 14rpx;
+  font-size: 24rpx;
+  color: #5d6d90;
+}
+
+.field-shell {
+  border-radius: 999rpx;
+  border: 2rpx solid #d6dfef;
+  background: #f9fbff;
+  padding: 0 18rpx;
+  box-shadow: inset 0 2rpx 6rpx rgba(38, 64, 132, 0.06);
+}
+
+.verify-row {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+}
+
+.code-input {
+  flex: 1;
+}
+
+.code-btn {
+  flex-shrink: 0;
+}
+
+.submit-btn {
+  margin-top: 40rpx;
+}
+
+.demo-tip {
+  margin-top: 34rpx;
+  text-align: center;
+  color: #8795b3;
+  font-size: 24rpx;
+}
+
+:deep(.field-shell .u-input) {
+  height: 74rpx;
+}
+
+:deep(.field-shell .u-input__content) {
+  height: 74rpx;
+}
+
+:deep(.field-shell .u-input__content__field-wrapper__field) {
+  font-size: 28rpx;
+  color: #243356;
+}
+
+:deep(.field-shell .u-input__content__field-wrapper__field::placeholder) {
+  color: #9aa8c5;
+}
+
+:deep(.field-shell .u-icon__icon) {
+  color: #6f82aa !important;
+}
+
+:deep(.submit-btn .u-button__text),
+:deep(.code-btn .u-button__text) {
+  font-weight: 600;
+}
+</style>
