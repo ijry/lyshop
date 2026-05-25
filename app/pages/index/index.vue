@@ -1,7 +1,7 @@
 <template>
-  <view class="min-h-screen bg-gray-50">
+  <view class="min-h-screen" style="background: var(--app-page-bg);">
     <!-- Header -->
-    <view class="bg-white px-30rpx pt-60rpx pb-30rpx">
+    <view class="px-30rpx pt-60rpx pb-30rpx" style="background: var(--app-card-bg);">
       <view class="flex items-center justify-between">
         <view class="flex items-center gap-12rpx">
           <image src="/static/lyshop-mark.svg" mode="aspectFit" class="w-48rpx h-48rpx" />

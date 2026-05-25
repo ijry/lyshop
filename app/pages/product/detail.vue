@@ -1,5 +1,5 @@
 <template>
-  <view class="min-h-screen bg-white pb-120rpx">
+  <view class="min-h-screen pb-120rpx" style="background: var(--app-card-bg);">
     <u-swiper :list="images" height="375" v-if="images.length" radius="0" />
     <view v-else class="bg-gray-100 h-750rpx" />
 
@@ -109,7 +109,8 @@
       <view v-else class="text-center py-80rpx text-24rpx text-gray-400">暂无评价</view>
     </view>
 
-    <view class="fixed bottom-0 left-0 right-0 z-100 bg-white border-t-1 border-gray-100 flex items-center px-20rpx py-16rpx"
+    <view class="fixed bottom-0 left-0 right-0 z-100 flex items-center px-20rpx py-16rpx"
+      :style="{ background: 'var(--app-card-bg)', borderTop: '1px solid var(--app-border-color)' }"
       :style="{paddingBottom: 'calc(16rpx + env(safe-area-inset-bottom))'}">
       <view class="flex items-center gap-30rpx mr-20rpx">
         <view class="flex flex-col items-center" @click="uni.navigateTo({url:'/pages/im/chat'})">

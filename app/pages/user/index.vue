@@ -1,5 +1,5 @@
 <template>
-  <view class="min-h-screen" style="background: #f5f5f5;">
+  <view class="min-h-screen" style="background: var(--app-page-bg);">
     <view style="background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); padding: 60px 24px 40px; border-radius: 0 0 24px 24px;">
       <view style="display: flex; align-items: center; gap: 16px;">
         <image :src="user.avatar || 'https://api.dicebear.com/7.x/adventurer/svg?seed=default'"
@@ -24,29 +24,29 @@
       </view>
     </view>
 
-    <view style="margin: -20px 16px 0; background: #fff; border-radius: 16px; padding: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);">
+    <view :style="{ margin: '-20px 16px 0', background: 'var(--app-card-bg)', borderRadius: '16px', padding: '20px', boxShadow: 'var(--app-shadow)' }">
       <view style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
-        <text style="font-size: 15px; font-weight: 700; color: #111;">我的订单</text>
+        <text :style="{ fontSize: '15px', fontWeight: '700', color: 'var(--app-text-primary)' }">我的订单</text>
         <text @click="uni.switchTab({url:'/pages/order/list'})"
-          style="font-size: 12px; color: #999;">全部订单 ></text>
+          :style="{ fontSize: '12px', color: 'var(--app-text-placeholder)' }">全部订单 ></text>
       </view>
       <view style="display: flex; justify-content: space-around;">
         <view v-for="item in orderEntries" :key="item.label"
           @click="uni.switchTab({url:'/pages/order/list'})"
           style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
           <view style="position: relative;">
-            <u-icon :name="item.icon" size="24" color="#333" />
+            <u-icon :name="item.icon" size="24" :color="iconColor" />
             <view v-if="item.badge"
               style="position: absolute; top: -4px; right: -8px; min-width: 16px; height: 16px; background: #dc2626; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
               <text style="color: #fff; font-size: 10px;">{{ item.badge }}</text>
             </view>
           </view>
-          <text style="font-size: 12px; color: #666;">{{ item.label }}</text>
+          <text :style="{ fontSize: '12px', color: 'var(--app-text-tertiary)' }">{{ item.label }}</text>
         </view>
       </view>
     </view>
 
-    <view style="margin: 12px 16px; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.04);">
+    <view :style="{ margin: '12px 16px', background: 'var(--app-card-bg)', borderRadius: '16px', overflow: 'hidden', boxShadow: 'var(--app-shadow-sm)' }">
       <view style="display: flex; padding: 20px 0;">
         <view v-for="entry in quickEntries" :key="entry.label"
           @click="entry.action()"
@@ -54,25 +54,35 @@
           <view :style="{ background: entry.bg, width: '44px', height: '44px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }">
             <u-icon :name="entry.icon" size="22" :color="entry.color" />
           </view>
-          <text style="font-size: 12px; color: #333;">{{ entry.label }}</text>
+          <text :style="{ fontSize: '12px', color: 'var(--app-text-secondary)' }">{{ entry.label }}</text>
         </view>
       </view>
     </view>
 
-    <view style="margin: 12px 16px; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.04);">
+    <view :style="{ margin: '12px 16px', background: 'var(--app-card-bg)', borderRadius: '16px', overflow: 'hidden', boxShadow: 'var(--app-shadow-sm)' }">
+      <!-- Dark mode toggle -->
+      <view :style="{ display: 'flex', alignItems: 'center', padding: '14px 20px', borderBottom: '1px solid var(--app-divider-color)' }">
+        <u-icon name="setting" size="20" :color="iconColor" />
+        <text :style="{ flex: '1', marginLeft: '12px', fontSize: '14px', color: 'var(--app-text-secondary)' }">暗黑模式</text>
+        <view style="display: flex; align-items: center; gap: 8px;">
+          <text :style="{ fontSize: '12px', color: 'var(--app-text-placeholder)' }">{{ themeModeLabel }}</text>
+          <u-switch v-model="isDark" size="22" @change="onThemeToggle" />
+        </view>
+      </view>
+      <!-- Menu cells -->
       <view v-for="(cell, i) in menuCells" :key="cell.label"
         @click="cell.action()"
-        :style="{ display: 'flex', alignItems: 'center', padding: '14px 20px', borderBottom: i < menuCells.length - 1 ? '1px solid #f5f5f5' : 'none' }">
-        <u-icon :name="cell.icon" size="20" color="#666" />
-        <text style="flex: 1; margin-left: 12px; font-size: 14px; color: #333;">{{ cell.label }}</text>
-        <text v-if="cell.value" style="font-size: 13px; color: #999; margin-right: 4px;">{{ cell.value }}</text>
-        <u-icon name="arrow-right" size="14" color="#ccc" />
+        :style="{ display: 'flex', alignItems: 'center', padding: '14px 20px', borderBottom: i < menuCells.length - 1 ? '1px solid var(--app-divider-color)' : 'none' }">
+        <u-icon :name="cell.icon" size="20" :color="iconColor" />
+        <text :style="{ flex: '1', marginLeft: '12px', fontSize: '14px', color: 'var(--app-text-secondary)' }">{{ cell.label }}</text>
+        <text v-if="cell.value" :style="{ fontSize: '13px', color: 'var(--app-text-placeholder)', marginRight: '4px' }">{{ cell.value }}</text>
+        <u-icon name="arrow-right" size="14" :color="arrowColor" />
       </view>
     </view>
 
-    <view style="margin: 16px 16px 40px; background: #fff; border-radius: 16px; overflow: hidden;">
+    <view :style="{ margin: '16px 16px 40px', background: 'var(--app-card-bg)', borderRadius: '16px', overflow: 'hidden' }">
       <view @click="logout"
-        style="text-align: center; padding: 14px; font-size: 14px; color: #dc2626;">
+        :style="{ textAlign: 'center', padding: '14px', fontSize: '14px', color: 'var(--app-accent)' }">
         退出登录
       </view>
     </view>
@@ -80,8 +90,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { get } from '@/utils/request'
+import { useTheme } from '@/composables/useTheme'
+
+const { effectiveTheme, setTheme } = useTheme()
+
+const isDark = ref(effectiveTheme.value === 'dark')
+const themeModeLabel = computed(() => isDark.value ? '已开启' : '已关闭')
+const iconColor = computed(() => effectiveTheme.value === 'dark' ? '#9ca3af' : '#666')
+const arrowColor = computed(() => effectiveTheme.value === 'dark' ? '#6b7280' : '#ccc')
+
+function onThemeToggle(val: boolean) {
+  setTheme(val ? 'dark' : 'light')
+}
 
 const user = ref<any>({})
 const unreadTotal = ref(0)

@@ -1,5 +1,5 @@
 <template>
-  <view class="min-h-screen bg-gray-50 pb-160rpx">
+  <view class="min-h-screen pb-160rpx" style="background: var(--app-page-bg)">
     <!-- Empty state -->
     <view v-if="!items.length" class="flex flex-col items-center pt-200rpx">
       <u-icon name="shopping-cart" size="60" color="#ccc" />
@@ -11,7 +11,8 @@
     <!-- Cart items -->
     <view v-else class="p-20rpx">
       <view v-for="item in items" :key="item.sku_id"
-        class="flex items-center bg-white rounded-20rpx p-24rpx mb-20rpx shadow-sm">
+        class="flex items-center rounded-20rpx p-24rpx mb-20rpx"
+        :style="{ background: 'var(--app-card-bg)', boxShadow: 'var(--app-shadow-sm)' }">
         <!-- Select -->
         <view class="pr-16rpx flex-shrink-0" @click.stop="toggleItem(item.sku_id)">
           <view
@@ -50,18 +51,18 @@
 
     <!-- Recommend -->
     <view style="padding: 12px 16px 20px;">
-      <text style="font-size: 15px; font-weight: 700; color: #111; display: block; margin-bottom: 12px;">猜你喜欢</text>
+      <text :style="{ fontSize: '15px', fontWeight: '700', color: 'var(--app-text-primary)', display: 'block', marginBottom: '12px' }">猜你喜欢</text>
       <view style="display: flex; flex-wrap: wrap; margin: 0 -5px;">
         <view v-for="p in recommends" :key="p.product_id"
           @click="uni.navigateTo({url:`/pages/product/detail?id=${p.product_id}`})"
           style="width: 50%; padding: 5px; box-sizing: border-box;">
-          <view style="background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,0.04);">
+          <view :style="{ background: 'var(--app-card-bg)', borderRadius: '12px', overflow: 'hidden', boxShadow: 'var(--app-shadow-sm)' }">
             <image :src="p.cover" mode="aspectFill" style="width: 100%; height: 150px; display: block;" />
             <view style="padding: 8px 10px 12px;">
-              <text style="font-size: 12px; color: #333; font-weight: 500; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;">{{ p.title }}</text>
+              <text :style="{ fontSize: '12px', color: 'var(--app-text-secondary)', fontWeight: '500', display: '-webkit-box', '-webkit-line-clamp': '1', '-webkit-box-orient': 'vertical', overflow: 'hidden' }">{{ p.title }}</text>
               <view style="display: flex; align-items: baseline; gap: 4px; margin-top: 4px;">
-                <text style="font-size: 15px; color: #dc2626; font-weight: 700;">¥{{ p.price }}</text>
-                <text v-if="p.origin_price" style="font-size: 10px; color: #ccc; text-decoration: line-through;">¥{{ p.origin_price }}</text>
+                <text :style="{ fontSize: '15px', color: 'var(--app-price-color)', fontWeight: '700' }">¥{{ p.price }}</text>
+                <text v-if="p.origin_price" :style="{ fontSize: '10px', color: 'var(--app-text-placeholder)', textDecoration: 'line-through' }">¥{{ p.origin_price }}</text>
               </view>
             </view>
           </view>
@@ -71,7 +72,8 @@
 
     <!-- Bottom checkout bar -->
     <view v-if="items.length"
-      class="fixed bottom-0 left-0 right-0 z-100 bg-white border-t-1 border-gray-100 px-30rpx py-20rpx flex items-center justify-between"
+      class="fixed bottom-0 left-0 right-0 z-100 px-30rpx py-20rpx flex items-center justify-between"
+      :style="{ background: 'var(--app-card-bg)', borderTop: '1px solid var(--app-border-color)' }"
       :style="{paddingBottom: 'calc(20rpx + env(safe-area-inset-bottom))'}">
       <view class="flex items-center gap-24rpx">
         <view class="flex items-center" @click="toggleCheckAll">
