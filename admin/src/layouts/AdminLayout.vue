@@ -20,7 +20,7 @@
                 : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
               @mouseenter="previewGroup(homeTabKey)"
             >
-              {{ dashboardMenu.title }}
+              {{ mt(dashboardMenu) }}
             </router-link>
             <button
               v-for="group in sortedGroupedMenus"
@@ -31,14 +31,14 @@
                 : 'text-slate-300 hover:bg-slate-800 hover:text-white'"
               @mouseenter="previewGroup(group.key)"
             >
-              {{ group.title }}
+              {{ mt(group) }}
             </button>
           </div>
           <nav class="flex-1 overflow-y-auto py-4 px-3 bg-slate-100 sidebar-scroll-light">
             <template v-if="activeGroupMenus.length">
               <div v-for="menu in activeGroupMenus" :key="menu.path" class="mb-2">
                 <div v-if="menu.children?.length" class="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  {{ menu.title }}
+                  {{ mt(menu) }}
                 </div>
                 <template v-if="menu.children?.length">
                   <router-link
@@ -48,7 +48,7 @@
                     class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition"
                     active-class="!bg-red-600 !text-white"
                   >
-                    <span>{{ child.title }}</span>
+                    <span>{{ mt(child) }}</span>
                   </router-link>
                 </template>
                 <router-link
@@ -57,7 +57,7 @@
                   class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition"
                   active-class="!bg-red-600 !text-white"
                 >
-                  <span>{{ menu.title }}</span>
+                  <span>{{ mt(menu) }}</span>
                 </router-link>
               </div>
             </template>
@@ -71,11 +71,11 @@
           class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition mb-2"
           active-class="!bg-red-600 !text-white"
         >
-          <span>{{ dashboardMenu.title }}</span>
+          <span>{{ mt(dashboardMenu) }}</span>
         </router-link>
         <div v-for="group in visibleLegacyMenus" :key="group.path" class="mb-2">
           <div class="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            {{ group.title }}
+            {{ mt(group) }}
           </div>
           <template v-if="group.children?.length">
             <router-link
@@ -85,7 +85,7 @@
               class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition"
               active-class="!bg-red-600 !text-white"
             >
-              <span>{{ child.title }}</span>
+              <span>{{ mt(child) }}</span>
             </router-link>
           </template>
           <router-link
@@ -94,7 +94,7 @@
             class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-slate-800 hover:text-white transition"
             active-class="!bg-red-600 !text-white"
           >
-            <span>{{ group.title }}</span>
+            <span>{{ mt(group) }}</span>
           </router-link>
         </div>
       </nav>
@@ -137,9 +137,14 @@ import {
   type AdminMenuResponse,
 } from '@/api/auth'
 
-const { locale } = useI18n()
+const { t, locale } = useI18n()
 const auth = useAuthStore()
 const route = useRoute()
+
+/** Translate menu title: use title_key if available, fall back to raw title */
+function mt(item: { title: string; title_key?: string }) {
+  return item.title_key ? t(item.title_key) : item.title
+}
 
 function switchLocale(lang: string) {
   locale.value = lang

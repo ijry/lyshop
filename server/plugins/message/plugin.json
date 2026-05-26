@@ -7,13 +7,13 @@
   "depends": [],
   "menus": [
     {
-      "title": "消息管理",
+      "title": "消息管理", "title_key": "menu.message",
       "icon": "bell",
       "path": "/message",
       "sort": 80,
       "children": [
-        { "title": "消息列表", "path": "/message/list", "permission": "message:view" },
-        { "title": "发送消息", "path": "/message/send", "permission": "message:send" }
+        { "title": "消息列表", "title_key": "menu.message.list", "path": "/message/list", "permission": "message:view" },
+        { "title": "发送消息", "title_key": "menu.message.send", "path": "/message/send", "permission": "message:send" }
       ]
     }
   ],

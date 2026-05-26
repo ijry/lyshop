@@ -7,15 +7,15 @@
   "depends": ["product"],
   "menus": [
     {
-      "title": "仓储管理",
+      "title": "仓储管理", "title_key": "menu.wms",
       "icon": "warehouse",
       "path": "/wms",
       "sort": 30,
       "children": [
-        { "title": "库存列表", "path": "/wms/stock",     "permission": "wms:view" },
-        { "title": "仓库管理", "path": "/wms/warehouse", "permission": "wms:view" },
-        { "title": "入库管理", "path": "/wms/inbound",   "permission": "wms:view" },
-        { "title": "出库管理", "path": "/wms/outbound",  "permission": "wms:view" }
+        { "title": "库存列表", "title_key": "menu.wms.stock", "path": "/wms/stock", "permission": "wms:view" },
+        { "title": "仓库管理", "title_key": "menu.wms.warehouse", "path": "/wms/warehouse", "permission": "wms:view" },
+        { "title": "入库管理", "title_key": "menu.wms.inbound", "path": "/wms/inbound", "permission": "wms:view" },
+        { "title": "出库管理", "title_key": "menu.wms.outbound", "path": "/wms/outbound", "permission": "wms:view" }
       ]
     }
   ],

@@ -7,13 +7,13 @@
   "depends": ["product", "order"],
   "menus": [
     {
-      "title": "营销管理",
+      "title": "营销管理", "title_key": "menu.marketing",
       "icon": "tag",
       "path": "/marketing",
       "sort": 40,
       "children": [
-        { "title": "优惠券管理", "path": "/marketing/coupon",   "permission": "marketing:view" },
-        { "title": "活动管理",   "path": "/marketing/activity", "permission": "marketing:view" }
+        { "title": "优惠券管理", "title_key": "menu.marketing.coupon", "path": "/marketing/coupon", "permission": "marketing:view" },
+        { "title": "活动管理", "title_key": "menu.marketing.activity", "path": "/marketing/activity", "permission": "marketing:view" }
       ]
     }
   ],

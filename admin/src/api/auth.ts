@@ -2,6 +2,7 @@ import request from './request'
 
 export interface AdminMenuItem {
   title: string
+  title_key?: string
   path: string
   icon?: string
   sort?: number
@@ -11,6 +12,7 @@ export interface AdminMenuItem {
 export interface AdminMenuGroup {
   key: string
   title: string
+  title_key?: string
   icon?: string
   sort?: number
   menus: AdminMenuItem[]

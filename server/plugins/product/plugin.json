@@ -7,13 +7,13 @@
   "depends": [],
   "menus": [
     {
-      "title": "商品管理",
+      "title": "商品管理", "title_key": "menu.product",
       "icon": "box",
       "path": "/product",
       "sort": 10,
       "children": [
-        { "title": "商品列表", "path": "/product/list", "permission": "product:view" },
-        { "title": "商品分类", "path": "/product/category", "permission": "product:view" }
+        { "title": "商品列表", "title_key": "menu.product.list", "path": "/product/list", "permission": "product:view" },
+        { "title": "商品分类", "title_key": "menu.product.category", "path": "/product/category", "permission": "product:view" }
       ]
     }
   ],

@@ -7,12 +7,12 @@
   "depends": [],
   "menus": [
     {
-      "title": "店铺装修",
+      "title": "店铺装修", "title_key": "menu.decor",
       "icon": "layout",
       "path": "/decor",
       "sort": 70,
       "children": [
-        { "title": "首页装修", "path": "/decor/index", "permission": "decor:edit" }
+        { "title": "首页装修", "title_key": "menu.decor.editor", "path": "/decor/index", "permission": "decor:edit" }
       ]
     }
   ],

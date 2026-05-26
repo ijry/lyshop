@@ -7,13 +7,13 @@
   "depends": [],
   "menus": [
     {
-      "title": "签到管理",
+      "title": "签到管理", "title_key": "menu.checkin",
       "icon": "calendar",
       "path": "/checkin",
       "sort": 75,
       "children": [
-        { "title": "签到规则", "path": "/checkin/rules", "permission": "checkin:config" },
-        { "title": "签到记录", "path": "/checkin/logs",  "permission": "checkin:view" }
+        { "title": "签到规则", "title_key": "menu.checkin.rules", "path": "/checkin/rules", "permission": "checkin:config" },
+        { "title": "签到记录", "title_key": "menu.checkin.logs", "path": "/checkin/logs", "permission": "checkin:view" }
       ]
     }
   ],

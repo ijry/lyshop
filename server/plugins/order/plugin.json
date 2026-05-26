@@ -7,22 +7,22 @@
   "depends": ["product"],
   "menus": [
     {
-      "title": "订单管理",
+      "title": "订单管理", "title_key": "menu.order",
       "icon": "shopping-cart",
       "path": "/order",
       "sort": 20,
       "children": [
-        { "title": "订单列表", "path": "/order/list", "permission": "order:view" },
-        { "title": "售后列表", "path": "/order/after-sale/list", "permission": "order:view" }
+        { "title": "订单列表", "title_key": "menu.order.list", "path": "/order/list", "permission": "order:view" },
+        { "title": "售后列表", "title_key": "menu.order.afterSale", "path": "/order/after-sale/list", "permission": "order:view" }
       ]
     },
     {
-      "title": "评价管理",
+      "title": "评价管理", "title_key": "menu.review",
       "icon": "star",
       "path": "/review",
       "sort": 21,
       "children": [
-        { "title": "评价列表", "path": "/review/list", "permission": "order:view" }
+        { "title": "评价列表", "title_key": "menu.review.list", "path": "/review/list", "permission": "order:view" }
       ]
     }
   ],

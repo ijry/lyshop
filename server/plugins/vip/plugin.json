@@ -7,15 +7,15 @@
   "depends": ["product", "order", "marketing"],
   "menus": [
     {
-      "title": "会员管理",
+      "title": "会员管理", "title_key": "menu.vip",
       "icon": "award",
       "path": "/vip",
       "sort": 45,
       "children": [
-        { "title": "会员计划", "path": "/vip/plans", "permission": "vip:view" },
-        { "title": "会员等级", "path": "/vip/levels", "permission": "vip:view" },
-        { "title": "月领券规则", "path": "/vip/coupon-rules", "permission": "vip:view" },
-        { "title": "会员价", "path": "/vip/sku-prices", "permission": "vip:view" }
+        { "title": "会员计划", "title_key": "menu.vip.plans", "path": "/vip/plans", "permission": "vip:view" },
+        { "title": "会员等级", "title_key": "menu.vip.levels", "path": "/vip/levels", "permission": "vip:view" },
+        { "title": "月领券规则", "title_key": "menu.vip.couponRules", "path": "/vip/coupon-rules", "permission": "vip:view" },
+        { "title": "会员价", "title_key": "menu.vip.skuPrices", "path": "/vip/sku-prices", "permission": "vip:view" }
       ]
     }
   ],

@@ -21,6 +21,7 @@ type Meta struct {
 // MenuItem describes one entry in the admin sidebar.
 type MenuItem struct {
 	Title      string     `json:"title"`
+	TitleKey   string     `json:"title_key,omitempty"`
 	Icon       string     `json:"icon"`
 	Path       string     `json:"path"`
 	Sort       int        `json:"sort"`

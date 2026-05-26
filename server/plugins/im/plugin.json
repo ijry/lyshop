@@ -7,13 +7,13 @@
   "depends": [],
   "menus": [
     {
-      "title": "客服中心",
+      "title": "客服中心", "title_key": "menu.im",
       "icon": "message-circle",
       "path": "/im",
       "sort": 50,
       "children": [
-        { "title": "客服会话", "path": "/im/sessions", "permission": "im:view" },
-        { "title": "自动回复", "path": "/im/auto-reply", "permission": "im:view" }
+        { "title": "客服会话", "title_key": "menu.im.sessions", "path": "/im/sessions", "permission": "im:view" },
+        { "title": "自动回复", "title_key": "menu.im.autoReply", "path": "/im/auto-reply", "permission": "im:view" }
       ]
     }
   ],
