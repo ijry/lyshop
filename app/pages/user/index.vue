@@ -156,24 +156,16 @@ const quickEntries = computed(() => [
 
 const menuCellValues = ref<{ points: string; unread: string }>({ points: '', unread: '' })
 const menuCells = computed(() => [
-  { label: t('user.messageCenter'), icon: 'bell', value: menuCellValues.value.unread,
-    action: () => uni.navigateTo({ url: '/pages/message/index' }) },
   { label: t('user.dailyCheckin'), icon: 'calendar', value: '',
     action: () => uni.navigateTo({ url: '/pages/checkin/index' }) },
-  { label: t('user.myAddress'), icon: 'map', value: '',
-    action: () => uni.navigateTo({ url: '/pages/user/address' }) },
   { label: t('user.myCoupons'), icon: 'coupon', value: '',
     action: () => uni.navigateTo({ url: '/pages/marketing/coupon' }) },
   { label: t('user.myFavorites'), icon: 'heart', value: '',
     action: () => uni.navigateTo({ url: '/pages/user/favorites' }) },
-  { label: t('user.myPointsMenu'), icon: 'integral', value: menuCellValues.value.points,
-    action: () => uni.navigateTo({ url: '/pages/user/points' }) },
   { label: t('user.vipCenter'), icon: 'level', value: '',
     action: () => uni.navigateTo({ url: '/pages/user/vip' }) },
   { label: t('user.accountSecurity'), icon: 'lock', value: '',
     action: () => uni.navigateTo({ url: '/pages/user/security' }) },
-  { label: t('user.contactService'), icon: 'kefu-ermai', value: '',
-    action: () => uni.navigateTo({ url: '/pages/im/chat' }) },
 ])
 
 // Demo preset switching (mock mode only)
