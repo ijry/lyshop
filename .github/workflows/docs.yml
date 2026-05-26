@@ -40,11 +40,19 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-          cache-dependency-path: docs-site/package-lock.json
+          cache-dependency-path: |
+            app/package-lock.json
+            web/package-lock.json
+            admin/package-lock.json
+            docs-site/package-lock.json
 
       - name: Install app dependencies
         working-directory: app
-        run: rm -f package-lock.json && npm install --legacy-peer-deps
+        run: npm ci --legacy-peer-deps
+
+      - name: Rebuild app native optional deps
+        working-directory: app
+        run: npm rebuild esbuild rollup --foreground-scripts
 
       - name: Build H5 demo (mock data)
         working-directory: app

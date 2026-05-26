@@ -1,7 +1,7 @@
 {
   "id": "lyshop",
   "name": "lyshop",
-  "displayName": "lyshop新一代基于go免费开源的插件化商城系统100%前后端开源商用无忧。", 
+  "displayName": "lyshop新一代基于go免费开源的插件化商城系统100%前后端开源商用无忧。",
   "version": "2.0.0",
   "scripts": {
     "dev:h5": "cross-env UNI_INPUT_DIR=. uni",
@@ -17,7 +17,7 @@
     "@dcloudio/uni-app": "3.0.0-alpha-5010120260519001",
     "pinia": "^2.1.0",
     "uview-plus": "3.8.37",
-    "vue": "^3.4.0",
+    "vue": "3.4.21",
     "vue-i18n": "^9.14.5"
   },
   "devDependencies": {
@@ -121,14 +121,14 @@
         }
       }
     }
-},
-"description": "全插件化商城，多端覆盖。聚合AI生图、IM客服与营销引擎，支持RBAC权限及Docker一键部署。",
-"keywords": [
+  },
+  "description": "全插件化商城，多端覆盖。聚合AI生图、IM客服与营销引擎，支持RBAC权限及Docker一键部署。",
+  "keywords": [
     "shop",
     "lyshop",
     "商城",
     "电商",
     "免费"
-],
-"repository": "https://github.com/ijry/lyshop"
+  ],
+  "repository": "https://github.com/ijry/lyshop"
 }
