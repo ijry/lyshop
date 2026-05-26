@@ -6,7 +6,11 @@ export default {
     useTheme().initTheme()
     uni.hideTabBar({ animation: false })
   },
-  onShow() {},
+  onShow() {
+    if (typeof uni !== 'undefined' && typeof uni.$emit === 'function') {
+      uni.$emit('up:tabbar-sync')
+    }
+  },
   onHide() {}
 }
 </script>

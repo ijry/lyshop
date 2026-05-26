@@ -64,12 +64,14 @@ onMounted(() => {
   refreshRootState()
   if (typeof uni !== 'undefined' && typeof uni.$on === 'function') {
     uni.$on('uThemeChange', refreshRootStyle)
+    uni.$on('up:tabbar-sync', syncTabState)
   }
 })
 
 onBeforeUnmount(() => {
   if (typeof uni !== 'undefined' && typeof uni.$off === 'function') {
     uni.$off('uThemeChange', refreshRootStyle)
+    uni.$off('up:tabbar-sync', syncTabState)
   }
 })
 </script>
