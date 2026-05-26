@@ -44,6 +44,10 @@ jobs:
         working-directory: app
         run: rm -f package-lock.json && npm install --legacy-peer-deps
 
+      - name: Install app Linux native bindings
+        working-directory: app
+        run: npm install --no-save @oxc-parser/binding-linux-x64-gnu@0.131.0
+
       - name: Rebuild app native optional deps
         working-directory: app
         run: npm rebuild esbuild rollup --foreground-scripts
