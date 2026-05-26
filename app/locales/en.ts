@@ -1,4 +1,13 @@
 export default {
+  // ---------- tabBar ----------
+  tabBar: {
+    home: 'Home',
+    products: 'Products',
+    cart: 'Cart',
+    orders: 'Orders',
+    me: 'Me',
+  },
+
   // ---------- pages/index/index.vue ----------
   home: {
     welcome: 'Welcome to LYShop',

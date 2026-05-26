@@ -1,4 +1,13 @@
 export default {
+  // ---------- tabBar ----------
+  tabBar: {
+    home: '首页',
+    products: '商品',
+    cart: '购物车',
+    orders: '订单',
+    me: '我的',
+  },
+
   // ---------- pages/index/index.vue ----------
   home: {
     welcome: '欢迎来到 LYShop',

@@ -4,6 +4,7 @@ import { useTheme } from '@/composables/useTheme'
 export default {
   onLaunch() {
     useTheme().initTheme()
+    uni.hideTabBar({ animation: false })
   },
   onShow() {},
   onHide() {}
