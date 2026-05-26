@@ -48,7 +48,7 @@ jobs:
 
       - name: Install app dependencies
         working-directory: app
-        run: npm ci --legacy-peer-deps
+        run: npm install --legacy-peer-deps
 
       - name: Rebuild app native optional deps
         working-directory: app
