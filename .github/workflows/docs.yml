@@ -40,15 +40,10 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-          cache-dependency-path: |
-            app/package-lock.json
-            web/package-lock.json
-            admin/package-lock.json
-            docs-site/package-lock.json
 
       - name: Install app dependencies
         working-directory: app
-        run: npm install --legacy-peer-deps
+        run: rm -f package-lock.json && npm install --legacy-peer-deps
 
       - name: Rebuild app native optional deps
         working-directory: app
@@ -60,7 +55,7 @@ jobs:
 
       - name: Install web dependencies
         working-directory: web
-        run: npm install
+        run: rm -f package-lock.json && npm install
 
       - name: Build PC demo (mock data)
         working-directory: web
@@ -68,7 +63,7 @@ jobs:
 
       - name: Install admin dependencies
         working-directory: admin
-        run: npm install
+        run: rm -f package-lock.json && npm install
 
       - name: Build admin demo (mock data)
         working-directory: admin
@@ -76,7 +71,7 @@ jobs:
 
       - name: Install docs dependencies
         working-directory: docs-site
-        run: npm ci
+        run: rm -f package-lock.json && npm install
 
       - name: Build docs
         working-directory: docs-site
