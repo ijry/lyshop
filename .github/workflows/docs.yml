@@ -46,7 +46,7 @@ jobs:
 
       - name: Install app Linux native bindings
         working-directory: app
-        run: npm install --no-save @oxc-parser/binding-linux-x64-gnu@0.131.0
+        run: npm install --no-save --legacy-peer-deps @oxc-parser/binding-linux-x64-gnu@0.131.0
 
       - name: Rebuild app native optional deps
         working-directory: app
