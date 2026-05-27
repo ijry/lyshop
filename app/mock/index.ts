@@ -137,17 +137,61 @@ function pickDetailTheme(id: number) {
   return themes[Math.abs(id) % themes.length]
 }
 
+function normalizeImageURL(value: any) {
+  if (!value) return ''
+  if (typeof value === 'string') return value
+  if (typeof value?.url === 'string') return value.url
+  if (typeof value?.src === 'string') return value.src
+  return ''
+}
+
+function collectProductImagePool(product: any) {
+  const id = Number(product?.id || 0)
+  const urls: string[] = []
+  const pushURL = (value: any) => {
+    const url = normalizeImageURL(value)
+    if (url && !urls.includes(url)) urls.push(url)
+  }
+
+  pushURL(product?.cover)
+
+  if (Array.isArray(product?.images)) {
+    for (const item of product.images) pushURL(item)
+  }
+
+  const detailBlocks = Array.isArray(product?.detail?.blocks) ? product.detail.blocks : []
+  for (const block of detailBlocks) {
+    if (block?.type === 'image') pushURL(block?.props?.url)
+  }
+
+  if (!urls.length && Number(productDetailSource?.id || 0) === id) {
+    pushURL(productDetailSource?.cover)
+    for (const item of productDetailSource?.images || []) pushURL(item)
+    for (const block of productDetailSource?.detail?.blocks || []) {
+      if (block?.type === 'image') pushURL(block?.props?.url)
+    }
+  }
+
+  return urls
+}
+
 function buildDetailImages(product: any) {
   const id = Number(product?.id || 0)
-  const cover = String(product?.cover || '')
-  const fallbackBase = 1000 + (id % 200)
-  const seeds = [fallbackBase, fallbackBase + 1, fallbackBase + 2]
-  const list = [
-    cover || `https://picsum.photos/750/750?random=${seeds[0]}`,
-    `https://picsum.photos/750/750?random=${seeds[1]}`,
-    `https://picsum.photos/750/750?random=${seeds[2]}`,
-  ].filter(Boolean)
-  return list.map((url, index) => ({ id: id * 10 + index + 1, url }))
+  const pool = collectProductImagePool(product)
+  const fallback = normalizeImageURL(product?.cover) || normalizeImageURL(productDetailSource?.cover)
+  const seeds = pool.length ? pool : [fallback].filter(Boolean)
+  const unique = seeds.length ? seeds : ['https://picsum.photos/750/750?random=20']
+
+  while (unique.length < 3) {
+    unique.push(unique[unique.length - 1] || unique[0])
+  }
+
+  return unique.slice(0, Math.max(3, unique.length)).map((url, index) => ({
+    id: id * 10 + index + 1,
+    product_id: id,
+    url,
+    sort: index,
+  }))
 }
 
 function buildDetailSkus(product: any) {
@@ -213,6 +257,7 @@ function buildFallbackReviewSeed(product: any, index: number) {
     '发货很快，细节做得不错，整体满意。',
     '作为演示商品数据，规格和详情信息已经比较完整。',
   ]
+  const imagePool = buildDetailImages(product).map((item: any) => item.url)
   return {
     id: id * 1000 + index + 1,
     order_id: 900000 + id * 10 + index,
@@ -222,7 +267,7 @@ function buildFallbackReviewSeed(product: any, index: number) {
     product_score: 5 - (index % 2),
     logistics_score: 5,
     content: comments[index % comments.length],
-    images: index === 0 ? buildDetailImages(product).slice(0, 2).map((item: any) => item.url) : [],
+    images: index === 0 ? imagePool.slice(0, 2) : [],
     edited_times: 0,
     user_id: index + 1,
     user_nickname: users[index % users.length],
@@ -233,7 +278,7 @@ function buildFallbackReviewSeed(product: any, index: number) {
       id: id * 10000 + index + 1,
       review_id: id * 1000 + index + 1,
       content: '补充体验：连续使用一段时间后，表现依然稳定。',
-      images: buildDetailImages(product).slice(2, 3).map((item: any) => item.url),
+      images: imagePool.slice(2, 3),
       created_at: now,
       updated_at: now,
     }] : [],
@@ -268,13 +313,19 @@ function buildProductDetailPayload(source: any) {
   const id = Number(base?.id || 0)
   if (Number(productDetailSource?.id || 0) === id) {
     const detail = clone(productDetailSource)
+    const existingBlocks = Array.isArray(detail?.detail?.blocks) ? detail.detail.blocks : []
     const merged = {
       ...base,
       ...detail,
       subtitle: detail.subtitle || base.subtitle || '',
       sales: Number(detail.sales || base.sales || 0),
       stock: Number(detail.stock || base.stock || 0),
+      detail: {
+        version: 1,
+        blocks: existingBlocks.length ? existingBlocks : buildDetailBlocks({ ...base, ...detail }),
+      },
     }
+    merged.images = buildDetailImages(merged)
     ensureProductReviews(merged)
     return enrichFavoriteFields(merged)
   }
