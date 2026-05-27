@@ -137,6 +137,109 @@ export const supermarket: MockPreset = {
     ],
   },
 
+  pcDecor: {
+    components: [
+      {
+        type: 'hero',
+        id: 'pc_hero',
+        props: {
+          badge: '会员日全场满99减10',
+          title: '新鲜到家\\n实惠每天',
+          subtitle: '日用百货一站购齐，品质保障，1小时极速达。',
+          btn_text: '去逛逛',
+          btn_link: '/products',
+          btn2_text: '全部分类',
+          btn2_link: '/products',
+          bg_from: '#ea580c',
+          bg_to: '#c2410c',
+        },
+      },
+      {
+        type: 'category_nav',
+        id: 'pc_cats',
+        props: {
+          style: 'floating',
+          columns: 5,
+          items: [
+            { title: '零食饮料', link: '/products?category=101' },
+            { title: '日用百货', link: '/products?category=102' },
+            { title: '个护清洁', link: '/products?category=103' },
+            { title: '生鲜果蔬', link: '/products?category=104' },
+            { title: '粮油调味', link: '/products?category=105' },
+          ],
+        },
+      },
+      {
+        type: 'grid',
+        id: 'pc_grid',
+        props: {
+          columns: 4,
+          items: [
+            { title: '秒杀', icon: '⚡', bg: '#fef2f2', link: '/products' },
+            { title: '拼团', icon: '👥', bg: '#eff6ff', link: '/products' },
+            { title: '优惠券', icon: '🏷️', bg: '#fff7ed', link: '/products' },
+            { title: '签到', icon: '📅', bg: '#faf5ff', link: '/products' },
+          ],
+        },
+      },
+      {
+        type: 'notice',
+        id: 'pc_notice',
+        props: {
+          items: [
+            { text: '会员日满99减10' },
+            { text: '新人立减5元' },
+            { text: '整箱满199包邮' },
+          ],
+          color: '#f97316',
+          bgColor: '#fff7ed',
+        },
+      },
+      {
+        type: 'product_grid',
+        id: 'pc_hot',
+        props: {
+          title: '天天特价',
+          source: 'hot',
+          limit: 8,
+          columns: 4,
+        },
+      },
+      {
+        type: 'image_ad',
+        id: 'pc_ad1',
+        props: {
+          url: 'https://picsum.photos/1200/300?random=110',
+          link: '/products',
+          height: 200,
+        },
+      },
+      {
+        type: 'product_grid',
+        id: 'pc_new',
+        props: {
+          title: '囤货专区',
+          source: 'new',
+          limit: 4,
+          columns: 4,
+        },
+      },
+      {
+        type: 'features',
+        id: 'pc_features',
+        props: {
+          columns: 4,
+          items: [
+            { title: '1小时达', icon: 'i-carbon-delivery-truck', desc: '急速配送' },
+            { title: '品质保证', icon: 'i-carbon-checkmark-outline', desc: '正品行货' },
+            { title: '无忧退换', icon: 'i-carbon-renew', desc: '7天退换' },
+            { title: '在线客服', icon: 'i-carbon-headset', desc: '随时响应' },
+          ],
+        },
+      },
+    ],
+  },
+
   siteSettings: {
     site_name: '惠选超市',
     site_logo: '',

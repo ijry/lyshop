@@ -189,6 +189,70 @@ export const mother: MockPreset = {
       },
     ],
   },
+  pcDecor: {
+    components: [
+      {
+        type: 'hero', id: 'pc_hero',
+        props: {
+          badge: '大牌正品，安心之选', title: '安心之选\n呵护成长',
+          subtitle: '全球母婴大牌精选，品质保障，呵护宝宝每一步成长。',
+          btn_text: '为宝宝选购', btn_link: '/products', btn2_text: '查看全部', btn2_link: '/products',
+          bg_from: '#6d28d9', bg_to: '#5b21b6',
+        },
+      },
+      {
+        type: 'category_nav', id: 'pc_cats',
+        props: {
+          style: 'floating', columns: 5,
+          items: [
+            { title: '奶粉辅食', icon: '', link: '/products?category=601' },
+            { title: '纸尿裤', icon: '', link: '/products?category=602' },
+            { title: '玩具早教', icon: '', link: '/products?category=603' },
+            { title: '童装童鞋', icon: '', link: '/products?category=604' },
+            { title: '孕妈用品', icon: '', link: '/products?category=605' },
+          ],
+        },
+      },
+      {
+        type: 'grid', id: 'pc_grid',
+        props: {
+          columns: 4,
+          items: [
+            { title: '秒杀', icon: '⚡', bg: '#faf5ff', link: '/products' },
+            { title: '拼团', icon: '👥', bg: '#eff6ff', link: '/products' },
+            { title: '优惠券', icon: '🏷️', bg: '#fff7ed', link: '/products' },
+            { title: '签到', icon: '📅', bg: '#fdf2f8', link: '/products' },
+          ],
+        },
+      },
+      {
+        type: 'notice', id: 'pc_notice',
+        props: {
+          items: [
+            { text: '大牌正品安心购，全球母婴品牌直采', link: '' },
+            { text: '新人专享：满199减30，首单包邮', link: '/products' },
+            { text: '纸尿裤整箱囤货更划算，满299包邮', link: '/products' },
+          ],
+          color: '#7c3aed', bgColor: '#faf5ff',
+        },
+      },
+      { type: 'product_grid', id: 'pc_hot', props: { title: '宝妈精选', source: 'hot', limit: 8, columns: 4 } },
+      { type: 'image_ad', id: 'pc_ad1', props: { url: 'https://picsum.photos/1200/300?random=710', link: '/products?category=601', height: 220 } },
+      { type: 'product_grid', id: 'pc_new', props: { title: '新品上市', source: 'new', limit: 4, columns: 4 } },
+      {
+        type: 'features', id: 'pc_features',
+        props: {
+          columns: 4,
+          items: [
+            { icon: 'i-carbon-delivery-truck', title: '当日达', desc: '极速配送' },
+            { icon: 'i-carbon-checkmark-outline', title: '正品保障', desc: '全球直采' },
+            { icon: 'i-carbon-renew', title: '无忧退换', desc: '7天无理由' },
+            { icon: 'i-carbon-headset', title: '育儿顾问', desc: '专业咨询' },
+          ],
+        },
+      },
+    ],
+  },
 
   siteSettings: {
     site_name: '宝贝优选',

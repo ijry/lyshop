@@ -185,6 +185,49 @@ export const jewelry: MockPreset = {
       },
     ],
   },
+  pcDecor: {
+    components: [
+      {
+        type: 'hero', id: 'pc_hero',
+        props: {
+          badge: '新品上市，限时特惠', title: '臻品珠宝\n璀璨人生',
+          subtitle: '匠心工艺，甄选全球珍品，让每一刻都闪耀。',
+          btn_text: '探索臻品', btn_link: '/products', btn2_text: '新品首发', btn2_link: '/products',
+          bg_from: '#92400e', bg_to: '#78350f',
+        },
+      },
+      {
+        type: 'category_nav', id: 'pc_cats',
+        props: {
+          style: 'floating', columns: 5,
+          items: [
+            { title: '黄金饰品', icon: '', link: '/products?category=301' },
+            { title: '钻石珠宝', icon: '', link: '/products?category=302' },
+            { title: '翡翠玉石', icon: '', link: '/products?category=303' },
+            { title: '珍珠饰品', icon: '', link: '/products?category=304' },
+            { title: '银饰轻奢', icon: '', link: '/products?category=305' },
+          ],
+        },
+      },
+      { type: 'image_ad', id: 'pc_ad1', props: { url: 'https://picsum.photos/1200/350?random=410', link: '/products?category=301', height: 280 } },
+      { type: 'product_grid', id: 'pc_hot', props: { title: '臻品推荐', source: 'hot', limit: 8, columns: 4 } },
+      { type: 'spacer', id: 'pc_spacer1', props: { height: 24 } },
+      { type: 'image_ad', id: 'pc_ad2', props: { url: 'https://picsum.photos/1200/250?random=415', link: '/products?category=302' } },
+      { type: 'product_grid', id: 'pc_new', props: { title: '新品首发', source: 'new', limit: 4, columns: 4 } },
+      {
+        type: 'features', id: 'pc_features',
+        props: {
+          columns: 4,
+          items: [
+            { icon: 'i-carbon-delivery-truck', title: '顺丰包邮', desc: '全国顺丰配送' },
+            { icon: 'i-carbon-checkmark-outline', title: '正品认证', desc: '附带鉴定证书' },
+            { icon: 'i-carbon-renew', title: '30天退换', desc: '无忧售后' },
+            { icon: 'i-carbon-headset', title: '专属顾问', desc: '1对1服务' },
+          ],
+        },
+      },
+    ],
+  },
   siteSettings: {
     site_name: '璀璨珠宝',
     site_logo: '',

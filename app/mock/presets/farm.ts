@@ -185,6 +185,102 @@ export const farm: MockPreset = {
       },
     ],
   },
+  pcDecor: {
+    components: [
+      {
+        type: 'hero',
+        id: 'pc_hero',
+        props: {
+          badge: '应季新品，产地直发',
+          title: '田间到餐桌\\n自然的味道',
+          subtitle: '精选各地优质农产品，绿色有机，从田间到您的餐桌。',
+          btn_text: '逛逛好货',
+          btn_link: '/products',
+          btn2_text: '看看特产',
+          btn2_link: '/products',
+          bg_from: '#166534',
+          bg_to: '#14532d',
+        },
+      },
+      {
+        type: 'category_nav',
+        id: 'pc_cats',
+        props: {
+          style: 'floating',
+          columns: 5,
+          items: [
+            { title: '粮油米面', link: '/products?category=401' },
+            { title: '茶叶茗茶', link: '/products?category=402' },
+            { title: '蜂蜜滋补', link: '/products?category=403' },
+            { title: '干货腊味', link: '/products?category=404' },
+            { title: '地方特产', link: '/products?category=405' },
+          ],
+        },
+      },
+      {
+        type: 'notice',
+        id: 'pc_notice',
+        props: {
+          items: [
+            { text: '应季好货产地直发' },
+            { text: '首单满99减20' },
+            { text: '绿色有机认证' },
+          ],
+          color: '#15803d',
+          bgColor: '#f0fdf4',
+        },
+      },
+      {
+        type: 'product_grid',
+        id: 'pc_hot',
+        props: {
+          title: '田间精选',
+          source: 'hot',
+          limit: 8,
+          columns: 4,
+        },
+      },
+      {
+        type: 'image_ad',
+        id: 'pc_ad1',
+        props: {
+          url: 'https://picsum.photos/1200/300?random=510',
+          link: '/products?category=401',
+          height: 220,
+        },
+      },
+      {
+        type: 'rich_text',
+        id: 'pc_rich',
+        props: {
+          content: '<div style="text-align:center;padding:20px 0"><h3 style="font-size:20px;color:#166534;margin-bottom:8px">源头好货 · 品质保障</h3><p style="color:#666;font-size:14px">每一份农产品都经过严格品控，从田间到餐桌全程可追溯</p></div>',
+        },
+      },
+      {
+        type: 'product_grid',
+        id: 'pc_new',
+        props: {
+          title: '地方特产',
+          source: 'new',
+          limit: 4,
+          columns: 4,
+        },
+      },
+      {
+        type: 'features',
+        id: 'pc_features',
+        props: {
+          columns: 4,
+          items: [
+            { title: '产地直发', icon: 'i-carbon-delivery-truck', desc: '48小时发货' },
+            { title: '有机认证', icon: 'i-carbon-checkmark-outline', desc: '绿色有机' },
+            { title: '坏损包赔', icon: 'i-carbon-renew', desc: '售后无忧' },
+            { title: '源头客服', icon: 'i-carbon-headset', desc: '产地对接' },
+          ],
+        },
+      },
+    ],
+  },
   siteSettings: {
     site_name: '田园优选',
     site_logo: '',

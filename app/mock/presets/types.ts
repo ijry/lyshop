@@ -28,6 +28,7 @@ export interface MockPreset {
   products: { list: any[]; total: number; page: number; size: number }
   productDetail: any
   indexDecor: { components: any[] }
+  pcDecor: { components: any[] }
   siteSettings: SiteSettings
   seckills: any
   groupBuy: any

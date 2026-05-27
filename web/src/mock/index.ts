@@ -5,6 +5,7 @@ import addresses from '../../../app/mock/data/addresses.json'
 
 const preset = getPreset()
 const indexDecor = preset.indexDecor
+const pcDecor = preset.pcDecor
 const siteSettings = preset.siteSettings
 const categories = preset.categories
 const products = preset.products
@@ -418,6 +419,7 @@ function removeAddress(id: number) {
 
 const routes: Record<string, any> = {
   'GET /admin/api/index/decor': indexDecor,
+  'GET /api/v1/pc/decor': pcDecor,
   'GET /api/v1/site-settings': siteSettings,
   'GET /api/v1/categories': categories,
   'GET /api/v1/products': { list: productListSource, total: productListSource.length, page: 1, size: 20 },

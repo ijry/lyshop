@@ -138,6 +138,101 @@ export const fresh: MockPreset = {
     ],
   },
 
+  pcDecor: {
+    components: [
+      {
+        type: 'banner',
+        id: 'pc_banner',
+        props: {
+          images: [
+            { url: 'https://picsum.photos/1200/400?random=310', link: '/products?category=201' },
+            { url: 'https://picsum.photos/1200/400?random=311', link: '/products?category=203' },
+            { url: 'https://picsum.photos/1200/400?random=312', link: '/products?category=204' },
+          ],
+          height: 400,
+        },
+      },
+      {
+        type: 'category_nav',
+        id: 'pc_cats',
+        props: {
+          style: 'floating',
+          columns: 5,
+          items: [
+            { title: '新鲜水果', icon: '', link: '/products?category=201' },
+            { title: '时令蔬菜', icon: '', link: '/products?category=202' },
+            { title: '海鲜水产', icon: '', link: '/products?category=203' },
+            { title: '肉禽蛋品', icon: '', link: '/products?category=204' },
+            { title: '冷冻速食', icon: '', link: '/products?category=205' },
+          ],
+        },
+      },
+      {
+        type: 'notice',
+        id: 'pc_notice',
+        props: {
+          items: [
+            { text: '产地直供冷链到家', link: '' },
+            { text: '新人满88减15', link: '/products' },
+            { text: '每日限量秒杀', link: '/products' },
+          ],
+          color: '#16a34a',
+          bgColor: '#f0fdf4',
+        },
+      },
+      {
+        type: 'marketing_zone',
+        id: 'pc_seckill',
+        props: {
+          title: '限时秒杀',
+          subtitle: '新鲜不等待',
+          bg_from: '#15803d',
+          bg_to: '#16a34a',
+          more_link: '/products',
+          products: [
+            { product_id: 201, title: '智利车厘子5斤装', cover: 'https://picsum.photos/400/400?random=300', origin_price: 238, activity_price: 128 },
+            { product_id: 207, title: '海南金煌芒果10斤', cover: 'https://picsum.photos/400/400?random=306', origin_price: 89, activity_price: 39.9 },
+            { product_id: 206, title: '挪威三文鱼刺身200g', cover: 'https://picsum.photos/400/400?random=305', origin_price: 128, activity_price: 69.9 },
+            { product_id: 204, title: '澳洲安格斯牛排', cover: 'https://picsum.photos/400/400?random=303', origin_price: 358, activity_price: 199 },
+          ],
+        },
+      },
+      {
+        type: 'product_grid',
+        id: 'pc_hot',
+        props: { title: '今日精选', source: 'hot', limit: 8, columns: 4 },
+      },
+      {
+        type: 'spacer',
+        id: 'pc_spacer1',
+        props: { height: 24 },
+      },
+      {
+        type: 'image_ad',
+        id: 'pc_ad1',
+        props: { url: 'https://picsum.photos/1200/250?random=315', link: '/products?category=201' },
+      },
+      {
+        type: 'product_grid',
+        id: 'pc_new',
+        props: { title: '新鲜上市', source: 'new', limit: 4, columns: 4 },
+      },
+      {
+        type: 'features',
+        id: 'pc_features',
+        props: {
+          columns: 4,
+          items: [
+            { title: '冷链配送', icon: 'i-carbon-delivery-truck', desc: '全程冷链保鲜' },
+            { title: '产地直供', icon: 'i-carbon-checkmark-outline', desc: '源头直采' },
+            { title: '无忧退换', icon: 'i-carbon-renew', desc: '坏果包赔' },
+            { title: '在线客服', icon: 'i-carbon-headset', desc: '7×24在线' },
+          ],
+        },
+      },
+    ],
+  },
+
   siteSettings: {
     site_name: '鲜到家',
     site_logo: '',

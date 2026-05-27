@@ -17,6 +17,122 @@ export const mall: MockPreset = {
   products: products as any,
   productDetail: productDetail as any,
   indexDecor: indexDecor as any,
+  pcDecor: {
+    components: [
+      {
+        type: 'hero',
+        id: 'pc_hero',
+        props: {
+          badge: '限时秒杀进行中',
+          title: '精选好物\n品质生活从这里开始',
+          subtitle: '数千款精选商品，正品保障，极速发货，让购物更简单。',
+          btn_text: '立即选购',
+          btn_link: '/products',
+          btn2_text: '查看全部',
+          btn2_link: '/products',
+          bg_from: '#b91c1c',
+          bg_to: '#991b1b',
+        },
+      },
+      {
+        type: 'category_nav',
+        id: 'pc_cats',
+        props: {
+          style: 'floating',
+          columns: 8,
+          items: [
+            { title: '手机数码', icon: '', link: '/products?category=1' },
+            { title: '家用电器', icon: '', link: '/products?category=2' },
+            { title: '服装鞋帽', icon: '', link: '/products?category=3' },
+            { title: '美妆护肤', icon: '', link: '/products?category=4' },
+            { title: '食品饮料', icon: '', link: '/products?category=5' },
+            { title: '家居日用', icon: '', link: '/products?category=6' },
+            { title: '运动户外', icon: '', link: '/products?category=7' },
+            { title: '图书文具', icon: '', link: '/products?category=8' },
+          ],
+        },
+      },
+      {
+        type: 'notice',
+        id: 'pc_notice',
+        props: {
+          items: [
+            { text: '618年中大促：全场满300减50，限时3天！', link: '' },
+            { text: '新用户注册即送50元优惠券，立即领取', link: '/products' },
+            { text: '每日10点限时秒杀，爆款低至5折', link: '/products' },
+          ],
+          color: '#dc2626',
+          bgColor: '#fef2f2',
+        },
+      },
+      {
+        type: 'image_ad',
+        id: 'pc_ad1',
+        props: {
+          url: 'https://picsum.photos/1200/300?random=10',
+          link: '/products',
+          height: 200,
+        },
+      },
+      {
+        type: 'product_grid',
+        id: 'pc_hot',
+        props: {
+          title: '热销推荐',
+          source: 'hot',
+          limit: 8,
+          columns: 4,
+        },
+      },
+      {
+        type: 'marketing_zone',
+        id: 'pc_seckill',
+        props: {
+          title: '限时秒杀',
+          subtitle: '限时抢购中',
+          bg_from: '#b91c1c',
+          bg_to: '#dc2626',
+          more_link: '/products',
+          products: [
+            { product_id: 1, title: '旗舰智能手机 Pro Max', cover: 'https://picsum.photos/400/400?random=1', origin_price: 4999, activity_price: 3999 },
+            { product_id: 2, title: '轻薄笔记本电脑 Air', cover: 'https://picsum.photos/400/400?random=2', origin_price: 6999, activity_price: 5499 },
+            { product_id: 3, title: '真无线降噪耳机', cover: 'https://picsum.photos/400/400?random=3', origin_price: 899, activity_price: 599 },
+            { product_id: 4, title: '智能运动手表', cover: 'https://picsum.photos/400/400?random=4', origin_price: 1299, activity_price: 899 },
+          ],
+        },
+      },
+      {
+        type: 'spacer',
+        id: 'pc_spacer1',
+        props: {
+          height: 32,
+        },
+      },
+      {
+        type: 'product_grid',
+        id: 'pc_new',
+        props: {
+          title: '新品上架',
+          source: 'new',
+          limit: 8,
+          columns: 4,
+        },
+      },
+      {
+        type: 'features',
+        id: 'pc_features',
+        props: {
+          columns: 4,
+          items: [
+            { icon: 'i-carbon-delivery-truck', title: '快递配送', desc: '全国包邮，极速送达' },
+            { icon: 'i-carbon-checkmark-outline', title: '正品保障', desc: '品牌授权，假一赔十' },
+            { icon: 'i-carbon-renew', title: '无忧退换', desc: '7天无理由退换货' },
+            { icon: 'i-carbon-headset', title: '在线客服', desc: '7x24小时在线服务' },
+          ],
+        },
+      },
+    ],
+  },
   siteSettings: {
     site_name: 'LYShop',
     site_logo: '',

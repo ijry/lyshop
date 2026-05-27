@@ -190,6 +190,105 @@ export const cake: MockPreset = {
     ],
   },
 
+  pcDecor: {
+    components: [
+      {
+        type: 'banner',
+        id: 'pc_banner',
+        props: {
+          images: [
+            { url: 'https://picsum.photos/1200/420?random=610', link: '/products?category=501' },
+            { url: 'https://picsum.photos/1200/420?random=611', link: '/products?category=502' },
+            { url: 'https://picsum.photos/1200/420?random=612', link: '/products?category=505' },
+          ],
+          height: 420,
+        },
+      },
+      {
+        type: 'category_nav',
+        id: 'pc_cats',
+        props: {
+          columns: 5,
+          items: [
+            { title: '生日蛋糕', icon: '', link: '/products?category=501' },
+            { title: '甜品点心', icon: '', link: '/products?category=502' },
+            { title: '面包烘焙', icon: '', link: '/products?category=503' },
+            { title: '饮品奶茶', icon: '', link: '/products?category=504' },
+            { title: '节日定制', icon: '', link: '/products?category=505' },
+          ],
+        },
+      },
+      {
+        type: 'notice',
+        id: 'pc_notice',
+        props: {
+          items: [
+            { text: '每日现烤新鲜直送', link: '' },
+            { text: '生日蛋糕免配送费', link: '' },
+            { text: '会员积分换甜品', link: '' },
+          ],
+          color: '#db2777',
+          bgColor: '#fdf2f8',
+        },
+      },
+      {
+        type: 'product_grid',
+        id: 'pc_hot',
+        props: {
+          title: '甜蜜精选',
+          source: 'hot',
+          limit: 8,
+          columns: 4,
+        },
+      },
+      {
+        type: 'marketing_zone',
+        id: 'pc_seckill',
+        props: {
+          title: '限时优惠',
+          subtitle: '甜蜜不打烊',
+          bg_from: '#be185d',
+          bg_to: '#db2777',
+          more_link: '/products',
+          products: [
+            { product_id: 501, title: '草莓奶油生日蛋糕', cover: 'https://picsum.photos/400/400?random=600', origin_price: 298, activity_price: 198 },
+            { product_id: 502, title: '法式马卡龙礼盒', cover: 'https://picsum.photos/400/400?random=601', origin_price: 168, activity_price: 118 },
+            { product_id: 503, title: '北海道吐司', cover: 'https://picsum.photos/400/400?random=602', origin_price: 38, activity_price: 25.9 },
+            { product_id: 504, title: '提拉米苏6寸', cover: 'https://picsum.photos/400/400?random=603', origin_price: 188, activity_price: 128 },
+          ],
+        },
+      },
+      {
+        type: 'spacer',
+        id: 'pc_spacer1',
+        props: { height: 24 },
+      },
+      {
+        type: 'product_grid',
+        id: 'pc_new',
+        props: {
+          title: '新品尝鲜',
+          source: 'new',
+          limit: 4,
+          columns: 4,
+        },
+      },
+      {
+        type: 'features',
+        id: 'pc_features',
+        props: {
+          columns: 4,
+          items: [
+            { title: '2小时送达', icon: 'i-carbon-delivery-truck', desc: '冷链配送' },
+            { title: '手工现做', icon: 'i-carbon-checkmark-outline', desc: '新鲜保证' },
+            { title: '不满意重做', icon: 'i-carbon-renew', desc: '售后保障' },
+            { title: '在线客服', icon: 'i-carbon-headset', desc: '定制咨询' },
+          ],
+        },
+      },
+    ],
+  },
+
   siteSettings: {
     site_name: '甜蜜工坊',
     site_logo: '',
