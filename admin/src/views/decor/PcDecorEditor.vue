@@ -59,9 +59,11 @@
           </div>
         </div>
         <div class="flex-1 overflow-auto bg-slate-50 p-4">
-          <div class="mx-auto border border-slate-200 rounded-xl overflow-hidden shadow-lg bg-white"
-            :style="{ width: '1280px', transformOrigin: 'top center', transform: `scale(${previewScale})` }">
-            <PcDecorPreview :components="components" @select="selectComp" />
+          <div class="mx-auto flex justify-center" :style="{ width: `${1280 * previewScale}px`, minWidth: `${1280 * previewScale}px` }">
+            <div class="border border-slate-200 rounded-xl overflow-hidden shadow-lg bg-white"
+              :style="{ width: '1280px', transformOrigin: 'top center', transform: `scale(${previewScale})` }">
+              <PcDecorPreview :components="components" @select="selectComp" />
+            </div>
           </div>
         </div>
       </div>
@@ -113,7 +115,7 @@ import SpacerEditor from './editors/SpacerEditor.vue'
 const components = ref<any[]>([])
 const selectedIndex = ref<number | null>(null)
 const saving = ref(false)
-const previewScale = ref(0.5)
+const previewScale = ref(0.8)
 
 let draggedComp: any = null
 
