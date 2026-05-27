@@ -55,28 +55,57 @@ type ActivityProductUpsert struct {
 }
 
 type FrontActivityProduct struct {
-	ActivityID      uint64     `json:"activity_id"`
-	ActivityType    string     `json:"activity_type"`
-	ActivityName    string     `json:"activity_name"`
-	ActivityStartAt *time.Time `json:"activity_start_at"`
-	ActivityEndAt   *time.Time `json:"activity_end_at"`
-	ProductID       uint64     `json:"product_id"`
-	SkuID           uint64     `json:"sku_id"`
-	Title           string     `json:"title"`
-	Subtitle        string     `json:"subtitle"`
-	Cover           string     `json:"cover"`
-	CategoryID      uint64     `json:"category_id"`
-	Sales           int        `json:"sales"`
-	Stock           int        `json:"stock"`
-	OriginPrice     float64    `json:"origin_price"`
-	Price           float64    `json:"price"`
-	ActivityPrice   float64    `json:"activity_price"`
-	StartPrice      float64    `json:"start_price"`
-	FloorPrice      float64    `json:"floor_price"`
-	LimitPerOrder   int        `json:"limit_per_order"`
-	TotalStockLimit int        `json:"total_stock_limit"`
-	SoldQty         int        `json:"sold_qty"`
+	ActivityProductID uint64     `json:"activity_product_id"`
+	ActivityID        uint64     `json:"activity_id"`
+	ActivityType      string     `json:"activity_type"`
+	ActivityName      string     `json:"activity_name"`
+	ActivityStartAt   *time.Time `json:"activity_start_at"`
+	ActivityEndAt     *time.Time `json:"activity_end_at"`
+	ProductID         uint64     `json:"product_id"`
+	SkuID             uint64     `json:"sku_id"`
+	Title             string     `json:"title"`
+	Subtitle          string     `json:"subtitle"`
+	Cover             string     `json:"cover"`
+	CategoryID        uint64     `json:"category_id"`
+	Sales             int        `json:"sales"`
+	Stock             int        `json:"stock"`
+	OriginPrice       float64    `json:"origin_price"`
+	Price             float64    `json:"price"`
+	ActivityPrice     float64    `json:"activity_price"`
+	StartPrice        float64    `json:"start_price"`
+	FloorPrice        float64    `json:"floor_price"`
+	LimitPerOrder     int        `json:"limit_per_order"`
+	TotalStockLimit   int        `json:"total_stock_limit"`
+	SoldQty           int        `json:"sold_qty"`
 }
+
+type FrontActivityProductDetail struct {
+	ActivityProductID uint64     `json:"activity_product_id"`
+	ActivityID        uint64     `json:"activity_id"`
+	ActivityType      string     `json:"activity_type"`
+	ActivityName      string     `json:"activity_name"`
+	ActivityStatus    int8       `json:"activity_status"`
+	ActivityStartAt   *time.Time `json:"activity_start_at"`
+	ActivityEndAt     *time.Time `json:"activity_end_at"`
+	ProductID         uint64     `json:"product_id"`
+	SkuID             uint64     `json:"sku_id"`
+	Title             string     `json:"title"`
+	Subtitle          string     `json:"subtitle"`
+	Cover             string     `json:"cover"`
+	CategoryID        uint64     `json:"category_id"`
+	Sales             int        `json:"sales"`
+	Stock             int        `json:"stock"`
+	OriginPrice       float64    `json:"origin_price"`
+	Price             float64    `json:"price"`
+	ActivityPrice     float64    `json:"activity_price"`
+	StartPrice        float64    `json:"start_price"`
+	FloorPrice        float64    `json:"floor_price"`
+	LimitPerOrder     int        `json:"limit_per_order"`
+	TotalStockLimit   int        `json:"total_stock_limit"`
+	SoldQty           int        `json:"sold_qty"`
+}
+
+var getFrontActivityProductDetailFn = GetFrontActivityProductDetail
 
 func normalizePage(page, size int) (int, int) {
 	if page <= 0 {
@@ -352,33 +381,34 @@ func ListFrontActivityProducts(ctx context.Context, actType string, q ActivityPr
 	q.Page, q.Size = normalizePage(q.Page, q.Size)
 	q.SortBy, q.SortOrder = normalizeSort(q.SortBy, q.SortOrder)
 	type joined struct {
-		ActivityID      uint64
-		ActivityType    string
-		ActivityName    string
-		ActivityStartAt *time.Time
-		ActivityEndAt   *time.Time
-		ProductID       uint64
-		SkuID           uint64
-		Title           string
-		Subtitle        string
-		Cover           string
-		CategoryID      uint64
-		Sales           int
-		Stock           int
-		ProductPrice    float64
-		ActivityPrice   float64
-		StartPrice      float64
-		FloorPrice      float64
-		LimitPerOrder   int
-		TotalStockLimit int
-		SoldQty         int
-		SkuPrice        float64
+		ActivityProductID uint64
+		ActivityID        uint64
+		ActivityType      string
+		ActivityName      string
+		ActivityStartAt   *time.Time
+		ActivityEndAt     *time.Time
+		ProductID         uint64
+		SkuID             uint64
+		Title             string
+		Subtitle          string
+		Cover             string
+		CategoryID        uint64
+		Sales             int
+		Stock             int
+		ProductPrice      float64
+		ActivityPrice     float64
+		StartPrice        float64
+		FloorPrice        float64
+		LimitPerOrder     int
+		TotalStockLimit   int
+		SoldQty           int
+		SkuPrice          float64
 	}
 	now := time.Now()
 	tx := db.DB.WithContext(ctx).
 		Table("activity_products ap").
 		Select(`
-ap.activity_id, a.type AS activity_type, a.name AS activity_name, a.start_at AS activity_start_at, a.end_at AS activity_end_at,
+ap.id AS activity_product_id, ap.activity_id, a.type AS activity_type, a.name AS activity_name, a.start_at AS activity_start_at, a.end_at AS activity_end_at,
 ap.product_id, ap.sku_id,
 p.title, p.subtitle, p.cover, p.category_id, p.sales, p.stock,
 p.price AS product_price, ap.activity_price, ap.start_price, ap.floor_price, ap.limit_per_order, ap.total_stock_limit, ap.sold_qty,
@@ -424,27 +454,28 @@ ps.price AS sku_price`).
 			continue
 		}
 		result = append(result, FrontActivityProduct{
-			ActivityID:      item.ActivityID,
-			ActivityType:    item.ActivityType,
-			ActivityName:    item.ActivityName,
-			ActivityStartAt: item.ActivityStartAt,
-			ActivityEndAt:   item.ActivityEndAt,
-			ProductID:       item.ProductID,
-			SkuID:           item.SkuID,
-			Title:           item.Title,
-			Subtitle:        item.Subtitle,
-			Cover:           item.Cover,
-			CategoryID:      item.CategoryID,
-			Sales:           item.Sales,
-			Stock:           item.Stock,
-			OriginPrice:     roundPrice(originPrice),
-			Price:           roundPrice(price),
-			ActivityPrice:   roundPrice(item.ActivityPrice),
-			StartPrice:      roundPrice(item.StartPrice),
-			FloorPrice:      roundPrice(item.FloorPrice),
-			LimitPerOrder:   item.LimitPerOrder,
-			TotalStockLimit: item.TotalStockLimit,
-			SoldQty:         item.SoldQty,
+			ActivityProductID: item.ActivityProductID,
+			ActivityID:        item.ActivityID,
+			ActivityType:      item.ActivityType,
+			ActivityName:      item.ActivityName,
+			ActivityStartAt:   item.ActivityStartAt,
+			ActivityEndAt:     item.ActivityEndAt,
+			ProductID:         item.ProductID,
+			SkuID:             item.SkuID,
+			Title:             item.Title,
+			Subtitle:          item.Subtitle,
+			Cover:             item.Cover,
+			CategoryID:        item.CategoryID,
+			Sales:             item.Sales,
+			Stock:             item.Stock,
+			OriginPrice:       roundPrice(originPrice),
+			Price:             roundPrice(price),
+			ActivityPrice:     roundPrice(item.ActivityPrice),
+			StartPrice:        roundPrice(item.StartPrice),
+			FloorPrice:        roundPrice(item.FloorPrice),
+			LimitPerOrder:     item.LimitPerOrder,
+			TotalStockLimit:   item.TotalStockLimit,
+			SoldQty:           item.SoldQty,
 		})
 	}
 	sort.Slice(result, func(i, j int) bool {
@@ -481,6 +512,127 @@ ps.price AS sku_price`).
 		end = len(result)
 	}
 	return result[offset:end], total, nil
+}
+
+func GetFrontActivityProductDetail(ctx context.Context, activityProductID uint64) (*FrontActivityProductDetail, error) {
+	if activityProductID == 0 {
+		return nil, errors.New("活动商品不存在")
+	}
+	type joined struct {
+		ActivityProductID uint64
+		ActivityID        uint64
+		ActivityType      string
+		ActivityName      string
+		ActivityStatus    int8
+		ActivityStartAt   *time.Time
+		ActivityEndAt     *time.Time
+		ProductID         uint64
+		SkuID             uint64
+		Title             string
+		Subtitle          string
+		Cover             string
+		CategoryID        uint64
+		Sales             int
+		Stock             int
+		ProductPrice      float64
+		ActivityPrice     float64
+		StartPrice        float64
+		FloorPrice        float64
+		LimitPerOrder     int
+		TotalStockLimit   int
+		SoldQty           int
+		SkuPrice          float64
+	}
+	var row joined
+	err := db.DB.WithContext(ctx).
+		Table("activity_products ap").
+		Select(`
+ap.id AS activity_product_id, ap.activity_id, a.type AS activity_type, a.name AS activity_name, a.status AS activity_status, a.start_at AS activity_start_at, a.end_at AS activity_end_at,
+ap.product_id, ap.sku_id,
+p.title, p.subtitle, p.cover, p.category_id, p.sales, p.stock,
+p.price AS product_price, ap.activity_price, ap.start_price, ap.floor_price, ap.limit_per_order, ap.total_stock_limit, ap.sold_qty,
+ps.price AS sku_price`).
+		Joins("JOIN activities a ON a.id = ap.activity_id").
+		Joins("JOIN products p ON p.id = ap.product_id").
+		Joins("LEFT JOIN product_skus ps ON ps.id = ap.sku_id").
+		Where("ap.id = ? AND p.status = 1", activityProductID).
+		Take(&row).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("活动商品不存在")
+		}
+		return nil, err
+	}
+	originPrice := row.ProductPrice
+	if row.SkuPrice > 0 {
+		originPrice = row.SkuPrice
+	}
+	price := originPrice
+	switch row.ActivityType {
+	case mktmodel.ActivityTypeSeckill, mktmodel.ActivityTypeGroupBuy:
+		if row.ActivityPrice > 0 {
+			price = row.ActivityPrice
+		}
+	case mktmodel.ActivityTypeBargain:
+		if row.StartPrice > 0 {
+			price = row.StartPrice
+		}
+	}
+	return &FrontActivityProductDetail{
+		ActivityProductID: row.ActivityProductID,
+		ActivityID:        row.ActivityID,
+		ActivityType:      row.ActivityType,
+		ActivityName:      row.ActivityName,
+		ActivityStatus:    row.ActivityStatus,
+		ActivityStartAt:   row.ActivityStartAt,
+		ActivityEndAt:     row.ActivityEndAt,
+		ProductID:         row.ProductID,
+		SkuID:             row.SkuID,
+		Title:             row.Title,
+		Subtitle:          row.Subtitle,
+		Cover:             row.Cover,
+		CategoryID:        row.CategoryID,
+		Sales:             row.Sales,
+		Stock:             row.Stock,
+		OriginPrice:       roundPrice(originPrice),
+		Price:             roundPrice(price),
+		ActivityPrice:     roundPrice(row.ActivityPrice),
+		StartPrice:        roundPrice(row.StartPrice),
+		FloorPrice:        roundPrice(row.FloorPrice),
+		LimitPerOrder:     row.LimitPerOrder,
+		TotalStockLimit:   row.TotalStockLimit,
+		SoldQty:           row.SoldQty,
+	}, nil
+}
+
+func ValidateActivityProductSource(ctx context.Context, activityProductID, skuID, productID uint64) (*FrontActivityProductDetail, error) {
+	detail, err := getFrontActivityProductDetailFn(ctx, activityProductID)
+	if err != nil {
+		return nil, err
+	}
+	if detail == nil {
+		return nil, errors.New("活动商品不存在")
+	}
+	if skuID > 0 && detail.SkuID > 0 && detail.SkuID != skuID {
+		return nil, errors.New("活动商品SKU不匹配")
+	}
+	if productID > 0 && detail.ProductID != productID {
+		return nil, errors.New("活动商品与商品不匹配")
+	}
+	if detail.ActivityStatus != 1 {
+		return nil, errors.New("活动已失效")
+	}
+	now := time.Now()
+	if detail.ActivityStartAt != nil && now.Before(*detail.ActivityStartAt) {
+		return nil, errors.New("活动未开始")
+	}
+	if detail.ActivityEndAt != nil && now.After(*detail.ActivityEndAt) {
+		return nil, errors.New("活动已结束")
+	}
+	if detail.TotalStockLimit > 0 && detail.SoldQty >= detail.TotalStockLimit {
+		return nil, errors.New("活动库存不足")
+	}
+	return detail, nil
 }
 
 func IncreaseSoldQtyTx(tx *gorm.DB, skuID uint64, qty int) error {

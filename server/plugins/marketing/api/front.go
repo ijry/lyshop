@@ -14,6 +14,7 @@ func RegisterFrontRoutes(g *gin.RouterGroup) {
 	g.GET("/marketing/seckill/products", listSeckillProducts)
 	g.GET("/marketing/group-buy/products", listGroupBuyProducts)
 	g.GET("/marketing/bargain/products", listBargainProducts)
+	g.GET("/marketing/activity-products/:id", getFrontActivityProductDetail)
 
 	auth := g.Group("")
 	auth.Use(middleware.RequireAuth)
@@ -21,6 +22,20 @@ func RegisterFrontRoutes(g *gin.RouterGroup) {
 	auth.POST("/coupons/:id/claim", claimCoupon)
 	auth.GET("/user/coupons", listUserCoupons)
 	auth.GET("/user/points/logs", listPointsLogs)
+}
+
+func getFrontActivityProductDetail(c *gin.Context) {
+	activityProductID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil || activityProductID == 0 {
+		response.Fail(c, 400, "invalid activity product id")
+		return
+	}
+	detail, err := mktsvc.GetFrontActivityProductDetail(c.Request.Context(), activityProductID)
+	if err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, detail)
 }
 
 type activityProductsQuery struct {
