@@ -24,6 +24,37 @@
 
     <view class="h-16rpx bg-gray-50" />
 
+    <view v-if="marketingDetail" class="p-30rpx bg-white">
+      <view class="rounded-16rpx p-20rpx" :style="marketingCardStyle">
+        <view class="flex items-center justify-between">
+          <view>
+            <text class="text-24rpx font-600 block" :style="{ color: marketingTextColor }">{{ marketingTypeLabel }}</text>
+            <text class="text-22rpx block mt-6rpx" :style="{ color: marketingSubTextColor }">{{ marketingDetail.activity_name || '-' }}</text>
+          </view>
+          <text class="text-22rpx" :style="{ color: marketingTextColor }">{{ marketingStatusLabel }}</text>
+        </view>
+        <view class="flex items-end gap-12rpx mt-14rpx">
+          <text class="text-42rpx font-700" :style="{ color: marketingTextColor }">¥{{ marketingPrice }}</text>
+          <text class="text-22rpx text-gray-400 line-through">¥{{ marketingOriginPrice }}</text>
+        </view>
+        <view class="mt-12rpx">
+          <text class="text-22rpx text-gray-500 block">{{ $t('productDetail.activityLimitPerOrder') }} {{ marketingDetail.limit_per_order || '-' }}</text>
+          <text class="text-22rpx text-gray-500 block mt-4rpx">{{ $t('productDetail.activityStockProgress') }} {{ marketingDetail.sold_qty || 0 }}/{{ marketingDetail.total_stock_limit || '-' }}</text>
+        </view>
+        <view v-if="marketingCountdownLabel" class="mt-12rpx">
+          <text class="text-22rpx" :style="{ color: marketingTextColor }">{{ marketingCountdownLabel }}</text>
+        </view>
+        <view class="mt-14rpx">
+          <view class="inline-flex items-center px-16rpx py-8rpx rounded-999rpx text-22rpx"
+            :style="{ color: '#fff', background: marketingActionBg }">
+            {{ marketingActionLabel }}
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="h-16rpx bg-gray-50" v-if="marketingDetail" />
+
     <view class="p-30rpx" v-if="skus.length">
       <text class="text-28rpx font-600 text-gray-800 block mb-20rpx">{{ $t('productDetail.specSelect') }}</text>
       <view class="flex flex-wrap gap-16rpx">
@@ -139,7 +170,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { del, get, post } from '@/utils/request'
 
@@ -149,6 +180,10 @@ const product = ref<any>({})
 const skus = ref<any[]>([])
 const selectedSku = ref<any>(null)
 const images = ref<string[]>([])
+const activityProductID = ref(0)
+const marketingDetail = ref<any>(null)
+const countdownText = ref('')
+let countdownTimer: any = null
 const reviews = ref<any[]>([])
 const reviewSummary = ref<any>({ avg_product_score: 0, avg_logistics_score: 0, total: 0 })
 const activeTab = ref(0)
@@ -162,6 +197,74 @@ const detailBlocks = computed(() => {
   })() : detail
   if (!normalized || !Array.isArray(normalized.blocks)) return []
   return normalized.blocks
+})
+
+const marketingTypeLabel = computed(() => {
+  const type = String(marketingDetail.value?.activity_type || '')
+  if (type === 'seckill') return t('productDetail.activityTypeSeckill')
+  if (type === 'group_buy') return t('productDetail.activityTypeGroupBuy')
+  if (type === 'bargain') return t('productDetail.activityTypeBargain')
+  return t('productDetail.activityTypeDefault')
+})
+
+const marketingPrice = computed(() => Number(marketingDetail.value?.price || 0).toFixed(2))
+const marketingOriginPrice = computed(() => Number(marketingDetail.value?.origin_price || product.value?.price || 0).toFixed(2))
+
+const marketingStatusLabel = computed(() => {
+  if (!marketingDetail.value) return ''
+  const now = Date.now()
+  const startAt = marketingDetail.value?.activity_start_at ? new Date(marketingDetail.value.activity_start_at).getTime() : 0
+  const endAt = marketingDetail.value?.activity_end_at ? new Date(marketingDetail.value.activity_end_at).getTime() : 0
+  if (marketingDetail.value?.activity_status !== 1) return t('productDetail.activityStatusInactive')
+  if (startAt > now) return t('productDetail.activityStatusNotStarted')
+  if (endAt > 0 && endAt <= now) return t('productDetail.activityStatusEnded')
+  if (Number(marketingDetail.value?.total_stock_limit || 0) > 0 && Number(marketingDetail.value?.sold_qty || 0) >= Number(marketingDetail.value?.total_stock_limit || 0)) {
+    return t('productDetail.activityStatusSoldOut')
+  }
+  return t('productDetail.activityStatusOngoing')
+})
+
+const marketingActionLabel = computed(() => {
+  const type = String(marketingDetail.value?.activity_type || '')
+  if (type === 'seckill') return t('productDetail.activityActionSeckill')
+  if (type === 'group_buy') return t('productDetail.activityActionGroupBuy')
+  if (type === 'bargain') return t('productDetail.activityActionBargain')
+  return t('productDetail.activityActionDefault')
+})
+
+const marketingCountdownLabel = computed(() => {
+  if (!marketingDetail.value) return ''
+  if (String(marketingDetail.value?.activity_type || '') !== 'seckill') return ''
+  return countdownText.value ? `${t('productDetail.activityCountdown')}${countdownText.value}` : ''
+})
+
+const marketingCardStyle = computed(() => {
+  const type = String(marketingDetail.value?.activity_type || '')
+  if (type === 'seckill') return 'background: linear-gradient(135deg, #fef2f2, #fff7ed);'
+  if (type === 'group_buy') return 'background: linear-gradient(135deg, #eff6ff, #f5f3ff);'
+  if (type === 'bargain') return 'background: linear-gradient(135deg, #ecfdf5, #f0fdf4);'
+  return 'background: #f8fafc;'
+})
+const marketingTextColor = computed(() => {
+  const type = String(marketingDetail.value?.activity_type || '')
+  if (type === 'seckill') return '#dc2626'
+  if (type === 'group_buy') return '#2563eb'
+  if (type === 'bargain') return '#16a34a'
+  return '#334155'
+})
+const marketingSubTextColor = computed(() => {
+  const type = String(marketingDetail.value?.activity_type || '')
+  if (type === 'seckill') return '#b91c1c'
+  if (type === 'group_buy') return '#1d4ed8'
+  if (type === 'bargain') return '#15803d'
+  return '#64748b'
+})
+const marketingActionBg = computed(() => {
+  const type = String(marketingDetail.value?.activity_type || '')
+  if (type === 'seckill') return '#dc2626'
+  if (type === 'group_buy') return '#2563eb'
+  if (type === 'bargain') return '#16a34a'
+  return '#334155'
 })
 
 function parseAttrs(attrs: string) {
@@ -187,6 +290,7 @@ onMounted(async () => {
   const pages = getCurrentPages()
   const query = (pages[pages.length - 1] as any).options
   const id = Number(query.id)
+  activityProductID.value = Number(query.activity_product_id || 0)
   const data = await get<any>(`/api/v1/products/${id}`)
   if (!data) return
   product.value = data
@@ -196,20 +300,54 @@ onMounted(async () => {
   if (data.cover) imgList.push(data.cover)
   if (data.images) imgList.push(...data.images.map((i: any) => i.url))
   images.value = imgList
+
+  if (activityProductID.value > 0) {
+    const detail = await get<any>(`/api/v1/marketing/activity-products/${activityProductID.value}`)
+    if (detail?.activity_product_id) {
+      marketingDetail.value = detail
+      startCountdown()
+    } else {
+      marketingDetail.value = null
+      activityProductID.value = 0
+    }
+  }
   await loadReviews(id)
 })
+
+onUnmounted(() => {
+  if (countdownTimer) clearInterval(countdownTimer)
+})
+
+function startCountdown() {
+  if (countdownTimer) clearInterval(countdownTimer)
+  const tick = () => {
+    const endAt = marketingDetail.value?.activity_end_at ? new Date(marketingDetail.value.activity_end_at).getTime() : 0
+    if (!endAt) {
+      countdownText.value = ''
+      return
+    }
+    const diff = Math.max(0, endAt - Date.now())
+    const h = Math.floor(diff / 3600000)
+    const m = Math.floor((diff % 3600000) / 60000)
+    const s = Math.floor((diff % 60000) / 1000)
+    countdownText.value = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+  }
+  tick()
+  countdownTimer = setInterval(tick, 1000)
+}
 
 async function addCart() {
   const skuID = selectedSku.value?.id
   if (!skuID) { uni.showToast({ title: t('productDetail.selectSpec'), icon: 'none' }); return }
-  await post('/api/v1/cart/add', { sku_id: skuID, qty: 1 })
+  await post('/api/v1/cart/add', { sku_id: skuID, qty: 1, activity_product_id: activityProductID.value || 0 })
   uni.showToast({ title: t('productDetail.addedToCart'), icon: 'success' })
 }
 
 function buyNow() {
   const skuID = selectedSku.value?.id
   if (!skuID) { uni.showToast({ title: t('productDetail.selectSpec'), icon: 'none' }); return }
-  uni.navigateTo({ url: `/pages/order/confirm?sku_ids=${skuID}` })
+  const items = encodeURIComponent(JSON.stringify([{ sku_id: skuID, activity_product_id: activityProductID.value || 0 }]))
+  uni.navigateTo({ url: `/pages/order/confirm?items=${items}&sku_ids=${skuID}` })
 }
 
 async function toggleFavorite() {

@@ -11,7 +11,7 @@
     <!-- Product list -->
     <view style="padding: 12px;">
       <view v-for="p in products" :key="`${p.activity_id}-${p.product_id}-${p.sku_id}`"
-        @click="uni.navigateTo({url:`/pages/product/detail?id=${p.product_id}`})"
+        @click="openDetail(p)"
         style="display: flex; background: #fff; border-radius: 12px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
         <image :src="p.cover" mode="aspectFill" style="width: 100px; height: 100px; border-radius: 10px; flex-shrink: 0;" />
         <view style="flex: 1; margin-left: 12px; display: flex; flex-direction: column; justify-content: space-between;">
@@ -50,4 +50,14 @@ onMounted(async () => {
   const data = await get<any>('/api/v1/marketing/group-buy/products')
   products.value = Array.isArray(data?.list) ? data.list : (Array.isArray(data) ? data : [])
 })
+
+function openDetail(item: any) {
+  const productID = Number(item?.product_id || 0)
+  if (!productID) return
+  const activityProductID = Number(item?.activity_product_id || 0)
+  const url = activityProductID > 0
+    ? `/pages/product/detail?id=${productID}&activity_product_id=${activityProductID}`
+    : `/pages/product/detail?id=${productID}`
+  uni.navigateTo({ url })
+}
 </script>
