@@ -38,7 +38,7 @@
           v-for="p in products"
           :key="`${p.activity_id}_${p.sku_id}`"
           class="bg-white rounded-xl border border-gray-100 overflow-hidden cursor-pointer hover:shadow-lg hover:border-gray-200 transition-all"
-          @click="$router.push(`/product/${p.product_id}`)"
+          @click="openDetail(p)"
         >
           <div class="aspect-square bg-gray-50 overflow-hidden">
             <img :src="p.cover" :alt="p.title" class="w-full h-full object-cover" />
@@ -85,11 +85,13 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { get } from '@/api/request'
 
 const props = defineProps<{ activityType: 'seckill' | 'group-buy' | 'bargain' }>()
 const { t } = useI18n()
+const router = useRouter()
 
 const categories = ref<any[]>([])
 const products = ref<any[]>([])
@@ -165,9 +167,18 @@ function nextPage() {
   loadProducts()
 }
 
+function openDetail(item: any) {
+  const productID = Number(item?.product_id || 0)
+  if (!productID) return
+  const activityProductID = Number(item?.activity_product_id || 0)
+  const path = activityProductID > 0
+    ? `/product/${productID}?activity_product_id=${activityProductID}`
+    : `/product/${productID}`
+  router.push(path)
+}
+
 onMounted(async () => {
   await loadCategories()
   await loadProducts()
 })
 </script>
-

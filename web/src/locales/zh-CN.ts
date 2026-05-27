@@ -124,6 +124,22 @@ export default {
     sold: '已售',
     favCount: '收藏',
     addedToCart: '已加入购物车',
+    activityTypeDefault: '活动商品',
+    activityTypeSeckill: '秒杀活动',
+    activityTypeGroupBuy: '拼团活动',
+    activityTypeBargain: '砍价活动',
+    activityStatusOngoing: '进行中',
+    activityStatusNotStarted: '未开始',
+    activityStatusEnded: '已结束',
+    activityStatusSoldOut: '已售罄',
+    activityStatusInactive: '已失效',
+    activityActionDefault: '查看活动',
+    activityActionSeckill: '立即秒杀',
+    activityActionGroupBuy: '发起拼团',
+    activityActionBargain: '发起砍价',
+    activityCountdown: '倒计时：',
+    activityLimitPerOrder: '活动限购：',
+    activityStockProgress: '活动库存：',
   },
 
   // Cart.vue
@@ -141,6 +157,10 @@ export default {
     checkout: '去结算',
     defaultSpec: '默认规格',
     pleaseSelectItems: '请先勾选商品',
+    activityTagDefault: '活动商品',
+    activityTagSeckill: '秒杀',
+    activityTagGroupBuy: '拼团',
+    activityTagBargain: '砍价',
   },
 
   // OrderList.vue

@@ -38,6 +38,24 @@
           </div>
         </div>
 
+        <div v-if="marketingDetail" class="mb-6 rounded-xl border p-4" :class="marketingPanelClass">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <p class="text-sm font-semibold">{{ marketingTypeLabel }}</p>
+              <p class="text-xs opacity-80 mt-1">{{ marketingDetail.activity_name || '-' }}</p>
+            </div>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-white/70">{{ marketingStatusLabel }}</span>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <span class="text-2xl font-bold">¥{{ marketingPrice }}</span>
+            <span class="text-sm line-through opacity-60">¥{{ marketingOriginPrice }}</span>
+          </div>
+          <p class="text-xs mt-2">{{ $t('productDetail.activityLimitPerOrder') }}{{ marketingDetail.limit_per_order || '-' }}</p>
+          <p class="text-xs mt-1">{{ $t('productDetail.activityStockProgress') }}{{ marketingDetail.sold_qty || 0 }}/{{ marketingDetail.total_stock_limit || '-' }}</p>
+          <p v-if="seckillCountdown" class="text-xs mt-1">{{ $t('productDetail.activityCountdown') }}{{ seckillCountdown }}</p>
+          <div class="mt-3 inline-flex text-xs px-3 py-1 rounded-full bg-white/70 font-medium">{{ marketingActionLabel }}</div>
+        </div>
+
         <!-- SKU -->
         <div v-if="skus.length" class="mb-6">
           <h3 class="text-sm font-semibold text-gray-700 mb-3">{{ $t('productDetail.specSelect') }}</h3>
@@ -147,7 +165,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { del, get, post } from '@/api/request'
@@ -165,6 +183,10 @@ const selectedSku = ref<any>(null)
 const images = ref<string[]>([])
 const mainImage = ref('')
 const qty = ref(1)
+const activityProductID = ref(0)
+const marketingDetail = ref<any>(null)
+const seckillCountdown = ref('')
+let seckillTimer: any = null
 const activeTab = ref<'detail' | 'review'>('detail')
 const tabs = computed<Array<{ label: string; value: 'detail' | 'review' }>>(() => [
   { label: t('productDetail.tabDetail'), value: 'detail' },
@@ -172,6 +194,42 @@ const tabs = computed<Array<{ label: string; value: 'detail' | 'review' }>>(() =
 ])
 const reviews = ref<any[]>([])
 const reviewSummary = ref<any>({ avg_product_score: 0, avg_logistics_score: 0, total: 0 })
+const marketingTypeLabel = computed(() => {
+  const type = String(marketingDetail.value?.activity_type || '')
+  if (type === 'seckill') return t('productDetail.activityTypeSeckill')
+  if (type === 'group_buy') return t('productDetail.activityTypeGroupBuy')
+  if (type === 'bargain') return t('productDetail.activityTypeBargain')
+  return t('productDetail.activityTypeDefault')
+})
+const marketingPrice = computed(() => Number(marketingDetail.value?.price || 0).toFixed(2))
+const marketingOriginPrice = computed(() => Number(marketingDetail.value?.origin_price || product.value?.price || 0).toFixed(2))
+const marketingStatusLabel = computed(() => {
+  if (!marketingDetail.value) return ''
+  const now = Date.now()
+  const startAt = marketingDetail.value.activity_start_at ? new Date(marketingDetail.value.activity_start_at).getTime() : 0
+  const endAt = marketingDetail.value.activity_end_at ? new Date(marketingDetail.value.activity_end_at).getTime() : 0
+  if (marketingDetail.value.activity_status !== 1) return t('productDetail.activityStatusInactive')
+  if (startAt > now) return t('productDetail.activityStatusNotStarted')
+  if (endAt > 0 && endAt <= now) return t('productDetail.activityStatusEnded')
+  if (Number(marketingDetail.value.total_stock_limit || 0) > 0 && Number(marketingDetail.value.sold_qty || 0) >= Number(marketingDetail.value.total_stock_limit || 0)) {
+    return t('productDetail.activityStatusSoldOut')
+  }
+  return t('productDetail.activityStatusOngoing')
+})
+const marketingActionLabel = computed(() => {
+  const type = String(marketingDetail.value?.activity_type || '')
+  if (type === 'seckill') return t('productDetail.activityActionSeckill')
+  if (type === 'group_buy') return t('productDetail.activityActionGroupBuy')
+  if (type === 'bargain') return t('productDetail.activityActionBargain')
+  return t('productDetail.activityActionDefault')
+})
+const marketingPanelClass = computed(() => {
+  const type = String(marketingDetail.value?.activity_type || '')
+  if (type === 'seckill') return 'border-red-200 bg-red-50 text-red-700'
+  if (type === 'group_buy') return 'border-blue-200 bg-blue-50 text-blue-700'
+  if (type === 'bargain') return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+  return 'border-gray-200 bg-gray-50 text-gray-700'
+})
 
 const detailBlocks = computed(() => {
   const detail = product.value?.detail
@@ -194,7 +252,11 @@ function selectSku(sku: any) {
 
 async function addToCart() {
   if (!selectedSku.value) return
-  await post('/api/v1/cart/add', { sku_id: selectedSku.value.id, qty: qty.value })
+  await post('/api/v1/cart/add', {
+    sku_id: selectedSku.value.id,
+    qty: qty.value,
+    activity_product_id: activityProductID.value || 0,
+  })
   alert(t('productDetail.addedToCart'))
 }
 
@@ -234,7 +296,31 @@ function setTab(value: 'detail' | 'review') {
   activeTab.value = value
 }
 
+function updateSeckillCountdown() {
+  if (String(marketingDetail.value?.activity_type || '') !== 'seckill') {
+    seckillCountdown.value = ''
+    return
+  }
+  const endAt = marketingDetail.value?.activity_end_at ? new Date(marketingDetail.value.activity_end_at).getTime() : 0
+  if (!endAt) {
+    seckillCountdown.value = ''
+    return
+  }
+  const diff = Math.max(0, endAt - Date.now())
+  const h = Math.floor(diff / 3600000)
+  const m = Math.floor((diff % 3600000) / 60000)
+  const s = Math.floor((diff % 60000) / 1000)
+  seckillCountdown.value = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+}
+
+function startSeckillCountdown() {
+  if (seckillTimer) clearInterval(seckillTimer)
+  updateSeckillCountdown()
+  seckillTimer = setInterval(updateSeckillCountdown, 1000)
+}
+
 onMounted(async () => {
+  activityProductID.value = Number(route.query.activity_product_id || 0)
   const data = await get<any>(`/api/v1/products/${route.params.id}`)
   if (!data) return
   product.value = data
@@ -245,9 +331,20 @@ onMounted(async () => {
   if (data.images) imgs.push(...data.images.map((i: any) => i.url))
   images.value = imgs
   mainImage.value = imgs[0] || ''
+  if (activityProductID.value > 0) {
+    const detail = await get<any>(`/api/v1/marketing/activity-products/${activityProductID.value}`)
+    if (detail?.activity_product_id) {
+      marketingDetail.value = detail
+      startSeckillCountdown()
+    }
+  }
 
   const reviewData = await get<any>(`/api/v1/products/${route.params.id}/reviews`, { page: 1, size: 20 })
   reviewSummary.value = reviewData?.summary || { avg_product_score: 0, avg_logistics_score: 0, total: 0 }
   reviews.value = reviewData?.list || []
+})
+
+onUnmounted(() => {
+  if (seckillTimer) clearInterval(seckillTimer)
 })
 </script>

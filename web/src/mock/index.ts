@@ -31,6 +31,9 @@ function clone<T>(value: T): T {
 const orderListSource = Array.isArray((orders as any)?.list)
   ? JSON.parse(JSON.stringify((orders as any).list))
   : []
+const cartListSource = Array.isArray(cart)
+  ? clone(cart as any[])
+  : []
 const addressListSource = Array.isArray(addresses)
   ? JSON.parse(JSON.stringify(addresses))
   : []
@@ -89,6 +92,108 @@ function buildActivityRows(type: ActivityType) {
     }
   }
   return result
+}
+
+function findActivityRowByID(activityProductID: number) {
+  if (activityProductID <= 0) return null
+  const rows = [...buildActivityRows('seckill'), ...buildActivityRows('group_buy'), ...buildActivityRows('bargain')]
+  return rows.find((item: any) => Number(item?.activity_product_id || 0) === activityProductID) || null
+}
+
+function findActivityRowBySkuID(skuID: number) {
+  if (skuID <= 0) return null
+  const rows = [...buildActivityRows('seckill'), ...buildActivityRows('group_buy'), ...buildActivityRows('bargain')]
+  return rows.find((item: any) => Number(item?.sku_id || 0) === skuID) || null
+}
+
+function buildMarketingDetailByActivityProductID(activityProductID: number) {
+  const row = findActivityRowByID(activityProductID)
+  if (!row) return null
+  return {
+    activity_product_id: Number(row.activity_product_id || 0),
+    activity_id: Number(row.activity_id || 0),
+    activity_type: String(row.activity_type || ''),
+    activity_name: String(row.activity_name || ''),
+    activity_status: 1,
+    activity_start_at: row.activity_start_at || null,
+    activity_end_at: row.activity_end_at || null,
+    product_id: Number(row.product_id || 0),
+    sku_id: Number(row.sku_id || 0),
+    title: String(row.title || ''),
+    subtitle: String(row.subtitle || ''),
+    cover: String(row.cover || ''),
+    category_id: Number(row.category_id || 0),
+    sales: Number(row.sales || 0),
+    stock: Number(row.stock || 0),
+    origin_price: Number(row.origin_price || 0),
+    price: Number(row.price || 0),
+    activity_price: Number(row.activity_price || 0),
+    start_price: Number(row.start_price || 0),
+    floor_price: Number(row.floor_price || 0),
+    limit_per_order: Number(row.limit_per_order || 0),
+    total_stock_limit: Number(row.total_stock_limit || 0),
+    sold_qty: Number(row.sold_qty || 0),
+  }
+}
+
+function normalizeCartItemActivity(item: any, index: number) {
+  const row = Number(item?.activity_product_id || 0) > 0
+    ? findActivityRowByID(Number(item.activity_product_id || 0))
+    : (index === 0 ? findActivityRowBySkuID(Number(item?.sku_id || 0)) : null)
+  if (!row) return item
+  return {
+    ...item,
+    activity_product_id: Number(row.activity_product_id || 0),
+    activity_snapshot: {
+      activity_product_id: Number(row.activity_product_id || 0),
+      activity_id: Number(row.activity_id || 0),
+      activity_type: String(row.activity_type || ''),
+      activity_name: String(row.activity_name || ''),
+      price: Number(row.price || 0),
+      origin_price: Number(row.origin_price || 0),
+      activity_start_at: row.activity_start_at || null,
+      activity_end_at: row.activity_end_at || null,
+    },
+  }
+}
+
+function listCartItems() {
+  return cartListSource.map((item: any, index: number) => normalizeCartItemActivity(clone(item), index))
+}
+
+function addCartItem(payload: Record<string, any>) {
+  const skuID = Number(payload?.sku_id || 0)
+  const qty = Math.max(1, Number(payload?.qty || 1))
+  const activityProductID = Math.max(0, Number(payload?.activity_product_id || 0))
+  if (!skuID) return
+  const key = `${skuID}:${activityProductID}`
+  const index = cartListSource.findIndex((item: any) => `${Number(item?.sku_id || 0)}:${Number(item?.activity_product_id || 0)}` === key)
+  if (index >= 0) {
+    cartListSource[index].qty = Math.max(1, Number(cartListSource[index].qty || 1) + qty)
+    return
+  }
+  const detailSkus = Array.isArray(productDetailSource?.skus) ? productDetailSource.skus : []
+  const matchedSku = detailSkus.find((item: any) => Number(item?.id || 0) === skuID)
+  const productID = Number(matchedSku?.product_id || skuID || 0)
+  const sourceProduct = findProductByID(productID) || productDetailSource || {}
+  cartListSource.push({
+    sku_id: skuID,
+    qty,
+    activity_product_id: activityProductID,
+    product: {
+      id: Number(sourceProduct?.id || productID || 0),
+      title: String(sourceProduct?.title || `商品${productID}`),
+      cover: String(sourceProduct?.cover || ''),
+      price: Number(sourceProduct?.price || matchedSku?.price || 0),
+    },
+    sku: {
+      id: skuID,
+      product_id: productID,
+      attrs: String(matchedSku?.attrs || '[]'),
+      price: Number(matchedSku?.price || sourceProduct?.price || 0),
+      stock: Number(matchedSku?.stock || sourceProduct?.stock || 0),
+    },
+  })
 }
 const favoriteAtMap = new Map<number, string>()
 const productFavoriteCountMap = new Map<number, number>()
@@ -474,7 +579,7 @@ const routes: Record<string, any> = {
   'GET /api/v1/categories': categories,
   'GET /api/v1/products': { list: productListSource, total: productListSource.length, page: 1, size: 20 },
   'GET /api/v1/products/recommend': recommend,
-  'GET /api/v1/cart': cart,
+  'GET /api/v1/cart': cartListSource,
   'GET /api/v1/orders': orders,
   'GET /api/v1/orders/': orderListSource[0] || null,
   'GET /api/v1/user/coupons': userCoupons,
@@ -494,6 +599,13 @@ export function matchMock(method: string, url: string, params?: Record<string, a
   if (upperMethod === 'GET' && path === '/api/v1/orders') {
     const status = Number(query.status || 0)
     return { matched: true, data: listOrders(status) }
+  }
+  if (upperMethod === 'GET' && path === '/api/v1/cart') {
+    return { matched: true, data: listCartItems() }
+  }
+  if (upperMethod === 'POST' && path === '/api/v1/cart/add') {
+    addCartItem(params || {})
+    return { matched: true, data: null }
   }
   if (upperMethod === 'POST' && /^\/api\/v1\/products\/\d+\/favorite$/.test(path)) {
     const id = Number(path.split('/')[4] || 0)
@@ -719,6 +831,10 @@ export function matchMock(method: string, url: string, params?: Record<string, a
           detail: { version: 1, blocks: [] },
         }
     return { matched: true, data: enrichFavoriteFields(detail) }
+  }
+  if (upperMethod === 'GET' && /^\/api\/v1\/marketing\/activity-products\/\d+$/.test(path)) {
+    const activityProductID = Number(path.split('/').pop() || 0)
+    return { matched: true, data: buildMarketingDetailByActivityProductID(activityProductID) }
   }
 
   if (key in routes) {

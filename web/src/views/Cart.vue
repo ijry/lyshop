@@ -12,17 +12,20 @@
       <!-- Item list -->
       <div class="flex-1">
         <div class="card divide-y divide-gray-50">
-          <div v-for="item in cart.items" :key="item.sku_id"
+          <div v-for="item in cart.items" :key="getItemKey(item)"
             class="flex items-center gap-5 p-5 hover:bg-gray-50/50 transition-colors">
-            <button @click="toggleItem(item.sku_id)"
+            <button @click="toggleItem(item)"
               class="w-5 h-5 rounded-full border flex-center shrink-0 transition-colors"
-              :class="isChecked(item.sku_id) ? 'bg-red-500 border-red-500 text-white' : 'bg-white border-gray-300 text-transparent'">
+              :class="isChecked(item) ? 'bg-red-500 border-red-500 text-white' : 'bg-white border-gray-300 text-transparent'">
               <div class="i-carbon-checkmark text-xs" />
             </button>
             <img :src="item.product.cover" class="w-20 h-20 rounded-xl object-cover shrink-0" />
             <div class="flex-1 min-w-0">
               <h3 class="text-sm font-medium text-gray-800 line-clamp-1">{{ item.product.title }}</h3>
               <p class="text-xs text-gray-400 mt-1">{{ parseAttrs(item.sku.attrs) }}</p>
+              <div v-if="activityTagText(item)" class="mt-2 inline-flex items-center text-[11px] rounded-full px-2 py-0.5 bg-orange-50 text-orange-600">
+                {{ activityTagText(item) }}
+              </div>
               <div class="flex-between mt-3">
                 <span class="text-base font-bold text-red-500">¥{{ item.sku.price }}</span>
                 <div class="flex items-center gap-2">
@@ -31,7 +34,7 @@
                   <span class="w-8 text-center text-sm">{{ item.qty }}</span>
                   <button @click="changeQty(item, 1)"
                     class="w-7 h-7 rounded-md border border-gray-200 flex-center text-gray-500 hover:bg-gray-100 transition text-xs">+</button>
-                  <button @click="removeItem(item.sku_id)"
+                  <button @click="removeItem(item)"
                     class="ml-3 text-gray-300 hover:text-red-500 transition-colors">
                     <div class="i-carbon-trash-can text-lg" />
                   </button>
@@ -89,17 +92,17 @@ import { useCartStore } from '@/stores/cart'
 const { t } = useI18n()
 const cart = useCartStore()
 const router = useRouter()
-const checkedSkuIds = ref<number[]>([])
+const checkedItemKeys = ref<string[]>([])
 
 const selectedItems = computed(() =>
-  cart.items.filter(i => checkedSkuIds.value.includes(i.sku_id))
+  cart.items.filter(i => checkedItemKeys.value.includes(getItemKey(i)))
 )
 const selectedCount = computed(() => selectedItems.value.length)
 const selectedTotal = computed(() =>
   selectedItems.value.reduce((s, i) => s + i.sku.price * i.qty, 0)
 )
 const allChecked = computed(() =>
-  cart.items.length > 0 && checkedSkuIds.value.length === cart.items.length
+  cart.items.length > 0 && checkedItemKeys.value.length === cart.items.length
 )
 
 function parseAttrs(attrs: string) {
@@ -113,29 +116,37 @@ function changeQty(item: any, delta: number) {
   cart.updateQty(item.sku_id, newQty)
 }
 
-function isChecked(skuId: number) {
-  return checkedSkuIds.value.includes(skuId)
+function getItemKey(item: any) {
+  const skuID = Number(item?.sku_id || 0)
+  const activityProductID = Number(item?.activity_product_id || 0)
+  return `${skuID}:${activityProductID}`
 }
 
-function toggleItem(skuId: number) {
-  if (isChecked(skuId)) {
-    checkedSkuIds.value = checkedSkuIds.value.filter(id => id !== skuId)
+function isChecked(item: any) {
+  return checkedItemKeys.value.includes(getItemKey(item))
+}
+
+function toggleItem(item: any) {
+  const key = getItemKey(item)
+  if (checkedItemKeys.value.includes(key)) {
+    checkedItemKeys.value = checkedItemKeys.value.filter(id => id !== key)
     return
   }
-  checkedSkuIds.value.push(skuId)
+  checkedItemKeys.value.push(key)
 }
 
 function toggleCheckAll() {
   if (allChecked.value) {
-    checkedSkuIds.value = []
+    checkedItemKeys.value = []
     return
   }
-  checkedSkuIds.value = cart.items.map(i => i.sku_id)
+  checkedItemKeys.value = cart.items.map(i => getItemKey(i))
 }
 
-function removeItem(skuId: number) {
-  cart.removeItem(skuId)
-  checkedSkuIds.value = checkedSkuIds.value.filter(id => id !== skuId)
+function removeItem(item: any) {
+  const key = getItemKey(item)
+  cart.removeItem(item.sku_id)
+  checkedItemKeys.value = checkedItemKeys.value.filter(id => id !== key)
 }
 
 function checkout() {
@@ -146,21 +157,34 @@ function checkout() {
   router.push('/orders')
 }
 
-function syncCheckedSkuIds() {
-  const currentIds = cart.items.map(i => i.sku_id)
-  const checkedSet = new Set(checkedSkuIds.value)
-  const normalized = currentIds.filter(id => checkedSet.has(id))
-  checkedSkuIds.value = normalized.length ? normalized : [...currentIds]
+function syncCheckedItemKeys() {
+  const currentKeys = cart.items.map(i => getItemKey(i))
+  const checkedSet = new Set(checkedItemKeys.value)
+  const normalized = currentKeys.filter(id => checkedSet.has(id))
+  checkedItemKeys.value = normalized.length ? normalized : [...currentKeys]
+}
+
+function activityTagText(item: any) {
+  const activityProductID = Number(item?.activity_product_id || 0)
+  if (activityProductID <= 0) return ''
+  const snapshot = item?.activity_snapshot || {}
+  const name = String(snapshot?.activity_name || '')
+  const type = String(snapshot?.activity_type || '')
+  if (name) return name
+  if (type === 'seckill') return t('cart.activityTagSeckill')
+  if (type === 'group_buy') return t('cart.activityTagGroupBuy')
+  if (type === 'bargain') return t('cart.activityTagBargain')
+  return t('cart.activityTagDefault')
 }
 
 onMounted(async () => {
   const data = await get<any[]>('/api/v1/cart')
   if (data) cart.setItems(data)
-  checkedSkuIds.value = cart.items.map(i => i.sku_id)
+  checkedItemKeys.value = cart.items.map(i => getItemKey(i))
 })
 
 watch(
-  () => cart.items.map(i => i.sku_id).join(','),
-  () => syncCheckedSkuIds()
+  () => cart.items.map(i => getItemKey(i)).join(','),
+  () => syncCheckedItemKeys()
 )
 </script>

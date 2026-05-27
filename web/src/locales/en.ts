@@ -124,6 +124,22 @@ export default {
     sold: 'Sold',
     favCount: 'Favorites',
     addedToCart: 'Added to cart',
+    activityTypeDefault: 'Activity Product',
+    activityTypeSeckill: 'Flash Sale',
+    activityTypeGroupBuy: 'Group Buy',
+    activityTypeBargain: 'Bargain',
+    activityStatusOngoing: 'Ongoing',
+    activityStatusNotStarted: 'Not Started',
+    activityStatusEnded: 'Ended',
+    activityStatusSoldOut: 'Sold Out',
+    activityStatusInactive: 'Inactive',
+    activityActionDefault: 'View Activity',
+    activityActionSeckill: 'Buy in Flash Sale',
+    activityActionGroupBuy: 'Start Group Buy',
+    activityActionBargain: 'Start Bargain',
+    activityCountdown: 'Countdown: ',
+    activityLimitPerOrder: 'Limit per order: ',
+    activityStockProgress: 'Activity stock: ',
   },
 
   // Cart.vue
@@ -141,6 +157,10 @@ export default {
     checkout: 'Checkout',
     defaultSpec: 'Default',
     pleaseSelectItems: 'Please select items first',
+    activityTagDefault: 'Activity Product',
+    activityTagSeckill: 'Flash Sale',
+    activityTagGroupBuy: 'Group Buy',
+    activityTagBargain: 'Bargain',
   },
 
   // OrderList.vue
