@@ -10,21 +10,23 @@
         </view>
         <view v-if="!claimCoupons.length" class="text-24rpx text-gray-400 py-12rpx">{{ $t('coupon.noAvailable') }}</view>
         <view v-for="item in claimCoupons" :key="item.id" class="border border-gray-100 rounded-16rpx p-20rpx mb-16rpx">
-          <view class="flex items-center justify-between">
-            <view class="flex-1 pr-20rpx">
+          <view class="flex items-start">
+            <view class="flex-1 min-w-0 pr-20rpx">
               <text class="text-28rpx font-600 text-gray-800 block">{{ item.name }}</text>
               <text class="text-24rpx text-gray-500 block mt-6rpx">{{ claimDesc(item) }}</text>
               <text class="text-22rpx text-gray-400 block mt-6rpx">
                 {{ $t('coupon.perPersonLimit') }}{{ item.per_limit > 0 ? item.per_limit : '∞' }}{{ $t('coupon.unit') }} · {{ $t('coupon.claimed') }}{{ item.claimed_by_me || 0 }}{{ $t('coupon.unit') }}
               </text>
             </view>
-            <u-button
-              :text="item.can_claim ? $t('coupon.claimNow') : $t('coupon.limitReached')"
-              size="mini"
-              type="primary"
-              :disabled="!item.can_claim || isClaiming(item.id)"
-              @click="onClaim(item.id)"
-            />
+            <view class="w-180rpx flex-shrink-0">
+              <u-button
+                :text="item.can_claim ? $t('coupon.claimNow') : $t('coupon.limitReached')"
+                size="mini"
+                type="primary"
+                :disabled="!item.can_claim || isClaiming(item.id)"
+                @click="onClaim(item.id)"
+              />
+            </view>
           </view>
         </view>
       </view>

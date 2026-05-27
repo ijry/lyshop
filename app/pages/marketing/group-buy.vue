@@ -10,7 +10,7 @@
 
     <!-- Product list -->
     <view style="padding: 12px;">
-      <view v-for="p in products" :key="p.product_id"
+      <view v-for="p in products" :key="`${p.activity_id}-${p.product_id}-${p.sku_id}`"
         @click="uni.navigateTo({url:`/pages/product/detail?id=${p.product_id}`})"
         style="display: flex; background: #fff; border-radius: 12px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
         <image :src="p.cover" mode="aspectFill" style="width: 100px; height: 100px; border-radius: 10px; flex-shrink: 0;" />
@@ -19,7 +19,7 @@
           <view>
             <view style="display: flex; align-items: baseline; gap: 6px;">
               <text style="font-size: 12px; color: #2563eb; background: #eff6ff; padding: 1px 6px; border-radius: 4px;">{{ groupSize }}{{ $t('groupBuy.personGroup') }}</text>
-              <text style="font-size: 20px; color: #dc2626; font-weight: 700;">¥{{ p.group_price }}</text>
+              <text style="font-size: 20px; color: #dc2626; font-weight: 700;">¥{{ p.activity_price || p.price }}</text>
               <text style="font-size: 12px; color: #999; text-decoration: line-through;">¥{{ p.origin_price }}</text>
             </view>
             <view style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px;">
@@ -47,11 +47,7 @@ const products = ref<any[]>([])
 const groupSize = ref(3)
 
 onMounted(async () => {
-  const data = await get<any>('/api/v1/marketing/group-buy')
-  const activity = data?.list?.[0]
-  if (activity) {
-    products.value = activity.products || []
-    groupSize.value = activity.group_size || 3
-  }
+  const data = await get<any>('/api/v1/marketing/group-buy/products')
+  products.value = Array.isArray(data?.list) ? data.list : (Array.isArray(data) ? data : [])
 })
 </script>

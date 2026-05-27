@@ -79,6 +79,23 @@ export default {
     searchPlaceholder: '搜索你想要的商品...',
     empty: '暂无商品',
   },
+  activityList: {
+    seckillTitle: '秒杀专区',
+    groupBuyTitle: '拼团专区',
+    bargainTitle: '砍价专区',
+    seckillDesc: '限时秒杀，精选爆款直降',
+    groupBuyDesc: '多人拼团，享受更低团购价',
+    bargainDesc: '砍价起步，最低可砍至底价',
+    minPrice: '最低价',
+    maxPrice: '最高价',
+    sortPrice: '按价格排序',
+    sortSales: '按销量排序',
+    sortAsc: '升序',
+    sortDesc: '降序',
+    limitPerOrder: '每单限购',
+    stockLimit: '活动库存',
+    total: '共 {total} 条',
+  },
 
   // ProductDetail.vue
   productDetail: {

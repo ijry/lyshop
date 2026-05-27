@@ -18,7 +18,7 @@
 
     <!-- Product list -->
     <view style="padding: 12px;">
-      <view v-for="p in products" :key="p.product_id"
+      <view v-for="p in products" :key="`${p.activity_id}-${p.product_id}-${p.sku_id}`"
         @click="uni.navigateTo({url:`/pages/product/detail?id=${p.product_id}`})"
         style="display: flex; background: #fff; border-radius: 12px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
         <image :src="p.cover" mode="aspectFill" style="width: 100px; height: 100px; border-radius: 10px; flex-shrink: 0;" />
@@ -33,8 +33,8 @@
               <!-- Progress bar -->
               <view style="flex: 1; margin-right: 10px;">
                 <view style="height: 14px; background: #fee2e2; border-radius: 7px; overflow: hidden; position: relative;">
-                  <view :style="{ width: Math.min(((p.activity_stock - 10) / p.activity_stock) * 100, 85) + '%', height: '100%', background: 'linear-gradient(90deg, #dc2626, #ef4444)', borderRadius: '7px' }" />
-                  <text style="position: absolute; top: 0; left: 0; right: 0; text-align: center; font-size: 10px; color: #fff; line-height: 14px;">{{ Math.floor(Math.random()*60+20) }}%</text>
+                  <view :style="{ width: soldRatio(p) + '%', height: '100%', background: 'linear-gradient(90deg, #dc2626, #ef4444)', borderRadius: '7px' }" />
+                  <text style="position: absolute; top: 0; left: 0; right: 0; text-align: center; font-size: 10px; color: #fff; line-height: 14px;">{{ soldRatio(p) }}%</text>
                 </view>
               </view>
               <view style="background: #dc2626; color: #fff; font-size: 12px; padding: 4px 12px; border-radius: 12px; font-weight: 600;">
@@ -61,12 +61,14 @@ const countdownParts = ref(['00', '00', '00'])
 let timer: any = null
 
 onMounted(async () => {
-  const data = await get<any>('/api/v1/marketing/seckills')
-  const seckill = data?.list?.[0] || data?.[0]
-  if (seckill?.products) products.value = seckill.products
+  const data = await get<any>('/api/v1/marketing/seckill/products')
+  products.value = Array.isArray(data?.list) ? data.list : (Array.isArray(data) ? data : [])
 
   // Countdown
-  const endAt = seckill?.end_at ? new Date(seckill.end_at).getTime() : Date.now() + 86400000
+  const endTimes = products.value
+    .map((item: any) => item?.activity_end_at ? new Date(item.activity_end_at).getTime() : 0)
+    .filter((ts: number) => ts > Date.now())
+  const endAt = endTimes.length ? Math.min(...endTimes) : Date.now() + 86400000
   timer = setInterval(() => {
     const diff = Math.max(0, endAt - Date.now())
     const h = Math.floor(diff / 3600000)
@@ -77,4 +79,11 @@ onMounted(async () => {
 })
 
 onUnmounted(() => timer && clearInterval(timer))
+
+function soldRatio(item: any) {
+  const total = Number(item?.total_stock_limit || 0)
+  const sold = Number(item?.sold_qty || 0)
+  if (total <= 0) return 0
+  return Math.max(0, Math.min(100, Math.round((sold / total) * 100)))
+}
 </script>

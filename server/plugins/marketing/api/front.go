@@ -6,11 +6,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/ijry/lyshop/core/middleware"
 	"github.com/ijry/lyshop/core/response"
+	mktmodel "github.com/ijry/lyshop/plugins/marketing/model"
 	mktsvc "github.com/ijry/lyshop/plugins/marketing/service"
 )
 
 func RegisterFrontRoutes(g *gin.RouterGroup) {
-	g.GET("/marketing/seckills", listSeckills)
+	g.GET("/marketing/seckill/products", listSeckillProducts)
+	g.GET("/marketing/group-buy/products", listGroupBuyProducts)
+	g.GET("/marketing/bargain/products", listBargainProducts)
 
 	auth := g.Group("")
 	auth.Use(middleware.RequireAuth)
@@ -20,13 +23,49 @@ func RegisterFrontRoutes(g *gin.RouterGroup) {
 	auth.GET("/user/points/logs", listPointsLogs)
 }
 
-func listSeckills(c *gin.Context) {
-	list, err := mktsvc.GetActiveSeckills(c.Request.Context())
+type activityProductsQuery struct {
+	ActivityID uint64  `form:"activity_id"`
+	CategoryID uint64  `form:"category_id"`
+	Keyword    string  `form:"keyword"`
+	MinPrice   float64 `form:"min_price"`
+	MaxPrice   float64 `form:"max_price"`
+	SortBy     string  `form:"sort_by"`
+	SortOrder  string  `form:"sort_order"`
+	Page       int     `form:"page"`
+	Size       int     `form:"size"`
+}
+
+func listSeckillProducts(c *gin.Context)  { listActivityProducts(c, mktmodel.ActivityTypeSeckill) }
+func listGroupBuyProducts(c *gin.Context) { listActivityProducts(c, mktmodel.ActivityTypeGroupBuy) }
+func listBargainProducts(c *gin.Context)  { listActivityProducts(c, mktmodel.ActivityTypeBargain) }
+
+func listActivityProducts(c *gin.Context, actType string) {
+	var q activityProductsQuery
+	_ = c.ShouldBindQuery(&q)
+	page := q.Page
+	size := q.Size
+	if page <= 0 {
+		page = 1
+	}
+	if size <= 0 || size > 100 {
+		size = 20
+	}
+	list, total, err := mktsvc.ListFrontActivityProducts(c.Request.Context(), actType, mktsvc.ActivityProductListQuery{
+		ActivityID: q.ActivityID,
+		CategoryID: q.CategoryID,
+		Keyword:    q.Keyword,
+		MinPrice:   q.MinPrice,
+		MaxPrice:   q.MaxPrice,
+		SortBy:     q.SortBy,
+		SortOrder:  q.SortOrder,
+		Page:       page,
+		Size:       size,
+	})
 	if err != nil {
 		response.Fail(c, 500, err.Error())
 		return
 	}
-	response.OK(c, list)
+	response.OK(c, response.PageData{List: list, Total: total, Page: page, Size: size})
 }
 
 func claimCoupon(c *gin.Context) {

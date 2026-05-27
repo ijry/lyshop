@@ -204,7 +204,9 @@ function navigate(link?: string) {
     const pcLink = link
       .replace(/^\/pages\/product\/list/, '/products')
       .replace(/^\/pages\/product\/detail\?id=/, '/product/')
-      .replace(/^\/pages\/marketing\//, '/products?activity=')
+      .replace(/^\/pages\/marketing\/seckill$/, '/products/seckill')
+      .replace(/^\/pages\/marketing\/group-buy$/, '/products/group-buy')
+      .replace(/^\/pages\/marketing\/bargain$/, '/products/bargain')
       .replace(/^\/pages\//, '/')
     router.push(pcLink)
   }

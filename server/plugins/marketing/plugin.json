@@ -13,7 +13,12 @@
       "sort": 40,
       "children": [
         { "title": "优惠券管理", "title_key": "menu.marketing.coupon", "path": "/marketing/coupon", "permission": "marketing:view" },
-        { "title": "活动管理", "title_key": "menu.marketing.activity", "path": "/marketing/activity", "permission": "marketing:view" }
+        { "title": "秒杀活动管理", "title_key": "menu.marketing.seckillActivity", "path": "/marketing/seckill/activity", "permission": "marketing:view" },
+        { "title": "秒杀商品管理", "title_key": "menu.marketing.seckillProduct", "path": "/marketing/seckill/product", "permission": "marketing:view" },
+        { "title": "拼团活动管理", "title_key": "menu.marketing.groupBuyActivity", "path": "/marketing/group-buy/activity", "permission": "marketing:view" },
+        { "title": "拼团商品管理", "title_key": "menu.marketing.groupBuyProduct", "path": "/marketing/group-buy/product", "permission": "marketing:view" },
+        { "title": "砍价活动管理", "title_key": "menu.marketing.bargainActivity", "path": "/marketing/bargain/activity", "permission": "marketing:view" },
+        { "title": "砍价商品管理", "title_key": "menu.marketing.bargainProduct", "path": "/marketing/bargain/product", "permission": "marketing:view" }
       ]
     }
   ],

@@ -28,6 +28,12 @@ const router = createRouter({
         { path: 'wms/stock', name: 'nav.stockManage', component: () => import('@/views/wms/StockList.vue'), meta: { titleKey: 'nav.stockManage' } },
         // Marketing
         { path: 'marketing/coupon',   name: 'nav.couponManage', component: () => import('@/views/marketing/CouponList.vue'), meta: { titleKey: 'nav.couponManage' } },
+        { path: 'marketing/seckill/activity', name: 'nav.seckillActivityManage', component: () => import('@/views/marketing/SeckillActivityList.vue'), meta: { titleKey: 'nav.seckillActivityManage' } },
+        { path: 'marketing/seckill/product', name: 'nav.seckillProductManage', component: () => import('@/views/marketing/SeckillProductManage.vue'), meta: { titleKey: 'nav.seckillProductManage' } },
+        { path: 'marketing/group-buy/activity', name: 'nav.groupBuyActivityManage', component: () => import('@/views/marketing/GroupBuyActivityList.vue'), meta: { titleKey: 'nav.groupBuyActivityManage' } },
+        { path: 'marketing/group-buy/product', name: 'nav.groupBuyProductManage', component: () => import('@/views/marketing/GroupBuyProductManage.vue'), meta: { titleKey: 'nav.groupBuyProductManage' } },
+        { path: 'marketing/bargain/activity', name: 'nav.bargainActivityManage', component: () => import('@/views/marketing/BargainActivityList.vue'), meta: { titleKey: 'nav.bargainActivityManage' } },
+        { path: 'marketing/bargain/product', name: 'nav.bargainProductManage', component: () => import('@/views/marketing/BargainProductManage.vue'), meta: { titleKey: 'nav.bargainProductManage' } },
         // VIP
         { path: 'vip/plans', name: 'nav.vipPlan', component: () => import('@/views/vip/PlanList.vue'), meta: { titleKey: 'nav.vipPlan' } },
         { path: 'vip/levels', name: 'nav.vipLevel', component: () => import('@/views/vip/LevelList.vue'), meta: { titleKey: 'nav.vipLevel' } },

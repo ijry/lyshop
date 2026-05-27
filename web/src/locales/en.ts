@@ -79,6 +79,23 @@ export default {
     searchPlaceholder: 'Search for products...',
     empty: 'No products found',
   },
+  activityList: {
+    seckillTitle: 'Flash Sale',
+    groupBuyTitle: 'Group Buy',
+    bargainTitle: 'Bargain',
+    seckillDesc: 'Limited-time flash sale products',
+    groupBuyDesc: 'Join groups and enjoy lower prices',
+    bargainDesc: 'Start from launch price and bargain down',
+    minPrice: 'Min Price',
+    maxPrice: 'Max Price',
+    sortPrice: 'Sort by Price',
+    sortSales: 'Sort by Sales',
+    sortAsc: 'Ascending',
+    sortDesc: 'Descending',
+    limitPerOrder: 'Limit/Order',
+    stockLimit: 'Activity Stock',
+    total: 'Total {total}',
+  },
 
   // ProductDetail.vue
   productDetail: {

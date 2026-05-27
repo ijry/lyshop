@@ -10,7 +10,7 @@
 
     <!-- Product list -->
     <view style="padding: 12px;">
-      <view v-for="p in products" :key="p.product_id"
+      <view v-for="p in products" :key="`${p.activity_id}-${p.product_id}-${p.sku_id}`"
         @click="uni.navigateTo({url:`/pages/product/detail?id=${p.product_id}`})"
         style="background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.04);">
         <view style="display: flex;">
@@ -20,6 +20,7 @@
             <view style="display: flex; align-items: baseline; gap: 6px; margin-top: 6px;">
               <text style="font-size: 12px; color: #999;">{{ $t('bargain.originalPrice') }}</text>
               <text style="font-size: 14px; color: #999; text-decoration: line-through;">¥{{ p.origin_price }}</text>
+              <text style="font-size: 12px; color: #16a34a;">起砍 ¥{{ p.start_price || p.price }}</text>
               <text style="font-size: 12px; color: #16a34a;">{{ $t('bargain.floorPrice') }} ¥{{ p.floor_price }}</text>
             </view>
           </view>
@@ -27,11 +28,11 @@
         <!-- Progress -->
         <view style="margin-top: 12px;">
           <view style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-            <text style="font-size: 12px; color: #666;">{{ p.current_helpers }}/{{ p.max_helpers }} {{ $t('bargain.helpersCount') }}</text>
-            <text style="font-size: 12px; color: #16a34a; font-weight: 600;">{{ Math.floor((p.current_helpers / p.max_helpers) * 100) }}%</text>
+            <text style="font-size: 12px; color: #666;">已售 {{ p.sold_qty || 0 }}/{{ p.total_stock_limit || '-' }}</text>
+            <text style="font-size: 12px; color: #16a34a; font-weight: 600;">{{ soldRatio(p) }}%</text>
           </view>
           <view style="height: 8px; background: #dcfce7; border-radius: 4px; overflow: hidden;">
-            <view :style="{ width: (p.current_helpers / p.max_helpers * 100) + '%', height: '100%', background: 'linear-gradient(90deg, #16a34a, #22c55e)', borderRadius: '4px' }" />
+            <view :style="{ width: soldRatio(p) + '%', height: '100%', background: 'linear-gradient(90deg, #16a34a, #22c55e)', borderRadius: '4px' }" />
           </view>
         </view>
         <view style="display: flex; justify-content: flex-end; margin-top: 10px;">
@@ -55,8 +56,14 @@ import { get } from '@/utils/request'
 const products = ref<any[]>([])
 
 onMounted(async () => {
-  const data = await get<any>('/api/v1/marketing/bargain')
-  const activity = data?.list?.[0]
-  if (activity) products.value = activity.products || []
+  const data = await get<any>('/api/v1/marketing/bargain/products')
+  products.value = Array.isArray(data?.list) ? data.list : (Array.isArray(data) ? data : [])
 })
+
+function soldRatio(item: any) {
+  const total = Number(item?.total_stock_limit || 0)
+  const sold = Number(item?.sold_qty || 0)
+  if (total <= 0) return 0
+  return Math.max(0, Math.min(100, Math.round((sold / total) * 100)))
+}
 </script>

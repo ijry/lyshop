@@ -48,6 +48,52 @@ const productDetailSource = JSON.parse(JSON.stringify(productDetail as any))
 const productListSource = Array.isArray((products as any)?.list)
   ? JSON.parse(JSON.stringify((products as any).list))
   : []
+type ActivityType = 'seckill' | 'group_buy' | 'bargain'
+
+function asListPayload(input: any): any[] {
+  if (Array.isArray(input)) return input
+  if (Array.isArray(input?.list)) return input.list
+  return []
+}
+
+function buildActivityRows(type: ActivityType) {
+  const data = type === 'seckill' ? seckills : type === 'group_buy' ? groupBuy : bargain
+  const rows = asListPayload(data)
+  const result: any[] = []
+  for (const act of rows) {
+    const products = asListPayload(act?.products)
+    for (const item of products) {
+      const pid = Number(item?.product_id || 0)
+      const source = productListSource.find((p: any) => Number(p?.id || 0) === pid)
+      const originPrice = Number(item?.origin_price || source?.price || 0)
+      const marketPrice = Number(source?.price || originPrice || 0)
+      result.push({
+        activity_id: Number(act?.id || 0),
+        activity_type: type,
+        activity_name: String(act?.name || ''),
+        activity_start_at: act?.start_at || null,
+        activity_end_at: act?.end_at || null,
+        product_id: pid,
+        sku_id: Number(item?.sku_id || pid || 0),
+        title: String(item?.title || source?.title || ''),
+        subtitle: String(source?.subtitle || ''),
+        cover: String(item?.cover || source?.cover || ''),
+        category_id: Number(source?.category_id || 0),
+        sales: Number(source?.sales || 0),
+        stock: Number(source?.stock || 0),
+        origin_price: originPrice || marketPrice,
+        price: type === 'bargain' ? Number(item?.origin_price || marketPrice) : Number(item?.activity_price || item?.group_price || marketPrice),
+        activity_price: Number(item?.activity_price || item?.group_price || 0),
+        start_price: type === 'bargain' ? Number(item?.origin_price || marketPrice) : 0,
+        floor_price: Number(item?.floor_price || 0),
+        limit_per_order: Number(item?.limit_per_order || 0),
+        total_stock_limit: Number(item?.activity_stock || item?.group_stock || item?.total_stock_limit || 0),
+        sold_qty: Number(item?.sold_qty || 0),
+      })
+    }
+  }
+  return result
+}
 const favoriteAtMap = new Map<number, string>()
 const productFavoriteCountMap = new Map<number, number>()
 const productReviewMap = new Map<number, any[]>()
@@ -895,9 +941,9 @@ const routes: Record<string, any> = {
     total: 4,
   },
   'GET /api/v1/addresses': addresses,
-  'GET /api/v1/marketing/seckills': seckills,
-  'GET /api/v1/marketing/group-buy': groupBuy,
-  'GET /api/v1/marketing/bargain': bargain,
+  'GET /api/v1/marketing/seckill/products': { list: buildActivityRows('seckill'), total: buildActivityRows('seckill').length, page: 1, size: 20 },
+  'GET /api/v1/marketing/group-buy/products': { list: buildActivityRows('group_buy'), total: buildActivityRows('group_buy').length, page: 1, size: 20 },
+  'GET /api/v1/marketing/bargain/products': { list: buildActivityRows('bargain'), total: buildActivityRows('bargain').length, page: 1, size: 20 },
   'POST /api/v1/marketing/group-buy/join': { group_order_id: 1, status: 1 },
   'POST /api/v1/marketing/bargain/help': { cut_amount: 58.50, current_price: 1200 },
   'POST /api/v1/cart/add': null,
@@ -1149,6 +1195,34 @@ export function matchMock(method: string, url: string, params?: Record<string, a
   // Exact match
   if (key in routes) {
     const data = routes[key]
+    if (upperMethod === 'GET' && (path === '/api/v1/marketing/seckill/products' || path === '/api/v1/marketing/group-buy/products' || path === '/api/v1/marketing/bargain/products')) {
+      const sourceList = path === '/api/v1/marketing/seckill/products'
+        ? buildActivityRows('seckill')
+        : path === '/api/v1/marketing/group-buy/products'
+          ? buildActivityRows('group_buy')
+          : buildActivityRows('bargain')
+      const keyword = String(query.keyword || '').trim().toLowerCase()
+      const categoryID = Number(query.category_id || 0)
+      const minPrice = Number(query.min_price || 0)
+      const maxPrice = Number(query.max_price || 0)
+      const sortBy = String(query.sort_by || 'price')
+      const sortOrder = String(query.sort_order || 'asc')
+      const page = Number(query.page || 1)
+      const size = Number(query.size || 20)
+      let list = sourceList.slice()
+      if (keyword) list = list.filter((item: any) => String(item.title || '').toLowerCase().includes(keyword))
+      if (categoryID > 0) list = list.filter((item: any) => Number(item.category_id || 0) === categoryID)
+      if (minPrice > 0) list = list.filter((item: any) => Number(item.price || 0) >= minPrice)
+      if (maxPrice > 0) list = list.filter((item: any) => Number(item.price || 0) <= maxPrice)
+      list.sort((a: any, b: any) => {
+        const left = sortBy === 'sales' ? Number(a.sales || 0) : Number(a.price || 0)
+        const right = sortBy === 'sales' ? Number(b.sales || 0) : Number(b.price || 0)
+        return sortOrder === 'desc' ? right - left : left - right
+      })
+      const offset = Math.max(page - 1, 0) * Math.max(size, 1)
+      const pageList = list.slice(offset, offset + size)
+      return { matched: true, data: { list: pageList, total: list.length, page, size } }
+    }
     if (upperMethod === 'GET' && path === '/api/v1/products') {
       const sourceList = productListSource.slice()
       const keyword = String(query.keyword || '').trim().toLowerCase()

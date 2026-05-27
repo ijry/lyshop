@@ -65,6 +65,27 @@ const vipSkuPricesSource: any[] = [
   { id: 1, sku_id: 1001, level_name: '银卡', vip_price: 88 },
   { id: 2, sku_id: 1001, level_name: '金卡', vip_price: 82 },
 ]
+const seckillActivitiesSource: any[] = [
+  { id: 1, type: 'seckill', name: '午场秒杀', start_at: '2026-05-27T10:00:00Z', end_at: '2026-05-27T12:00:00Z', status: 1 },
+  { id: 2, type: 'seckill', name: '晚场秒杀', start_at: '2026-05-27T20:00:00Z', end_at: '2026-05-27T22:00:00Z', status: 1 },
+]
+const groupBuyActivitiesSource: any[] = [
+  { id: 11, type: 'group_buy', name: '今日拼团', start_at: '2026-05-27T00:00:00Z', end_at: '2026-05-27T23:59:59Z', status: 1 },
+]
+const bargainActivitiesSource: any[] = [
+  { id: 21, type: 'bargain', name: '砍价专场', start_at: '2026-05-27T00:00:00Z', end_at: '2026-05-28T23:59:59Z', status: 1 },
+]
+const seckillProductsSource: any[] = [
+  { id: 1001, activity_id: 1, product_id: 1, sku_id: 10011, activity_price: 3599, start_price: 0, floor_price: 0, limit_per_order: 1, total_stock_limit: 120, sold_qty: 18, product_title: '旗舰智能手机 Pro Max', product_cover: 'https://picsum.photos/120/120?random=101', sku_price: 4999, sku_stock: 400, sku_attrs: [{ name: '颜色', value: '曜石黑' }] },
+]
+const groupBuyProductsSource: any[] = [
+  { id: 2001, activity_id: 11, product_id: 4, sku_id: 10041, activity_price: 2699, start_price: 0, floor_price: 0, limit_per_order: 2, total_stock_limit: 200, sold_qty: 29, product_title: '智能手表 Ultra', product_cover: 'https://picsum.photos/120/120?random=102', sku_price: 3299, sku_stock: 380, sku_attrs: [{ name: '版本', value: '标准版' }] },
+]
+const bargainProductsSource: any[] = [
+  { id: 3001, activity_id: 21, product_id: 6, sku_id: 10061, activity_price: 0, start_price: 1980, floor_price: 299, limit_per_order: 1, total_stock_limit: 80, sold_qty: 6, product_title: '羊绒大衣女款', product_cover: 'https://picsum.photos/120/120?random=103', sku_price: 1980, sku_stock: 220, sku_attrs: [{ name: '尺码', value: 'M' }] },
+]
+let marketingActivitySeq = 100
+let marketingProductSeq = 5000
 
 function clone<T>(v: T): T {
   return JSON.parse(JSON.stringify(v))
@@ -410,6 +431,12 @@ const routes: Record<string, any> = {
         menus: [
           { title: '营销管理', icon: 'tag', path: '/marketing', sort: 10, children: [
             { title: '优惠券管理', path: '/marketing/coupon' },
+            { title: '秒杀活动管理', path: '/marketing/seckill/activity' },
+            { title: '秒杀商品管理', path: '/marketing/seckill/product' },
+            { title: '拼团活动管理', path: '/marketing/group-buy/activity' },
+            { title: '拼团商品管理', path: '/marketing/group-buy/product' },
+            { title: '砍价活动管理', path: '/marketing/bargain/activity' },
+            { title: '砍价商品管理', path: '/marketing/bargain/product' },
           ]},
         ],
       },
@@ -507,6 +534,12 @@ const routes: Record<string, any> = {
     ],
     total: 3, page: 1, size: 20,
   },
+  'GET /admin/api/marketing/seckill/activities': { list: seckillActivitiesSource, total: seckillActivitiesSource.length, page: 1, size: 20 },
+  'GET /admin/api/marketing/group-buy/activities': { list: groupBuyActivitiesSource, total: groupBuyActivitiesSource.length, page: 1, size: 20 },
+  'GET /admin/api/marketing/bargain/activities': { list: bargainActivitiesSource, total: bargainActivitiesSource.length, page: 1, size: 20 },
+  'GET /admin/api/marketing/seckill/products': { list: seckillProductsSource, total: seckillProductsSource.length, page: 1, size: 20 },
+  'GET /admin/api/marketing/group-buy/products': { list: groupBuyProductsSource, total: groupBuyProductsSource.length, page: 1, size: 20 },
+  'GET /admin/api/marketing/bargain/products': { list: bargainProductsSource, total: bargainProductsSource.length, page: 1, size: 20 },
   'GET /admin/api/vip/plans': { list: vipPlansSource, total: vipPlansSource.length, page: 1, size: 20 },
   'GET /admin/api/vip/levels': { list: vipLevelsSource, total: vipLevelsSource.length, page: 1, size: 20 },
   'GET /admin/api/vip/coupon-rules': { list: vipCouponRulesSource, total: vipCouponRulesSource.length, page: 1, size: 20 },
@@ -654,6 +687,128 @@ const routes: Record<string, any> = {
 export function matchMock(method: string, url: string, params?: Record<string, any>): { matched: boolean; data?: any } {
   const key = `${method.toUpperCase()} ${url}`
   const query = params || {}
+  const getActivityStore = (type: 'seckill' | 'group-buy' | 'bargain') => {
+    if (type === 'seckill') return seckillActivitiesSource
+    if (type === 'group-buy') return groupBuyActivitiesSource
+    return bargainActivitiesSource
+  }
+  const getProductStore = (type: 'seckill' | 'group-buy' | 'bargain') => {
+    if (type === 'seckill') return seckillProductsSource
+    if (type === 'group-buy') return groupBuyProductsSource
+    return bargainProductsSource
+  }
+  const parseTypeFromPath = (path: string): 'seckill' | 'group-buy' | 'bargain' | null => {
+    if (path.includes('/marketing/seckill/')) return 'seckill'
+    if (path.includes('/marketing/group-buy/')) return 'group-buy'
+    if (path.includes('/marketing/bargain/')) return 'bargain'
+    return null
+  }
+  const hasTimeConflict = (store: any[], startAt: string, endAt: string, excludeID = 0) => {
+    const start = new Date(startAt).getTime()
+    const end = new Date(endAt).getTime()
+    if (!start || !end || start >= end) return true
+    return store.some((item: any) => {
+      if (Number(item.id || 0) === excludeID) return false
+      const left = new Date(String(item.start_at || '')).getTime()
+      const right = new Date(String(item.end_at || '')).getTime()
+      return left < end && right > start
+    })
+  }
+  const toPageData = (list: any[], page: number, size: number) => {
+    const p = Math.max(1, Number(page || 1))
+    const s = Math.max(1, Number(size || 20))
+    const offset = (p - 1) * s
+    return { list: list.slice(offset, offset + s), total: list.length, page: p, size: s }
+  }
+
+  const marketingType = parseTypeFromPath(url)
+  if (marketingType) {
+    const activityStore = getActivityStore(marketingType)
+    const productStore = getProductStore(marketingType)
+    if (key.endsWith('/activities')) {
+      if (method.toUpperCase() === 'GET') {
+        const list = activityStore.slice().sort((a: any, b: any) => Number(b.id || 0) - Number(a.id || 0))
+        return { matched: true, data: toPageData(list, Number(query.page || 1), Number(query.size || 20)) }
+      }
+      if (method.toUpperCase() === 'POST') {
+        const payload: any = params || {}
+        const startAt = String(payload.start_at || '')
+        const endAt = String(payload.end_at || '')
+        if (hasTimeConflict(activityStore, startAt, endAt)) {
+          throw new Error('同类型活动时间段冲突')
+        }
+        marketingActivitySeq += 1
+        const row = {
+          id: marketingActivitySeq,
+          type: marketingType === 'group-buy' ? 'group_buy' : marketingType,
+          name: String(payload.name || `${marketingType}活动`),
+          start_at: startAt,
+          end_at: endAt,
+          status: Number(payload.status || 0) === 1 ? 1 : 0,
+        }
+        activityStore.push(row)
+        return { matched: true, data: row }
+      }
+    }
+    if (method.toUpperCase() === 'PUT' && /\/activities\/\d+$/.test(url)) {
+      const id = Number(url.split('/').pop() || 0)
+      const target = activityStore.find((item: any) => Number(item.id || 0) === id)
+      if (!target) return { matched: true, data: null }
+      const payload: any = params || {}
+      const startAt = String(payload.start_at || target.start_at || '')
+      const endAt = String(payload.end_at || target.end_at || '')
+      if (hasTimeConflict(activityStore, startAt, endAt, id)) {
+        throw new Error('同类型活动时间段冲突')
+      }
+      target.name = String(payload.name || target.name)
+      target.start_at = startAt
+      target.end_at = endAt
+      target.status = Number(payload.status ?? target.status) === 1 ? 1 : 0
+      return { matched: true, data: null }
+    }
+    if (key.endsWith('/products')) {
+      if (method.toUpperCase() === 'GET') {
+        const activityID = Number(query.activity_id || 0)
+        const keyword = String(query.keyword || '').trim().toLowerCase()
+        const page = Number(query.page || 1)
+        const size = Number(query.size || 20)
+        let list = productStore.slice()
+        if (activityID > 0) list = list.filter((item: any) => Number(item.activity_id || 0) === activityID)
+        if (keyword) list = list.filter((item: any) => String(item.product_title || '').toLowerCase().includes(keyword))
+        return { matched: true, data: toPageData(list, page, size) }
+      }
+      if (method.toUpperCase() === 'PUT' && /\/activities\/\d+\/products$/.test(url)) {
+        const activityID = Number(url.split('/')[6] || 0)
+        const rows = Array.isArray(params) ? params : []
+        for (let i = productStore.length - 1; i >= 0; i -= 1) {
+          if (Number(productStore[i].activity_id || 0) === activityID) {
+            productStore.splice(i, 1)
+          }
+        }
+        for (const row of rows) {
+          marketingProductSeq += 1
+          productStore.push({
+            id: marketingProductSeq,
+            activity_id: activityID,
+            product_id: Number((row as any).product_id || 0),
+            sku_id: Number((row as any).sku_id || 0),
+            activity_price: Number((row as any).activity_price || 0),
+            start_price: Number((row as any).start_price || 0),
+            floor_price: Number((row as any).floor_price || 0),
+            limit_per_order: Number((row as any).limit_per_order || 0),
+            total_stock_limit: Number((row as any).total_stock_limit || 0),
+            sold_qty: 0,
+            product_title: String((row as any).product_title || `商品${(row as any).product_id || ''}`),
+            product_cover: String((row as any).product_cover || ''),
+            sku_price: Number((row as any).sku_price || 0),
+            sku_stock: Number((row as any).sku_stock || 0),
+            sku_attrs: Array.isArray((row as any).sku_attrs) ? (row as any).sku_attrs : [],
+          })
+        }
+        return { matched: true, data: null }
+      }
+    }
+  }
   const vipCrud = (path: string, source: any[]) => {
     if (key === `GET ${path}`) return { matched: true, data: { list: clone(source), total: source.length, page: 1, size: 20 } }
     if (key === `POST ${path}`) {

@@ -24,9 +24,9 @@ type Coupon struct {
 	TotalCount      int        `gorm:"not null;default:0"            json:"total_count"`
 	PerLimit        int        `gorm:"not null;default:1"            json:"per_limit"`
 	Stackable       bool       `gorm:"not null;default:false"        json:"stackable"`        // can stack with other coupons?
-	Scope           string     `gorm:"size:32;default:'all'"         json:"scope"`             // all|category|product
-	ScopeIDs        string     `gorm:"type:json"                     json:"scope_ids"`         // JSON array of IDs
-	ExcludeActivity bool       `gorm:"not null;default:false"        json:"exclude_activity"`  // skip items already in an activity?
+	Scope           string     `gorm:"size:32;default:'all'"         json:"scope"`            // all|category|product
+	ScopeIDs        string     `gorm:"type:json"                     json:"scope_ids"`        // JSON array of IDs
+	ExcludeActivity bool       `gorm:"not null;default:false"        json:"exclude_activity"` // skip items already in an activity?
 	StartAt         *time.Time `json:"start_at"`
 	EndAt           *time.Time `json:"end_at"`
 	Status          int8       `gorm:"not null;default:1"            json:"status"`
@@ -44,26 +44,26 @@ type CouponUser struct {
 // ─── Activity ────────────────────────────────────────────────────────
 
 const (
-	ActivityTypeSeckill   = "seckill"    // 秒杀
-	ActivityTypeGroupBuy  = "group_buy"  // 拼团
-	ActivityTypeBargain   = "bargain"    // 砍价
-	ActivityTypeFullSave  = "full_save"  // 满减
-	ActivityTypeCustom    = "custom"     // 自定义活动（520专场等）
+	ActivityTypeSeckill  = "seckill"   // 秒杀
+	ActivityTypeGroupBuy = "group_buy" // 拼团
+	ActivityTypeBargain  = "bargain"   // 砍价
+	ActivityTypeFullSave = "full_save" // 满减
+	ActivityTypeCustom   = "custom"    // 自定义活动（520专场等）
 )
 
 // PriceRule defines how an activity modifies the price.
 const (
 	PriceRuleFixedPrice   = "fixed_price"   // replace unit price
-	PriceRuleDiscountRate = "discount_rate"  // multiply (e.g. 0.8 = 80%)
-	PriceRuleReduce       = "reduce"         // subtract fixed amount
+	PriceRuleDiscountRate = "discount_rate" // multiply (e.g. 0.8 = 80%)
+	PriceRuleReduce       = "reduce"        // subtract fixed amount
 )
 
 type Activity struct {
 	model.Base
 	Type         string          `gorm:"size:32;not null;index"         json:"type"`
 	Name         string          `gorm:"size:64;not null"               json:"name"`
-	PriceRule    string          `gorm:"size:32"                        json:"price_rule"`   // fixed_price|discount_rate|reduce
-	PriceValue   float64         `gorm:"type:decimal(10,2)"             json:"price_value"`  // the value for PriceRule
+	PriceRule    string          `gorm:"size:32"                        json:"price_rule"`    // fixed_price|discount_rate|reduce
+	PriceValue   float64         `gorm:"type:decimal(10,2)"             json:"price_value"`   // the value for PriceRule
 	ProductScope string          `gorm:"size:32;default:'selected'"     json:"product_scope"` // all|selected|category
 	Exclusive    bool            `gorm:"not null;default:false"         json:"exclusive"`     // if true, no other discounts apply
 	Config       json.RawMessage `gorm:"type:json"                      json:"config"`        // type-specific config (see below)
@@ -83,11 +83,16 @@ Config per type:
 
 type ActivityProduct struct {
 	model.Base
-	ActivityID    uint64  `gorm:"not null;index"             json:"activity_id"`
-	ProductID     uint64  `gorm:"not null"                   json:"product_id"`
-	SkuID         uint64  `gorm:"default:0"                  json:"sku_id"`
-	ActivityPrice float64 `gorm:"type:decimal(10,2)"         json:"activity_price"`
-	ActivityStock int     `gorm:"default:0"                  json:"activity_stock"`
+	ActivityID      uint64  `gorm:"not null;index"                     json:"activity_id"`
+	ProductID       uint64  `gorm:"not null;index"                     json:"product_id"`
+	SkuID           uint64  `gorm:"default:0;index"                    json:"sku_id"`
+	ActivityPrice   float64 `gorm:"type:decimal(10,2)"                 json:"activity_price"`    // 秒杀/拼团活动价
+	StartPrice      float64 `gorm:"type:decimal(10,2)"                 json:"start_price"`       // 砍价起始价
+	FloorPrice      float64 `gorm:"type:decimal(10,2)"                 json:"floor_price"`       // 砍价最低价
+	LimitPerOrder   int     `gorm:"not null;default:0"                 json:"limit_per_order"`   // 0=不限
+	TotalStockLimit int     `gorm:"not null;default:0"                 json:"total_stock_limit"` // 0=不限
+	SoldQty         int     `gorm:"not null;default:0"                 json:"sold_qty"`
+	ActivityStock   int     `gorm:"default:0"                          json:"activity_stock"` // deprecated, retained for backward compatibility
 }
 
 // ─── Group Buy ───────────────────────────────────────────────────────
@@ -95,10 +100,10 @@ type ActivityProduct struct {
 type GroupBuyOrder struct {
 	model.Base
 	ActivityID  uint64     `gorm:"not null;index"  json:"activity_id"`
-	LeaderID    uint64     `gorm:"not null"        json:"leader_id"`     // user who started the group
-	GroupSize   int        `gorm:"not null"        json:"group_size"`    // required members
+	LeaderID    uint64     `gorm:"not null"        json:"leader_id"`  // user who started the group
+	GroupSize   int        `gorm:"not null"        json:"group_size"` // required members
 	JoinedCount int        `gorm:"not null;default:1" json:"joined_count"`
-	Status      int8       `gorm:"not null"        json:"status"`        // 1=拼团中 2=成功 3=失败
+	Status      int8       `gorm:"not null"        json:"status"` // 1=拼团中 2=成功 3=失败
 	ExpireAt    *time.Time `json:"expire_at"`
 }
 
@@ -113,16 +118,16 @@ type GroupBuyMember struct {
 
 type BargainOrder struct {
 	model.Base
-	ActivityID   uint64  `gorm:"not null;index"  json:"activity_id"`
-	UserID       uint64  `gorm:"not null;index"  json:"user_id"`
-	ProductID    uint64  `gorm:"not null"        json:"product_id"`
-	OriginalPrice float64 `gorm:"type:decimal(10,2);not null" json:"original_price"`
-	CurrentPrice float64 `gorm:"type:decimal(10,2);not null" json:"current_price"`
-	FloorPrice   float64 `gorm:"type:decimal(10,2);not null" json:"floor_price"`
-	HelperCount  int     `gorm:"not null;default:0" json:"helper_count"`
-	MaxHelpers   int     `gorm:"not null"        json:"max_helpers"`
-	Status       int8    `gorm:"not null"        json:"status"` // 1=砍价中 2=已完成 3=已过期
-	ExpireAt     *time.Time `json:"expire_at"`
+	ActivityID    uint64     `gorm:"not null;index"  json:"activity_id"`
+	UserID        uint64     `gorm:"not null;index"  json:"user_id"`
+	ProductID     uint64     `gorm:"not null"        json:"product_id"`
+	OriginalPrice float64    `gorm:"type:decimal(10,2);not null" json:"original_price"`
+	CurrentPrice  float64    `gorm:"type:decimal(10,2);not null" json:"current_price"`
+	FloorPrice    float64    `gorm:"type:decimal(10,2);not null" json:"floor_price"`
+	HelperCount   int        `gorm:"not null;default:0" json:"helper_count"`
+	MaxHelpers    int        `gorm:"not null"        json:"max_helpers"`
+	Status        int8       `gorm:"not null"        json:"status"` // 1=砍价中 2=已完成 3=已过期
+	ExpireAt      *time.Time `json:"expire_at"`
 }
 
 type BargainHelper struct {
@@ -137,10 +142,10 @@ type BargainHelper struct {
 type Distributor struct {
 	model.Base
 	UserID    uint64  `gorm:"not null;uniqueIndex" json:"user_id"`
-	ParentID  uint64  `gorm:"not null;default:0;index" json:"parent_id"`  // 上级分销商
-	Level     int     `gorm:"not null;default:1" json:"level"`            // 1=一级 2=二级
+	ParentID  uint64  `gorm:"not null;default:0;index" json:"parent_id"` // 上级分销商
+	Level     int     `gorm:"not null;default:1" json:"level"`           // 1=一级 2=二级
 	TotalEarn float64 `gorm:"type:decimal(10,2);default:0" json:"total_earn"`
-	Balance   float64 `gorm:"type:decimal(10,2);default:0" json:"balance"`  // 可提现余额
+	Balance   float64 `gorm:"type:decimal(10,2);default:0" json:"balance"` // 可提现余额
 	Status    int8    `gorm:"not null;default:1" json:"status"`
 }
 
@@ -148,9 +153,9 @@ type DistributionCommission struct {
 	model.Base
 	OrderID       uint64  `gorm:"not null;index" json:"order_id"`
 	DistributorID uint64  `gorm:"not null;index" json:"distributor_id"`
-	Level         int     `gorm:"not null"       json:"level"`   // 1=直推 2=间推
+	Level         int     `gorm:"not null"       json:"level"` // 1=直推 2=间推
 	Amount        float64 `gorm:"type:decimal(10,2);not null" json:"amount"`
-	Status        int8    `gorm:"not null"       json:"status"`  // 1=待结算 2=已结算 3=已退回
+	Status        int8    `gorm:"not null"       json:"status"` // 1=待结算 2=已结算 3=已退回
 }
 
 type DistributionConfig struct {

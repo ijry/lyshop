@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/ijry/lyshop/core/db"
 	"github.com/ijry/lyshop/core/marketing"
+	marketingsvc "github.com/ijry/lyshop/plugins/marketing/service"
 	ordermodel "github.com/ijry/lyshop/plugins/order/model"
 	productmodel "github.com/ijry/lyshop/plugins/product/model"
 	vipsvc "github.com/ijry/lyshop/plugins/vip/service"
@@ -173,6 +174,9 @@ func CreateOrder(ctx context.Context, req CreateOrderReq) (*ordermodel.Order, er
 			}
 			if res.RowsAffected == 0 {
 				return fmt.Errorf("order.err.insufficientStock (sku_id=%d)", items[i].SkuID)
+			}
+			if err := marketingsvc.IncreaseSoldQtyTx(tx, items[i].SkuID, items[i].Qty); err != nil {
+				return err
 			}
 		}
 		return tx.Create(&items).Error
