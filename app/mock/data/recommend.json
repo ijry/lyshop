@@ -1,6 +1,6 @@
 [
-  { "product_id": 7, "title": "精华水套装", "cover": "https://picsum.photos/400/400?random=16", "price": 299, "origin_price": 599, "sales": 8900 },
-  { "product_id": 4, "title": "智能手表 Ultra", "cover": "https://picsum.photos/400/400?random=13", "price": 3299, "origin_price": 3999, "sales": 2340 },
-  { "product_id": 3, "title": "真无线降噪耳机", "cover": "https://picsum.photos/400/400?random=12", "price": 899, "origin_price": 1299, "sales": 5620 },
-  { "product_id": 8, "title": "机械键盘 RGB", "cover": "https://picsum.photos/400/400?random=17", "price": 399, "origin_price": 599, "sales": 3200 }
+  { "product_id": 7, "title": "精华水套装", "cover": "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=800&q=80", "price": 299, "origin_price": 599, "sales": 8900 },
+  { "product_id": 4, "title": "智能手表 Ultra", "cover": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=800&q=80", "price": 3299, "origin_price": 3999, "sales": 2340 },
+  { "product_id": 3, "title": "真无线降噪耳机", "cover": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80", "price": 899, "origin_price": 1299, "sales": 5620 },
+  { "product_id": 8, "title": "机械键盘 RGB", "cover": "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?auto=format&fit=crop&w=800&q=80", "price": 399, "origin_price": 599, "sales": 3200 }
 ]

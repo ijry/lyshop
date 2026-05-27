@@ -2,7 +2,7 @@
   "id": 1,
   "title": "旗舰智能手机 Pro Max",
   "subtitle": "全新芯片，超长续航，5000万像素三摄",
-  "cover": "https://picsum.photos/750/750?random=20",
+  "cover": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1200&q=80",
   "price": 4999.00,
   "origin_price": 5999.00,
   "stock": 500,
@@ -23,7 +23,7 @@
         "id": "b2",
         "type": "image",
         "props": {
-          "url": "https://picsum.photos/750/420?random=120",
+          "url": "https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?auto=format&fit=crop&w=1200&q=80",
           "alt": "性能展示"
         }
       },
@@ -43,9 +43,9 @@
     { "id": 4, "product_id": 1, "attrs": "[{\"name\":\"颜色\",\"value\":\"冰川白\"},{\"name\":\"存储\",\"value\":\"512GB\"}]", "price": 5699.00, "stock": 80, "sku_code": "PHONE-WHT-512" }
   ],
   "images": [
-    { "id": 1, "product_id": 1, "url": "https://picsum.photos/750/750?random=20", "sort": 0 },
-    { "id": 2, "product_id": 1, "url": "https://picsum.photos/750/750?random=21", "sort": 1 },
-    { "id": 3, "product_id": 1, "url": "https://picsum.photos/750/750?random=22", "sort": 2 },
-    { "id": 4, "product_id": 1, "url": "https://picsum.photos/750/750?random=23", "sort": 3 }
+    { "id": 1, "product_id": 1, "url": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=1200&q=80", "sort": 0 },
+    { "id": 2, "product_id": 1, "url": "https://images.unsplash.com/photo-1512499617640-c74ae3a79d37?auto=format&fit=crop&w=1200&q=80", "sort": 1 },
+    { "id": 3, "product_id": 1, "url": "https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=1200&q=80", "sort": 2 },
+    { "id": 4, "product_id": 1, "url": "https://images.unsplash.com/photo-1516728778615-2d590ea1856b?auto=format&fit=crop&w=1200&q=80", "sort": 3 }
   ]
 }

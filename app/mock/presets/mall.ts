@@ -69,7 +69,7 @@ export const mall: MockPreset = {
         type: 'image_ad',
         id: 'pc_ad1',
         props: {
-          url: 'https://picsum.photos/1200/300?random=10',
+          url: 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=1400&q=80',
           link: '/products',
           height: 200,
         },
@@ -94,10 +94,10 @@ export const mall: MockPreset = {
           bg_to: '#dc2626',
           more_link: '/products',
           products: [
-            { product_id: 1, title: '旗舰智能手机 Pro Max', cover: 'https://picsum.photos/400/400?random=1', origin_price: 4999, activity_price: 3999 },
-            { product_id: 2, title: '轻薄笔记本电脑 Air', cover: 'https://picsum.photos/400/400?random=2', origin_price: 6999, activity_price: 5499 },
-            { product_id: 3, title: '真无线降噪耳机', cover: 'https://picsum.photos/400/400?random=3', origin_price: 899, activity_price: 599 },
-            { product_id: 4, title: '智能运动手表', cover: 'https://picsum.photos/400/400?random=4', origin_price: 1299, activity_price: 899 },
+            { product_id: 1, title: '旗舰智能手机 Pro Max', cover: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&q=80', origin_price: 4999, activity_price: 3999 },
+            { product_id: 2, title: '轻薄笔记本电脑 Air', cover: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=800&q=80', origin_price: 6999, activity_price: 5499 },
+            { product_id: 3, title: '真无线降噪耳机', cover: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80', origin_price: 899, activity_price: 599 },
+            { product_id: 4, title: '智能运动手表', cover: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=800&q=80', origin_price: 1299, activity_price: 899 },
           ],
         },
       },

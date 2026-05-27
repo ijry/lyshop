@@ -2,42 +2,42 @@
   "list": [
     {
       "id": 1, "title": "旗舰智能手机 Pro Max", "subtitle": "全新芯片，超长续航",
-      "cover": "https://picsum.photos/400/400?random=10",
+      "cover": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&q=80",
       "price": 4999.00, "origin_price": 5999.00, "stock": 500, "sales": 1280, "status": 1, "category_id": 1
     },
     {
       "id": 2, "title": "轻薄笔记本 Air 15", "subtitle": "2K屏，长续航，轻至1.2kg",
-      "cover": "https://picsum.photos/400/400?random=11",
+      "cover": "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=800&q=80",
       "price": 6499.00, "origin_price": 7299.00, "stock": 200, "sales": 856, "status": 1, "category_id": 2
     },
     {
       "id": 3, "title": "真无线降噪耳机", "subtitle": "主动降噪，42dB深度降噪",
-      "cover": "https://picsum.photos/400/400?random=12",
+      "cover": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80",
       "price": 899.00, "origin_price": 1299.00, "stock": 3000, "sales": 5620, "status": 1, "category_id": 1
     },
     {
       "id": 4, "title": "智能手表 Ultra", "subtitle": "钛合金表壳，双频GPS",
-      "cover": "https://picsum.photos/400/400?random=13",
+      "cover": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=800&q=80",
       "price": 3299.00, "origin_price": 3999.00, "stock": 800, "sales": 2340, "status": 1, "category_id": 1
     },
     {
       "id": 5, "title": "4K超清投影仪", "subtitle": "2500ANSI流明，自动对焦",
-      "cover": "https://picsum.photos/400/400?random=14",
+      "cover": "https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=800&q=80",
       "price": 3999.00, "origin_price": 4999.00, "stock": 150, "sales": 430, "status": 1, "category_id": 3
     },
     {
       "id": 6, "title": "羊绒大衣女款", "subtitle": "100%纯羊绒，经典版型",
-      "cover": "https://picsum.photos/400/400?random=15",
+      "cover": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80",
       "price": 1980.00, "origin_price": 3680.00, "stock": 300, "sales": 760, "status": 1, "category_id": 4
     },
     {
       "id": 7, "title": "精华水套装", "subtitle": "烟酰胺精华+水乳套装",
-      "cover": "https://picsum.photos/400/400?random=16",
+      "cover": "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=800&q=80",
       "price": 299.00, "origin_price": 599.00, "stock": 2000, "sales": 8900, "status": 1, "category_id": 5
     },
     {
       "id": 8, "title": "机械键盘 RGB", "subtitle": "热插拔轴体，全键无冲",
-      "cover": "https://picsum.photos/400/400?random=17",
+      "cover": "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?auto=format&fit=crop&w=800&q=80",
       "price": 399.00, "origin_price": 599.00, "stock": 1000, "sales": 3200, "status": 1, "category_id": 2
     }
   ],
