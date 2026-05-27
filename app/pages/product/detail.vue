@@ -49,6 +49,7 @@
         <view v-for="block in detailBlocks" :key="block.id" class="mb-20rpx">
           <text v-if="block.type === 'text'" class="text-26rpx text-gray-600 leading-42rpx block">{{ block.props?.text || '' }}</text>
           <image v-else-if="block.type === 'image'" :src="block.props?.url || ''" mode="widthFix" style="width:100%; border-radius: 12px;" />
+          <view v-else-if="block.type === 'rich_text'" class="rich-text-content text-26rpx text-gray-600 leading-42rpx" v-html="block.props?.content || ''" />
         </view>
       </view>
       <text v-else class="text-24rpx text-gray-400">{{ $t('productDetail.noDetail') }}</text>
@@ -233,3 +234,26 @@ async function toggleFavorite() {
   uni.showToast({ title: t('productDetail.favoriteSuccess'), icon: 'success' })
 }
 </script>
+
+<style scoped>
+.rich-text-content :deep(img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12rpx;
+}
+
+.rich-text-content :deep(p) {
+  margin-bottom: 16rpx;
+}
+
+.rich-text-content :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.rich-text-content :deep(td),
+.rich-text-content :deep(th) {
+  border: 1px solid #e5e7eb;
+  padding: 12rpx;
+}
+</style>

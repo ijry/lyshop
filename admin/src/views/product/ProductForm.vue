@@ -103,10 +103,17 @@
                     @focus="currentBlockIndex = idx"
                   />
                 </div>
+                <div v-else-if="block.type === 'rich_text'">
+                  <RichTextEditor
+                    :model-value="{ content: block.props.content || '' }"
+                    @update:modelValue="updateRichTextBlock(idx, $event.content || '')"
+                  />
+                </div>
               </div>
               <div class="flex gap-2">
                 <button class="px-3 py-2 text-xs rounded-lg bg-slate-100 hover:bg-slate-200" @click="addTextBlock()">{{ $t('product.form.addText') }}</button>
                 <button class="px-3 py-2 text-xs rounded-lg bg-slate-100 hover:bg-slate-200" @click="addImageBlock()">{{ $t('product.form.addImage') }}</button>
+                <button class="px-3 py-2 text-xs rounded-lg bg-slate-100 hover:bg-slate-200" @click="addRichTextBlock()">{{ $t('product.form.addRichText') }}</button>
               </div>
             </div>
           </div>
@@ -187,10 +194,11 @@ import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { createProduct, generateAiImage, getAiModels, getAiTask, getCategories, getProduct, updateProduct, uploadFile } from '@/api/plugins'
+import RichTextEditor from '@/views/decor/editors/RichTextEditor.vue'
 
 type DetailBlock = {
   id: string
-  type: 'text' | 'image'
+  type: 'text' | 'image' | 'rich_text'
   props: Record<string, any>
 }
 
@@ -247,7 +255,7 @@ function parseDetail(detail: any) {
   })() : detail
   if (!raw || !Array.isArray(raw.blocks)) return
   detailBlocks.value = raw.blocks
-    .filter((item: any) => item && (item.type === 'text' || item.type === 'image'))
+    .filter((item: any) => item && (item.type === 'text' || item.type === 'image' || item.type === 'rich_text'))
     .map((item: any, idx: number) => ({
       id: item.id || `b-${idx}-${Date.now()}`,
       type: item.type,
@@ -274,6 +282,22 @@ function addImageBlock(url = '', position = detailBlocks.value.length) {
     props: { url, alt: '' },
   })
   currentBlockIndex.value = position
+}
+
+function addRichTextBlock(position = detailBlocks.value.length) {
+  detailBlocks.value.splice(position, 0, {
+    id: `b-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`,
+    type: 'rich_text',
+    props: { content: '' },
+  })
+  currentBlockIndex.value = position
+}
+
+function updateRichTextBlock(index: number, content: string) {
+  const block = detailBlocks.value[index]
+  if (!block || block.type !== 'rich_text') return
+  block.props.content = content
+  currentBlockIndex.value = index
 }
 
 function removeBlock(index: number) {

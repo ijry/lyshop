@@ -155,7 +155,7 @@ export default {
   'product.form.carousel': '轮播图',
   'product.form.addBlank': '+ 新增空白项',
   'product.form.detail': '商品详情（JSON Blocks）',
-  'product.form.detailHint': '支持 text/image，按顺序渲染',
+  'product.form.detailHint': '支持 text/image/rich_text，按顺序渲染',
   'product.form.blockLabel': 'Block {idx} · {type}',
   'product.form.moveUp': '上移',
   'product.form.moveDown': '下移',
@@ -164,6 +164,7 @@ export default {
   'product.form.imageAlt': '图片说明（可选）',
   'product.form.addText': '+ 文本块',
   'product.form.addImage': '+ 图片块',
+  'product.form.addRichText': '+ 富文本块',
   'product.form.nameRequired': '商品名称不能为空',
 
   // AI Image

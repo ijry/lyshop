@@ -155,7 +155,7 @@ export default {
   'product.form.carousel': 'Carousel Images',
   'product.form.addBlank': '+ Add blank item',
   'product.form.detail': 'Product Detail (JSON Blocks)',
-  'product.form.detailHint': 'Supports text/image, rendered in order',
+  'product.form.detailHint': 'Supports text/image/rich_text, rendered in order',
   'product.form.blockLabel': 'Block {idx} · {type}',
   'product.form.moveUp': 'Move up',
   'product.form.moveDown': 'Move down',
@@ -164,6 +164,7 @@ export default {
   'product.form.imageAlt': 'Image caption (optional)',
   'product.form.addText': '+ Text block',
   'product.form.addImage': '+ Image block',
+  'product.form.addRichText': '+ Rich text block',
   'product.form.nameRequired': 'Product name is required',
 
   // AI Image
