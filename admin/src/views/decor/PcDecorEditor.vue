@@ -20,7 +20,7 @@
         <p class="text-xs font-medium text-slate-500 mb-3">组件库</p>
         <div class="space-y-2">
           <div v-for="comp in pcComponentLib" :key="comp.type"
-            draggable="true" @dragstart="dragStart(comp)"
+            draggable="true" @dragstart="dragStart(comp)" @click="appendComp(comp)"
             class="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-xl cursor-grab hover:border-blue-300 hover:bg-blue-50 transition text-sm text-slate-700">
             <span>{{ comp.icon }}</span>
             <span>{{ comp.title }}</span>
@@ -61,7 +61,7 @@
         <div class="flex-1 overflow-auto bg-slate-50 p-4">
           <div class="mx-auto border border-slate-200 rounded-xl overflow-hidden shadow-lg bg-white"
             :style="{ width: '1280px', transformOrigin: 'top center', transform: `scale(${previewScale})` }">
-            <PcDecorPreview :components="components" />
+            <PcDecorPreview :components="components" @select="selectComp" />
           </div>
         </div>
       </div>
@@ -123,13 +123,18 @@ const selectedComp = computed(() =>
 
 function dragStart(comp: any) { draggedComp = comp }
 
+function appendComp(comp: any) {
+  components.value.push({
+    type: comp.type,
+    id: `pc_${Date.now()}_${Math.random().toString(16).slice(2, 6)}`,
+    props: createPcDefaultProps(comp.type),
+  })
+  selectedIndex.value = components.value.length - 1
+}
+
 function onDrop() {
   if (!draggedComp) return
-  components.value.push({
-    type: draggedComp.type,
-    id: `pc_${Date.now()}`,
-    props: createPcDefaultProps(draggedComp.type),
-  })
+  appendComp(draggedComp)
   draggedComp = null
 }
 

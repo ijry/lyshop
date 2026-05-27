@@ -1,8 +1,9 @@
 <template>
   <div class="bg-gray-50 min-h-full">
-    <template v-for="comp in components" :key="comp.id">
+    <template v-for="(comp, index) in components" :key="comp.id">
       <!-- Hero -->
-      <section v-if="comp.type === 'hero'" class="relative overflow-hidden"
+      <section v-if="comp.type === 'hero'" class="relative overflow-hidden cursor-pointer"
+        @click.stop="emit('select', index)"
         :style="{ background: `linear-gradient(135deg, ${comp.props?.bg_from || '#b91c1c'}, ${comp.props?.bg_to || '#991b1b'})` }">
         <div class="absolute inset-0" style="background: radial-gradient(circle at 30% 50%, rgba(255,255,255,0.08), transparent 50%)" />
         <div class="max-w-7xl mx-auto px-6 py-16 relative">
@@ -35,7 +36,7 @@
       </section>
 
       <!-- Banner -->
-      <section v-else-if="comp.type === 'banner'" class="max-w-7xl mx-auto px-6 mt-6">
+      <section v-else-if="comp.type === 'banner'" class="max-w-7xl mx-auto px-6 mt-6 cursor-pointer" @click.stop="emit('select', index)">
         <div class="rounded-xl overflow-hidden bg-gray-200" :style="{ height: (comp.props?.height || 400) + 'px' }">
           <img v-if="(comp.props?.images || [])[0]?.url" :src="comp.props.images[0].url"
             class="w-full h-full object-cover" />
@@ -45,6 +46,8 @@
 
       <!-- Category Nav -->
       <section v-else-if="comp.type === 'category_nav'"
+        @click.stop="emit('select', index)"
+        class="cursor-pointer"
         :class="comp.props?.style === 'floating' ? 'max-w-7xl mx-auto px-6 -mt-6 relative z-10' : 'max-w-7xl mx-auto px-6 mt-6'">
         <div :class="comp.props?.style === 'floating' ? 'bg-white rounded-xl shadow-md p-5' : 'bg-white rounded-xl p-5 border border-gray-100'">
           <div class="grid gap-3" :style="{ gridTemplateColumns: `repeat(${comp.props?.columns || 8}, 1fr)` }">
@@ -59,7 +62,7 @@
       </section>
 
       <!-- Product Grid -->
-      <section v-else-if="comp.type === 'product_grid'" class="max-w-7xl mx-auto px-6 mt-8">
+      <section v-else-if="comp.type === 'product_grid'" class="max-w-7xl mx-auto px-6 mt-8 cursor-pointer" @click.stop="emit('select', index)">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-lg font-bold text-gray-900">{{ comp.props?.title || '推荐商品' }}</h2>
           <span class="text-xs text-blue-600">查看全部 &rarr;</span>
@@ -77,7 +80,7 @@
       </section>
 
       <!-- Notice -->
-      <section v-else-if="comp.type === 'notice'" class="max-w-7xl mx-auto px-6 mt-5">
+      <section v-else-if="comp.type === 'notice'" class="max-w-7xl mx-auto px-6 mt-5 cursor-pointer" @click.stop="emit('select', index)">
         <div class="rounded-lg px-4 py-2.5 flex items-center gap-2 text-sm"
           :style="{ background: comp.props?.bgColor || '#fff7ed', color: comp.props?.color || '#f97316' }">
           <span class="i-carbon-volume-up text-base shrink-0" />
@@ -86,7 +89,7 @@
       </section>
 
       <!-- Image Ad -->
-      <section v-else-if="comp.type === 'image_ad'" class="max-w-7xl mx-auto px-6 mt-6">
+      <section v-else-if="comp.type === 'image_ad'" class="max-w-7xl mx-auto px-6 mt-6 cursor-pointer" @click.stop="emit('select', index)">
         <div class="rounded-xl overflow-hidden bg-gray-200"
           :style="{ height: comp.props?.height ? comp.props.height + 'px' : '180px' }">
           <img v-if="comp.props?.url" :src="comp.props.url" class="w-full h-full object-cover" />
@@ -95,12 +98,12 @@
       </section>
 
       <!-- Rich Text -->
-      <section v-else-if="comp.type === 'rich_text'" class="max-w-7xl mx-auto px-6 mt-6">
+      <section v-else-if="comp.type === 'rich_text'" class="max-w-7xl mx-auto px-6 mt-6 cursor-pointer" @click.stop="emit('select', index)">
         <div class="prose prose-sm max-w-none" v-html="comp.props?.content || '<p class=&quot;text-gray-400&quot;>富文本内容</p>'" />
       </section>
 
       <!-- Marketing Zone -->
-      <section v-else-if="comp.type === 'marketing_zone'" class="max-w-7xl mx-auto px-6 mt-6">
+      <section v-else-if="comp.type === 'marketing_zone'" class="max-w-7xl mx-auto px-6 mt-6 cursor-pointer" @click.stop="emit('select', index)">
         <div class="rounded-xl p-5 text-white"
           :style="{ background: `linear-gradient(135deg, ${comp.props?.bg_from || '#b91c1c'}, ${comp.props?.bg_to || '#dc2626'})` }">
           <div class="flex items-center justify-between mb-3">
@@ -123,7 +126,7 @@
       </section>
 
       <!-- Features -->
-      <section v-else-if="comp.type === 'features'" class="max-w-7xl mx-auto px-6 mt-8 mb-6">
+      <section v-else-if="comp.type === 'features'" class="max-w-7xl mx-auto px-6 mt-8 mb-6 cursor-pointer" @click.stop="emit('select', index)">
         <div class="grid gap-3" :style="{ gridTemplateColumns: `repeat(${comp.props?.columns || 4}, 1fr)` }">
           <div v-for="f in (comp.props?.items || [])" :key="f.title"
             class="flex items-center gap-2.5 bg-white rounded-lg p-3 border border-gray-100">
@@ -137,7 +140,7 @@
       </section>
 
       <!-- Grid -->
-      <section v-else-if="comp.type === 'grid'" class="max-w-7xl mx-auto px-6 mt-6">
+      <section v-else-if="comp.type === 'grid'" class="max-w-7xl mx-auto px-6 mt-6 cursor-pointer" @click.stop="emit('select', index)">
         <div class="bg-white rounded-xl p-5 border border-gray-100">
           <div class="grid gap-3" :style="{ gridTemplateColumns: `repeat(${comp.props?.columns || 4}, 1fr)` }">
             <div v-for="item in (comp.props?.items || [])" :key="item.title"
@@ -153,6 +156,8 @@
 
       <!-- Spacer -->
       <div v-else-if="comp.type === 'spacer'"
+        class="cursor-pointer"
+        @click.stop="emit('select', index)"
         :style="{ height: (comp.props?.height || 16) + 'px', background: comp.props?.background || 'transparent' }" />
     </template>
 
@@ -165,6 +170,10 @@
 
 <script setup lang="ts">
 defineProps<{ components: any[] }>()
+
+const emit = defineEmits<{
+  select: [index: number]
+}>()
 
 function splitLines(text?: string): string[] {
   return (text || '').split(/\\n|\n/)
