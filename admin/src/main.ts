@@ -5,6 +5,7 @@ import router from './router'
 import { i18n } from './locales'
 import { setNotifyHandler } from './utils/notify'
 import { pushToast } from './utils/toast'
+import 'virtual:uno.css'
 import './style.css'
 
 // 可按需替换为第三方消息组件，例如：

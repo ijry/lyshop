@@ -46,14 +46,22 @@
         </div>
       </div>
 
-      <!-- Center: PC preview -->
+      <!-- Center: inline PC preview -->
       <div class="flex-1 flex flex-col bg-white rounded-xl border border-slate-100 overflow-hidden min-w-0">
         <div class="flex items-center justify-between px-4 py-2 border-b border-slate-100 shrink-0">
-          <span class="text-xs text-slate-500">PC 预览（1280px）</span>
+          <span class="text-xs text-slate-500">PC 预览</span>
+          <div class="flex items-center gap-2">
+            <button @click="previewScale = Math.max(0.3, previewScale - 0.1)"
+              class="text-xs text-slate-400 hover:text-slate-600 px-1">-</button>
+            <span class="text-xs text-slate-400 w-10 text-center">{{ Math.round(previewScale * 100) }}%</span>
+            <button @click="previewScale = Math.min(1, previewScale + 0.1)"
+              class="text-xs text-slate-400 hover:text-slate-600 px-1">+</button>
+          </div>
         </div>
         <div class="flex-1 overflow-auto bg-slate-50 p-4">
-          <div class="mx-auto border border-slate-200 rounded-xl overflow-hidden shadow-lg bg-white" style="width: 1280px; transform-origin: top left; transform: scale(0.6);">
-            <iframe ref="previewIframe" :src="previewUrl" class="w-full border-none" style="height: 1600px; pointer-events: none;" />
+          <div class="mx-auto border border-slate-200 rounded-xl overflow-hidden shadow-lg bg-white"
+            :style="{ width: '1280px', transformOrigin: 'top center', transform: `scale(${previewScale})` }">
+            <PcDecorPreview :components="components" />
           </div>
         </div>
       </div>
@@ -89,6 +97,7 @@ import request from '@/api/request'
 import { notify } from '@/utils/notify'
 import { pcComponentLib, pcCompTitleMap, createPcDefaultProps } from '@/types/decor'
 
+import PcDecorPreview from './PcDecorPreview.vue'
 import HeroEditor from './editors/HeroEditor.vue'
 import BannerEditor from './editors/BannerEditor.vue'
 import CategoryNavEditor from './editors/CategoryNavEditor.vue'
@@ -104,8 +113,7 @@ import SpacerEditor from './editors/SpacerEditor.vue'
 const components = ref<any[]>([])
 const selectedIndex = ref<number | null>(null)
 const saving = ref(false)
-
-const previewUrl = (import.meta.env.VITE_PC_PREVIEW_URL || 'http://localhost:5174') + '/?preview=1'
+const previewScale = ref(0.5)
 
 let draggedComp: any = null
 
