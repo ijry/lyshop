@@ -68,12 +68,16 @@
           <span class="text-xs text-blue-600">查看全部 &rarr;</span>
         </div>
         <div class="grid gap-4" :style="{ gridTemplateColumns: `repeat(${comp.props?.columns || 4}, 1fr)` }">
-          <div v-for="i in Math.min(comp.props?.limit || 8, 8)" :key="i"
+          <div v-for="product in resolveProductGridItems(comp.props)" :key="product.id"
             class="bg-white rounded-xl border border-gray-100 overflow-hidden">
-            <div class="aspect-square bg-gray-100" />
+            <img v-if="product.cover" :src="product.cover" class="aspect-square w-full bg-gray-100 object-cover" />
+            <div v-else class="aspect-square bg-gray-100" />
             <div class="p-3">
-              <div class="h-3 bg-gray-100 rounded mb-2 w-3/4" />
-              <div class="h-4 bg-red-50 rounded w-1/3" />
+              <p class="text-sm font-medium text-gray-800 line-clamp-2 min-h-[2.5rem]">{{ product.title }}</p>
+              <div class="mt-3 flex items-end justify-between gap-2">
+                <span class="text-base font-bold text-red-600">¥{{ formatPrice(product.price) }}</span>
+                <span class="text-xs text-gray-400">销量 {{ product.sales || 0 }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -169,11 +173,58 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, ref } from 'vue'
+import { getProducts } from '@/api/plugins'
+import productsData from '../../../../app/mock/data/products.json'
+
 defineProps<{ components: any[] }>()
 
 const emit = defineEmits<{
   select: [index: number]
 }>()
+
+const previewProducts = ref<any[]>([])
+
+function getMockProducts() {
+  const list = Array.isArray((productsData as any)?.list) ? (productsData as any).list : []
+  return list.map((item: any) => ({
+    ...item,
+    price: Number(item?.price || 0),
+    sales: Number(item?.sales || 0),
+    created_at: item?.created_at || item?.createdAt || '',
+  }))
+}
+
+function sortProductsBySource(source: string, list: any[]) {
+  const rows = [...list]
+  if (source === 'new') {
+    return rows.sort((left, right) => String(right?.created_at || '').localeCompare(String(left?.created_at || '')))
+  }
+  if (source === 'recommend') {
+    return rows.sort((left, right) => Number(right?.favorite_count || 0) - Number(left?.favorite_count || 0))
+  }
+  return rows.sort((left, right) => Number(right?.sales || 0) - Number(left?.sales || 0))
+}
+
+function resolveProductGridItems(props: any) {
+  const source = String(props?.source || 'hot')
+  const limit = Math.max(1, Number(props?.limit || 8))
+  return sortProductsBySource(source, previewProducts.value).slice(0, limit)
+}
+
+function formatPrice(price: number) {
+  return Number(price || 0).toFixed(2)
+}
+
+onMounted(async () => {
+  try {
+    const data: any = await getProducts({ page: 1, size: 50 })
+    const list = Array.isArray(data?.list) ? data.list : []
+    previewProducts.value = list.length ? list : getMockProducts()
+  } catch {
+    previewProducts.value = getMockProducts()
+  }
+})
 
 function splitLines(text?: string): string[] {
   return (text || '').split(/\\n|\n/)
