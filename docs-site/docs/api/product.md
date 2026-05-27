@@ -8,6 +8,7 @@
 - 用户可在个人中心查看“我的收藏”列表。
 - 商品列表、商品详情均返回收藏态与收藏数。
 - 后台商品列表可直接读取收藏数字段展示。
+- 活动来源场景下，商品详情页采用“双请求”模式：先请求标准商品详情，再按 `activity_product_id` 追加请求营销活动商品详情接口。
 
 ## 接口变化
 
@@ -21,6 +22,9 @@
   - 详情新增：
     - `favorite_count: number`
     - `is_favorited: boolean`（未登录时为 `false`）
+  - 标准商品详情接口保持不变；当页面带有活动来源（`activity_product_id`）时，前端应追加请求：
+    - `GET /api/v1/marketing/activity-products/:id`
+  - 用途：补充渲染活动扩展元素（秒杀倒计时、拼团/砍价入口、活动库存与限购等）
 - `GET /admin/api/products`
   - 列表项新增：
     - `favorite_count: number`
@@ -62,6 +66,7 @@
 
 - 无新增环境变量。
 - 无新增中间件或外部依赖。
+- 活动来源详情双请求仅涉及前端调用链路与营销接口协同，无新增配置项。
 - 数据库新增迁移：
   - 新表 `product_favorites`
   - `products` 表新增字段 `favorite_count`

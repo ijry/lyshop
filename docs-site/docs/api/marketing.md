@@ -3,7 +3,7 @@
 ## 功能说明
 
 营销模块用于优惠券、秒杀、拼团、砍价与积分等能力。  
-本次调整新增了 PC 端三类活动商品列表（秒杀/拼团/砍价）与后台六菜单管理能力（活动管理 + 商品管理）。
+本次调整新增了 PC 端三类活动商品列表（秒杀/拼团/砍价）、活动商品详情补充接口，以及后台六菜单管理能力（活动管理 + 商品管理）。
 
 ## 接口变化
 
@@ -14,6 +14,15 @@
 - `GET /api/v1/marketing/seckill/products`
 - `GET /api/v1/marketing/group-buy/products`
 - `GET /api/v1/marketing/bargain/products`
+- `GET /api/v1/marketing/activity-products/:id`
+
+其中 `GET /api/v1/marketing/activity-products/:id` 用于活动商品详情补充（`id=activity_product_id`），面向 H5/PC 商品详情页在标准商品详情外追加营销元素渲染（如秒杀倒计时、拼团入口、砍价入口）。
+核心返回字段包含：
+
+- `activity_product_id`、`activity_id`、`activity_type`、`activity_name`
+- `activity_status`、`activity_start_at`、`activity_end_at`
+- `activity_price`、`start_price`、`floor_price`、`price`、`origin_price`
+- `limit_per_order`、`total_stock_limit`、`sold_qty`
 
 通用查询参数：
 
@@ -26,6 +35,7 @@
 - `page` / `size`：分页参数。
 
 返回包含：活动批次信息、商品信息、活动价格信息（秒杀/拼团活动价、砍价起始价/最低价）、每单限购、活动总库存上限、已售数量。
+活动列表项兼容返回 `activity_product_id`，用于详情页与下单链路透传来源 ID。
 
 ### C 端（需登录）
 
@@ -82,6 +92,7 @@
 ## 部署或配置影响
 
 - 无新增环境变量。
+- 无新增配置项。
 - 数据库 `activity_products` 增加字段：
   - `start_price`
   - `floor_price`

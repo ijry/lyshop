@@ -6,6 +6,10 @@
 
 ## 典型接口
 
+- `GET /api/v1/cart`
+- `POST /api/v1/cart/add`
+- `PUT /api/v1/cart/qty`
+- `DELETE /api/v1/cart/:sku_id`
 - `GET /api/v1/addresses`
 - `POST /api/v1/addresses`
 - `PUT /api/v1/addresses/:id`
@@ -53,6 +57,40 @@
 - 评价“回复”操作按 `order:review-reply` 权限显隐与拦截，无该权限时不展示回复入口且不可提交回复。
 - 评价详情弹窗在无 `order:review-reply` 权限时会展示只读提示文案，明确当前账号仅可查看。
 - 若通过非常规方式触发回复动作（如旧状态页面），前端会弹出“无评价回复权限”提示并阻断提交。
+
+## 活动来源下单兼容升级
+
+为支持活动商品来源强约束（`activity_product_id`），购物车与下单接口做了兼容升级：
+
+- `POST /api/v1/cart/add`
+  - 新增可选参数：`activity_product_id`
+- `PUT /api/v1/cart/qty`
+  - 新增可选参数：`activity_product_id`
+- `DELETE /api/v1/cart/:sku_id`
+  - 新增可选参数：`activity_product_id`
+- `POST /api/v1/orders`
+  - 新增 `items`：`[{ sku_id, activity_product_id }]`
+  - 当请求同时带 `items` 与 `sku_ids` 时，后端优先按 `items` 下单；`sku_ids` 继续兼容旧调用
+
+`POST /api/v1/orders` 请求体示例（活动来源）：
+
+```json
+{
+  "address_id": 1,
+  "payment_method": "wechat",
+  "items": [
+    { "sku_id": 101, "activity_product_id": 9001 },
+    { "sku_id": 102, "activity_product_id": 0 }
+  ],
+  "sku_ids": [101, 102],
+  "remark": "请尽快发货"
+}
+```
+
+说明：
+
+- `activity_product_id > 0`：走活动来源校验与活动价结算。
+- `activity_product_id = 0`：按普通商品流程结算，不自动匹配活动价。
 
 ## 购物车勾选结算（兼容升级）
 
@@ -193,6 +231,8 @@
 ## 部署与配置影响
 
 - 本次仅为订单与售后能力增强，无新增部署步骤，无新增环境变量。
+- 活动来源链路新增后，`order_items` 会新增活动快照字段（`activity_product_id`、`activity_id`、`activity_type`、`activity_title`），需依赖服务启动自动迁移。
+- Redis 购物车键由单一 `sku_id` 兼容升级为 `sku_id:activity_product_id` 复合键（旧键可兼容读取），无新增配置项。
 - 后台商品列表评价弹窗仅涉及管理端前端交互改造，服务端接口、数据库结构与配置项均无变化。
 - 购物车勾选结算仅涉及前端交互与参数组装，无后端部署、迁移与配置变更。
 - 数据库会新增售后与物流相关表，需执行服务启动时的插件迁移。
