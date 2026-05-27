@@ -112,9 +112,46 @@
             <option value="zh-CN">中文</option>
             <option value="en">English</option>
           </select>
-          <button @click="auth.logout()" class="text-sm text-slate-500 hover:text-slate-800 transition">
-            {{ $t('layout.logout') }}
-          </button>
+          <div ref="accountMenuRef" class="relative">
+            <button
+              class="flex items-center gap-3 rounded-full border border-slate-200 bg-white px-2 py-1 pr-3 hover:border-slate-300"
+              @click="accountMenuOpen = !accountMenuOpen"
+            >
+              <img :src="currentAccount.avatar" :alt="currentAccount.username" class="h-8 w-8 rounded-full bg-slate-100" />
+              <div class="flex flex-col items-start">
+                <span class="text-sm font-medium text-slate-700">{{ currentAccount.username }}</span>
+                <a
+                  :href="currentAccount.github"
+                  target="_blank"
+                  rel="noreferrer"
+                  class="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600"
+                  @click.stop
+                >
+                  <Github class="h-3.5 w-3.5" />
+                  <span>GitHub</span>
+                </a>
+              </div>
+            </button>
+            <div v-if="accountMenuOpen" class="absolute right-0 top-12 z-30 w-64 rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
+              <div class="px-3 py-2 text-xs font-semibold text-slate-400">{{ $t('layout.accountSwitch') }}</div>
+              <button
+                v-for="account in auth.accounts"
+                :key="account.username"
+                class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left hover:bg-slate-50"
+                @click="handleSwitchAccount(account.username)"
+              >
+                <img :src="account.avatar" :alt="account.username" class="h-8 w-8 rounded-full bg-slate-100" />
+                <div class="min-w-0 flex-1">
+                  <div class="truncate text-sm text-slate-700">{{ account.username }}</div>
+                  <div class="truncate text-xs text-slate-400">{{ account.github }}</div>
+                </div>
+                <span v-if="account.username === auth.currentUsername" class="text-xs text-emerald-600">{{ $t('layout.currentAccount') }}</span>
+              </button>
+              <button @click="auth.logout()" class="mt-2 flex w-full items-center justify-center rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-600 hover:bg-slate-200">
+                {{ $t('layout.logout') }}
+              </button>
+            </div>
+          </div>
         </div>
       </header>
       <main class="flex-1 overflow-y-auto p-6">
@@ -125,9 +162,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { Github } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth'
 import {
   getMenus,
@@ -140,15 +178,39 @@ import {
 const { t, locale } = useI18n()
 const auth = useAuthStore()
 const route = useRoute()
+const accountMenuOpen = ref(false)
+const accountMenuRef = ref<HTMLElement | null>(null)
 
 /** Translate menu title: use title_key if available, fall back to raw title */
 function mt(item: { title: string; title_key?: string }) {
   return item.title_key ? t(item.title_key) : item.title
 }
 
+const currentAccount = computed(() => {
+  const found = auth.accounts.find((item) => item.username === auth.currentUsername)
+  return found || {
+    username: auth.currentUsername || 'admin',
+    avatar: `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(auth.currentUsername || 'admin')}`,
+    github: `https://github.com/${encodeURIComponent(auth.currentUsername || 'admin')}`,
+  }
+})
+
 function switchLocale(lang: string) {
   locale.value = lang
   localStorage.setItem('locale', lang)
+}
+
+function handleSwitchAccount(username: string) {
+  accountMenuOpen.value = false
+  if (username === auth.currentUsername) return
+  auth.switchAccount(username)
+}
+
+function handleWindowClick(event: MouseEvent) {
+  if (!accountMenuOpen.value) return
+  const target = event.target as Node | null
+  if (target && accountMenuRef.value?.contains(target)) return
+  accountMenuOpen.value = false
 }
 const groupedMenus = ref<AdminMenuGroup[]>([])
 const legacyMenus = ref<AdminMenuItem[]>([])
@@ -221,6 +283,7 @@ function clearPreviewGroup() {
 }
 
 onMounted(async () => {
+  window.addEventListener('click', handleWindowClick)
   try {
     const data = await getMenus()
     if (isGroupedResponse(data)) {
@@ -240,6 +303,10 @@ onMounted(async () => {
     groupedMenus.value = []
     legacyMenus.value = []
   }
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('click', handleWindowClick)
 })
 </script>
 

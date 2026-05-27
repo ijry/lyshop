@@ -73,6 +73,8 @@ export default {
   'layout.brand': 'LYShop',
   'layout.noMenu': 'No menu',
   'layout.logout': 'Logout',
+  'layout.accountSwitch': 'Switch Account',
+  'layout.currentAccount': 'Current',
 
   // Nav / Router
   'nav.home': 'Home',

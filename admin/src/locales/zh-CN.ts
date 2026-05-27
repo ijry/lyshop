@@ -73,6 +73,8 @@ export default {
   'layout.brand': 'LYShop',
   'layout.noMenu': '暂无菜单',
   'layout.logout': '退出登录',
+  'layout.accountSwitch': '账号切换',
+  'layout.currentAccount': '当前账号',
 
   // Nav / Router
   'nav.home': '首页',
