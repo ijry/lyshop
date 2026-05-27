@@ -16,20 +16,33 @@ type ClaimableCoupon struct {
 	CanClaim     bool  `json:"can_claim"`
 }
 
+type UserCoupon struct {
+	mktmodel.CouponUser
+	Coupon *mktmodel.Coupon `json:"coupon,omitempty"`
+}
+
 func ListCoupons(ctx context.Context, page, size int) ([]mktmodel.Coupon, int64, error) {
-	if page <= 0 { page = 1 }
-	if size <= 0 || size > 100 { size = 20 }
+	if page <= 0 {
+		page = 1
+	}
+	if size <= 0 || size > 100 {
+		size = 20
+	}
 	var total int64
 	db.DB.WithContext(ctx).Model(&mktmodel.Coupon{}).Count(&total)
 	var list []mktmodel.Coupon
 	err := db.DB.WithContext(ctx).Order("id desc").
-		Offset((page-1)*size).Limit(size).Find(&list).Error
+		Offset((page - 1) * size).Limit(size).Find(&list).Error
 	return list, total, err
 }
 
 func ListClaimableCoupons(ctx context.Context, userID uint64, page, size int) ([]ClaimableCoupon, error) {
-	if page <= 0 { page = 1 }
-	if size <= 0 || size > 100 { size = 20 }
+	if page <= 0 {
+		page = 1
+	}
+	if size <= 0 || size > 100 {
+		size = 20
+	}
 
 	now := time.Now()
 	var list []mktmodel.Coupon
@@ -99,10 +112,44 @@ func ClaimCoupon(ctx context.Context, couponID, userID uint64) error {
 	}).Error
 }
 
-// ListUserCoupons returns a user's coupons.
-func ListUserCoupons(ctx context.Context, userID uint64) ([]mktmodel.CouponUser, error) {
-	var list []mktmodel.CouponUser
-	err := db.DB.WithContext(ctx).Where("user_id = ?", userID).
-		Order("id desc").Find(&list).Error
-	return list, err
+// ListUserCoupons returns a user's coupons with coupon details.
+func ListUserCoupons(ctx context.Context, userID uint64) ([]UserCoupon, error) {
+	var rows []mktmodel.CouponUser
+	if err := db.DB.WithContext(ctx).Where("user_id = ?", userID).
+		Order("id desc").Find(&rows).Error; err != nil {
+		return nil, err
+	}
+
+	idSet := map[uint64]struct{}{}
+	for _, row := range rows {
+		if row.CouponID > 0 {
+			idSet[row.CouponID] = struct{}{}
+		}
+	}
+
+	couponMap := map[uint64]mktmodel.Coupon{}
+	if len(idSet) > 0 {
+		ids := make([]uint64, 0, len(idSet))
+		for id := range idSet {
+			ids = append(ids, id)
+		}
+		var coupons []mktmodel.Coupon
+		if err := db.DB.WithContext(ctx).Where("id IN ?", ids).Find(&coupons).Error; err != nil {
+			return nil, err
+		}
+		for _, item := range coupons {
+			couponMap[item.ID] = item
+		}
+	}
+
+	list := make([]UserCoupon, 0, len(rows))
+	for _, row := range rows {
+		result := UserCoupon{CouponUser: row}
+		if c, ok := couponMap[row.CouponID]; ok {
+			coupon := c
+			result.Coupon = &coupon
+		}
+		list = append(list, result)
+	}
+	return list, nil
 }

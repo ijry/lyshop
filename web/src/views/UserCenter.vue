@@ -63,11 +63,11 @@
               :class="c.status === 1 ? 'border-red-200' : 'border-gray-100 opacity-60'">
               <div class="w-24 py-4 text-center shrink-0"
                 :class="c.status === 1 ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-500'">
-                <div class="text-xl font-bold">¥{{ c.discount || (c.type === 2 ? (c.discount_rate * 10) + t('userCenter.couponDiscount') : '?') }}</div>
-                <div class="text-xs mt-0.5">{{ c.min_amount > 0 ? `${$t('userCenter.couponThreshold')}${c.min_amount}${$t('userCenter.couponAvailable')}` : $t('userCenter.couponNoThreshold') }}</div>
+                <div class="text-xl font-bold">{{ couponValueText(c.coupon) }}</div>
+                <div class="text-xs mt-0.5">{{ couponThresholdText(c.coupon) }}</div>
               </div>
               <div class="flex-1 px-4 py-3">
-                <p class="text-sm font-medium text-gray-800">{{ c.name || $t('userCenter.myCoupons') }}</p>
+                <p class="text-sm font-medium text-gray-800">{{ couponName(c.coupon) }}</p>
                 <p class="text-xs text-gray-400 mt-1">{{ c.status === 1 ? $t('userCenter.unused') : c.status === 2 ? $t('userCenter.used') : $t('userCenter.expired') }}</p>
               </div>
             </div>
@@ -335,5 +335,21 @@ async function unfavorite(productID: number) {
 
 function toProductDetail(id: number) {
   router.push(`/product/${id}`)
+}
+
+function couponValueText(coupon: any) {
+  if (Number(coupon.type || 0) === 2) return `${Number(coupon.discount || coupon.discount_rate || 0) * 10}${t('userCenter.couponDiscount')}`
+  const amount = Number(coupon.discount || 0)
+  return amount > 0 ? `¥${amount}` : '--'
+}
+
+function couponThresholdText(coupon: any) {
+  return Number(coupon.min_amount || 0) > 0
+    ? `${t('userCenter.couponThreshold')}${coupon.min_amount}${t('userCenter.couponAvailable')}`
+    : t('userCenter.couponNoThreshold')
+}
+
+function couponName(coupon: any) {
+  return String(coupon.name || t('userCenter.myCoupons'))
 }
 </script>

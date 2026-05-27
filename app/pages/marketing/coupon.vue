@@ -46,10 +46,10 @@
           <!-- Left: coupon value -->
           <view class="bg-blue-700 w-180rpx flex flex-col items-center justify-center py-32rpx flex-shrink-0">
             <text class="text-white text-48rpx font-700 leading-56rpx">
-              {{ c.coupon?.type === 2 ? c.coupon?.discount * 10 + $t('coupon.discount') : '¥' + c.coupon?.discount }}
+              {{ formatCouponValue(c) }}
             </text>
             <text class="text-blue-200 text-22rpx mt-8rpx leading-30rpx">
-              {{ c.coupon?.min_amount > 0 ? $t('coupon.minSpend') + c.coupon?.min_amount + $t('coupon.usable') : $t('coupon.noThreshold') }}
+              {{ formatCouponThreshold(c) }}
             </text>
           </view>
           <!-- Right: info -->
@@ -86,6 +86,21 @@ const statusMap = [1, 2, 3]
 const statusLabels = computed<Record<number, string>>(() => ({ 1: t('coupon.unused'), 2: t('coupon.used'), 3: t('coupon.expired') }))
 const statusLabel = (s: number) => statusLabels.value[s] || ''
 const isClaiming = (id: number) => claimingIds.value.includes(Number(id))
+
+function formatCouponValue(row: any) {
+  const coupon = row?.coupon
+  if (!coupon) return '--'
+  if (coupon.type === 2) return `${Number(coupon.discount || 0) * 10}${t('coupon.discount')}`
+  return `¥${Number(coupon.discount || 0)}`
+}
+
+function formatCouponThreshold(row: any) {
+  const coupon = row?.coupon
+  if (!coupon) return $t('coupon.noThreshold')
+  return Number(coupon.min_amount || 0) > 0
+    ? `${t('coupon.minSpend')}${coupon.min_amount}${t('coupon.usable')}`
+    : t('coupon.noThreshold')
+}
 
 function claimDesc(coupon: any) {
   if (coupon?.type === 2) return `${Number(coupon.discount || 0) * 10}${t('coupon.discount')}`

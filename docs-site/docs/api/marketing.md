@@ -36,6 +36,8 @@
 - `GET /api/v1/user/coupons`
 - `GET /api/v1/user/points/logs`
 
+其中 `GET /api/v1/user/coupons` 已在原接口上兼容升级：返回项新增 `coupon` 对象（优惠券快照），包含 `id/name/type/min_amount/discount/start_at/end_at/status` 等字段，前端可直接渲染券面信息，避免再次按 `coupon_id` 补查。旧字段 `coupon_id/status/used_at/order_id` 保持不变。
+
 ### 管理端（需 `marketing:view` 或 `marketing:edit`）
 
 #### 秒杀
