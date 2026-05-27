@@ -11,6 +11,7 @@ export default defineConfig({
   transformers: [transformerDirectives()],
   rules: [
     [/^border-(l|r|t|b)-3$/, ([, direction]) => ({ [`border-${direction}-width`]: '3px' })],
+    [/^(min-w|w|h)-4\.5$/, ([, property]) => ({ [property]: '1.125rem' })],
   ],
   shortcuts: {
     'flex-center': 'flex justify-center items-center',
