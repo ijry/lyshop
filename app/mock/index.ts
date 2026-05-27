@@ -180,18 +180,23 @@ function buildDetailImages(product: any) {
   const pool = collectProductImagePool(product)
   const fallback = normalizeImageURL(product?.cover) || normalizeImageURL(productDetailSource?.cover)
   const seeds = pool.length ? pool : [fallback].filter(Boolean)
-  const unique = seeds.length ? seeds : ['https://picsum.photos/750/750?random=20']
+  const unique = seeds.length ? [...seeds] : ['https://picsum.photos/750/750?random=20']
 
   while (unique.length < 3) {
-    unique.push(unique[unique.length - 1] || unique[0])
+    const copyFrom = unique.length === 1 ? unique[0] : unique[unique.length % unique.length]
+    unique.push(copyFrom || unique[0])
   }
 
-  return unique.slice(0, Math.max(3, unique.length)).map((url, index) => ({
+  const finalList = unique.slice(0, Math.max(3, unique.length)).map((url, index) => ({
     id: id * 10 + index + 1,
     product_id: id,
     url,
     sort: index,
   }))
+  if (finalList.length === 3 && finalList[0]?.url === finalList[1]?.url && finalList[1]?.url === finalList[2]?.url) {
+    return finalList.map((item, index) => ({ ...item, id: id * 10 + index + 1 }))
+  }
+  return finalList
 }
 
 function buildDetailSkus(product: any) {

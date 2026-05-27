@@ -39,6 +39,16 @@ const decorVariantsSource: any[] = [
     published_at: '2026-05-25T10:00:00Z',
   },
 ]
+const pcDecorSource: any = {
+  id: 1,
+  components: JSON.stringify([
+    { type: 'hero', id: 'pc_hero', props: { badge: '限时秒杀进行中', title: '精选好物\n品质生活从这里开始', subtitle: '数千款精选商品，正品保障，极速发货。', btn_text: '立即选购', btn_link: '/products', btn2_text: '查看全部', btn2_link: '/products', bg_from: '#b91c1c', bg_to: '#991b1b' } },
+    { type: 'product_grid', id: 'pc_hot', props: { title: '热销推荐', source: 'hot', limit: 8, columns: 4 } },
+    { type: 'features', id: 'pc_features', props: { columns: 4, items: [{ icon: 'i-carbon-delivery-truck', title: '快递配送', desc: '全国包邮' }, { icon: 'i-carbon-checkmark-outline', title: '正品保障', desc: '假一赔十' }, { icon: 'i-carbon-renew', title: '无忧退换', desc: '7天退换' }, { icon: 'i-carbon-headset', title: '在线客服', desc: '随时响应' }] } },
+  ]),
+  is_published: true,
+}
+
 const vipPlansSource: any[] = [
   { id: 1, name: '月卡', months: 1, price: 19.9, status: 1 },
   { id: 2, name: '季卡', months: 3, price: 49.9, status: 1 },
@@ -356,7 +366,8 @@ const routes: Record<string, any> = {
             { title: '评价列表', path: '/review/list' },
           ]},
           { title: '店铺装修', icon: 'layout', path: '/decor', sort: 30, children: [
-            { title: '首页装修', path: '/decor/index' },
+            { title: '移动端装修', path: '/decor/index' },
+            { title: 'PC端装修', path: '/decor/pc' },
           ]},
         ],
       },
@@ -878,6 +889,19 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     }
     return { matched: true, data: null }
   }
+  // PC Decor
+  if (key === 'GET /admin/api/decor/pc') {
+    return { matched: true, data: clone(pcDecorSource) }
+  }
+  if (key === 'PUT /admin/api/decor/pc') {
+    pcDecorSource.components = JSON.stringify((params as any)?.components || [])
+    return { matched: true, data: clone(pcDecorSource) }
+  }
+  if (key === 'POST /admin/api/decor/pc/publish') {
+    pcDecorSource.is_published = true
+    return { matched: true, data: null }
+  }
+
   if (key in routes) return { matched: true, data: routes[key] }
   for (const pattern of Object.keys(routes)) {
     if (key.startsWith(pattern) && pattern.endsWith('/')) {

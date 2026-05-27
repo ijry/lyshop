@@ -45,6 +45,7 @@ const router = createRouter({
         { path: 'ai/models',    name: 'nav.aiModelConfig', component: () => import('@/views/ai/ImageGen.vue'), meta: { titleKey: 'nav.aiModelConfig' } },
         // Decor
         { path: 'decor/index',  name: 'nav.decorEditor', component: () => import('@/views/decor/DecorEditor.vue'), meta: { titleKey: 'nav.decorEditor' } },
+        { path: 'decor/pc',    name: 'PC首页装修', component: () => import('@/views/decor/PcDecorEditor.vue'), meta: { titleKey: 'nav.pcDecorEditor' } },
         // Checkin
         { path: 'checkin/rules', name: 'nav.checkinRules', component: () => import('@/views/checkin/CheckinRules.vue'), meta: { titleKey: 'nav.checkinRules' } },
         { path: 'checkin/logs',  name: 'nav.checkinLogs', component: () => import('@/views/checkin/CheckinLogs.vue'), meta: { titleKey: 'nav.checkinLogs' } },
