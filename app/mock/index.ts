@@ -113,6 +113,190 @@ function findProductByID(id: number) {
   return null
 }
 
+function pickDetailTheme(id: number) {
+  const themes = [
+    {
+      specName: '规格',
+      values: ['标准装', '升级装', '礼盒装'],
+      highlights: ['官方正品', '极速发货', '7天无忧退换'],
+      scenes: ['居家使用', '办公通勤', '礼赠场景'],
+    },
+    {
+      specName: '颜色',
+      values: ['曜石黑', '珍珠白', '星雾灰'],
+      highlights: ['人气热销', '新品尝鲜', '质感升级'],
+      scenes: ['日常搭配', '商务出行', '旅行便携'],
+    },
+    {
+      specName: '版本',
+      values: ['经典款', '高配款', '旗舰款'],
+      highlights: ['性能稳定', '配置均衡', '体验进阶'],
+      scenes: ['入门首选', '家庭常备', '进阶用户'],
+    },
+  ]
+  return themes[Math.abs(id) % themes.length]
+}
+
+function buildDetailImages(product: any) {
+  const id = Number(product?.id || 0)
+  const cover = String(product?.cover || '')
+  const fallbackBase = 1000 + (id % 200)
+  const seeds = [fallbackBase, fallbackBase + 1, fallbackBase + 2]
+  const list = [
+    cover || `https://picsum.photos/750/750?random=${seeds[0]}`,
+    `https://picsum.photos/750/750?random=${seeds[1]}`,
+    `https://picsum.photos/750/750?random=${seeds[2]}`,
+  ].filter(Boolean)
+  return list.map((url, index) => ({ id: id * 10 + index + 1, url }))
+}
+
+function buildDetailSkus(product: any) {
+  const id = Number(product?.id || 0)
+  const basePrice = Number(product?.price || 0)
+  const baseStock = Math.max(10, Number(product?.stock || 0))
+  const theme = pickDetailTheme(id)
+  return theme.values.map((value, index) => ({
+    id: id * 100 + index + 1,
+    product_id: id,
+    attrs: JSON.stringify([{ name: theme.specName, value }]),
+    price: Number((basePrice + (index - 1) * Math.max(basePrice * 0.08, 3)).toFixed(2)),
+    stock: Math.max(1, baseStock - index * Math.max(Math.floor(baseStock / 5), 5)),
+    sku_code: `DEMO-${id}-${index + 1}`,
+  }))
+}
+
+function buildDetailBlocks(product: any) {
+  const id = Number(product?.id || 0)
+  const title = String(product?.title || '演示商品')
+  const subtitle = String(product?.subtitle || '')
+  const theme = pickDetailTheme(id)
+  const images = buildDetailImages(product)
+  return [
+    {
+      id: `text-${id}-1`,
+      type: 'text',
+      props: {
+        text: `${title}${subtitle ? `，${subtitle}` : ''}。${theme.highlights.join('，')}。`,
+      },
+    },
+    {
+      id: `image-${id}-1`,
+      type: 'image',
+      props: {
+        url: images[1]?.url || images[0]?.url || '',
+      },
+    },
+    {
+      id: `text-${id}-2`,
+      type: 'text',
+      props: {
+        text: `适用场景：${theme.scenes.join('、')}。演示数据已补齐商品轮播、规格库存、详情图文与评价链路。`,
+      },
+    },
+    {
+      id: `image-${id}-2`,
+      type: 'image',
+      props: {
+        url: images[2]?.url || images[0]?.url || '',
+      },
+    },
+  ]
+}
+
+function buildFallbackReviewSeed(product: any, index: number) {
+  const id = Number(product?.id || 0)
+  const now = new Date(Date.now() - index * 86400000).toISOString()
+  const users = ['演示用户A', '演示用户B', '回头客', '精选买家']
+  const comments = [
+    '包装完整，实物和页面展示一致，体验比较稳定。',
+    '价格和品质匹配，日常使用没有问题，会考虑回购。',
+    '发货很快，细节做得不错，整体满意。',
+    '作为演示商品数据，规格和详情信息已经比较完整。',
+  ]
+  return {
+    id: id * 1000 + index + 1,
+    order_id: 900000 + id * 10 + index,
+    order_no: `DEMO${id}${index + 1}`,
+    order_item_id: id * 100 + index + 1,
+    product_id: id,
+    product_score: 5 - (index % 2),
+    logistics_score: 5,
+    content: comments[index % comments.length],
+    images: index === 0 ? buildDetailImages(product).slice(0, 2).map((item: any) => item.url) : [],
+    edited_times: 0,
+    user_id: index + 1,
+    user_nickname: users[index % users.length],
+    user_avatar: '',
+    created_at: now,
+    updated_at: now,
+    appends: index === 0 ? [{
+      id: id * 10000 + index + 1,
+      review_id: id * 1000 + index + 1,
+      content: '补充体验：连续使用一段时间后，表现依然稳定。',
+      images: buildDetailImages(product).slice(2, 3).map((item: any) => item.url),
+      created_at: now,
+      updated_at: now,
+    }] : [],
+    admin_reply: index === 1 ? {
+      id: id * 20000 + index + 1,
+      review_id: id * 1000 + index + 1,
+      content: '感谢反馈，演示环境会持续补充更完整的数据体验。',
+      created_at: now,
+      updated_at: now,
+      admin_id: 1,
+    } : null,
+  }
+}
+
+function ensureProductReviews(product: any) {
+  const id = Number(product?.id || 0)
+  const bucket = ensureProductReviewBucket(id)
+  if (bucket.length) return bucket
+  const list = [0, 1, 2].map((index) => buildFallbackReviewSeed(product, index))
+  productReviewMap.set(id, list)
+  for (const item of list) {
+    reviewSeq = Math.max(reviewSeq, Number(item.id || 0))
+    reviewIndexMap.set(Number(item.id), item)
+    for (const ap of item.appends || []) appendSeq = Math.max(appendSeq, Number(ap.id || 0))
+    if (item.admin_reply) replySeq = Math.max(replySeq, Number(item.admin_reply.id || 0))
+  }
+  return list
+}
+
+function buildProductDetailPayload(source: any) {
+  const base = clone(source || {})
+  const id = Number(base?.id || 0)
+  if (Number(productDetailSource?.id || 0) === id) {
+    const detail = clone(productDetailSource)
+    const merged = {
+      ...base,
+      ...detail,
+      subtitle: detail.subtitle || base.subtitle || '',
+      sales: Number(detail.sales || base.sales || 0),
+      stock: Number(detail.stock || base.stock || 0),
+    }
+    ensureProductReviews(merged)
+    return enrichFavoriteFields(merged)
+  }
+
+  const images = buildDetailImages(base)
+  const skus = buildDetailSkus(base)
+  const merged = {
+    ...base,
+    subtitle: String(base.subtitle || `${base.title || '商品'} 演示详情已补齐`),
+    sales: Number(base.sales || 0),
+    stock: Number(base.stock || 0),
+    images,
+    skus,
+    detail: {
+      version: 1,
+      blocks: buildDetailBlocks(base),
+    },
+  }
+  ensureProductReviews(merged)
+  return enrichFavoriteFields(merged)
+}
+
 function favoriteProductByID(id: number) {
   if (id <= 0) return
   if (favoriteAtMap.has(id)) return
@@ -902,15 +1086,7 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     const id = Number(path.split('/').pop() || 0)
     const source = findProductByID(id)
     if (!source) return { matched: true, data: null }
-    const detail = Number(productDetailSource?.id || 0) === id
-      ? clone(productDetailSource)
-      : {
-          ...clone(source),
-          skus: [],
-          images: [],
-          detail: { version: 1, blocks: [] },
-        }
-    return { matched: true, data: enrichFavoriteFields(detail) }
+    return { matched: true, data: buildProductDetailPayload(source) }
   }
   if (upperMethod === 'GET' && path.startsWith('/api/v1/products/') && path.endsWith('/reviews')) {
     const productID = Number(path.split('/')[4] || 0)
