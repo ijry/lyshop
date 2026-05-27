@@ -1,14 +1,16 @@
 <template>
   <div class="space-y-2">
     <label class="block text-xs text-slate-500">{{ $t('decor.richText.content') }}</label>
-    <div class="overflow-hidden rounded-lg border border-slate-200 bg-white">
-      <Toolbar
+    <div v-if="editorReady" class="overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <component
+        :is="toolbarComponent"
         class="border-b border-slate-200"
         :editor="editorRef"
         :default-config="toolbarConfig"
         mode="default"
       />
-      <Editor
+      <component
+        :is="editorComponent"
         class="min-h-[320px] text-sm"
         :default-config="editorConfig"
         mode="default"
@@ -17,16 +19,16 @@
         @on-change="handleChange"
       />
     </div>
+    <div v-else class="flex min-h-[320px] items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-sm text-slate-400">编辑器加载中...</div>
     <p class="text-xs text-slate-400">{{ $t('decor.richText.placeholder') }}</p>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, shallowRef } from 'vue'
+import { computed, markRaw, onBeforeUnmount, onMounted, shallowRef } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Editor, Toolbar } from '@wangeditor-next/editor-for-vue'
+import type { Component } from 'vue'
 import type { IEditorConfig, IToolbarConfig, IDomEditor } from '@wangeditor-next/editor'
-import '@wangeditor-next/editor/dist/css/style.css'
 import type { RichTextProps } from '@/types/decor'
 import { uploadFile } from '@/api/plugins'
 
@@ -35,6 +37,9 @@ const emit = defineEmits<{ 'update:modelValue': [value: RichTextProps] }>()
 
 const { t } = useI18n()
 const editorRef = shallowRef<IDomEditor>()
+const editorComponent = shallowRef<Component>()
+const toolbarComponent = shallowRef<Component>()
+const editorReady = computed(() => !!editorComponent.value && !!toolbarComponent.value)
 
 const html = computed(() => props.modelValue?.content || '')
 
@@ -84,6 +89,15 @@ function handleCreated(editor: IDomEditor) {
 function handleChange(editor: IDomEditor) {
   emit('update:modelValue', { content: editor.getHtml() })
 }
+
+onMounted(async () => {
+  const [{ Editor, Toolbar }] = await Promise.all([
+    import('@wangeditor-next/editor-for-vue'),
+    import('@wangeditor-next/editor/dist/css/style.css'),
+  ])
+  editorComponent.value = markRaw(Editor)
+  toolbarComponent.value = markRaw(Toolbar)
+})
 
 onBeforeUnmount(() => {
   editorRef.value?.destroy()
