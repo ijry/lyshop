@@ -1,7 +1,7 @@
 <template>
   <view>
     <template v-for="comp in components" :key="comp.id">
-      <view v-if="comp.type === 'banner'" class="mb-16rpx">
+      <view v-if="comp.type === 'banner'" class="mb-16rpx" @click.capture="emitPreviewSelect(comp.id)">
         <u-swiper
           :list="bannerList(comp)"
           keyName="url"
@@ -15,7 +15,7 @@
         />
       </view>
 
-      <view v-else-if="comp.type === 'category_nav'" class="bg-white py-28rpx mb-16rpx">
+      <view v-else-if="comp.type === 'category_nav'" class="bg-white py-28rpx mb-16rpx" @click.capture="emitPreviewSelect(comp.id)">
         <scroll-view scroll-x :show-scrollbar="false" class="px-16rpx">
           <view style="display: flex; gap: 12px;">
             <view
@@ -42,7 +42,7 @@
         </scroll-view>
       </view>
 
-      <view v-else-if="comp.type === 'notice'" class="mx-20rpx mb-16rpx">
+      <view v-else-if="comp.type === 'notice'" class="mx-20rpx mb-16rpx" @click.capture="emitPreviewSelect(comp.id)">
         <u-column-notice
           v-if="noticeTexts(comp).length"
           :text="noticeTexts(comp)"
@@ -59,7 +59,7 @@
         </u-column-notice>
       </view>
 
-      <view v-else-if="comp.type === 'product_grid'" class="px-16rpx mb-16rpx">
+      <view v-else-if="comp.type === 'product_grid'" class="px-16rpx mb-16rpx" @click.capture="emitPreviewSelect(comp.id)">
         <view
           v-if="comp.props?.title"
           style="display: flex; align-items: center; justify-content: space-between; padding: 16px 4px 12px;"
@@ -133,7 +133,7 @@
         </u-waterfall>
       </view>
 
-      <view v-else-if="comp.type === 'image_ad'" class="px-20rpx mb-16rpx">
+      <view v-else-if="comp.type === 'image_ad'" class="px-20rpx mb-16rpx" @click.capture="emitPreviewSelect(comp.id)">
         <image
           v-if="comp.props?.url"
           :src="comp.props.url"
@@ -144,7 +144,7 @@
       </view>
 
       <!-- Grid -->
-      <view v-else-if="comp.type === 'grid'" class="bg-white mb-16rpx py-20rpx">
+      <view v-else-if="comp.type === 'grid'" class="bg-white mb-16rpx py-20rpx" @click.capture="emitPreviewSelect(comp.id)">
         <view :style="{ display: 'flex', flexWrap: 'wrap' }">
           <view v-for="item in (comp.props?.items || [])" :key="item.title"
             @click="openLink(item.link)"
@@ -157,16 +157,17 @@
         </view>
       </view>
 
-      <view v-else-if="comp.type === 'rich_text'" class="px-30rpx py-16rpx">
+      <view v-else-if="comp.type === 'rich_text'" class="px-30rpx py-16rpx" @click.capture="emitPreviewSelect(comp.id)">
         <rich-text :nodes="comp.props?.content || ''" />
       </view>
 
       <view
         v-else-if="comp.type === 'spacer'"
+        @click.capture="emitPreviewSelect(comp.id)"
         :style="{ height: (comp.props?.height || 16) + 'rpx', background: comp.props?.background || '#f5f5f5' }"
       />
 
-      <view v-else-if="comp.type === 'marketing_zone'" class="px-20rpx mb-16rpx">
+      <view v-else-if="comp.type === 'marketing_zone'" class="px-20rpx mb-16rpx" @click.capture="emitPreviewSelect(comp.id)">
         <view style="border-radius: 12px; padding: 16px 20px; background: linear-gradient(135deg, #dc2626 0%, #ea580c 100%);">
           <view style="display: flex; align-items: center; justify-content: space-between;">
             <view>
@@ -258,6 +259,19 @@ function onNoticeClick(comp: any, index: number) {
 
 function openProduct(id: string | number) {
   uni.navigateTo({ url: `/pages/product/detail?id=${id}` })
+}
+
+function emitPreviewSelect(componentId: string) {
+  if (!componentId) return
+  if (typeof window === 'undefined') return
+  const params = new URLSearchParams(window.location.search || '')
+  if (params.get('preview') !== '1') return
+  if (window.parent === window) return
+  window.parent.postMessage({
+    type: 'DECOR_PREVIEW_SELECT',
+    source: 'lyshop-app',
+    componentId,
+  }, '*')
 }
 
 async function loadGridProducts() {

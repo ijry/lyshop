@@ -40,7 +40,7 @@
         <p class="text-xs font-medium text-slate-500 mb-3">{{ $t('decor.componentLib') }}</p>
         <div class="space-y-2">
           <div v-for="comp in componentLib" :key="comp.type"
-            draggable="true" @dragstart="dragStart(comp)"
+            draggable="true" @dragstart="dragStart(comp)" @click="appendComp(comp)"
             class="flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-xl cursor-grab hover:border-blue-300 hover:bg-blue-50 transition text-sm text-slate-700">
             <span>{{ comp.icon }}</span>
             <span>{{ $t(comp.titleKey) }}</span>
@@ -157,12 +157,17 @@ function dragStart(comp: any) { draggedComp = comp }
 
 function onDrop() {
   if (!draggedComp) return
-  components.value.push({
-    type: draggedComp.type,
-    id: `c_${Date.now()}`,
-    props: createDefaultProps(draggedComp.type),
-  })
+  appendComp(draggedComp)
   draggedComp = null
+}
+
+function appendComp(comp: any) {
+  components.value.push({
+    type: comp.type,
+    id: `c_${Date.now()}_${Math.random().toString(16).slice(2, 6)}`,
+    props: createDefaultProps(comp.type),
+  })
+  selectedIndex.value = components.value.length - 1
 }
 
 // ---- Component operations ----
@@ -205,6 +210,13 @@ function onPreviewMessage(e: MessageEvent) {
   if (e.data?.type === 'DECOR_PREVIEW_READY' && e.data?.source === 'lyshop-app') {
     previewReady.value = true
     sendPreviewUpdate()
+    return
+  }
+  if (e.data?.type === 'DECOR_PREVIEW_SELECT' && e.data?.source === 'lyshop-app') {
+    const targetId = String(e.data?.componentId || '')
+    if (!targetId) return
+    const nextIndex = components.value.findIndex((item) => item?.id === targetId)
+    if (nextIndex >= 0) selectedIndex.value = nextIndex
   }
 }
 
