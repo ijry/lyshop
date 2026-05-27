@@ -1,5 +1,81 @@
 import type { MockPreset, SiteSettings } from './types'
 
+const farmImageMap: Record<number, { cover: string; gallery: string[] }> = {
+  401: {
+    cover: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1516684669134-de6f7c473a2a?auto=format&fit=crop&w=1200&q=80',
+    ],
+  },
+  402: {
+    cover: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1515823064-d6e0c04616a7?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1464306076886-da185f6a9d05?auto=format&fit=crop&w=1200&q=80',
+    ],
+  },
+  403: {
+    cover: 'https://images.unsplash.com/photo-1587049352851-8d4e89133924?auto=format&fit=crop&w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1587049352851-8d4e89133924?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1471943311424-646960669fbc?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1558640476-437a2b9438a2?auto=format&fit=crop&w=1200&q=80',
+    ],
+  },
+  404: {
+    cover: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1603048297172-c92544798d5a?auto=format&fit=crop&w=1200&q=80',
+    ],
+  },
+  405: {
+    cover: 'https://images.unsplash.com/photo-1611080626919-7cf5a9dbab5b?auto=format&fit=crop&w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1611080626919-7cf5a9dbab5b?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1502741338009-cac2772e18bc?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1519096845289-95806ee03a1a?auto=format&fit=crop&w=1200&q=80',
+    ],
+  },
+  406: {
+    cover: 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1604335399105-a0c585fd81a1?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1603048297172-c92544798d5a?auto=format&fit=crop&w=1200&q=80',
+    ],
+  },
+  407: {
+    cover: 'https://images.unsplash.com/photo-1502741338009-cac2772e18bc?auto=format&fit=crop&w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1502741338009-cac2772e18bc?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=1200&q=80',
+    ],
+  },
+  408: {
+    cover: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1603048297172-c92544798d5a?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1200&q=80',
+    ],
+  },
+}
+
+function farmCover(id: number) {
+  return farmImageMap[id]?.cover || farmImageMap[401].cover
+}
+
+function farmGallery(id: number, index = 0) {
+  const list = farmImageMap[id]?.gallery || farmImageMap[401].gallery
+  return list[index] || list[0]
+}
+
 export const farm: MockPreset = {
   key: 'farm',
   name: '农产品特产',
@@ -16,42 +92,42 @@ export const farm: MockPreset = {
     list: [
       {
         id: 401, title: '五常有机大米10斤', subtitle: '黑龙江五常产区，稻花香2号',
-        cover: 'https://picsum.photos/400/400?random=500',
+        cover: farmCover(401),
         price: 69.90, origin_price: 98.00, stock: 2000, sales: 8650, status: 1, category_id: 401,
       },
       {
         id: 402, title: '西湖龙井明前茶250g', subtitle: '核心产区，明前头采，鲜爽回甘',
-        cover: 'https://picsum.photos/400/400?random=501',
+        cover: farmCover(402),
         price: 268.00, origin_price: 388.00, stock: 300, sales: 1260, status: 1, category_id: 402,
       },
       {
         id: 403, title: '秦岭土蜂蜜500g', subtitle: '秦岭深山百花蜜，自然成熟封盖蜜',
-        cover: 'https://picsum.photos/400/400?random=502',
+        cover: farmCover(403),
         price: 58.00, origin_price: 88.00, stock: 800, sales: 3420, status: 1, category_id: 403,
       },
       {
         id: 404, title: '云南野生菌菇礼盒', subtitle: '松茸牛肝菌鸡枞菌，山珍组合',
-        cover: 'https://picsum.photos/400/400?random=503',
+        cover: farmCover(404),
         price: 188.00, origin_price: 268.00, stock: 200, sales: 960, status: 1, category_id: 404,
       },
       {
         id: 405, title: '赣南脐橙10斤装', subtitle: '江西赣州脐橙，皮薄多汁，甜度高',
-        cover: 'https://picsum.photos/400/400?random=504',
+        cover: farmCover(405),
         price: 49.90, origin_price: 69.00, stock: 1500, sales: 12800, status: 1, category_id: 405,
       },
       {
         id: 406, title: '新疆和田大枣500g', subtitle: '和田骏枣，个大肉厚，自然晾晒',
-        cover: 'https://picsum.photos/400/400?random=505',
+        cover: farmCover(406),
         price: 35.90, origin_price: 55.00, stock: 1000, sales: 5680, status: 1, category_id: 404,
       },
       {
         id: 407, title: '东北黑木耳250g', subtitle: '长白山秋耳，肉厚朵大，口感爽脆',
-        cover: 'https://picsum.photos/400/400?random=506',
+        cover: farmCover(407),
         price: 29.90, origin_price: 45.00, stock: 1200, sales: 4350, status: 1, category_id: 404,
       },
       {
         id: 408, title: '湖南烟熏腊肉500g', subtitle: '湘西农家柴火烟熏，肥瘦相间',
-        cover: 'https://picsum.photos/400/400?random=507',
+        cover: farmCover(408),
         price: 45.90, origin_price: 68.00, stock: 600, sales: 2780, status: 1, category_id: 404,
       },
     ],
@@ -63,7 +139,7 @@ export const farm: MockPreset = {
     id: 401,
     title: '五常有机大米10斤',
     subtitle: '黑龙江五常产区，稻花香2号',
-    cover: 'https://picsum.photos/750/750?random=500',
+    cover: farmCover(401),
     price: 69.90,
     origin_price: 98.00,
     stock: 2000,
@@ -84,7 +160,7 @@ export const farm: MockPreset = {
           id: 'b2',
           type: 'image',
           props: {
-            url: 'https://picsum.photos/750/420?random=508',
+            url: farmGallery(401, 1),
             alt: '五常稻田实拍',
           },
         },
@@ -103,10 +179,10 @@ export const farm: MockPreset = {
       { id: 403, product_id: 401, attrs: '[{"name":"规格","value":"20斤"}]', price: 129.90, stock: 500, sku_code: 'RICE-WC-20' },
     ],
     images: [
-      { id: 401, product_id: 401, url: 'https://picsum.photos/750/750?random=500', sort: 0 },
-      { id: 402, product_id: 401, url: 'https://picsum.photos/750/750?random=501', sort: 1 },
-      { id: 403, product_id: 401, url: 'https://picsum.photos/750/750?random=502', sort: 2 },
-      { id: 404, product_id: 401, url: 'https://picsum.photos/750/750?random=503', sort: 3 },
+      { id: 401, product_id: 401, url: farmGallery(401, 0), sort: 0 },
+      { id: 402, product_id: 401, url: farmGallery(401, 1), sort: 1 },
+      { id: 403, product_id: 401, url: farmGallery(401, 2), sort: 2 },
+      { id: 404, product_id: 401, url: farmGallery(405, 0), sort: 3 },
     ],
   },
   indexDecor: {
@@ -116,9 +192,9 @@ export const farm: MockPreset = {
         id: 'demo_banner',
         props: {
           images: [
-            { url: 'https://picsum.photos/750/340?random=500', link: '/pages/product/list?category_id=401' },
-            { url: 'https://picsum.photos/750/340?random=501', link: '/pages/marketing/coupon?mode=claim' },
-            { url: 'https://picsum.photos/750/340?random=502', link: '/pages/product/list?category_id=405' },
+            { url: farmGallery(401, 0), link: '/pages/product/list?category_id=401' },
+            { url: farmGallery(402, 0), link: '/pages/marketing/coupon?mode=claim' },
+            { url: farmGallery(405, 0), link: '/pages/product/list?category_id=405' },
           ],
           height: 340,
         },
@@ -244,7 +320,7 @@ export const farm: MockPreset = {
         type: 'image_ad',
         id: 'pc_ad1',
         props: {
-          url: 'https://picsum.photos/1200/300?random=510',
+          url: farmGallery(401, 0),
           link: '/products?category=401',
           height: 220,
         },
@@ -309,9 +385,9 @@ export const farm: MockPreset = {
         id: 1, type: 'seckill', name: '产地直供秒杀',
         start_at: '2026-05-20T00:00:00Z', end_at: '2026-06-20T23:59:59Z', status: 1,
         products: [
-          { product_id: 401, title: '五常有机大米10斤', cover: 'https://picsum.photos/400/400?random=500', origin_price: 69.90, activity_price: 49.90, activity_stock: 200 },
-          { product_id: 403, title: '秦岭土蜂蜜500g', cover: 'https://picsum.photos/400/400?random=502', origin_price: 58, activity_price: 38, activity_stock: 100 },
-          { product_id: 405, title: '赣南脐橙10斤装', cover: 'https://picsum.photos/400/400?random=504', origin_price: 49.90, activity_price: 29.90, activity_stock: 300 },
+          { product_id: 401, title: '五常有机大米10斤', cover: farmCover(401), origin_price: 69.90, activity_price: 49.90, activity_stock: 200 },
+          { product_id: 403, title: '秦岭土蜂蜜500g', cover: farmCover(403), origin_price: 58, activity_price: 38, activity_stock: 100 },
+          { product_id: 405, title: '赣南脐橙10斤装', cover: farmCover(405), origin_price: 49.90, activity_price: 29.90, activity_stock: 300 },
         ],
       },
     ],
@@ -324,9 +400,9 @@ export const farm: MockPreset = {
         group_size: 3, expire_hours: 24,
         start_at: '2026-05-01T00:00:00Z', end_at: '2026-07-01T23:59:59Z', status: 1,
         products: [
-          { product_id: 402, title: '西湖龙井明前茶250g', cover: 'https://picsum.photos/400/400?random=501', origin_price: 268, group_price: 198, group_stock: 80 },
-          { product_id: 404, title: '云南野生菌菇礼盒', cover: 'https://picsum.photos/400/400?random=503', origin_price: 188, group_price: 138, group_stock: 50 },
-          { product_id: 408, title: '湖南烟熏腊肉500g', cover: 'https://picsum.photos/400/400?random=507', origin_price: 45.90, group_price: 35.90, group_stock: 100 },
+          { product_id: 402, title: '西湖龙井明前茶250g', cover: farmCover(402), origin_price: 268, group_price: 198, group_stock: 80 },
+          { product_id: 404, title: '云南野生菌菇礼盒', cover: farmCover(404), origin_price: 188, group_price: 138, group_stock: 50 },
+          { product_id: 408, title: '湖南烟熏腊肉500g', cover: farmCover(408), origin_price: 45.90, group_price: 35.90, group_stock: 100 },
         ],
       },
     ],
@@ -337,24 +413,24 @@ export const farm: MockPreset = {
         id: 1, type: 'bargain', name: '砍价免费拿',
         start_at: '2026-05-01T00:00:00Z', end_at: '2026-07-01T23:59:59Z', status: 1,
         products: [
-          { product_id: 406, title: '新疆和田大枣500g', cover: 'https://picsum.photos/400/400?random=505', origin_price: 35.90, floor_price: 0.01, max_helpers: 10, current_helpers: 3 },
-          { product_id: 407, title: '东北黑木耳250g', cover: 'https://picsum.photos/400/400?random=506', origin_price: 29.90, floor_price: 5.90, max_helpers: 8, current_helpers: 5 },
+          { product_id: 406, title: '新疆和田大枣500g', cover: farmCover(406), origin_price: 35.90, floor_price: 0.01, max_helpers: 10, current_helpers: 3 },
+          { product_id: 407, title: '东北黑木耳250g', cover: farmCover(407), origin_price: 29.90, floor_price: 5.90, max_helpers: 8, current_helpers: 5 },
         ],
       },
     ],
   },
   recommend: [
-    { product_id: 405, title: '赣南脐橙10斤装', cover: 'https://picsum.photos/400/400?random=504', price: 49.90, origin_price: 69, sales: 12800 },
-    { product_id: 401, title: '五常有机大米10斤', cover: 'https://picsum.photos/400/400?random=500', price: 69.90, origin_price: 98, sales: 8650 },
-    { product_id: 406, title: '新疆和田大枣500g', cover: 'https://picsum.photos/400/400?random=505', price: 35.90, origin_price: 55, sales: 5680 },
-    { product_id: 407, title: '东北黑木耳250g', cover: 'https://picsum.photos/400/400?random=506', price: 29.90, origin_price: 45, sales: 4350 },
+    { product_id: 405, title: '赣南脐橙10斤装', cover: farmCover(405), price: 49.90, origin_price: 69, sales: 12800 },
+    { product_id: 401, title: '五常有机大米10斤', cover: farmCover(401), price: 69.90, origin_price: 98, sales: 8650 },
+    { product_id: 406, title: '新疆和田大枣500g', cover: farmCover(406), price: 35.90, origin_price: 55, sales: 5680 },
+    { product_id: 407, title: '东北黑木耳250g', cover: farmCover(407), price: 29.90, origin_price: 45, sales: 4350 },
   ],
   cart: [
     {
       sku_id: 402,
       qty: 1,
       product: {
-        id: 401, title: '五常有机大米10斤', cover: 'https://picsum.photos/200/200?random=500', price: 69.90,
+        id: 401, title: '五常有机大米10斤', cover: farmCover(401), price: 69.90,
       },
       sku: {
         id: 402, product_id: 401, attrs: '[{"name":"规格","value":"10斤"}]', price: 69.90, stock: 700,
@@ -364,7 +440,7 @@ export const farm: MockPreset = {
       sku_id: 403,
       qty: 2,
       product: {
-        id: 403, title: '秦岭土蜂蜜500g', cover: 'https://picsum.photos/200/200?random=502', price: 58.00,
+        id: 403, title: '秦岭土蜂蜜500g', cover: farmCover(403), price: 58.00,
       },
       sku: {
         id: 403, product_id: 403, attrs: '[{"name":"规格","value":"500g"}]', price: 58.00, stock: 800,
@@ -382,7 +458,7 @@ export const farm: MockPreset = {
         amount_breakdown: { goods_amount: 69.90, discount_amount: 20.00, freight_amount: 0.00, payable_amount: 49.90 },
         items: [
           {
-            id: 4011, product_id: 401, title: '五常有机大米10斤', cover: 'https://picsum.photos/200/200?random=500', qty: 1, price: 69.90,
+            id: 4011, product_id: 401, title: '五常有机大米10斤', cover: farmCover(401), qty: 1, price: 69.90,
             review: {
               id: 4002, review_id: 4002, has_review: true, product_score: 5, logistics_score: 5,
               content: '米粒饱满晶莹，煮出来的饭特别香，全家都爱吃。', edited_times: 0,
@@ -404,7 +480,7 @@ export const farm: MockPreset = {
         tracking_no: 'SF9988776602',
         amount_breakdown: { goods_amount: 268.00, discount_amount: 70.00, freight_amount: 0.00, payable_amount: 198.00 },
         items: [
-          { id: 4021, product_id: 402, title: '西湖龙井明前茶250g', cover: 'https://picsum.photos/200/200?random=501', qty: 1, price: 268.00 },
+          { id: 4021, product_id: 402, title: '西湖龙井明前茶250g', cover: farmCover(402), qty: 1, price: 268.00 },
         ],
         created_at: '2026-05-10T14:20:00Z', paid_at: '2026-05-10T14:22:00Z',
       },
@@ -415,7 +491,7 @@ export const farm: MockPreset = {
         freight_amount: 0, total_amount: 188.00, remark: '',
         amount_breakdown: { goods_amount: 188.00, discount_amount: 0.00, freight_amount: 0.00, payable_amount: 188.00 },
         items: [
-          { id: 4031, product_id: 404, title: '云南野生菌菇礼盒', cover: 'https://picsum.photos/200/200?random=503', qty: 1, price: 188.00 },
+          { id: 4031, product_id: 404, title: '云南野生菌菇礼盒', cover: farmCover(404), qty: 1, price: 188.00 },
         ],
         created_at: '2026-05-20T09:00:00Z',
       },
@@ -427,7 +503,7 @@ export const farm: MockPreset = {
         tracking_no: '',
         amount_breakdown: { goods_amount: 35.90, discount_amount: 35.89, freight_amount: 0.00, payable_amount: 0.01 },
         items: [
-          { id: 4041, product_id: 406, title: '新疆和田大枣500g', cover: 'https://picsum.photos/200/200?random=505', qty: 1, price: 35.90 },
+          { id: 4041, product_id: 406, title: '新疆和田大枣500g', cover: farmCover(406), qty: 1, price: 35.90 },
         ],
         created_at: '2026-05-21T16:00:00Z', paid_at: '2026-05-21T16:02:00Z',
       },
