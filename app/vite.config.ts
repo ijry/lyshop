@@ -5,6 +5,16 @@ import UniUpRoot from 'uview-plus/libs/root/index.js'
 // UnoCSS is ESM-only, must use dynamic import
 export default defineConfig(async () => {
   const UnoCSS = (await import('unocss/vite')).default
+  const patchUniPagesJsonImportGlob = {
+    name: 'patch-uni-pages-json-import-glob',
+    enforce: 'pre' as const,
+    transform(code: string, id: string) {
+      if (id === 'pages-json-js' || id.endsWith('/pages-json-js') || id.endsWith('\\pages-json-js')) {
+        return code.replace("import.meta.glob('./locale/*.json'", "import.meta.glob('/locale/*.json'")
+      }
+      return null
+    },
+  }
 
   return {
     plugins: [
@@ -13,6 +23,7 @@ export default defineConfig(async () => {
         autoCreateRootFile: false,
       }),
       uni(),
+      patchUniPagesJsonImportGlob,
       UnoCSS(),
     ],
     css: {
