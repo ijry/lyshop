@@ -59,14 +59,18 @@ function buildActivityRows(type: ActivityType) {
       const source = productListSource.find((p: any) => Number(p?.id || 0) === pid)
       const originPrice = Number(item?.origin_price || source?.price || 0)
       const marketPrice = Number(source?.price || originPrice || 0)
+      const skuID = Number(item?.sku_id || pid || 0)
+      const activityID = Number(act?.id || 0)
+      const activityProductID = Number(item?.id || 0) || Number(`${activityID}${skuID}`)
       result.push({
-        activity_id: Number(act?.id || 0),
+        activity_product_id: activityProductID,
+        activity_id: activityID,
         activity_type: type,
         activity_name: String(act?.name || ''),
         activity_start_at: act?.start_at || null,
         activity_end_at: act?.end_at || null,
         product_id: pid,
-        sku_id: Number(item?.sku_id || pid || 0),
+        sku_id: skuID,
         title: String(item?.title || source?.title || ''),
         subtitle: String(source?.subtitle || ''),
         cover: String(item?.cover || source?.cover || ''),

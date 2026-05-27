@@ -106,6 +106,32 @@ type FrontActivityProductDetail struct {
 }
 
 var getFrontActivityProductDetailFn = GetFrontActivityProductDetail
+var listFrontActivityProductsLoadRowsFn = loadFrontActivityProductRows
+
+type frontActivityProductJoinedRow struct {
+	ActivityProductID uint64
+	ActivityID        uint64
+	ActivityType      string
+	ActivityName      string
+	ActivityStartAt   *time.Time
+	ActivityEndAt     *time.Time
+	ProductID         uint64
+	SkuID             uint64
+	Title             string
+	Subtitle          string
+	Cover             string
+	CategoryID        uint64
+	Sales             int
+	Stock             int
+	ProductPrice      float64
+	ActivityPrice     float64
+	StartPrice        float64
+	FloorPrice        float64
+	LimitPerOrder     int
+	TotalStockLimit   int
+	SoldQty           int
+	SkuPrice          float64
+}
 
 func normalizePage(page, size int) (int, int) {
 	if page <= 0 {
@@ -373,38 +399,7 @@ func UpsertActivityProducts(ctx context.Context, activityID uint64, actType stri
 	})
 }
 
-func ListFrontActivityProducts(ctx context.Context, actType string, q ActivityProductListQuery) ([]FrontActivityProduct, int64, error) {
-	normalizedType, err := normalizeActivityType(actType)
-	if err != nil {
-		return nil, 0, err
-	}
-	q.Page, q.Size = normalizePage(q.Page, q.Size)
-	q.SortBy, q.SortOrder = normalizeSort(q.SortBy, q.SortOrder)
-	type joined struct {
-		ActivityProductID uint64
-		ActivityID        uint64
-		ActivityType      string
-		ActivityName      string
-		ActivityStartAt   *time.Time
-		ActivityEndAt     *time.Time
-		ProductID         uint64
-		SkuID             uint64
-		Title             string
-		Subtitle          string
-		Cover             string
-		CategoryID        uint64
-		Sales             int
-		Stock             int
-		ProductPrice      float64
-		ActivityPrice     float64
-		StartPrice        float64
-		FloorPrice        float64
-		LimitPerOrder     int
-		TotalStockLimit   int
-		SoldQty           int
-		SkuPrice          float64
-	}
-	now := time.Now()
+func loadFrontActivityProductRows(ctx context.Context, normalizedType string, q ActivityProductListQuery, now time.Time) ([]frontActivityProductJoinedRow, error) {
 	tx := db.DB.WithContext(ctx).
 		Table("activity_products ap").
 		Select(`
@@ -423,8 +418,23 @@ ps.price AS sku_price`).
 	if strings.TrimSpace(q.Keyword) != "" {
 		tx = tx.Where("p.title LIKE ?", "%"+strings.TrimSpace(q.Keyword)+"%")
 	}
-	var rows []joined
+	var rows []frontActivityProductJoinedRow
 	if err := tx.Find(&rows).Error; err != nil {
+		return nil, err
+	}
+	return rows, nil
+}
+
+func ListFrontActivityProducts(ctx context.Context, actType string, q ActivityProductListQuery) ([]FrontActivityProduct, int64, error) {
+	normalizedType, err := normalizeActivityType(actType)
+	if err != nil {
+		return nil, 0, err
+	}
+	q.Page, q.Size = normalizePage(q.Page, q.Size)
+	q.SortBy, q.SortOrder = normalizeSort(q.SortBy, q.SortOrder)
+	now := time.Now()
+	rows, err := listFrontActivityProductsLoadRowsFn(ctx, normalizedType, q, now)
+	if err != nil {
 		return nil, 0, err
 	}
 	result := make([]FrontActivityProduct, 0, len(rows))
