@@ -1,5 +1,81 @@
 import type { MockPreset, SiteSettings } from './types'
 
+const supermarketImageMap: Record<number, { cover: string; gallery: string[] }> = {
+  101: {
+    cover: 'https://images.unsplash.com/photo-1629203851122-3726ecdf080e?auto=format&fit=crop&w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1629203851122-3726ecdf080e?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1543253539-4a1d2933f173?auto=format&fit=crop&w=1200&q=80',
+    ],
+  },
+  102: {
+    cover: 'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?auto=format&fit=crop&w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1556228578-8c89e6adf883?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1583947581924-860bda6a26df?auto=format&fit=crop&w=1200&q=80',
+    ],
+  },
+  103: {
+    cover: 'https://images.unsplash.com/photo-1583947581924-860bda6a26df?auto=format&fit=crop&w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1583947581924-860bda6a26df?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1556228578-8c89e6adf883?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?auto=format&fit=crop&w=1200&q=80',
+    ],
+  },
+  104: {
+    cover: 'https://images.unsplash.com/photo-1612196808214-b40d2765b7db?auto=format&fit=crop&w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1612196808214-b40d2765b7db?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1600959907703-125ba1374a12?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1519864600265-abb23847ef2c?auto=format&fit=crop&w=1200&q=80',
+    ],
+  },
+  105: {
+    cover: 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1556228578-8c89e6adf883?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1583947581924-860bda6a26df?auto=format&fit=crop&w=1200&q=80',
+    ],
+  },
+  106: {
+    cover: 'https://images.unsplash.com/photo-1612929633738-8fe44f7ec841?auto=format&fit=crop&w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1612929633738-8fe44f7ec841?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1629203851122-3726ecdf080e?auto=format&fit=crop&w=1200&q=80',
+    ],
+  },
+  107: {
+    cover: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1600959907703-125ba1374a12?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1519864600265-abb23847ef2c?auto=format&fit=crop&w=1200&q=80',
+    ],
+  },
+  108: {
+    cover: 'https://images.unsplash.com/photo-1583947581924-860bda6a26df?auto=format&fit=crop&w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1583947581924-860bda6a26df?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1556228578-8c89e6adf883?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?auto=format&fit=crop&w=1200&q=80',
+    ],
+  },
+}
+
+function supermarketCover(id: number) {
+  return supermarketImageMap[id]?.cover || supermarketImageMap[101].cover
+}
+
+function supermarketGallery(id: number, index = 0) {
+  const list = supermarketImageMap[id]?.gallery || supermarketImageMap[101].gallery
+  return list[index] || list[0]
+}
+
 export const supermarket: MockPreset = {
   key: 'supermarket',
   name: '商超便利',
@@ -16,14 +92,14 @@ export const supermarket: MockPreset = {
 
   products: {
     list: [
-      { id: 101, title: '可口可乐24罐装', subtitle: '经典口味，畅爽一夏', cover: 'https://picsum.photos/400/400?random=200', price: 49.90, origin_price: 69.90, stock: 2000, sales: 8560, status: 1, category_id: 101 },
-      { id: 102, title: '蓝月亮洗衣液4L', subtitle: '深层洁净，持久留香', cover: 'https://picsum.photos/400/400?random=201', price: 39.90, origin_price: 59.90, stock: 1500, sales: 6230, status: 1, category_id: 102 },
-      { id: 103, title: '维达抽纸10包装', subtitle: '柔韧亲肤，家庭必备', cover: 'https://picsum.photos/400/400?random=202', price: 29.90, origin_price: 45.00, stock: 3000, sales: 12400, status: 1, category_id: 102 },
-      { id: 104, title: '乐事薯片大礼包', subtitle: '多口味混合装，追剧必备', cover: 'https://picsum.photos/400/400?random=203', price: 59.90, origin_price: 89.90, stock: 800, sales: 4320, status: 1, category_id: 101 },
-      { id: 105, title: '舒肤佳沐浴露套装', subtitle: '温和清洁，滋润保湿', cover: 'https://picsum.photos/400/400?random=204', price: 35.90, origin_price: 55.00, stock: 1200, sales: 3780, status: 1, category_id: 103 },
-      { id: 106, title: '康师傅方便面整箱', subtitle: '红烧牛肉面，24袋装', cover: 'https://picsum.photos/400/400?random=205', price: 44.90, origin_price: 59.90, stock: 1000, sales: 7650, status: 1, category_id: 101 },
-      { id: 107, title: '特仑苏纯牛奶12盒', subtitle: '优质奶源，醇厚口感', cover: 'https://picsum.photos/400/400?random=206', price: 59.90, origin_price: 79.90, stock: 1800, sales: 9120, status: 1, category_id: 104 },
-      { id: 108, title: '立白洗洁精1.5kg', subtitle: '强效去油，不伤手', cover: 'https://picsum.photos/400/400?random=207', price: 9.90, origin_price: 15.90, stock: 5000, sales: 15600, status: 1, category_id: 102 },
+      { id: 101, title: '可口可乐24罐装', subtitle: '经典口味，畅爽一夏', cover: supermarketCover(101), price: 49.90, origin_price: 69.90, stock: 2000, sales: 8560, status: 1, category_id: 101 },
+      { id: 102, title: '蓝月亮洗衣液4L', subtitle: '深层洁净，持久留香', cover: supermarketCover(102), price: 39.90, origin_price: 59.90, stock: 1500, sales: 6230, status: 1, category_id: 102 },
+      { id: 103, title: '维达抽纸10包装', subtitle: '柔韧亲肤，家庭必备', cover: supermarketCover(103), price: 29.90, origin_price: 45.00, stock: 3000, sales: 12400, status: 1, category_id: 102 },
+      { id: 104, title: '乐事薯片大礼包', subtitle: '多口味混合装，追剧必备', cover: supermarketCover(104), price: 59.90, origin_price: 89.90, stock: 800, sales: 4320, status: 1, category_id: 101 },
+      { id: 105, title: '舒肤佳沐浴露套装', subtitle: '温和清洁，滋润保湿', cover: supermarketCover(105), price: 35.90, origin_price: 55.00, stock: 1200, sales: 3780, status: 1, category_id: 103 },
+      { id: 106, title: '康师傅方便面整箱', subtitle: '红烧牛肉面，24袋装', cover: supermarketCover(106), price: 44.90, origin_price: 59.90, stock: 1000, sales: 7650, status: 1, category_id: 101 },
+      { id: 107, title: '特仑苏纯牛奶12盒', subtitle: '优质奶源，醇厚口感', cover: supermarketCover(107), price: 59.90, origin_price: 79.90, stock: 1800, sales: 9120, status: 1, category_id: 104 },
+      { id: 108, title: '立白洗洁精1.5kg', subtitle: '强效去油，不伤手', cover: supermarketCover(108), price: 9.90, origin_price: 15.90, stock: 5000, sales: 15600, status: 1, category_id: 102 },
     ],
     total: 8,
     page: 1,
@@ -34,7 +110,7 @@ export const supermarket: MockPreset = {
     id: 101,
     title: '可口可乐24罐装',
     subtitle: '经典口味，畅爽一夏，330ml×24罐',
-    cover: 'https://picsum.photos/750/750?random=220',
+    cover: supermarketCover(101),
     price: 49.90,
     origin_price: 69.90,
     stock: 2000,
@@ -45,7 +121,7 @@ export const supermarket: MockPreset = {
       version: 1,
       blocks: [
         { id: 'b1', type: 'text', props: { text: '可口可乐经典原味，330ml×24罐装。冰镇后饮用口感更佳，适合聚会、家庭囤货。' } },
-        { id: 'b2', type: 'image', props: { url: 'https://picsum.photos/750/420?random=230', alt: '产品展示' } },
+        { id: 'b2', type: 'image', props: { url: supermarketGallery(101, 1), alt: '产品展示' } },
         { id: 'b3', type: 'text', props: { text: '保质期12个月，常温保存即可。建议冰镇至4-8℃饮用，口感最佳。' } },
       ],
     },
@@ -54,9 +130,9 @@ export const supermarket: MockPreset = {
       { id: 102, product_id: 101, attrs: '[{"name":"规格","value":"12罐装"}]', price: 26.90, stock: 500, sku_code: 'COLA-12' },
     ],
     images: [
-      { id: 101, product_id: 101, url: 'https://picsum.photos/750/750?random=220', sort: 0 },
-      { id: 102, product_id: 101, url: 'https://picsum.photos/750/750?random=221', sort: 1 },
-      { id: 103, product_id: 101, url: 'https://picsum.photos/750/750?random=222', sort: 2 },
+      { id: 101, product_id: 101, url: supermarketGallery(101, 0), sort: 0 },
+      { id: 102, product_id: 101, url: supermarketGallery(101, 1), sort: 1 },
+      { id: 103, product_id: 101, url: supermarketGallery(101, 2), sort: 2 },
     ],
   },
 
@@ -209,7 +285,7 @@ export const supermarket: MockPreset = {
         type: 'image_ad',
         id: 'pc_ad1',
         props: {
-          url: 'https://picsum.photos/1200/300?random=110',
+          url: supermarketGallery(101, 0),
           link: '/products',
           height: 200,
         },
@@ -269,8 +345,8 @@ export const supermarket: MockPreset = {
         id: 101, type: 'seckill', name: '超市限时秒杀',
         start_at: '2026-05-20T00:00:00Z', end_at: '2026-06-20T23:59:59Z', status: 1,
         products: [
-          { product_id: 101, title: '可口可乐24罐装', cover: 'https://picsum.photos/400/400?random=200', origin_price: 49.90, activity_price: 35.90, activity_stock: 200 },
-          { product_id: 106, title: '康师傅方便面整箱', cover: 'https://picsum.photos/400/400?random=205', origin_price: 44.90, activity_price: 29.90, activity_stock: 150 },
+          { product_id: 101, title: '可口可乐24罐装', cover: supermarketCover(101), origin_price: 49.90, activity_price: 35.90, activity_stock: 200 },
+          { product_id: 106, title: '康师傅方便面整箱', cover: supermarketCover(106), origin_price: 44.90, activity_price: 29.90, activity_stock: 150 },
         ],
       },
     ],
@@ -284,8 +360,8 @@ export const supermarket: MockPreset = {
         group_size: 3, expire_hours: 24,
         start_at: '2026-05-01T00:00:00Z', end_at: '2026-07-01T23:59:59Z', status: 1,
         products: [
-          { product_id: 107, title: '特仑苏纯牛奶12盒', cover: 'https://picsum.photos/400/400?random=206', origin_price: 59.90, group_price: 45.90, group_stock: 300 },
-          { product_id: 104, title: '乐事薯片大礼包', cover: 'https://picsum.photos/400/400?random=203', origin_price: 59.90, group_price: 39.90, group_stock: 200 },
+          { product_id: 107, title: '特仑苏纯牛奶12盒', cover: supermarketCover(107), origin_price: 59.90, group_price: 45.90, group_stock: 300 },
+          { product_id: 104, title: '乐事薯片大礼包', cover: supermarketCover(104), origin_price: 59.90, group_price: 39.90, group_stock: 200 },
         ],
       },
     ],
@@ -297,30 +373,30 @@ export const supermarket: MockPreset = {
         id: 101, type: 'bargain', name: '砍价免费拿',
         start_at: '2026-05-01T00:00:00Z', end_at: '2026-07-01T23:59:59Z', status: 1,
         products: [
-          { product_id: 105, title: '舒肤佳沐浴露套装', cover: 'https://picsum.photos/400/400?random=204', origin_price: 55.00, floor_price: 0.01, max_helpers: 15, current_helpers: 6 },
+          { product_id: 105, title: '舒肤佳沐浴露套装', cover: supermarketCover(105), origin_price: 55.00, floor_price: 0.01, max_helpers: 15, current_helpers: 6 },
         ],
       },
     ],
   },
 
   recommend: [
-    { product_id: 101, title: '可口可乐24罐装', cover: 'https://picsum.photos/400/400?random=200', price: 49.90, origin_price: 69.90, sales: 8560 },
-    { product_id: 103, title: '维达抽纸10包装', cover: 'https://picsum.photos/400/400?random=202', price: 29.90, origin_price: 45.00, sales: 12400 },
-    { product_id: 107, title: '特仑苏纯牛奶12盒', cover: 'https://picsum.photos/400/400?random=206', price: 59.90, origin_price: 79.90, sales: 9120 },
-    { product_id: 108, title: '立白洗洁精1.5kg', cover: 'https://picsum.photos/400/400?random=207', price: 9.90, origin_price: 15.90, sales: 15600 },
+    { product_id: 101, title: '可口可乐24罐装', cover: supermarketCover(101), price: 49.90, origin_price: 69.90, sales: 8560 },
+    { product_id: 103, title: '维达抽纸10包装', cover: supermarketCover(103), price: 29.90, origin_price: 45.00, sales: 12400 },
+    { product_id: 107, title: '特仑苏纯牛奶12盒', cover: supermarketCover(107), price: 59.90, origin_price: 79.90, sales: 9120 },
+    { product_id: 108, title: '立白洗洁精1.5kg', cover: supermarketCover(108), price: 9.90, origin_price: 15.90, sales: 15600 },
   ],
 
   cart: [
     {
       sku_id: 101,
       qty: 2,
-      product: { id: 101, title: '可口可乐24罐装', cover: 'https://picsum.photos/200/200?random=240', price: 49.90 },
+      product: { id: 101, title: '可口可乐24罐装', cover: supermarketCover(101), price: 49.90 },
       sku: { id: 101, product_id: 101, attrs: '[{"name":"规格","value":"24罐装"}]', price: 49.90, stock: 1500 },
     },
     {
       sku_id: 103,
       qty: 1,
-      product: { id: 103, title: '维达抽纸10包装', cover: 'https://picsum.photos/200/200?random=242', price: 29.90 },
+      product: { id: 103, title: '维达抽纸10包装', cover: supermarketCover(103), price: 29.90 },
       sku: { id: 103, product_id: 103, attrs: '[{"name":"规格","value":"10包装"}]', price: 29.90, stock: 3000 },
     },
   ],
@@ -336,7 +412,7 @@ export const supermarket: MockPreset = {
         amount_breakdown: { goods_amount: 94.80, discount_amount: 14.00, freight_amount: 0.00, payable_amount: 80.80 },
         items: [
           {
-            id: 1011, product_id: 101, title: '可口可乐24罐装', cover: 'https://picsum.photos/200/200?random=240', qty: 1, price: 35.90,
+            id: 1011, product_id: 101, title: '可口可乐24罐装', cover: supermarketCover(101), qty: 1, price: 35.90,
             review: {
               id: 1101, review_id: 1101, has_review: true, product_score: 5, logistics_score: 5,
               content: '价格实惠，日期很新鲜，冰镇后口感很好！', edited_times: 0,
@@ -347,7 +423,7 @@ export const supermarket: MockPreset = {
               created_at: '2026-05-01T10:31:00Z', updated_at: '2026-05-03T10:00:00Z',
             },
           },
-          { id: 1012, product_id: 106, title: '康师傅方便面整箱', cover: 'https://picsum.photos/200/200?random=245', qty: 1, price: 44.90 },
+          { id: 1012, product_id: 106, title: '康师傅方便面整箱', cover: supermarketCover(106), qty: 1, price: 44.90 },
         ],
         created_at: '2026-05-01T10:30:00Z', paid_at: '2026-05-01T10:31:00Z',
       },
@@ -360,7 +436,7 @@ export const supermarket: MockPreset = {
         amount_breakdown: { goods_amount: 59.90, discount_amount: 14.00, freight_amount: 0.00, payable_amount: 45.90 },
         items: [
           {
-            id: 1021, product_id: 107, title: '特仑苏纯牛奶12盒', cover: 'https://picsum.photos/200/200?random=246', qty: 1, price: 45.90,
+            id: 1021, product_id: 107, title: '特仑苏纯牛奶12盒', cover: supermarketCover(107), qty: 1, price: 45.90,
             review: {
               id: 1102, review_id: 1102, has_review: true, product_score: 4, logistics_score: 4,
               content: '口感醇厚，日期新鲜。', edited_times: 0,
@@ -378,7 +454,7 @@ export const supermarket: MockPreset = {
         freight_amount: 0, total_amount: 89.70, remark: '',
         amount_breakdown: { goods_amount: 89.70, discount_amount: 0.00, freight_amount: 0.00, payable_amount: 89.70 },
         items: [
-          { id: 1031, product_id: 103, title: '维达抽纸10包装', cover: 'https://picsum.photos/200/200?random=242', qty: 3, price: 29.90 },
+          { id: 1031, product_id: 103, title: '维达抽纸10包装', cover: supermarketCover(103), qty: 3, price: 29.90 },
         ],
         created_at: '2026-05-20T09:00:00Z',
       },
@@ -390,7 +466,7 @@ export const supermarket: MockPreset = {
         tracking_no: '',
         amount_breakdown: { goods_amount: 55.00, discount_amount: 54.99, freight_amount: 0.00, payable_amount: 0.01 },
         items: [
-          { id: 1041, product_id: 105, title: '舒肤佳沐浴露套装', cover: 'https://picsum.photos/200/200?random=244', qty: 1, price: 55.00 },
+          { id: 1041, product_id: 105, title: '舒肤佳沐浴露套装', cover: supermarketCover(105), qty: 1, price: 55.00 },
         ],
         created_at: '2026-05-21T16:00:00Z', paid_at: '2026-05-21T16:02:00Z',
       },
