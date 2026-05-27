@@ -129,7 +129,7 @@
               <img :src="currentAccount.avatar" :alt="currentAccount.username" class="h-8 w-8 rounded-full bg-slate-100" />
               <div class="flex flex-col items-start">
                 <span class="text-sm font-medium text-slate-700">{{ currentAccount.username }}</span>
-                <span class="text-xs text-slate-400">{{ $t('layout.currentAccount') }}</span>
+                <span class="text-xs text-slate-400">{{ currentAccount.roleName }}</span>
               </div>
             </button>
             <div v-if="accountMenuOpen" class="absolute right-0 top-12 z-30 w-64 rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
@@ -143,9 +143,16 @@
                 <img :src="account.avatar" :alt="account.username" class="h-8 w-8 rounded-full bg-slate-100" />
                 <div class="min-w-0 flex-1">
                   <div class="truncate text-sm text-slate-700">{{ account.username }}</div>
-                  <div class="truncate text-xs text-slate-400">{{ account.username }}</div>
+                  <div class="truncate text-xs text-slate-400">{{ account.roleName }}</div>
                 </div>
                 <span v-if="account.username === auth.currentUsername" class="text-xs text-emerald-600">{{ $t('layout.currentAccount') }}</span>
+                <button
+                  v-else
+                  class="text-xs text-red-400 hover:text-red-600"
+                  @click.stop="handleRemoveAccount(account.username)"
+                >
+                  {{ $t('layout.removeAccount') }}
+                </button>
               </button>
               <button @click="auth.logout()" class="mt-2 flex w-full items-center justify-center rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-600 hover:bg-slate-200">
                 {{ $t('layout.logout') }}
@@ -191,6 +198,7 @@ const currentAccount = computed(() => {
   return found || {
     username: auth.currentUsername || 'admin',
     avatar: `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(auth.currentUsername || 'admin')}`,
+    roleName: t('layout.defaultRole'),
   }
 })
 
@@ -203,6 +211,10 @@ function handleSwitchAccount(username: string) {
   accountMenuOpen.value = false
   if (username === auth.currentUsername) return
   auth.switchAccount(username)
+}
+
+function handleRemoveAccount(username: string) {
+  auth.removeAccount(username)
 }
 
 function handleWindowClick(event: MouseEvent) {

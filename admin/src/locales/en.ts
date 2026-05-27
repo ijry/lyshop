@@ -75,6 +75,8 @@ export default {
   'layout.logout': 'Logout',
   'layout.accountSwitch': 'Switch Account',
   'layout.currentAccount': 'Current',
+  'layout.removeAccount': 'Remove',
+  'layout.defaultRole': 'Administrator',
 
   // Nav / Router
   'nav.home': 'Home',

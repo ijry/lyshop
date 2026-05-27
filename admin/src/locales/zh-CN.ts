@@ -75,6 +75,8 @@ export default {
   'layout.logout': '退出登录',
   'layout.accountSwitch': '账号切换',
   'layout.currentAccount': '当前账号',
+  'layout.removeAccount': '删除',
+  'layout.defaultRole': '管理员',
 
   // Nav / Router
   'nav.home': '首页',
