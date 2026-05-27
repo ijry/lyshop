@@ -1052,6 +1052,67 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     return { matched: true, data: addressListSource.slice() }
   }
 
+  if (upperMethod === 'POST' && path === '/api/v1/orders') {
+    const body = params || {}
+    const fromItems = Array.isArray(body.items) ? body.items : []
+    const fromSkuIDs = Array.isArray(body.sku_ids)
+      ? body.sku_ids.map((v: any) => Number(v || 0)).filter((v: number) => v > 0)
+      : String(body.sku_ids || '').split(',').map((v) => Number(v || 0)).filter((v) => v > 0)
+    const requestItems = fromItems.length
+      ? fromItems
+          .map((item: any) => ({
+            sku_id: Number(item?.sku_id || 0),
+            activity_product_id: Number(item?.activity_product_id || 0),
+          }))
+          .filter((item: any) => item.sku_id > 0)
+      : fromSkuIDs.map((skuID: number) => ({ sku_id: skuID, activity_product_id: 0 }))
+
+    if (!requestItems.length) {
+      return { matched: true, data: null }
+    }
+
+    const now = new Date().toISOString()
+    const nextID = Math.max(0, ...orderListSource.map((item: any) => Number(item.id || 0))) + 1
+    const orderNo = `DEMO${Date.now()}${String(nextID).padStart(3, '0')}`
+    const orderItems = requestItems.map((item: any, idx: number) => {
+      const source = productListSource.find((p: any) => Number(p?.id || 0) === Number(item.sku_id || 0)) || productListSource[idx] || {}
+      return {
+        id: nextID * 100 + idx + 1,
+        order_id: nextID,
+        product_id: Number(source?.id || item.sku_id || 0),
+        sku_id: Number(item.sku_id || 0),
+        activity_product_id: Number(item.activity_product_id || 0),
+        title: String(source?.title || `商品${item.sku_id}`),
+        cover: String(source?.cover || ''),
+        attrs: '[]',
+        price: Number(source?.price || 0),
+        qty: 1,
+      }
+    })
+    const goodsAmount = Number(orderItems.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 0), 0).toFixed(2))
+    const newOrder: any = {
+      id: nextID,
+      user_id: 1,
+      order_no: orderNo,
+      status: 1,
+      payment_method: String(body.payment_method || 'wechat'),
+      goods_amount: goodsAmount,
+      discount_amount: 0,
+      freight_amount: 0,
+      total_amount: goodsAmount,
+      created_at: now,
+      updated_at: now,
+      paid_at: null,
+      tracking_no: '',
+      items: orderItems,
+      remark: String(body.remark || ''),
+      activity_type: Number(orderItems[0]?.activity_product_id || 0) > 0 ? 'activity' : '',
+    }
+    ensureOrderExt(newOrder)
+    orderListSource.unshift(newOrder)
+    return { matched: true, data: { order_no: orderNo, id: nextID, status: 1 } }
+  }
+
   if (upperMethod === 'POST' && path.startsWith('/api/v1/orders/') && path.endsWith('/pay')) {
     const id = Number(path.split('/')[4] || 0)
     const target = getOrderByID(id)

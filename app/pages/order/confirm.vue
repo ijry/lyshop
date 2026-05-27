@@ -141,11 +141,34 @@ const payMethods = computed(() => [
 ])
 
 let skuIds: number[] = []
+let orderItems: Array<{ sku_id: number; activity_product_id: number }> = []
 
 onMounted(async () => {
   const pages = getCurrentPages()
   const query = (pages[pages.length - 1] as any).options
   skuIds = (query.sku_ids || '').split(',').map(Number).filter(Boolean)
+  const rawItems = String(query.items || '').trim()
+  if (rawItems) {
+    try {
+      const parsed = JSON.parse(decodeURIComponent(rawItems))
+      if (Array.isArray(parsed)) {
+        orderItems = parsed
+          .map((item: any) => ({
+            sku_id: Number(item?.sku_id || 0),
+            activity_product_id: Number(item?.activity_product_id || 0),
+          }))
+          .filter((item: any) => item.sku_id > 0)
+      }
+    } catch {
+      orderItems = []
+    }
+  }
+  if (!orderItems.length) {
+    orderItems = skuIds.map((skuID) => ({ sku_id: skuID, activity_product_id: 0 }))
+  }
+  if (!skuIds.length) {
+    skuIds = orderItems.map((item) => item.sku_id)
+  }
 
   await loadAddresses()
 })
@@ -229,11 +252,16 @@ async function saveAddress() {
 
 async function submit() {
   if (!address.value) { uni.showToast({ title: t('orderConfirm.addressRequired2'), icon: 'none' }); return }
+  if (!orderItems.length && !skuIds.length) {
+    uni.showToast({ title: t('cart.selectFirst'), icon: 'none' })
+    return
+  }
   submitting.value = true
   try {
     await post<any>('/api/v1/orders', {
       address_id: address.value.id,
       payment_method: payMethod.value,
+      items: orderItems,
       sku_ids: skuIds,
       remark: remark.value
     })

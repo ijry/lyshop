@@ -10,16 +10,16 @@
 
     <!-- Cart items -->
     <view v-else class="p-20rpx">
-      <view v-for="item in items" :key="item.sku_id"
+      <view v-for="item in items" :key="itemKey(item)"
         class="flex items-center rounded-20rpx p-24rpx mb-20rpx"
         :style="{ background: 'var(--app-card-bg)', boxShadow: 'var(--app-shadow-sm)' }">
         <!-- Select -->
-        <view class="pr-16rpx flex-shrink-0" @click.stop="toggleItem(item.sku_id)">
+        <view class="pr-16rpx flex-shrink-0" @click.stop="toggleItem(item)">
           <view
             class="w-36rpx h-36rpx rounded-full border-2 flex items-center justify-center"
-            :class="isChecked(item.sku_id) ? 'border-blue-700 bg-blue-700' : 'border-gray-300 bg-white'"
+            :class="isChecked(item) ? 'border-blue-700 bg-blue-700' : 'border-gray-300 bg-white'"
           >
-            <u-icon v-if="isChecked(item.sku_id)" name="checkmark" size="14" color="#fff" />
+            <u-icon v-if="isChecked(item)" name="checkmark" size="14" color="#fff" />
           </view>
         </view>
 
@@ -38,12 +38,12 @@
           <view class="flex items-center justify-between mt-16rpx">
             <text class="text-32rpx text-blue-700 font-700">¥{{ item.sku?.price }}</text>
             <u-number-box v-model="item.qty" :min="1" :max="99"
-              @change="(v:any) => updateQty(item.sku_id, v.value)" />
+              @change="(v:any) => updateQty(item, v.value)" />
           </view>
         </view>
 
         <!-- Delete -->
-        <view class="ml-16rpx p-12rpx flex-shrink-0" @click="remove(item.sku_id)">
+        <view class="ml-16rpx p-12rpx flex-shrink-0" @click="remove(item)">
           <u-icon name="trash" size="18" color="#f56c6c" />
         </view>
       </view>
@@ -98,23 +98,27 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { get, post } from '@/utils/request'
+import { del, get, post } from '@/utils/request'
 
 const { t } = useI18n()
 
 const items = ref<any[]>([])
 const recommends = ref<any[]>([])
-const checkedSkuIds = ref<number[]>([])
+const checkedItemKeys = ref<string[]>([])
+
+function itemKey(item: any) {
+  return `${Number(item?.sku_id || 0)}:${Number(item?.activity_product_id || 0)}`
+}
 
 const selectedItems = computed(() =>
-  items.value.filter(i => checkedSkuIds.value.includes(i.sku_id))
+  items.value.filter(i => checkedItemKeys.value.includes(itemKey(i)))
 )
 const selectedCount = computed(() => selectedItems.value.length)
 const selectedTotal = computed(() =>
   selectedItems.value.reduce((s, i) => s + (i.sku?.price || 0) * i.qty, 0)
 )
 const allChecked = computed(() =>
-  items.value.length > 0 && checkedSkuIds.value.length === items.value.length
+  items.value.length > 0 && checkedItemKeys.value.length === items.value.length
 )
 
 function skuLabel(item: any) {
@@ -128,48 +132,62 @@ function skuLabel(item: any) {
 async function loadCart() {
   const data = await get<any[]>('/api/v1/cart')
   items.value = data || []
-  checkedSkuIds.value = items.value.map(i => i.sku_id)
+  checkedItemKeys.value = items.value.map(itemKey)
   // Load recommendations
   const rec = await get<any[]>('/api/v1/products/recommend')
   recommends.value = rec || []
 }
 
-async function updateQty(skuID: number, qty: number) {
-  await post('/api/v1/cart/qty', { sku_id: skuID, qty })
+async function updateQty(item: any, qty: number) {
+  await post('/api/v1/cart/qty', {
+    sku_id: Number(item?.sku_id || 0),
+    activity_product_id: Number(item?.activity_product_id || 0),
+    qty,
+  })
 }
 
-async function remove(skuID: number) {
-  items.value = items.value.filter(i => i.sku_id !== skuID)
-  checkedSkuIds.value = checkedSkuIds.value.filter(id => id !== skuID)
+async function remove(item: any) {
+  const key = itemKey(item)
+  items.value = items.value.filter(i => itemKey(i) !== key)
+  checkedItemKeys.value = checkedItemKeys.value.filter(v => v !== key)
+  await del(`/api/v1/cart/${Number(item?.sku_id || 0)}`, {
+    activity_product_id: Number(item?.activity_product_id || 0),
+  })
 }
 
-function isChecked(skuID: number) {
-  return checkedSkuIds.value.includes(skuID)
+function isChecked(item: any) {
+  return checkedItemKeys.value.includes(itemKey(item))
 }
 
-function toggleItem(skuID: number) {
-  if (isChecked(skuID)) {
-    checkedSkuIds.value = checkedSkuIds.value.filter(id => id !== skuID)
+function toggleItem(item: any) {
+  const key = itemKey(item)
+  if (checkedItemKeys.value.includes(key)) {
+    checkedItemKeys.value = checkedItemKeys.value.filter(v => v !== key)
     return
   }
-  checkedSkuIds.value.push(skuID)
+  checkedItemKeys.value.push(key)
 }
 
 function toggleCheckAll() {
   if (allChecked.value) {
-    checkedSkuIds.value = []
+    checkedItemKeys.value = []
     return
   }
-  checkedSkuIds.value = items.value.map(i => i.sku_id)
+  checkedItemKeys.value = items.value.map(itemKey)
 }
 
 function checkout() {
-  if (!checkedSkuIds.value.length) {
+  if (!checkedItemKeys.value.length) {
     uni.showToast({ title: t('cart.selectFirst'), icon: 'none' })
     return
   }
-  const ids = checkedSkuIds.value.join(',')
-  uni.navigateTo({ url: `/pages/order/confirm?sku_ids=${ids}` })
+  const selected = selectedItems.value.map((item: any) => ({
+    sku_id: Number(item?.sku_id || 0),
+    activity_product_id: Number(item?.activity_product_id || 0),
+  }))
+  const ids = selected.map((item: any) => item.sku_id).join(',')
+  const encodedItems = encodeURIComponent(JSON.stringify(selected))
+  uni.navigateTo({ url: `/pages/order/confirm?items=${encodedItems}&sku_ids=${ids}` })
 }
 
 onMounted(loadCart)
