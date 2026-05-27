@@ -2166,7 +2166,7 @@ uni-app 使用 `pages.json` 代替 Vue Router：
 ```json
 {
   "pages": [
-    { "path": "pages/index/index", "style": { "navigationBarTitleText": "首页" } },
+    { "path": "pages/index/index", "style": { "navigationBarTitleText": "首页", "navigationStyle": "custom" } },
     { "path": "pages/product/list", "style": { "navigationBarTitleText": "商品" } },
     { "path": "pages/product/detail", "style": { "navigationBarTitleText": "商品详情" } },
     { "path": "pages/cart/index", "style": { "navigationBarTitleText": "购物车" } },

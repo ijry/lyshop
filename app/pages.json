@@ -8,7 +8,7 @@
     }
   },
   "pages": [
-    { "path": "pages/index/index",          "style": { "navigationBarTitleText": "%pages.index.title%" } },
+    { "path": "pages/index/index",          "style": { "navigationBarTitleText": "%pages.index.title%", "navigationStyle": "custom" } },
     { "path": "pages/product/list",         "style": { "navigationBarTitleText": "%pages.product.list%" } },
     { "path": "pages/product/detail",       "style": { "navigationBarTitleText": "%pages.product.detail%" } },
     { "path": "pages/cart/index",           "style": { "navigationBarTitleText": "%pages.cart.index%" } },
