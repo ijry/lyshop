@@ -53,8 +53,9 @@ func getCart(c *gin.Context) {
 func addToCart(c *gin.Context) {
 	userID, _ := c.Get("user_id")
 	var req struct {
-		SkuID uint64 `json:"sku_id" binding:"required"`
-		Qty   int    `json:"qty"`
+		SkuID             uint64 `json:"sku_id" binding:"required"`
+		ActivityProductID uint64 `json:"activity_product_id"`
+		Qty               int    `json:"qty"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Fail(c, 400, err.Error())
@@ -63,7 +64,7 @@ func addToCart(c *gin.Context) {
 	if req.Qty <= 0 {
 		req.Qty = 1
 	}
-	if err := ordersvc.AddToCart(c.Request.Context(), userID.(uint64), req.SkuID, req.Qty); err != nil {
+	if err := ordersvc.AddToCart(c.Request.Context(), userID.(uint64), req.SkuID, req.Qty, req.ActivityProductID); err != nil {
 		response.Fail(c, 500, err.Error())
 		return
 	}
@@ -73,18 +74,20 @@ func addToCart(c *gin.Context) {
 func updateCartQty(c *gin.Context) {
 	userID, _ := c.Get("user_id")
 	var req struct {
-		SkuID uint64 `json:"sku_id"`
-		Qty   int    `json:"qty"`
+		SkuID             uint64 `json:"sku_id"`
+		ActivityProductID uint64 `json:"activity_product_id"`
+		Qty               int    `json:"qty"`
 	}
 	c.ShouldBindJSON(&req)
-	ordersvc.UpdateCartQty(c.Request.Context(), userID.(uint64), req.SkuID, req.Qty)
+	ordersvc.UpdateCartQty(c.Request.Context(), userID.(uint64), req.SkuID, req.Qty, req.ActivityProductID)
 	response.OK(c, nil)
 }
 
 func removeFromCart(c *gin.Context) {
 	userID, _ := c.Get("user_id")
 	skuID, _ := strconv.ParseUint(c.Param("sku_id"), 10, 64)
-	ordersvc.RemoveFromCart(c.Request.Context(), userID.(uint64), skuID)
+	activityProductID, _ := strconv.ParseUint(c.DefaultQuery("activity_product_id", "0"), 10, 64)
+	ordersvc.RemoveFromCart(c.Request.Context(), userID.(uint64), skuID, activityProductID)
 	response.OK(c, nil)
 }
 
