@@ -1,5 +1,81 @@
 import type { MockPreset, SiteSettings } from './types'
 
+const jewelryImageMap: Record<number, { cover: string; gallery: string[] }> = {
+  301: {
+    cover: 'https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1611652022419-a9419f74343d?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=1200&q=80',
+    ],
+  },
+  302: {
+    cover: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1543295204-8e6d7d62f8df?auto=format&fit=crop&w=1200&q=80',
+    ],
+  },
+  303: {
+    cover: 'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?auto=format&fit=crop&w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1611107683227-e9060eccd846?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=1200&q=80',
+    ],
+  },
+  304: {
+    cover: 'https://images.unsplash.com/photo-1611599537845-1c7aca0091c0?auto=format&fit=crop&w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1611599537845-1c7aca0091c0?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1603974372039-adc49044b6bd?auto=format&fit=crop&w=1200&q=80',
+    ],
+  },
+  305: {
+    cover: 'https://images.unsplash.com/photo-1535632787350-4e68ef0ac584?auto=format&fit=crop&w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1535632787350-4e68ef0ac584?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1589128777073-263566ae5e4d?auto=format&fit=crop&w=1200&q=80',
+    ],
+  },
+  306: {
+    cover: 'https://images.unsplash.com/photo-1617038261661-1d5f1c4ccb20?auto=format&fit=crop&w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1617038261661-1d5f1c4ccb20?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=1200&q=80',
+    ],
+  },
+  307: {
+    cover: 'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?auto=format&fit=crop&w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1617038261661-1d5f1c4ccb20?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1611652022419-a9419f74343d?auto=format&fit=crop&w=1200&q=80',
+    ],
+  },
+  308: {
+    cover: 'https://images.unsplash.com/photo-1588444837495-c6cfeb53f32d?auto=format&fit=crop&w=800&q=80',
+    gallery: [
+      'https://images.unsplash.com/photo-1588444837495-c6cfeb53f32d?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=1200&q=80',
+      'https://images.unsplash.com/photo-1602173574767-37ac01994b2a?auto=format&fit=crop&w=1200&q=80',
+    ],
+  },
+}
+
+function jewelryCover(id: number) {
+  return jewelryImageMap[id]?.cover || jewelryImageMap[301].cover
+}
+
+function jewelryGallery(id: number, index = 0) {
+  const list = jewelryImageMap[id]?.gallery || jewelryImageMap[301].gallery
+  return list[index] || list[0]
+}
+
 export const jewelry: MockPreset = {
   key: 'jewelry',
   name: '珠宝饰品',
@@ -16,42 +92,42 @@ export const jewelry: MockPreset = {
     list: [
       {
         id: 301, title: '足金转运珠手链', subtitle: '999足金，精工编织，寓意好运',
-        cover: 'https://picsum.photos/400/400?random=400',
+        cover: jewelryCover(301),
         price: 1580.00, origin_price: 1980.00, stock: 300, sales: 2150, status: 1, category_id: 301,
       },
       {
         id: 302, title: '1克拉钻石戒指', subtitle: 'GIA认证，D色VS1净度',
-        cover: 'https://picsum.photos/400/400?random=401',
+        cover: jewelryCover(302),
         price: 29999.00, origin_price: 39999.00, stock: 50, sales: 86, status: 1, category_id: 302,
       },
       {
         id: 303, title: '冰种翡翠吊坠', subtitle: '缅甸A货翡翠，冰润通透',
-        cover: 'https://picsum.photos/400/400?random=402',
+        cover: jewelryCover(303),
         price: 6800.00, origin_price: 8800.00, stock: 80, sales: 320, status: 1, category_id: 303,
       },
       {
         id: 304, title: '天然淡水珍珠项链', subtitle: '8-9mm正圆强光，925银扣',
-        cover: 'https://picsum.photos/400/400?random=403',
+        cover: jewelryCover(304),
         price: 899.00, origin_price: 1280.00, stock: 500, sales: 1860, status: 1, category_id: 304,
       },
       {
         id: 305, title: '925纯银耳钉套装', subtitle: '一周耳钉七对装，简约百搭',
-        cover: 'https://picsum.photos/400/400?random=404',
+        cover: jewelryCover(305),
         price: 99.00, origin_price: 168.00, stock: 2000, sales: 6820, status: 1, category_id: 305,
       },
       {
         id: 306, title: '和田玉平安扣', subtitle: '新疆和田籽料，油润细腻',
-        cover: 'https://picsum.photos/400/400?random=405',
+        cover: jewelryCover(306),
         price: 3680.00, origin_price: 4980.00, stock: 120, sales: 450, status: 1, category_id: 303,
       },
       {
         id: 307, title: '18K玫瑰金手镯', subtitle: '意大利工艺，优雅时尚',
-        cover: 'https://picsum.photos/400/400?random=406',
+        cover: jewelryCover(307),
         price: 4280.00, origin_price: 5680.00, stock: 200, sales: 680, status: 1, category_id: 301,
       },
       {
         id: 308, title: '蓝宝石耳环', subtitle: '斯里兰卡蓝宝石，璀璨夺目',
-        cover: 'https://picsum.photos/400/400?random=407',
+        cover: jewelryCover(308),
         price: 2580.00, origin_price: 3580.00, stock: 150, sales: 390, status: 1, category_id: 302,
       },
     ],
@@ -63,7 +139,7 @@ export const jewelry: MockPreset = {
     id: 301,
     title: '足金转运珠手链',
     subtitle: '999足金，精工编织，寓意好运',
-    cover: 'https://picsum.photos/750/750?random=400',
+    cover: jewelryCover(301),
     price: 1580.00,
     origin_price: 1980.00,
     stock: 300,
@@ -84,7 +160,7 @@ export const jewelry: MockPreset = {
           id: 'b2',
           type: 'image',
           props: {
-            url: 'https://picsum.photos/750/420?random=408',
+            url: jewelryGallery(301, 1),
             alt: '足金工艺细节展示',
           },
         },
@@ -103,10 +179,10 @@ export const jewelry: MockPreset = {
       { id: 303, product_id: 301, attrs: '[{"name":"重量","value":"8g"}]', price: 4080.00, stock: 80, sku_code: 'GOLD-BEAD-8G' },
     ],
     images: [
-      { id: 301, product_id: 301, url: 'https://picsum.photos/750/750?random=400', sort: 0 },
-      { id: 302, product_id: 301, url: 'https://picsum.photos/750/750?random=401', sort: 1 },
-      { id: 303, product_id: 301, url: 'https://picsum.photos/750/750?random=402', sort: 2 },
-      { id: 304, product_id: 301, url: 'https://picsum.photos/750/750?random=403', sort: 3 },
+      { id: 301, product_id: 301, url: jewelryGallery(301, 0), sort: 0 },
+      { id: 302, product_id: 301, url: jewelryGallery(301, 1), sort: 1 },
+      { id: 303, product_id: 301, url: jewelryGallery(301, 2), sort: 2 },
+      { id: 304, product_id: 301, url: jewelryGallery(307, 0), sort: 3 },
     ],
   },
   indexDecor: {
@@ -116,9 +192,9 @@ export const jewelry: MockPreset = {
         id: 'demo_banner',
         props: {
           images: [
-            { url: 'https://picsum.photos/750/340?random=400', link: '/pages/product/list?category_id=301' },
-            { url: 'https://picsum.photos/750/340?random=401', link: '/pages/marketing/coupon?mode=claim' },
-            { url: 'https://picsum.photos/750/340?random=402', link: '/pages/product/list?category_id=302' },
+            { url: jewelryGallery(301, 0), link: '/pages/product/list?category_id=301' },
+            { url: jewelryGallery(305, 0), link: '/pages/marketing/coupon?mode=claim' },
+            { url: jewelryGallery(302, 0), link: '/pages/product/list?category_id=302' },
           ],
           height: 340,
         },
@@ -209,10 +285,10 @@ export const jewelry: MockPreset = {
           ],
         },
       },
-      { type: 'image_ad', id: 'pc_ad1', props: { url: 'https://picsum.photos/1200/350?random=410', link: '/products?category=301', height: 280 } },
+      { type: 'image_ad', id: 'pc_ad1', props: { url: jewelryGallery(301, 0), link: '/products?category=301', height: 280 } },
       { type: 'product_grid', id: 'pc_hot', props: { title: '臻品推荐', source: 'hot', limit: 8, columns: 4 } },
       { type: 'spacer', id: 'pc_spacer1', props: { height: 24 } },
-      { type: 'image_ad', id: 'pc_ad2', props: { url: 'https://picsum.photos/1200/250?random=415', link: '/products?category=302' } },
+      { type: 'image_ad', id: 'pc_ad2', props: { url: jewelryGallery(302, 0), link: '/products?category=302' } },
       { type: 'product_grid', id: 'pc_new', props: { title: '新品首发', source: 'new', limit: 4, columns: 4 } },
       {
         type: 'features', id: 'pc_features',
@@ -256,9 +332,9 @@ export const jewelry: MockPreset = {
         id: 1, type: 'seckill', name: '珠宝限时秒杀',
         start_at: '2026-05-20T00:00:00Z', end_at: '2026-06-20T23:59:59Z', status: 1,
         products: [
-          { product_id: 301, title: '足金转运珠手链', cover: 'https://picsum.photos/400/400?random=400', origin_price: 1580, activity_price: 1280, activity_stock: 30 },
-          { product_id: 305, title: '925纯银耳钉套装', cover: 'https://picsum.photos/400/400?random=404', origin_price: 99, activity_price: 59, activity_stock: 200 },
-          { product_id: 304, title: '天然淡水珍珠项链', cover: 'https://picsum.photos/400/400?random=403', origin_price: 899, activity_price: 599, activity_stock: 80 },
+          { product_id: 301, title: '足金转运珠手链', cover: jewelryCover(301), origin_price: 1580, activity_price: 1280, activity_stock: 30 },
+          { product_id: 305, title: '925纯银耳钉套装', cover: jewelryCover(305), origin_price: 99, activity_price: 59, activity_stock: 200 },
+          { product_id: 304, title: '天然淡水珍珠项链', cover: jewelryCover(304), origin_price: 899, activity_price: 599, activity_stock: 80 },
         ],
       },
     ],
@@ -271,9 +347,9 @@ export const jewelry: MockPreset = {
         group_size: 3, expire_hours: 24,
         start_at: '2026-05-01T00:00:00Z', end_at: '2026-07-01T23:59:59Z', status: 1,
         products: [
-          { product_id: 303, title: '冰种翡翠吊坠', cover: 'https://picsum.photos/400/400?random=402', origin_price: 6800, group_price: 5200, group_stock: 30 },
-          { product_id: 304, title: '天然淡水珍珠项链', cover: 'https://picsum.photos/400/400?random=403', origin_price: 899, group_price: 699, group_stock: 100 },
-          { product_id: 308, title: '蓝宝石耳环', cover: 'https://picsum.photos/400/400?random=407', origin_price: 2580, group_price: 1980, group_stock: 50 },
+          { product_id: 303, title: '冰种翡翠吊坠', cover: jewelryCover(303), origin_price: 6800, group_price: 5200, group_stock: 30 },
+          { product_id: 304, title: '天然淡水珍珠项链', cover: jewelryCover(304), origin_price: 899, group_price: 699, group_stock: 100 },
+          { product_id: 308, title: '蓝宝石耳环', cover: jewelryCover(308), origin_price: 2580, group_price: 1980, group_stock: 50 },
         ],
       },
     ],
@@ -284,24 +360,24 @@ export const jewelry: MockPreset = {
         id: 1, type: 'bargain', name: '砍价免费拿',
         start_at: '2026-05-01T00:00:00Z', end_at: '2026-07-01T23:59:59Z', status: 1,
         products: [
-          { product_id: 305, title: '925纯银耳钉套装', cover: 'https://picsum.photos/400/400?random=404', origin_price: 99, floor_price: 0.01, max_helpers: 10, current_helpers: 4 },
-          { product_id: 307, title: '18K玫瑰金手镯', cover: 'https://picsum.photos/400/400?random=406', origin_price: 4280, floor_price: 1280, max_helpers: 30, current_helpers: 12 },
+          { product_id: 305, title: '925纯银耳钉套装', cover: jewelryCover(305), origin_price: 99, floor_price: 0.01, max_helpers: 10, current_helpers: 4 },
+          { product_id: 307, title: '18K玫瑰金手镯', cover: jewelryCover(307), origin_price: 4280, floor_price: 1280, max_helpers: 30, current_helpers: 12 },
         ],
       },
     ],
   },
   recommend: [
-    { product_id: 305, title: '925纯银耳钉套装', cover: 'https://picsum.photos/400/400?random=404', price: 99, origin_price: 168, sales: 6820 },
-    { product_id: 301, title: '足金转运珠手链', cover: 'https://picsum.photos/400/400?random=400', price: 1580, origin_price: 1980, sales: 2150 },
-    { product_id: 304, title: '天然淡水珍珠项链', cover: 'https://picsum.photos/400/400?random=403', price: 899, origin_price: 1280, sales: 1860 },
-    { product_id: 307, title: '18K玫瑰金手镯', cover: 'https://picsum.photos/400/400?random=406', price: 4280, origin_price: 5680, sales: 680 },
+    { product_id: 305, title: '925纯银耳钉套装', cover: jewelryCover(305), price: 99, origin_price: 168, sales: 6820 },
+    { product_id: 301, title: '足金转运珠手链', cover: jewelryCover(301), price: 1580, origin_price: 1980, sales: 2150 },
+    { product_id: 304, title: '天然淡水珍珠项链', cover: jewelryCover(304), price: 899, origin_price: 1280, sales: 1860 },
+    { product_id: 307, title: '18K玫瑰金手镯', cover: jewelryCover(307), price: 4280, origin_price: 5680, sales: 680 },
   ],
   cart: [
     {
       sku_id: 301,
       qty: 1,
       product: {
-        id: 301, title: '足金转运珠手链', cover: 'https://picsum.photos/200/200?random=400', price: 1580.00,
+        id: 301, title: '足金转运珠手链', cover: jewelryCover(301), price: 1580.00,
       },
       sku: {
         id: 301, product_id: 301, attrs: '[{"name":"重量","value":"3g"}]', price: 1580.00, stock: 120,
@@ -311,7 +387,7 @@ export const jewelry: MockPreset = {
       sku_id: 305,
       qty: 2,
       product: {
-        id: 305, title: '925纯银耳钉套装', cover: 'https://picsum.photos/200/200?random=404', price: 99.00,
+        id: 305, title: '925纯银耳钉套装', cover: jewelryCover(305), price: 99.00,
       },
       sku: {
         id: 305, product_id: 305, attrs: '[{"name":"款式","value":"经典款"}]', price: 99.00, stock: 2000,
@@ -329,7 +405,7 @@ export const jewelry: MockPreset = {
         amount_breakdown: { goods_amount: 1580.00, discount_amount: 300.00, freight_amount: 0.00, payable_amount: 1280.00 },
         items: [
           {
-            id: 3011, product_id: 301, title: '足金转运珠手链', cover: 'https://picsum.photos/200/200?random=400', qty: 1, price: 1580.00,
+            id: 3011, product_id: 301, title: '足金转运珠手链', cover: jewelryCover(301), qty: 1, price: 1580.00,
             review: {
               id: 4001, review_id: 4001, has_review: true, product_score: 5, logistics_score: 5,
               content: '做工精致，金珠光泽很好，送人很有面子。', edited_times: 0,
@@ -351,7 +427,7 @@ export const jewelry: MockPreset = {
         tracking_no: 'SF9988776601',
         amount_breakdown: { goods_amount: 6800.00, discount_amount: 1600.00, freight_amount: 0.00, payable_amount: 5200.00 },
         items: [
-          { id: 3021, product_id: 303, title: '冰种翡翠吊坠', cover: 'https://picsum.photos/200/200?random=402', qty: 1, price: 6800.00 },
+          { id: 3021, product_id: 303, title: '冰种翡翠吊坠', cover: jewelryCover(303), qty: 1, price: 6800.00 },
         ],
         created_at: '2026-05-10T14:20:00Z', paid_at: '2026-05-10T14:22:00Z',
       },
@@ -362,7 +438,7 @@ export const jewelry: MockPreset = {
         freight_amount: 0, total_amount: 29999.00, remark: '',
         amount_breakdown: { goods_amount: 29999.00, discount_amount: 0.00, freight_amount: 0.00, payable_amount: 29999.00 },
         items: [
-          { id: 3031, product_id: 302, title: '1克拉钻石戒指', cover: 'https://picsum.photos/200/200?random=401', qty: 1, price: 29999.00 },
+          { id: 3031, product_id: 302, title: '1克拉钻石戒指', cover: jewelryCover(302), qty: 1, price: 29999.00 },
         ],
         created_at: '2026-05-20T09:00:00Z',
       },
@@ -374,7 +450,7 @@ export const jewelry: MockPreset = {
         tracking_no: '',
         amount_breakdown: { goods_amount: 99.00, discount_amount: 98.99, freight_amount: 0.00, payable_amount: 0.01 },
         items: [
-          { id: 3041, product_id: 305, title: '925纯银耳钉套装', cover: 'https://picsum.photos/200/200?random=404', qty: 1, price: 99.00 },
+          { id: 3041, product_id: 305, title: '925纯银耳钉套装', cover: jewelryCover(305), qty: 1, price: 99.00 },
         ],
         created_at: '2026-05-21T16:00:00Z', paid_at: '2026-05-21T16:02:00Z',
       },
