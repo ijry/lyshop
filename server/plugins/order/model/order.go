@@ -35,14 +35,18 @@ type Order struct {
 
 type OrderItem struct {
 	model.Base
-	OrderID   uint64          `gorm:"not null;index"               json:"order_id"`
-	ProductID uint64          `gorm:"not null"                     json:"product_id"`
-	SkuID     uint64          `gorm:"not null"                     json:"sku_id"`
-	Title     string          `gorm:"size:255;not null"            json:"title"`
-	Cover     string          `gorm:"size:500"                     json:"cover"`
-	Attrs     json.RawMessage `gorm:"type:json"                    json:"attrs"`
-	Price     float64         `gorm:"type:decimal(10,2);not null"  json:"price"`
-	Qty       int             `gorm:"not null"                     json:"qty"`
+	OrderID            uint64          `gorm:"not null;index"               json:"order_id"`
+	ProductID          uint64          `gorm:"not null"                     json:"product_id"`
+	SkuID              uint64          `gorm:"not null"                     json:"sku_id"`
+	ActivityProductID  uint64          `gorm:"not null;default:0;index"     json:"activity_product_id"`
+	ActivityID         uint64          `gorm:"not null;default:0;index"     json:"activity_id"`
+	ActivityType       string          `gorm:"size:32;default:''"            json:"activity_type"`
+	ActivityTitle      string          `gorm:"size:64;default:''"            json:"activity_title"`
+	Title              string          `gorm:"size:255;not null"             json:"title"`
+	Cover              string          `gorm:"size:500"                      json:"cover"`
+	Attrs              json.RawMessage `gorm:"type:json"                     json:"attrs"`
+	Price              float64         `gorm:"type:decimal(10,2);not null"   json:"price"`
+	Qty                int             `gorm:"not null"                      json:"qty"`
 }
 
 type OrderPayment struct {

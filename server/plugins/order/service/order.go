@@ -24,10 +24,16 @@ type CreateOrderReq struct {
 	UserID        uint64   `json:"user_id"`
 	AddressID     uint64   `json:"address_id"`
 	PaymentMethod string   `json:"payment_method"`
+	Items         []CreateOrderItemReq `json:"items"`
 	SkuIDs        []uint64 `json:"sku_ids"`
 	CouponIDs     []uint64 `json:"coupon_ids"`
 	PointsUse     int      `json:"points_use"`
 	Remark        string   `json:"remark"`
+}
+
+type CreateOrderItemReq struct {
+	SkuID             uint64 `json:"sku_id"`
+	ActivityProductID uint64 `json:"activity_product_id"`
 }
 
 type AmountBreakdown struct {
@@ -57,6 +63,78 @@ type OrderShipmentView struct {
 	DirectionLabel       string `json:"direction_label,omitempty"`
 	BizTypeLabel         string `json:"biz_type_label,omitempty"`
 	LogisticsStatusLabel string `json:"logistics_status_label,omitempty"`
+}
+
+var validateActivityProductSourceFn = marketingsvc.ValidateActivityProductSource
+var increaseSoldQtyByActivityProductTxFn = marketingsvc.IncreaseSoldQtyByActivityProductTx
+
+func cartSelectionKey(skuID, activityProductID uint64) string {
+	return fmt.Sprintf("%d:%d", skuID, activityProductID)
+}
+
+func buildOrderItemsFromCart(ctx context.Context, cartItems []CartItem, req CreateOrderReq) ([]ordermodel.OrderItem, error) {
+	selected := make(map[string]struct{})
+	selectedBySKU := make(map[uint64]struct{})
+	useItems := len(req.Items) > 0
+	if useItems {
+		for _, item := range req.Items {
+			if item.SkuID == 0 {
+				continue
+			}
+			selected[cartSelectionKey(item.SkuID, item.ActivityProductID)] = struct{}{}
+		}
+	} else {
+		for _, id := range req.SkuIDs {
+			if id == 0 {
+				continue
+			}
+			selectedBySKU[id] = struct{}{}
+		}
+	}
+
+	items := make([]ordermodel.OrderItem, 0, len(cartItems))
+	for _, ci := range cartItems {
+		if ci.Sku == nil || ci.Product == nil {
+			continue
+		}
+		if useItems {
+			if _, ok := selected[cartSelectionKey(ci.SkuID, ci.ActivityProductID)]; !ok {
+				continue
+			}
+		} else if len(selectedBySKU) > 0 {
+			if _, ok := selectedBySKU[ci.SkuID]; !ok {
+				continue
+			}
+		}
+
+		item := ordermodel.OrderItem{
+			ProductID: ci.Product.ID,
+			SkuID:     ci.SkuID,
+			Title:     ci.Product.Title,
+			Cover:     ci.Product.Cover,
+			Attrs:     ci.Sku.Attrs,
+			Price:     ci.Sku.Price,
+			Qty:       ci.Qty,
+		}
+		if ci.ActivityProductID > 0 {
+			detail, err := validateActivityProductSourceFn(ctx, ci.ActivityProductID, ci.SkuID, ci.Product.ID)
+			if err != nil {
+				return nil, err
+			}
+			item.ActivityProductID = detail.ActivityProductID
+			item.ActivityID = detail.ActivityID
+			item.ActivityType = detail.ActivityType
+			item.ActivityTitle = detail.ActivityName
+			if detail.Price > 0 {
+				item.Price = detail.Price
+			}
+		}
+		items = append(items, item)
+	}
+	if len(items) == 0 {
+		return nil, errors.New("order.err.noValidProducts")
+	}
+	return items, nil
 }
 
 func buildOrderShipmentViews(c *gin.Context, rows []ordermodel.OrderShipment) []OrderShipmentView {
@@ -95,32 +173,9 @@ func CreateOrder(ctx context.Context, req CreateOrderReq) (*ordermodel.Order, er
 		return nil, errors.New("order.err.cartEmpty")
 	}
 
-	// Filter to requested SKU IDs
-	skuSet := make(map[uint64]bool, len(req.SkuIDs))
-	for _, id := range req.SkuIDs {
-		skuSet[id] = true
-	}
-
-	var items []ordermodel.OrderItem
-	for _, ci := range cartItems {
-		if len(req.SkuIDs) > 0 && !skuSet[ci.SkuID] {
-			continue
-		}
-		if ci.Sku == nil || ci.Product == nil {
-			continue
-		}
-		items = append(items, ordermodel.OrderItem{
-			ProductID: ci.Product.ID,
-			SkuID:     ci.SkuID,
-			Title:     ci.Product.Title,
-			Cover:     ci.Product.Cover,
-			Attrs:     ci.Sku.Attrs,
-			Price:     ci.Sku.Price,
-			Qty:       ci.Qty,
-		})
-	}
-	if len(items) == 0 {
-		return nil, errors.New("order.err.noValidProducts")
+	items, err := buildOrderItemsFromCart(ctx, cartItems, req)
+	if err != nil {
+		return nil, err
 	}
 
 	// 3. Run pricing pipeline
@@ -175,8 +230,10 @@ func CreateOrder(ctx context.Context, req CreateOrderReq) (*ordermodel.Order, er
 			if res.RowsAffected == 0 {
 				return fmt.Errorf("order.err.insufficientStock (sku_id=%d)", items[i].SkuID)
 			}
-			if err := marketingsvc.IncreaseSoldQtyTx(tx, items[i].SkuID, items[i].Qty); err != nil {
-				return err
+			if items[i].ActivityProductID > 0 {
+				if err := increaseSoldQtyByActivityProductTxFn(tx, items[i].ActivityProductID, items[i].Qty); err != nil {
+					return err
+				}
 			}
 		}
 		return tx.Create(&items).Error
@@ -187,7 +244,7 @@ func CreateOrder(ctx context.Context, req CreateOrderReq) (*ordermodel.Order, er
 
 	// 4. Remove checked-out items from cart
 	for _, item := range items {
-		RemoveFromCart(ctx, req.UserID, item.SkuID)
+		RemoveFromCart(ctx, req.UserID, item.SkuID, item.ActivityProductID)
 	}
 
 	return order, nil

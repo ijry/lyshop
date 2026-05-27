@@ -107,6 +107,7 @@ type FrontActivityProductDetail struct {
 
 var getFrontActivityProductDetailFn = GetFrontActivityProductDetail
 var listFrontActivityProductsLoadRowsFn = loadFrontActivityProductRows
+var increaseSoldQtyByActivityProductFn = IncreaseSoldQtyByActivityProductTx
 
 type frontActivityProductJoinedRow struct {
 	ActivityProductID uint64
@@ -671,6 +672,32 @@ func IncreaseSoldQtyTx(tx *gorm.DB, skuID uint64, qty int) error {
 		}
 	}
 	return nil
+}
+
+func IncreaseSoldQtyByActivityProductTx(tx *gorm.DB, activityProductID uint64, qty int) error {
+	if activityProductID == 0 || qty <= 0 {
+		return nil
+	}
+	now := time.Now()
+	var item mktmodel.ActivityProduct
+	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+		Joins("JOIN activities a ON a.id = activity_products.activity_id").
+		Where("activity_products.id = ? AND a.status = 1 AND a.start_at <= ? AND a.end_at >= ?", activityProductID, now, now).
+		Take(&item).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("活动商品不存在")
+		}
+		return err
+	}
+	if item.LimitPerOrder > 0 && qty > item.LimitPerOrder {
+		return errors.New("超过活动单笔限购")
+	}
+	if item.TotalStockLimit > 0 && item.SoldQty+qty > item.TotalStockLimit {
+		return errors.New("活动库存不足")
+	}
+	return tx.Model(&mktmodel.ActivityProduct{}).
+		Where("id = ?", item.ID).
+		UpdateColumn("sold_qty", gorm.Expr("sold_qty + ?", qty)).Error
 }
 
 func roundPrice(value float64) float64 {
