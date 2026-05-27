@@ -112,6 +112,15 @@
             <option value="zh-CN">中文</option>
             <option value="en">English</option>
           </select>
+          <a
+            href="https://github.com/ijry/lyshop"
+            target="_blank"
+            rel="noreferrer"
+            class="flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 hover:border-slate-300 hover:text-slate-900"
+          >
+            <Github class="h-4 w-4" />
+            <span>GitHub</span>
+          </a>
           <div ref="accountMenuRef" class="relative">
             <button
               class="flex items-center gap-3 rounded-full border border-slate-200 bg-white px-2 py-1 pr-3 hover:border-slate-300"
@@ -120,16 +129,7 @@
               <img :src="currentAccount.avatar" :alt="currentAccount.username" class="h-8 w-8 rounded-full bg-slate-100" />
               <div class="flex flex-col items-start">
                 <span class="text-sm font-medium text-slate-700">{{ currentAccount.username }}</span>
-                <a
-                  :href="currentAccount.github"
-                  target="_blank"
-                  rel="noreferrer"
-                  class="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600"
-                  @click.stop
-                >
-                  <Github class="h-3.5 w-3.5" />
-                  <span>GitHub</span>
-                </a>
+                <span class="text-xs text-slate-400">{{ $t('layout.currentAccount') }}</span>
               </div>
             </button>
             <div v-if="accountMenuOpen" class="absolute right-0 top-12 z-30 w-64 rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
@@ -143,7 +143,7 @@
                 <img :src="account.avatar" :alt="account.username" class="h-8 w-8 rounded-full bg-slate-100" />
                 <div class="min-w-0 flex-1">
                   <div class="truncate text-sm text-slate-700">{{ account.username }}</div>
-                  <div class="truncate text-xs text-slate-400">{{ account.github }}</div>
+                  <div class="truncate text-xs text-slate-400">{{ account.username }}</div>
                 </div>
                 <span v-if="account.username === auth.currentUsername" class="text-xs text-emerald-600">{{ $t('layout.currentAccount') }}</span>
               </button>
@@ -191,7 +191,6 @@ const currentAccount = computed(() => {
   return found || {
     username: auth.currentUsername || 'admin',
     avatar: `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(auth.currentUsername || 'admin')}`,
-    github: `https://github.com/${encodeURIComponent(auth.currentUsername || 'admin')}`,
   }
 })
 

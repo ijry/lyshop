@@ -7,7 +7,6 @@ type AdminAccount = {
   username: string
   token: string
   avatar: string
-  github: string
 }
 
 const ACCOUNT_LIST_KEY = 'admin_accounts'
@@ -51,7 +50,6 @@ export const useAuthStore = defineStore('auth', () => {
       username: normalized,
       token: tokenValue,
       avatar: `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(normalized)}`,
-      github: `https://github.com/${encodeURIComponent(normalized)}`,
     }
   }
 
