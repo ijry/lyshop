@@ -139,7 +139,7 @@ const saving = ref(false)
 // iframe preview state
 const previewIframe = ref<HTMLIFrameElement>()
 const previewReady = ref(false)
-const previewUrl = import.meta.env.VITE_H5_PREVIEW_URL || 'http://localhost:5173/?preview=1'
+const previewUrl = import.meta.env.VITE_H5_PREVIEW_URL || 'https://ijry.github.io/lyshop/demo/?preview=1'
 
 let draggedComp: any = null
 
