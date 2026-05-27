@@ -2,13 +2,16 @@ import { defineConfig, presetWind, presetIcons, transformerDirectives } from 'un
 
 export default defineConfig({
   presets: [
-    presetWind(),
+    presetWind({ preflight: false }),
     presetIcons({
       scale: 1.2,
       cdn: 'https://esm.sh/',
     }),
   ],
   transformers: [transformerDirectives()],
+  rules: [
+    [/^border-(l|r|t|b)-3$/, ([, direction]) => ({ [`border-${direction}-width`]: '3px' })],
+  ],
   shortcuts: {
     'flex-center': 'flex justify-center items-center',
     'flex-between': 'flex justify-between items-center',
