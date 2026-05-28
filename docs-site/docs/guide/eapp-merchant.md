@@ -1,65 +1,91 @@
-# 商家移动端 eapp
+# 商家移动端 eapp（最新架构）
 
-`eapp` 是 LYShop 的独立商家移动端工程，面向单店铺后台运营场景，支持 `H5 + 微信小程序 + App`。
+`eapp/` 是 lyshop 的商家专用移动端，覆盖 `H5 + 微信小程序 + App` 三端，承担「订单履约、商品运营、营销活动、客户与店铺管理」的成熟移动端商家工作台能力。
 
-在线演示：<a href="https://ijry.github.io/lyshop/eapp-demo/index.html#/pages/dashboard/index" target="_blank" rel="noreferrer">eapp 商家端 H5 演示（Mock 免登录）</a>
+## 在线演示
 
-## 功能说明
+`npm run dev:h5 -- --mode demo` 启动后即为 mock 演示模式，账号 admin / admin123 自动登录。生产模式连接后端 `/admin/api/*`。
 
-- 五个主导航：工作台、订单、商品、营销、我的
-- 工作台：经营概览、待办事项、快捷入口
-- 订单：列表、详情、发货弹窗（首次/补发、快递/同城）、物流轨迹同步与节点展示
-- 售后：列表、详情、审核通过/拒绝、确认收货、登记退款、完结、关闭
-- 商品：列表、上下架、商品编辑（高频字段）
-- 营销：优惠券、秒杀/拼团/砍价活动管理、活动商品管理
-- 我的：消息中心、IM 会话、店铺设置、管理员、角色权限
+## 顶层结构
 
-## 接口变化
+- **5 个底部 Tab**：工作台 / 订单 / 商品 / 营销 / 我的
+- **图表能力**：基于 `ly-charts (qiun-data-charts)` 跨端集成，业务方用 `ChartPanel + AreaChart / RingChart / BarChart` 统一调用
+- **商家高阶组件库**：`components/biz/` 提供 PageHeader / MetricCard / ActionGrid / TodoCenter / AnnouncementBar / FilterDrawer / BatchBar / BatchResultPopup / Timeline / EmptyState / OrderCard / ProductCard / AfterSaleCard / SkuMatrixEditor / CategoryTreePicker / RichTextEditor / ShipPopup / RepricingPopup / RemarkPopup
+- **composables**：`useDashboard / useOrderList / useProductList / useBatchSelection / useFilter / useRequest`
 
-- `eapp` 复用现有后台接口：`/admin/api/*`
-- 无新增商家专属接口前缀与独立后端服务
-- 鉴权沿用后台登录与 token 语义，移动端使用独立本地存储键隔离会话
-- 商品接口按后台语义提交：
-  - 新增商品：`POST /products`，body 为 `{ product, skus?, images? }`
-  - 编辑商品：`PUT /products/:id`，body 为 `{ product, skus?, images? }`
-- 订单发货接口使用统一发货参数：
-  - `PUT /orders/:id/ship` 支持 `delivery_type`、`ship_type`、`after_sale_case_id`、物流/骑手字段
-  - `POST /orders/:id/shipments/:shipment_id/sync` + `GET /orders/:id/shipments/:shipment_id/tracks` 用于轨迹同步与查询
-- 售后动作复用后台接口：
-  - 审核 `/after-sales/:id/audit`
-  - 收货 `/after-sales/:id/receive`
-  - 退款 `/after-sales/:id/refund`
-  - 完结 `/after-sales/:id/complete`
-  - 关闭 `/after-sales/:id/close`
+## 工作台（Dashboard）
 
-## 部署与配置影响
+- 顶部：店铺名（来自 `/shops/current`）+ 扫码 + 消息入口
+- 营业概览：今日营收 / 今日订单 / 客单价 + 同环比小标签
+- 营收趋势：近 7 / 30 日切换的 `AreaChart`
+- 订单状态分布：`RingChart` + 图例
+- 公告通知带（横滑）
+- 待办中心 6 项：待发货 / 待审售后 / 待回消息 / 库存预警 / 待开发票 / 待处理退款（点击直跳到对应业务页并自动应用筛选）
+- 快捷九宫格 8 项：扫码发货 / 新建商品 / 优惠券 / 装修 / 数据 / 客户 / 财务 / WMS（后 4 项 P2 阶段实现）
+- 商品销量 Top5 `BarChart`
+- 库存预警列表
 
-- 新增 `eapp/` 前端工程构建与发布
-- 后端无新增环境变量与配置项
-- 网关仅需新增 `eapp` 静态资源托管路径（H5 部署时）
-- 小程序与 App 端仅新增前端构建产物，不涉及后端部署拓扑调整
+## 订单
 
-## 联调验收清单
+### 列表
+- 顶部 9 状态 tabs：全部 / 待付款 / 待发货 / 已发货 / 已完成 / 已关闭 / 售后中 / 待评价 / 待开票
+- 高级筛选抽屉：关键词、金额区间、物流公司、收货省份、支付方式、是否含售后、时间
+- 卡片操作菜单：详情 / 改价 / 催付 / 发货 / 备注 / 打单
+- 长按或勾选进入批量模式：批量发货 / 批量备注 / 批量关闭
 
-- 登录态
-  - 使用后台管理员账号登录后可进入工作台
-  - token 过期后自动回到登录页并清理本地会话
-- 订单与物流
-  - 订单列表按状态筛选可用
-  - 订单详情可执行首次发货（快递/同城）
-  - 补发模式可提交 `after_sale_case_id`
-  - 快递单可执行轨迹同步并展示节点
-- 售后流程
-  - 审核通过/拒绝仅在 `applied` 状态可用
-  - 确认收货仅在 `user_returning` 状态可用
-  - 登记退款仅在 `refund_pending` 状态可用
-  - 完结仅在 `refunded`、`reshipped` 状态可用
-  - 关闭仅在可关闭状态集合可用
-- 商品与营销
-  - 商品上下架调用 `PUT /products/:id` 并传 `{ product: { status } }`
-  - 商品新增/编辑调用包装体 `{ product, skus?, images? }`
-  - 秒杀/拼团/砍价页面可创建活动并维护活动商品
-- 多端构建
-  - `npm run build:h5`
-  - `npm run build:mp-weixin`
-  - `npm run build:app`
+### 详情
+- 顶部订单进度 Timeline（下单→支付→发货→签收→完成）
+- 操作 ActionSheet（改价 / 备注 / 打单 / 催付）
+- 物流卡片、商品明细、操作日志
+
+### 批量操作集中页 `/pages/order/batch`
+- 由列表「批量发货」或工作台「扫码发货」进入
+- 支持统一选择快递公司，按行填写运单号
+- 提交后展示成功/失败结果
+
+### 面单预览 `/pages/order/print-preview`
+- 服务端模板 HTML 通过 `rich-text` 渲染（演示模式 mock 静态模板）
+
+## 售后
+
+- 列表：6 状态 tabs + 售后类型筛选
+- 详情：5 步进度条 / 协商沟通时间线（双向带头像气泡）/ 商家凭证上传 / 双向物流卡片 / 操作按钮按状态机启用
+
+## 商品
+
+### 列表
+- 4 状态 tabs：在售 / 仓库 / 预警 / 全部
+- 筛选：关键词 + 排序（销量 / 库存 / 价格 / 最新）
+- 卡片：缩略图 + 多指标 + 状态徽标 + 操作
+- 批量：批量上下架 / 批量分类 / 批量调价（百分比）
+- FAB：新建 / AI 提示
+
+### 编辑
+- 分段表单：基础信息 / 主图轮播 / 详情（演示期只读 RichTextEditor）/ 价格库存 / 规格 SKU / 分类与标签 / 物流与营销 / 状态控制
+- 多规格 SKU 矩阵编辑器：动态规格组 + 全组合矩阵 + 批量赋价/赋库存
+
+### 分类管理 `/pages/product/category-tree`
+- 三级树展开/折叠 + 改名 / 删除 / 增子
+
+## 营销 / 我的
+
+P1 保留现有实现（优惠券 / 秒杀 / 拼团 / 砍价 / 店铺设置 / 管理员 / 角色等），P2 之后会与商家工作台进一步集成。
+
+## mock 演进
+
+- 所有 mock 路由与示例数据集中维护在 `admin/src/mock/index.ts`，eapp 通过 `import.meta.env.VITE_MOCK==='true'` 触发 `matchMock`
+- mock 写入型接口（改价、批量发货、协商消息、商家凭证、商品批量、分类 CRUD）会修改内存源数组，刷新后保留状态
+- 批量接口返回 `success_ids[] / fail[{id,reason}]` 结构，含部分失败示例
+
+## 平台兼容
+
+- H5：主跑 demo，`env(safe-area-inset-top)` 在桌面自然降级为 0
+- 微信小程序：ly-charts 自带 canvas 兼容；富文本编辑器演示期只读
+- App：面单预览用 `rich-text`/`web-view` 渲染
+- 旧机型：九宫格不超过 8 项、公告带最多 5 条
+
+## 后续 Phase
+
+- **P2**：商品分类树管理强化 / 规格模板 / 营销补会员价&分销&积分商城 / 移动端装修编辑器 / 优惠券深度
+- **P3**：客户列表/标签/分群/会员卡 / 数据分析专题 / 群发推送 / 评价管理
+- **P4**：账户/流水/对账/提现 / WMS 出入库/盘点/调拨 / IM 多坐席与工单 / 系统消息分级

@@ -48,4 +48,34 @@
 
 - 商家移动端 `eapp` 与管理后台统一复用 `/admin/api/*` 资源。
 - 本次无新增 `merchant` 前缀接口，无需额外网关转发规则。
+
+## 商家移动端工作台与基础接口
+
+### GET /dashboard（升级）
+
+在原有 today_* 与待办字段基础上，追加返回：
+
+- `today_avg_price`
+- `compare`：`{ revenue_yoy, revenue_mom, order_yoy, order_mom }` （0.18 表示 +18%）
+- `trend`：`{ revenue_7d, revenue_30d, order_7d }`，每项为 `{ categories: string[], series: [{ name, data }] }`
+- `status_distribution`：`[{ name, value }]`
+- `hot_products`：`[{ id, title, cover, sold_qty }]`
+- `announcements`：`[{ id, title, content, type, created_at }]`
+- `stock_warning_list`：`[{ product_id, sku_id, title, stock, threshold }]`
+
+### GET /shops/current
+
+当前店铺：`{ id, name, logo, owner, decor_status }`
+
+### GET /announcements
+
+平台公告列表：标准 `{ list, total, page, size }` 分页结构。
+
+### POST /after-sales/{id}/messages
+
+售后协商消息：`{ from: 'merchant'|'user', content, images? }` → `{ id, messages: [...] }`
+
+### POST /after-sales/{id}/evidences
+
+商家凭证：`{ images: string[], remark? }` → `{ id, evidences: [...] }`
 - eapp 侧仅增加客户端请求封装与会话存储键，不改变服务端接口语义。

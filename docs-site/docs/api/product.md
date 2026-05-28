@@ -74,4 +74,29 @@
 - 数据库新增迁移：
   - 新表 `product_favorites`
   - `products` 表新增字段 `favorite_count`
+
+## 商家移动端商品增强接口
+
+### GET /categories/tree
+
+返回 3 级分类树：`[{ id, parent_id, name, sort, product_count, children: [...] }]`
+
+### POST /categories | PUT /categories/{id} | DELETE /categories/{id}
+
+CRUD：POST `{ name, parent_id?, sort? }`、PUT `{ name?, sort? }`、DELETE 无 body。
+
+### PUT /products/batch/status | category | price
+
+批量上下架 / 批量分类 / 批量调价。
+
+请求：
+- status: `{ ids: number[], status: 0|1 }`
+- category: `{ ids: number[], category_id }`
+- price: `{ ids: number[], adjustment: { type: 'set'|'percent'|'amount', value, scope?: 'all'|'main_sku' } }`
+
+返回：`{ success_ids[], fail: [{id, reason}] }`
+
+### GET /products?status=&category_id=&sort_by=&low_stock=
+
+列表扩展查询参数。`sort_by` 取值 `sales|stock|price_asc|price_desc|created`。
 - 依赖现有自动迁移流程，无需额外配置项。

@@ -243,4 +243,51 @@
   - `primary_driver` / `secondary_driver`：主备驱动
   - `polling_enabled`：自动轮询开关
   - `polling_interval_seconds`：轮询频率（秒）
+
+## 商家移动端订单增强接口
+
+> 用于商家移动端 eapp 的批量与高频操作，统一前缀 `/admin/api`。
+
+### POST /orders/{id}/repricing
+
+订单改价（仅 status=1 可用）。
+
+请求：`{ items: [{ item_id, price }], remark }`
+返回：`{ id, amount_breakdown: { goods_amount, discount_amount, payable_amount } }`
+
+### POST /orders/{id}/notes
+
+订单备注。
+
+请求：`{ content, visible_to?: 'merchant_only' }`
+返回：`{ id, notes: [...] }`
+
+### POST /orders/{id}/remind-pay
+
+催付款（短信 / 微信）。
+
+请求：`{ channel: 'sms' | 'wx' }`
+返回：`{ sent_at, channel }`
+
+### GET /orders/{id}/print-template
+
+电子面单模板。
+
+返回：`{ template: '<html>...</html>' }`
+
+### GET /orders/{id}/timeline
+
+订单时间线。
+
+返回：`[{ stage, status, time, content }]`
+
+### POST /orders/batch/ship | notes | repricing | close
+
+批量操作系列。`ship` 接收数组 `[{order_id,company,tracking_no}]`；其他统一 `{ ids[], ... }`。
+
+返回：`{ success_ids: number[], fail: [{ id, reason }] }`
+
+### GET /orders?keyword=&time_start=&time_end=&amount_min=&amount_max=&logistics_company=&province=&pay_method=&has_after_sale=
+
+列表接口扩展查询参数。其它字段与原接口一致。
   - `polling_batch_size`：单批处理数量
