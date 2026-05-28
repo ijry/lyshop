@@ -25,6 +25,7 @@
 - [后台概览接口](./admin)
 - [商品接口](./product)
 - [订单接口](./order)
+- [仓储接口](./wms)
 - [营销接口](./marketing)
 - [IM 接口](./im)
 - [支付接口](./payment)

@@ -64,6 +64,7 @@ export default defineConfig({
             { text: "后台概览接口", link: "/api/admin" },
             { text: "商品接口", link: "/api/product" },
             { text: "订单接口", link: "/api/order" },
+            { text: "仓储接口", link: "/api/wms" },
             { text: "装修接口", link: "/api/decor" },
             { text: "营销接口", link: "/api/marketing" },
             { text: "IM 接口", link: "/api/im" },
