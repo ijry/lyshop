@@ -54,6 +54,84 @@
 
           <div>
             <div class="flex items-center justify-between mb-2">
+              <label class="block text-sm font-medium text-slate-700">{{ $t('product.form.skuSection') }}</label>
+              <button class="text-xs text-blue-600 hover:underline" @click="addSku">{{ $t('product.form.addSku') }}</button>
+            </div>
+            <div class="space-y-3">
+              <div v-for="(sku, skuIdx) in skus" :key="sku.local_key" class="border border-slate-200 rounded-xl p-3">
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-xs text-slate-500">{{ $t('product.form.skuLabel', { idx: skuIdx + 1, id: sku.id || '-' }) }}</span>
+                  <button class="px-2 py-1 text-xs rounded bg-red-50 text-red-600 hover:bg-red-100" @click="removeSku(skuIdx)">{{ $t('common.delete') }}</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <input
+                    v-model="sku.sku_code"
+                    class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                    :placeholder="$t('product.form.skuCodePlaceholder')"
+                  />
+                  <input
+                    v-model.number="sku.price"
+                    type="number"
+                    step="0.01"
+                    class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                    :placeholder="$t('product.form.price')"
+                  />
+                  <input
+                    v-model.number="sku.stock"
+                    type="number"
+                    class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                    :placeholder="$t('product.form.stock')"
+                  />
+                </div>
+
+                <div class="mt-3">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs text-slate-500">{{ $t('product.form.skuAttrs') }}</span>
+                    <button class="text-xs text-blue-600 hover:underline" @click="addSkuAttr(skuIdx)">{{ $t('product.form.addSkuAttr') }}</button>
+                  </div>
+                  <div class="space-y-2">
+                    <div v-for="(attr, attrIdx) in sku.attrs" :key="attr.local_key" class="grid grid-cols-[1fr_1fr_auto] gap-2">
+                      <input
+                        v-model="attr.name"
+                        class="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                        :placeholder="$t('product.form.skuAttrName')"
+                      />
+                      <input
+                        v-model="attr.value"
+                        class="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                        :placeholder="$t('product.form.skuAttrValue')"
+                      />
+                      <button class="px-3 py-2 text-xs bg-slate-100 rounded-lg hover:bg-slate-200" @click="removeSkuAttr(skuIdx, attrIdx)">{{ $t('common.delete') }}</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="vipEnabled && vipLevels.length" class="mt-3 rounded-lg border border-amber-200 bg-amber-50/40 p-3">
+                  <div class="text-xs font-medium text-amber-700 mb-2">{{ $t('product.form.vipPriceHook') }}</div>
+                  <p v-if="!canEditVip" class="text-[11px] text-slate-500 mb-2">{{ $t('product.form.vipPriceReadonly') }}</p>
+                  <p v-if="sku.id <= 0" class="text-[11px] text-slate-500 mb-2">{{ $t('product.form.vipPriceSaveHint') }}</p>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div v-for="level in vipLevels" :key="`lvl-${level.id}`">
+                      <label class="block text-xs text-slate-500 mb-1">{{ level.name }}</label>
+                      <input
+                        :value="getVipPriceValue(sku.id, Number(level.id))"
+                        type="number"
+                        step="0.01"
+                        class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                        :placeholder="$t('product.form.vipPricePlaceholder')"
+                        :disabled="sku.id <= 0 || !canEditVip"
+                        @input="setVipPriceValue(sku.id, Number(level.id), ($event.target as HTMLInputElement).value)"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p v-if="vipEnabled && !vipLevels.length" class="text-xs text-slate-400">{{ $t('product.form.vipPriceNoLevel') }}</p>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-2">
               <label class="block text-sm font-medium text-slate-700">{{ $t('product.form.carousel') }}</label>
               <button class="text-xs text-blue-600 hover:underline" @click="addGalleryImage('')">{{ $t('product.form.addBlank') }}</button>
             </div>
@@ -193,7 +271,9 @@
 import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { createProduct, generateAiImage, getAiModels, getAiTask, getCategories, getProduct, updateProduct, uploadFile } from '@/api/plugins'
+import { createProduct, createVipSkuPrice, deleteVipSkuPrice, generateAiImage, getAiModels, getAiTask, getCategories, getProduct, getVipLevels, getVipSkuPrices, updateProduct, updateVipSkuPrice, uploadFile } from '@/api/plugins'
+import { getMenus, type AdminMenuGroupedResponse, type AdminMenuItem, type AdminMenuResponse } from '@/api/auth'
+import { useAuthStore } from '@/stores/auth'
 import RichTextEditor from '@/views/decor/editors/RichTextEditor.vue'
 
 type DetailBlock = {
@@ -202,15 +282,53 @@ type DetailBlock = {
   props: Record<string, any>
 }
 
+type SkuAttr = {
+  local_key: string
+  name: string
+  value: string
+}
+
+type EditableSku = {
+  local_key: string
+  id: number
+  sku_code: string
+  price: number
+  stock: number
+  attrs: SkuAttr[]
+}
+
+type VipLevel = {
+  id: number
+  name: string
+}
+
+type VipSkuPrice = {
+  id: number
+  product_id: number
+  sku_id: number
+  level_id: number
+  vip_price: number
+  status: number
+}
+
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
+const auth = useAuthStore()
 const isEdit = computed(() => !!route.params.id)
+const canEditVip = computed(() => {
+  if (!Array.isArray(auth.perms) || auth.perms.length === 0) return true
+  return auth.hasPermission('vip:edit')
+})
 const categories = ref<any[]>([])
 const saving = ref(false)
 const error = ref('')
 const currentBlockIndex = ref(0)
 const galleryImages = ref<Array<{ url: string; sort: number }>>([])
+const vipEnabled = ref(false)
+const vipLevels = ref<VipLevel[]>([])
+const vipPriceRows = ref<VipSkuPrice[]>([])
+const vipPriceMap = ref<Record<number, Record<number, string>>>({})
 
 const form = ref({
   title: '', price: 0, origin_price: 0, stock: 0,
@@ -220,6 +338,8 @@ const form = ref({
 const detailBlocks = ref<DetailBlock[]>([
   { id: `b-${Date.now()}`, type: 'text', props: { text: '' } }
 ])
+
+const skus = ref<EditableSku[]>([createEmptySku()])
 
 const aiModels = ref<any[]>([])
 const aiImages = ref<string[]>([])
@@ -237,6 +357,116 @@ const aiForm = ref({
 
 const selectedModel = computed(() => aiModels.value.find((m) => Number(m.id) === Number(aiForm.value.model_id)))
 const selectedModelSupportsRef = computed(() => Number(selectedModel.value?.supports_ref_image || 0) === 1)
+
+function makeLocalKey(prefix: string) {
+  return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`
+}
+
+function createEmptySkuAttr(): SkuAttr {
+  return {
+    local_key: makeLocalKey('sku-attr'),
+    name: '',
+    value: '',
+  }
+}
+
+function createEmptySku(): EditableSku {
+  return {
+    local_key: makeLocalKey('sku'),
+    id: 0,
+    sku_code: '',
+    price: Number(form.value.price || 0),
+    stock: Number(form.value.stock || 0),
+    attrs: [createEmptySkuAttr()],
+  }
+}
+
+function parseSkuAttrs(raw: any): SkuAttr[] {
+  let rows: any[] = []
+  if (Array.isArray(raw)) {
+    rows = raw
+  } else if (typeof raw === 'string' && raw.trim()) {
+    try {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) rows = parsed
+    } catch {
+      rows = []
+    }
+  }
+  const mapped = rows.map((item: any) => ({
+    local_key: makeLocalKey('sku-attr'),
+    name: String(item?.name || ''),
+    value: String(item?.value || ''),
+  }))
+  return mapped.length ? mapped : [createEmptySkuAttr()]
+}
+
+function parseSkus(list: any[]) {
+  const rows = Array.isArray(list) ? list : []
+  skus.value = rows.map((item: any) => ({
+    local_key: makeLocalKey('sku'),
+    id: Number(item?.id || 0),
+    sku_code: String(item?.sku_code || ''),
+    price: Number(item?.price || 0),
+    stock: Number(item?.stock || 0),
+    attrs: parseSkuAttrs(item?.attrs),
+  }))
+  if (!skus.value.length) {
+    skus.value = [createEmptySku()]
+  }
+}
+
+function normalizeSkuAttrs(attrs: SkuAttr[]) {
+  return attrs
+    .map((item) => ({ name: String(item.name || '').trim(), value: String(item.value || '').trim() }))
+    .filter((item) => item.name || item.value)
+}
+
+function buildSkusPayload() {
+  return skus.value
+    .map((sku) => {
+      const row: any = {
+        sku_code: String(sku.sku_code || '').trim(),
+        price: Number(sku.price || 0),
+        stock: Number(sku.stock || 0),
+        attrs: normalizeSkuAttrs(sku.attrs),
+      }
+      if (sku.id > 0) row.id = sku.id
+      return row
+    })
+    .filter((row: any) => row.sku_code || row.price > 0 || row.stock > 0 || row.attrs.length > 0)
+}
+
+function addSku() {
+  skus.value.push(createEmptySku())
+}
+
+function removeSku(index: number) {
+  const target = skus.value[index]
+  if (!target) return
+  if (target.id > 0) {
+    delete vipPriceMap.value[target.id]
+  }
+  skus.value.splice(index, 1)
+  if (!skus.value.length) {
+    skus.value = [createEmptySku()]
+  }
+}
+
+function addSkuAttr(skuIndex: number) {
+  const target = skus.value[skuIndex]
+  if (!target) return
+  target.attrs.push(createEmptySkuAttr())
+}
+
+function removeSkuAttr(skuIndex: number, attrIndex: number) {
+  const target = skus.value[skuIndex]
+  if (!target) return
+  target.attrs.splice(attrIndex, 1)
+  if (!target.attrs.length) {
+    target.attrs = [createEmptySkuAttr()]
+  }
+}
 
 function makeDetailPayload() {
   return {
@@ -323,6 +553,133 @@ function removeGalleryImage(index: number) {
   galleryImages.value.forEach((item, idx) => { item.sort = idx })
 }
 
+function isGroupedResponse(data: AdminMenuResponse): data is AdminMenuGroupedResponse {
+  return !!data && !Array.isArray(data) && Array.isArray((data as AdminMenuGroupedResponse).groups)
+}
+
+function flattenMenus(rows: AdminMenuItem[]): AdminMenuItem[] {
+  const list = Array.isArray(rows) ? rows : []
+  return list.flatMap((row) => [row, ...flattenMenus(row.children || [])])
+}
+
+async function detectVipFeatureEnabled() {
+  try {
+    const data = await getMenus()
+    const menuRows = isGroupedResponse(data)
+      ? flattenMenus(data.groups.flatMap((group) => group.menus || []))
+      : (Array.isArray(data) ? data : [])
+    vipEnabled.value = menuRows.some((item) => String(item.path || '').startsWith('/vip'))
+  } catch {
+    vipEnabled.value = auth.hasPermission('vip:view') || auth.hasPermission('vip:edit')
+  }
+}
+
+function setVipPriceMap(rows: VipSkuPrice[]) {
+  const next: Record<number, Record<number, string>> = {}
+  for (const row of rows) {
+    const skuID = Number(row.sku_id || 0)
+    const levelID = Number(row.level_id || 0)
+    if (skuID <= 0 || levelID <= 0) continue
+    if (!next[skuID]) next[skuID] = {}
+    next[skuID][levelID] = Number(row.vip_price || 0) > 0 ? String(row.vip_price) : ''
+  }
+  vipPriceMap.value = next
+}
+
+async function loadVipMetaAndPrices(productID: number) {
+  if (!vipEnabled.value || productID <= 0) return
+  try {
+    const levelData: any = await getVipLevels({ page: 1, size: 200 })
+    vipLevels.value = Array.isArray(levelData?.list)
+      ? levelData.list
+      : (Array.isArray(levelData) ? levelData : [])
+
+    const priceData: any = await getVipSkuPrices({ page: 1, size: 1000, product_id: productID, status: 1 })
+    vipPriceRows.value = Array.isArray(priceData?.list)
+      ? priceData.list
+      : (Array.isArray(priceData) ? priceData : [])
+
+    setVipPriceMap(vipPriceRows.value)
+  } catch {
+    vipLevels.value = []
+    vipPriceRows.value = []
+    vipPriceMap.value = {}
+  }
+}
+
+function getVipPriceValue(skuID: number, levelID: number): string {
+  if (skuID <= 0 || levelID <= 0) return ''
+  return vipPriceMap.value[skuID]?.[levelID] || ''
+}
+
+function setVipPriceValue(skuID: number, levelID: number, value: string) {
+  if (skuID <= 0 || levelID <= 0) return
+  if (!vipPriceMap.value[skuID]) vipPriceMap.value[skuID] = {}
+  vipPriceMap.value[skuID][levelID] = String(value || '').trim()
+}
+
+function vipRowKey(skuID: number, levelID: number) {
+  return `${skuID}_${levelID}`
+}
+
+function buildDesiredVipPriceRows(productID: number) {
+  const desired: Array<{ product_id: number; sku_id: number; level_id: number; vip_price: number; status: number }> = []
+  for (const sku of skus.value) {
+    if (Number(sku.id) <= 0) continue
+    for (const level of vipLevels.value) {
+      const levelID = Number(level.id || 0)
+      if (levelID <= 0) continue
+      const raw = getVipPriceValue(Number(sku.id), levelID)
+      if (!raw) continue
+      const price = Number(raw)
+      if (!Number.isFinite(price) || price <= 0) {
+        throw new Error(t('product.form.vipPriceInvalid', { skuId: sku.id, level: level.name || levelID }))
+      }
+      desired.push({
+        product_id: productID,
+        sku_id: Number(sku.id),
+        level_id: levelID,
+        vip_price: Number(price.toFixed(2)),
+        status: 1,
+      })
+    }
+  }
+  return desired
+}
+
+async function syncVipPrices(productID: number) {
+  if (!vipEnabled.value || !isEdit.value || !canEditVip.value || !vipLevels.value.length) return
+  const desiredRows = buildDesiredVipPriceRows(productID)
+  const desiredMap = new Map<string, { product_id: number; sku_id: number; level_id: number; vip_price: number; status: number }>()
+  for (const row of desiredRows) {
+    desiredMap.set(vipRowKey(row.sku_id, row.level_id), row)
+  }
+
+  const existingMap = new Map<string, VipSkuPrice>()
+  for (const row of vipPriceRows.value) {
+    existingMap.set(vipRowKey(Number(row.sku_id || 0), Number(row.level_id || 0)), row)
+  }
+
+  for (const [key, row] of desiredMap) {
+    const existing = existingMap.get(key)
+    if (!existing) {
+      await createVipSkuPrice(row)
+      continue
+    }
+    if (Number(existing.vip_price || 0) !== row.vip_price || Number(existing.status || 0) !== 1) {
+      await updateVipSkuPrice(Number(existing.id), { vip_price: row.vip_price, status: 1 })
+    }
+  }
+
+  for (const [key, row] of existingMap) {
+    if (!desiredMap.has(key)) {
+      await deleteVipSkuPrice(Number(row.id))
+    }
+  }
+
+  await loadVipMetaAndPrices(productID)
+}
+
 async function onRefImageChange(event: Event) {
   const file = (event.target as HTMLInputElement).files?.[0]
   if (!file) return
@@ -404,15 +761,21 @@ async function save() {
     ...form.value,
     detail: makeDetailPayload(),
   }
+  const skusPayload = buildSkusPayload()
   const imagesPayload = galleryImages.value
     .filter((item) => item.url.trim())
     .map((item, idx) => ({ url: item.url.trim(), sort: idx }))
 
   try {
     if (isEdit.value) {
-      await updateProduct(Number(route.params.id), { product: payload, images: imagesPayload })
+      const productID = Number(route.params.id)
+      await updateProduct(productID, { product: payload, skus: skusPayload, images: imagesPayload })
+      if (vipEnabled.value && canEditVip.value) {
+        await loadVipMetaAndPrices(productID)
+        await syncVipPrices(productID)
+      }
     } else {
-      await createProduct({ product: payload, skus: [], images: imagesPayload })
+      await createProduct({ product: payload, skus: skusPayload, images: imagesPayload })
     }
     router.push('/product/list')
   } catch (e: any) {
@@ -426,9 +789,11 @@ onMounted(async () => {
   categories.value = ((await getCategories()) || []) as any[]
   aiModels.value = ((await getAiModels()) || []) as any[]
   if (aiModels.value.length) aiForm.value.model_id = Number(aiModels.value[0].id)
+  await detectVipFeatureEnabled()
 
   if (isEdit.value) {
-    const data: any = await getProduct(Number(route.params.id))
+    const productID = Number(route.params.id)
+    const data: any = await getProduct(productID)
     Object.assign(form.value, {
       title: data.title || '',
       price: data.price || 0,
@@ -439,11 +804,15 @@ onMounted(async () => {
       status: data.status ?? 1,
     })
     parseDetail(data.detail)
+    parseSkus(data.skus)
     galleryImages.value = Array.isArray(data.images) ? data.images.map((item: any, idx: number) => ({
       url: item.url || '',
       sort: item.sort ?? idx,
     })) : []
-    aiForm.value.target_product_id = Number(route.params.id)
+    aiForm.value.target_product_id = productID
+    if (vipEnabled.value) {
+      await loadVipMetaAndPrices(productID)
+    }
   }
 })
 </script>

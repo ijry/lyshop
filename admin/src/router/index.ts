@@ -38,7 +38,6 @@ const router = createRouter({
         { path: 'vip/plans', name: 'nav.vipPlan', component: () => import('@/views/vip/PlanList.vue'), meta: { titleKey: 'nav.vipPlan' } },
         { path: 'vip/levels', name: 'nav.vipLevel', component: () => import('@/views/vip/LevelList.vue'), meta: { titleKey: 'nav.vipLevel' } },
         { path: 'vip/coupon-rules', name: 'nav.vipCouponRule', component: () => import('@/views/vip/CouponRuleList.vue'), meta: { titleKey: 'nav.vipCouponRule' } },
-        { path: 'vip/sku-prices', name: 'nav.vipSkuPrice', component: () => import('@/views/vip/SkuPriceList.vue'), meta: { titleKey: 'nav.vipSkuPrice' } },
         // System
         { path: 'system/site',   name: 'nav.siteSettings', component: () => import('@/views/system/SiteSettings.vue'), meta: { titleKey: 'nav.siteSettings' } },
         { path: 'system/config', name: 'nav.configCenter', component: () => import('@/views/system/PaymentConfig.vue'), meta: { titleKey: 'nav.configCenter' } },

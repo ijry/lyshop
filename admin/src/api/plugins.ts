@@ -24,6 +24,11 @@ export const uploadFile = (file: File) => {
 export const getAiModels = () => request.get<never, any[]>('/ai/models')
 export const generateAiImage = (data: any) => request.post('/ai/generate', data)
 export const getAiTask = (id: number) => request.get(`/ai/tasks/${id}`)
+export const getVipLevels = (params?: any) => request.get('/vip/levels', { params })
+export const getVipSkuPrices = (params?: any) => request.get('/vip/sku-prices', { params })
+export const createVipSkuPrice = (data: any) => request.post('/vip/sku-prices', data)
+export const updateVipSkuPrice = (id: number, data: any) => request.put(`/vip/sku-prices/${id}`, data)
+export const deleteVipSkuPrice = (id: number) => request.delete(`/vip/sku-prices/${id}`)
 
 // ---- Order ----
 export const getOrders = (params?: any) => request.get('/orders', { params })

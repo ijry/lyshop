@@ -85,8 +85,9 @@ const vipCouponRulesSource: any[] = [
   { id: 2, name: '金卡月券', coupon_name: '满199减30', monthly_limit: 2 },
 ]
 const vipSkuPricesSource: any[] = [
-  { id: 1, sku_id: 1001, level_name: '银卡', vip_price: 88 },
-  { id: 2, sku_id: 1001, level_name: '金卡', vip_price: 82 },
+  { id: 1, product_id: 1, sku_id: 1, level_id: 1, level_name: '银卡', vip_price: 4888, status: 1 },
+  { id: 2, product_id: 1, sku_id: 1, level_id: 2, level_name: '金卡', vip_price: 4699, status: 1 },
+  { id: 3, product_id: 1, sku_id: 2, level_id: 2, level_name: '金卡', vip_price: 5399, status: 1 },
 ]
 const seckillActivitiesSource: any[] = [
   { id: 1, type: 'seckill', name: '午场秒杀', start_at: '2026-05-27T10:00:00Z', end_at: '2026-05-27T12:00:00Z', status: 1 },
@@ -473,7 +474,6 @@ const routes: Record<string, any> = {
             { title: '会员套餐', path: '/vip/plans' },
             { title: '会员等级', path: '/vip/levels' },
             { title: '会员领券规则', path: '/vip/coupon-rules' },
-            { title: '会员SKU价', path: '/vip/sku-prices' },
           ]},
         ],
       },
@@ -833,10 +833,27 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     }
   }
   const vipCrud = (path: string, source: any[]) => {
-    if (key === `GET ${path}`) return { matched: true, data: { list: clone(source), total: source.length, page: 1, size: 20 } }
+    if (key === `GET ${path}`) {
+      let list = clone(source)
+      if (path === '/admin/api/vip/sku-prices') {
+        const productID = Number(query.product_id || 0)
+        const skuID = Number(query.sku_id || 0)
+        const levelID = Number(query.level_id || 0)
+        const hasStatus = query.status !== undefined && query.status !== null && String(query.status).trim() !== ''
+        const status = Number(query.status || 0)
+        if (productID > 0) list = list.filter((item: any) => Number(item.product_id || 0) === productID)
+        if (skuID > 0) list = list.filter((item: any) => Number(item.sku_id || 0) === skuID)
+        if (levelID > 0) list = list.filter((item: any) => Number(item.level_id || 0) === levelID)
+        if (hasStatus) list = list.filter((item: any) => Number(item.status || 0) === status)
+      }
+      const page = Math.max(1, Number(query.page || 1))
+      const size = Math.max(1, Number(query.size || 20))
+      const offset = (page - 1) * size
+      return { matched: true, data: { list: list.slice(offset, offset + size), total: list.length, page, size } }
+    }
     if (key === `POST ${path}`) {
       const nextID = Math.max(0, ...source.map((item: any) => Number(item.id || 0))) + 1
-      source.push({ id: nextID, ...(params || {}) })
+      source.push({ id: nextID, status: 1, ...(params || {}) })
       return { matched: true, data: null }
     }
     if (key.startsWith(`PUT ${path}/`)) {

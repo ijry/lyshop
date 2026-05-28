@@ -191,6 +191,23 @@ func ReplaceProductImages(ctx context.Context, productID uint64, images []produc
 	})
 }
 
+func ReplaceProductSkus(ctx context.Context, productID uint64, skus []productmodel.ProductSku) error {
+	return db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("product_id = ?", productID).Delete(&productmodel.ProductSku{}).Error; err != nil {
+			return err
+		}
+		for i := range skus {
+			skus[i].ProductID = productID
+		}
+		if len(skus) > 0 {
+			if err := tx.Create(&skus).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
 func hasProductID(set map[uint64]struct{}, productID uint64) bool {
 	_, ok := set[productID]
 	return ok

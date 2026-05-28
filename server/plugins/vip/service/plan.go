@@ -76,7 +76,14 @@ func CreateCouponRule(ctx context.Context, row *vipmodel.CouponRule) error {
 	return db.DB.WithContext(ctx).Create(row).Error
 }
 
-func ListSkuPrices(ctx context.Context, page, size int) ([]vipmodel.SkuPrice, int64, error) {
+type SkuPriceListQuery struct {
+	ProductID uint64
+	SkuID     uint64
+	LevelID   uint64
+	Status    int
+}
+
+func ListSkuPrices(ctx context.Context, page, size int, q SkuPriceListQuery) ([]vipmodel.SkuPrice, int64, error) {
 	if page <= 0 {
 		page = 1
 	}
@@ -84,6 +91,18 @@ func ListSkuPrices(ctx context.Context, page, size int) ([]vipmodel.SkuPrice, in
 		size = 20
 	}
 	tx := db.DB.WithContext(ctx).Model(&vipmodel.SkuPrice{})
+	if q.ProductID > 0 {
+		tx = tx.Where("product_id = ?", q.ProductID)
+	}
+	if q.SkuID > 0 {
+		tx = tx.Where("sku_id = ?", q.SkuID)
+	}
+	if q.LevelID > 0 {
+		tx = tx.Where("level_id = ?", q.LevelID)
+	}
+	if q.Status >= 0 {
+		tx = tx.Where("status = ?", q.Status)
+	}
 	var total int64
 	tx.Count(&total)
 	var list []vipmodel.SkuPrice
@@ -96,6 +115,17 @@ func CreateSkuPrice(ctx context.Context, row *vipmodel.SkuPrice) error {
 		return errors.New("会员价或折扣率至少填写一项")
 	}
 	return db.DB.WithContext(ctx).Create(row).Error
+}
+
+func UpdateSkuPrice(ctx context.Context, id uint64, updates map[string]any) error {
+	if len(updates) == 0 {
+		return nil
+	}
+	return db.DB.WithContext(ctx).Model(&vipmodel.SkuPrice{}).Where("id = ?", id).Updates(updates).Error
+}
+
+func DeleteSkuPrice(ctx context.Context, id uint64) error {
+	return db.DB.WithContext(ctx).Delete(&vipmodel.SkuPrice{}, id).Error
 }
 
 func OpenMembership(ctx context.Context, userID, planID uint64, now time.Time) (*vipmodel.UserAsset, error) {

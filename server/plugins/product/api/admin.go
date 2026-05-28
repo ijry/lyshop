@@ -111,6 +111,7 @@ func adminUpdateProduct(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	var req struct {
 		Product map[string]any              `json:"product"`
+		SKUs    []productmodel.ProductSku   `json:"skus"`
 		Images  []productmodel.ProductImage `json:"images"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -125,6 +126,12 @@ func adminUpdateProduct(c *gin.Context) {
 	if err := productsvc.UpdateProduct(c.Request.Context(), id, updates); err != nil {
 		response.Fail(c, 500, err.Error())
 		return
+	}
+	if req.SKUs != nil {
+		if err := productsvc.ReplaceProductSkus(c.Request.Context(), id, req.SKUs); err != nil {
+			response.Fail(c, 500, err.Error())
+			return
+		}
 	}
 	if req.Images != nil {
 		if err := productsvc.ReplaceProductImages(c.Request.Context(), id, req.Images); err != nil {
