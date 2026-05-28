@@ -37,3 +37,7 @@ docs-site/docs/public/eapp-demo/
 server/internal/embedstatic/assets/web/
 server/internal/embedstatic/assets/admin/
 server/internal/embedstatic/assets/h5/
+
+# 私有备忘（不入库）
+eapp-ui-reference-private.md
+
