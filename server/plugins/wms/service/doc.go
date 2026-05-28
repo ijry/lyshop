@@ -294,12 +294,12 @@ func lockWarehouse(tx *gorm.DB, id uint64) (*wmsmodel.Warehouse, error) {
 }
 
 func ensureWarehouseExists(tx *gorm.DB, warehouseID uint64) error {
-	var cnt int64
-	if err := tx.Model(&wmsmodel.Warehouse{}).Where("id = ?", warehouseID).Count(&cnt).Error; err != nil {
-		return WrapDBError("查询仓库失败", err)
-	}
-	if cnt == 0 {
-		return NotFoundError("仓库不存在")
+	var row wmsmodel.Warehouse
+	if err := tx.Where("id = ?", warehouseID).First(&row).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return NotFoundError("仓库不存在")
+		}
+		return err
 	}
 	return nil
 }
