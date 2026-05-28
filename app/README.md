@@ -31,7 +31,7 @@
 
 | 层级 | 技术 |
 |------|------|
-| 后端 | Go + Gin + GORM + MySQL + Redis |
+| 后端 | Go + Gin + GORM + SQLite/MySQL + Redis |
 | 管理后台 | Vue3 + Vite + TailwindCSS + shadcn-vue |
 | PC 商城 | Vue3 + Vite + UnoCSS |
 | 移动端 | uni-app + uview-plus 3.x + UnoCSS |
@@ -82,6 +82,7 @@ cp ../config.example.yaml ../config.yaml  # 编辑配置
 go mod tidy
 go run main.go
 # 首次启动自动建表 + 创建超管 admin/admin123
+# 默认使用 SQLite（lyshop.db），如需 MySQL 可改 database.dsn
 ```
 
 ### 2. 管理后台

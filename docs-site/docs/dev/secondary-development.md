@@ -27,7 +27,7 @@ LYShop 采用前后端分离架构，后端为 Go 单体服务，前端分为三
 
 ```
 lyshop/
-├── server/            # Go 后端（Gin + GORM + MySQL + Redis）
+├── server/            # Go 后端（Gin + GORM + SQLite/MySQL + Redis）
 │   ├── main.go        # 入口，空导入启用的插件
 │   ├── core/          # 框架核心
 │   │   ├── app/       # 应用初始化与启动
@@ -54,7 +54,7 @@ lyshop/
 |------|------|------|
 | **后端框架** | Go + Gin | Go 1.26+ |
 | **ORM** | GORM | v1.31+ |
-| **数据库** | MySQL | 8.0+ |
+| **数据库** | SQLite（默认）/ MySQL | SQLite 3+ / MySQL 8.0+ |
 | **缓存** | Redis | 6.0+ |
 | **认证** | JWT (HS256) | golang-jwt/v5 |
 | **前端框架** | Vue 3 (Composition API) | 3.4+ |
@@ -73,7 +73,7 @@ lyshop/
 
 - Go 1.21+
 - Node.js 18+
-- MySQL 8.0+
+- SQLite 3+（默认）或 MySQL 8.0+
 - Redis（可选，不配则部分缓存功能不可用）
 
 #### 后端启动
@@ -2833,7 +2833,7 @@ docker-compose up -d
 
 ```
 ┌─────────┐     ┌──────────────┐     ┌──────────┐
-│  Nginx  │────▶│  Go Server   │────▶│  MySQL   │
+│  Nginx  │────▶│  Go Server   │────▶│ Database │
 │ (反向代理) │     │  (:8080)     │     │          │
 └────┬────┘     └──────┬───────┘     └──────────┘
      │                 │
@@ -2848,7 +2848,7 @@ docker-compose up -d
 
 | 配置项 | 说明 | 示例 |
 |--------|------|------|
-| `database.dsn` | MySQL 连接串 | `root:pass@tcp(mysql:3306)/lyshop?...` |
+| `database.dsn` | 数据库连接串（默认 SQLite，兼容 MySQL） | `lyshop.db` / `root:pass@tcp(mysql:3306)/lyshop?...` |
 | `redis.addr` | Redis 地址 | `redis:6379` |
 | `jwt.secret` | JWT 密钥（**务必修改**） | 随机字符串 |
 | `server.mode` | 运行模式 | `release` |
@@ -2909,7 +2909,7 @@ server {
 - **生产环境必须修改 JWT Secret**：使用随机字符串
 - **使用 `server.mode: release`**：生产环境关闭 Gin 的 debug 日志
 - **WebSocket 需要 Nginx 特殊配置**：升级 HTTP 协议为 WebSocket
-- **数据库备份**：生产环境定期备份 MySQL 数据
+- **数据库备份**：生产环境定期备份当前使用的数据库（SQLite 文件或 MySQL 数据）
 
 ---
 

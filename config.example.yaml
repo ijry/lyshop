@@ -3,9 +3,12 @@ server:
   mode: debug   # debug | release
 
 database:
-  dsn: "root:password@tcp(mysql:3306)/lyshop?charset=utf8mb4&parseTime=True&loc=Local"
-  max_open: 100
-  max_idle: 10
+  # 默认 SQLite（开箱即用）
+  dsn: "lyshop.db"
+  # MySQL 示例：
+  # dsn: "root:password@tcp(mysql:3306)/lyshop?charset=utf8mb4&parseTime=True&loc=Local"
+  max_open: 1
+  max_idle: 1
 
 redis:
   addr: "redis:6379"

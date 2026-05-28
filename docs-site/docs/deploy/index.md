@@ -6,7 +6,7 @@
 
 - Node.js 18+
 - Go 1.21+
-- MySQL 8+
+- SQLite（默认）或 MySQL 8+
 - Redis（可选，按插件能力使用）
 
 ## 本地开发部署
@@ -15,9 +15,19 @@
 
 ```bash
 cd server
+cp ../config.example.yaml ../config.yaml
 go mod tidy
-go run main.go
+go run main.go -config ../config.yaml
 ```
+
+`config.example.yaml` 默认使用 SQLite：
+
+```yaml
+database:
+  dsn: "lyshop.db"
+```
+
+如需改为 MySQL，只需将 `database.dsn` 替换为 MySQL 连接串。
 
 ### 管理后台
 
@@ -113,6 +123,7 @@ server {
 - 环境变量与密钥管理
 - 数据卷持久化
 - 反向代理与 HTTPS
+- 若使用 MySQL 容器，请在 `config.yaml` 中将 `database.dsn` 设置为 MySQL 连接串（例如 `root:password@tcp(mysql:3306)/lyshop?...`）。
 
 ## eapp 部署影响
 
