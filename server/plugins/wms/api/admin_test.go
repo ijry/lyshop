@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -65,7 +66,7 @@ func TestAdminWarehouseStatusDocCompleteAndMovements(t *testing.T) {
 	warehouseForStatus := wmsmodel.Warehouse{Code: "WH-S", Name: "状态仓", Status: wmsmodel.WarehouseStatusEnabled}
 	require.NoError(t, testDB.Create(&warehouseForStatus).Error)
 
-	statusResp := doJSONRequest(t, router, http.MethodPut, fmt.Sprintf("/admin/wms/warehouses/%d/status", warehouseForStatus.ID), `{"status":0}`)
+	statusResp := doJSONRequestWithPerm(t, router, http.MethodPut, fmt.Sprintf("/admin/wms/warehouses/%d/status", warehouseForStatus.ID), `{"status":0}`, "*")
 	require.Equal(t, 0, statusResp.Code)
 
 	var latestStatusWarehouse wmsmodel.Warehouse
@@ -91,14 +92,14 @@ func TestAdminWarehouseStatusDocCompleteAndMovements(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	completeResp := doJSONRequest(t, router, http.MethodPost, fmt.Sprintf("/admin/wms/docs/%d/complete", doc.ID), "")
+	completeResp := doJSONRequestWithPerm(t, router, http.MethodPost, fmt.Sprintf("/admin/wms/docs/%d/complete", doc.ID), "", "*")
 	require.Equal(t, 0, completeResp.Code)
 
 	var latestDoc wmsmodel.InventoryDoc
 	require.NoError(t, testDB.Where("id = ?", doc.ID).First(&latestDoc).Error)
 	require.Equal(t, wmsmodel.DocStatusCompleted, latestDoc.Status)
 
-	movementResp := doJSONRequest(t, router, http.MethodGet, "/admin/wms/movements?doc_no="+doc.DocNo, "")
+	movementResp := doJSONRequestWithPerm(t, router, http.MethodGet, "/admin/wms/movements?doc_no="+doc.DocNo, "", "*")
 	require.Equal(t, 0, movementResp.Code)
 
 	var movementPage pageResp
@@ -106,12 +107,49 @@ func TestAdminWarehouseStatusDocCompleteAndMovements(t *testing.T) {
 	require.GreaterOrEqual(t, movementPage.Total, int64(1))
 	require.NotEmpty(t, movementPage.List)
 	require.Equal(t, doc.DocNo, movementPage.List[0]["doc_no"])
+
+	repeatCompleteResp := doJSONRequestWithPerm(t, router, http.MethodPost, fmt.Sprintf("/admin/wms/docs/%d/complete", doc.ID), "", "*")
+	require.Equal(t, 409, repeatCompleteResp.Code)
+	require.Contains(t, repeatCompleteResp.Msg, "单据状态非法")
+}
+
+func TestAdminPermissionDenied(t *testing.T) {
+	router, _ := setupAdminTestRouter(t)
+
+	viewDeniedResp := doJSONRequestWithPerm(t, router, http.MethodGet, "/admin/wms/warehouses", "", "wms:edit")
+	require.Equal(t, 403, viewDeniedResp.Code)
+
+	editDeniedResp := doJSONRequestWithPerm(t, router, http.MethodPost, "/admin/wms/docs", `{"warehouse_id":1,"doc_type":"outbound","items":[{"sku_id":1,"qty":1}]}`, "wms:view")
+	require.Equal(t, 403, editDeniedResp.Code)
+}
+
+func TestAdminInvalidQueryParams(t *testing.T) {
+	router, _ := setupAdminTestRouter(t)
+
+	warehouseIDInvalid := doJSONRequestWithPerm(t, router, http.MethodGet, "/admin/wms/stocks?warehouse_id=abc", "", "*")
+	require.Equal(t, 400, warehouseIDInvalid.Code)
+
+	warningOnlyInvalid := doJSONRequestWithPerm(t, router, http.MethodGet, "/admin/wms/stocks?warning_only=bad", "", "*")
+	require.Equal(t, 400, warningOnlyInvalid.Code)
+}
+
+func TestAdminDocNotFoundMapping(t *testing.T) {
+	router, _ := setupAdminTestRouter(t)
+	resp := doJSONRequestWithPerm(t, router, http.MethodGet, "/admin/wms/docs/999999", "", "*")
+	require.Equal(t, 404, resp.Code)
 }
 
 func doJSONRequest(t *testing.T, router *gin.Engine, method, path, body string) apiResp {
+	return doJSONRequestWithPerm(t, router, method, path, body, "*")
+}
+
+func doJSONRequestWithPerm(t *testing.T, router *gin.Engine, method, path, body, perms string) apiResp {
 	t.Helper()
 	req := httptest.NewRequest(method, path, bytes.NewBufferString(body))
 	req.Header.Set("Content-Type", "application/json")
+	if perms != "" {
+		req.Header.Set("X-Test-Perms", perms)
+	}
 	rec := httptest.NewRecorder()
 	router.ServeHTTP(rec, req)
 	require.Equal(t, http.StatusOK, rec.Code)
@@ -141,7 +179,25 @@ func setupAdminTestRouter(t *testing.T) (*gin.Engine, *gorm.DB) {
 
 	r := gin.New()
 	admin := r.Group("/admin", func(c *gin.Context) {
-		c.Set("perms", []string{"*"})
+		raw := strings.TrimSpace(c.GetHeader("X-Test-Perms"))
+		if raw == "__missing__" {
+			c.Next()
+			return
+		}
+		if raw == "" {
+			c.Set("perms", []string{"*"})
+			c.Next()
+			return
+		}
+		parts := strings.Split(raw, ",")
+		perms := make([]string, 0, len(parts))
+		for _, p := range parts {
+			v := strings.TrimSpace(p)
+			if v != "" {
+				perms = append(perms, v)
+			}
+		}
+		c.Set("perms", perms)
 		c.Next()
 	})
 	RegisterAdminRoutes(admin)

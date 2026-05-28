@@ -33,8 +33,11 @@ func RegisterAdminRoutes(g *gin.RouterGroup) {
 }
 
 func listWarehouses(c *gin.Context) {
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	size, _ := strconv.Atoi(c.DefaultQuery("size", "20"))
+	page, size, err := parsePageSize(c)
+	if err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
 	statusPtr, err := parseOptionalInt8(c.Query("status"))
 	if err != nil {
 		response.Fail(c, 400, err.Error())
@@ -47,7 +50,7 @@ func listWarehouses(c *gin.Context) {
 		Status:  statusPtr,
 	})
 	if err != nil {
-		response.Fail(c, 500, err.Error())
+		writeServiceError(c, err)
 		return
 	}
 	response.OK(c, response.PageData{List: list, Total: total, Page: page, Size: size})
@@ -60,7 +63,7 @@ func createWarehouse(c *gin.Context) {
 		return
 	}
 	if err := wmssvc.CreateWarehouse(c.Request.Context(), &w); err != nil {
-		response.Fail(c, 500, err.Error())
+		writeServiceError(c, err)
 		return
 	}
 	response.OK(c, w)
@@ -78,7 +81,7 @@ func updateWarehouse(c *gin.Context) {
 		return
 	}
 	if err := wmssvc.UpdateWarehouse(c.Request.Context(), id, &req); err != nil {
-		response.Fail(c, 500, err.Error())
+		writeServiceError(c, err)
 		return
 	}
 	response.OK(c, nil)
@@ -98,18 +101,33 @@ func updateWarehouseStatus(c *gin.Context) {
 		return
 	}
 	if err := wmssvc.UpdateWarehouseStatus(c.Request.Context(), id, req.Status); err != nil {
-		response.Fail(c, 500, err.Error())
+		writeServiceError(c, err)
 		return
 	}
 	response.OK(c, nil)
 }
 
 func listStocks(c *gin.Context) {
-	warehouseID, _ := strconv.ParseUint(c.Query("warehouse_id"), 10, 64)
-	skuID, _ := strconv.ParseUint(c.Query("sku_id"), 10, 64)
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	size, _ := strconv.Atoi(c.DefaultQuery("size", "20"))
-	warningOnly := parseBool(c.Query("warning_only"))
+	page, size, err := parsePageSize(c)
+	if err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	warehouseID, err := parseOptionalUint64Query(c.Query("warehouse_id"), "warehouse_id")
+	if err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	skuID, err := parseOptionalUint64Query(c.Query("sku_id"), "sku_id")
+	if err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	warningOnly, err := parseOptionalBoolQuery(c.Query("warning_only"), "warning_only")
+	if err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
 	list, total, err := wmssvc.ListStocks(c.Request.Context(), wmssvc.StockListQuery{
 		Page:        page,
 		Size:        size,
@@ -118,7 +136,7 @@ func listStocks(c *gin.Context) {
 		WarningOnly: warningOnly,
 	})
 	if err != nil {
-		response.Fail(c, 500, err.Error())
+		writeServiceError(c, err)
 		return
 	}
 	response.OK(c, response.PageData{List: list, Total: total, Page: page, Size: size})
@@ -138,16 +156,23 @@ func updateStockSafety(c *gin.Context) {
 		return
 	}
 	if err := wmssvc.UpdateStockSafety(c.Request.Context(), id, req.SafeQty); err != nil {
-		response.Fail(c, 500, err.Error())
+		writeServiceError(c, err)
 		return
 	}
 	response.OK(c, nil)
 }
 
 func listDocs(c *gin.Context) {
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	size, _ := strconv.Atoi(c.DefaultQuery("size", "20"))
-	warehouseID, _ := strconv.ParseUint(c.Query("warehouse_id"), 10, 64)
+	page, size, err := parsePageSize(c)
+	if err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	warehouseID, err := parseOptionalUint64Query(c.Query("warehouse_id"), "warehouse_id")
+	if err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
 	startAt, err := parseOptionalTime(c.Query("start_at"))
 	if err != nil {
 		response.Fail(c, 400, err.Error())
@@ -169,7 +194,7 @@ func listDocs(c *gin.Context) {
 		EndAt:       endAt,
 	})
 	if err != nil {
-		response.Fail(c, 500, err.Error())
+		writeServiceError(c, err)
 		return
 	}
 	response.OK(c, response.PageData{List: list, Total: total, Page: page, Size: size})
@@ -183,7 +208,7 @@ func createDoc(c *gin.Context) {
 	}
 	doc, err := wmssvc.CreateDraftDoc(c.Request.Context(), req)
 	if err != nil {
-		response.Fail(c, 500, err.Error())
+		writeServiceError(c, err)
 		return
 	}
 	response.OK(c, doc)
@@ -197,7 +222,7 @@ func getDocDetail(c *gin.Context) {
 	}
 	detail, err := wmssvc.GetDocDetail(c.Request.Context(), id)
 	if err != nil {
-		response.Fail(c, 500, err.Error())
+		writeServiceError(c, err)
 		return
 	}
 	response.OK(c, detail)
@@ -215,7 +240,7 @@ func updateDoc(c *gin.Context) {
 		return
 	}
 	if err := wmssvc.UpdateDraftDoc(c.Request.Context(), id, req); err != nil {
-		response.Fail(c, 500, err.Error())
+		writeServiceError(c, err)
 		return
 	}
 	response.OK(c, nil)
@@ -228,7 +253,7 @@ func completeDoc(c *gin.Context) {
 		return
 	}
 	if err := wmssvc.CompleteDraftDoc(c.Request.Context(), id); err != nil {
-		response.Fail(c, 500, err.Error())
+		writeServiceError(c, err)
 		return
 	}
 	response.OK(c, nil)
@@ -241,17 +266,28 @@ func cancelDoc(c *gin.Context) {
 		return
 	}
 	if err := wmssvc.CancelDraftDoc(c.Request.Context(), id); err != nil {
-		response.Fail(c, 500, err.Error())
+		writeServiceError(c, err)
 		return
 	}
 	response.OK(c, nil)
 }
 
 func listMovements(c *gin.Context) {
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	size, _ := strconv.Atoi(c.DefaultQuery("size", "20"))
-	warehouseID, _ := strconv.ParseUint(c.Query("warehouse_id"), 10, 64)
-	skuID, _ := strconv.ParseUint(c.Query("sku_id"), 10, 64)
+	page, size, err := parsePageSize(c)
+	if err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	warehouseID, err := parseOptionalUint64Query(c.Query("warehouse_id"), "warehouse_id")
+	if err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	skuID, err := parseOptionalUint64Query(c.Query("sku_id"), "sku_id")
+	if err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
 	startAt, err := parseOptionalTime(c.Query("start_at"))
 	if err != nil {
 		response.Fail(c, 400, err.Error())
@@ -273,10 +309,23 @@ func listMovements(c *gin.Context) {
 		EndAt:       endAt,
 	})
 	if err != nil {
-		response.Fail(c, 500, err.Error())
+		writeServiceError(c, err)
 		return
 	}
 	response.OK(c, response.PageData{List: list, Total: total, Page: page, Size: size})
+}
+
+func writeServiceError(c *gin.Context, err error) {
+	switch wmssvc.ErrorKindOf(err) {
+	case wmssvc.ErrorKindInvalid:
+		response.Fail(c, 400, err.Error())
+	case wmssvc.ErrorKindNotFound:
+		response.Fail(c, 404, err.Error())
+	case wmssvc.ErrorKindConflict, wmssvc.ErrorKindForbidden:
+		response.Fail(c, 409, err.Error())
+	default:
+		response.Fail(c, 500, err.Error())
+	}
 }
 
 func parseIDParam(c *gin.Context, key string) (uint64, error) {
@@ -301,6 +350,45 @@ func parseOptionalInt8(raw string) (*int8, error) {
 	return &val, nil
 }
 
+func parseOptionalUint64Query(raw, key string) (uint64, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return 0, nil
+	}
+	val, err := strconv.ParseUint(raw, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("%s 参数非法", key)
+	}
+	return val, nil
+}
+
+func parsePageSize(c *gin.Context) (int, int, error) {
+	page, err := parsePositiveIntQuery(c.Query("page"), "page", 1, 1000000)
+	if err != nil {
+		return 0, 0, err
+	}
+	size, err := parsePositiveIntQuery(c.Query("size"), "size", 20, 100)
+	if err != nil {
+		return 0, 0, err
+	}
+	return page, size, nil
+}
+
+func parsePositiveIntQuery(raw, key string, defaultVal, maxVal int) (int, error) {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return defaultVal, nil
+	}
+	val, err := strconv.Atoi(raw)
+	if err != nil {
+		return 0, fmt.Errorf("%s 参数非法", key)
+	}
+	if val <= 0 || (maxVal > 0 && val > maxVal) {
+		return 0, fmt.Errorf("%s 参数非法", key)
+	}
+	return val, nil
+}
+
 func parseOptionalTime(raw string) (*time.Time, error) {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {
@@ -320,7 +408,16 @@ func parseOptionalTime(raw string) (*time.Time, error) {
 	return nil, fmt.Errorf("时间参数格式非法")
 }
 
-func parseBool(raw string) bool {
+func parseOptionalBoolQuery(raw, key string) (bool, error) {
 	raw = strings.TrimSpace(strings.ToLower(raw))
-	return raw == "1" || raw == "true" || raw == "yes"
+	if raw == "" {
+		return false, nil
+	}
+	if raw == "1" || raw == "true" {
+		return true, nil
+	}
+	if raw == "0" || raw == "false" {
+		return false, nil
+	}
+	return false, fmt.Errorf("%s 参数非法", key)
 }

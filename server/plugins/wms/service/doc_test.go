@@ -86,6 +86,7 @@ func TestCompleteDraftDocRollbackOnInsufficientStock(t *testing.T) {
 	err = CompleteDraftDoc(ctx, doc.ID)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "库存不足")
+	require.Equal(t, ErrorKindConflict, ErrorKindOf(err))
 
 	var stock201 wmsmodel.InventoryStock
 	require.NoError(t, testDB.Where("warehouse_id = ? AND sku_id = ?", warehouse.ID, 201).First(&stock201).Error)
@@ -103,6 +104,42 @@ func TestCompleteDraftDocRollbackOnInsufficientStock(t *testing.T) {
 	require.NoError(t, testDB.Where("id = ?", doc.ID).First(&latestDoc).Error)
 	require.Equal(t, wmsmodel.DocStatusDraft, latestDoc.Status)
 	require.Nil(t, latestDoc.CompletedAt)
+}
+
+func TestCompleteDraftDocConflictWhenRepeated(t *testing.T) {
+	testDB := setupWmsTestDB(t)
+	ctx := context.Background()
+
+	warehouse := wmsmodel.Warehouse{Code: "WH-R", Name: "重复完成仓", Status: wmsmodel.WarehouseStatusEnabled}
+	require.NoError(t, testDB.Create(&warehouse).Error)
+	require.NoError(t, testDB.Create(&wmsmodel.InventoryStock{
+		WarehouseID: warehouse.ID,
+		SkuID:       301,
+		Qty:         10,
+	}).Error)
+
+	doc, err := CreateDraftDoc(ctx, CreateDocInput{
+		WarehouseID: warehouse.ID,
+		DocType:     wmsmodel.DocTypeOutbound,
+		Items: []DocItemInput{
+			{SkuID: 301, Qty: 2},
+		},
+	})
+	require.NoError(t, err)
+	require.NoError(t, CompleteDraftDoc(ctx, doc.ID))
+
+	secondErr := CompleteDraftDoc(ctx, doc.ID)
+	require.Error(t, secondErr)
+	require.Equal(t, ErrorKindConflict, ErrorKindOf(secondErr))
+	require.ErrorContains(t, secondErr, "单据状态非法")
+
+	var stock wmsmodel.InventoryStock
+	require.NoError(t, testDB.Where("warehouse_id = ? AND sku_id = ?", warehouse.ID, 301).First(&stock).Error)
+	require.Equal(t, 8, stock.Qty)
+
+	var movements []wmsmodel.InventoryMovement
+	require.NoError(t, testDB.Where("doc_id = ?", doc.ID).Find(&movements).Error)
+	require.Len(t, movements, 1)
 }
 
 func setupWmsTestDB(t *testing.T) *gorm.DB {

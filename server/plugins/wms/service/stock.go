@@ -2,10 +2,11 @@ package service
 
 import (
 	"context"
-	"fmt"
+	"errors"
 
 	"github.com/ijry/lyshop/core/db"
 	wmsmodel "github.com/ijry/lyshop/plugins/wms/model"
+	"gorm.io/gorm"
 )
 
 type StockView struct {
@@ -29,12 +30,12 @@ func ListStocks(ctx context.Context, q StockListQuery) ([]StockView, int64, erro
 
 	var total int64
 	if err := tx.Count(&total).Error; err != nil {
-		return nil, 0, err
+		return nil, 0, WrapDBError("查询库存总数失败", err)
 	}
 
 	var rows []wmsmodel.InventoryStock
 	if err := tx.Order("id DESC").Offset((page - 1) * size).Limit(size).Find(&rows).Error; err != nil {
-		return nil, 0, err
+		return nil, 0, WrapDBError("查询库存列表失败", err)
 	}
 
 	list := make([]StockView, 0, len(rows))
@@ -54,17 +55,20 @@ func ListStocks(ctx context.Context, q StockListQuery) ([]StockView, int64, erro
 
 func UpdateStockSafety(ctx context.Context, id uint64, safeQty int) error {
 	if id == 0 {
-		return fmt.Errorf("库存ID不能为空")
+		return InvalidError("库存ID不能为空")
 	}
 	if safeQty < 0 {
-		return fmt.Errorf("安全库存不能小于0")
+		return InvalidError("安全库存不能小于0")
 	}
-	tx := db.DB.WithContext(ctx).Model(&wmsmodel.InventoryStock{}).Where("id = ?", id).Update("safe_qty", safeQty)
-	if tx.Error != nil {
-		return tx.Error
+	var row wmsmodel.InventoryStock
+	if err := db.DB.WithContext(ctx).Where("id = ?", id).First(&row).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return NotFoundError("库存记录不存在")
+		}
+		return WrapDBError("查询库存失败", err)
 	}
-	if tx.RowsAffected == 0 {
-		return fmt.Errorf("库存记录不存在")
+	if err := db.DB.WithContext(ctx).Model(&wmsmodel.InventoryStock{}).Where("id = ?", id).Update("safe_qty", safeQty).Error; err != nil {
+		return WrapDBError("更新安全库存失败", err)
 	}
 	return nil
 }

@@ -31,7 +31,7 @@ func ListDocs(ctx context.Context, q DocListQuery) ([]wmsmodel.InventoryDoc, int
 		tx = tx.Where("status = ?", q.Status)
 	}
 	if q.DocNo != "" {
-		tx = tx.Where("doc_no LIKE ?", "%"+strings.TrimSpace(q.DocNo)+"%")
+		tx = tx.Where("doc_no = ?", strings.TrimSpace(q.DocNo))
 	}
 	if q.StartAt != nil {
 		tx = tx.Where("created_at >= ?", *q.StartAt)
@@ -42,24 +42,24 @@ func ListDocs(ctx context.Context, q DocListQuery) ([]wmsmodel.InventoryDoc, int
 
 	var total int64
 	if err := tx.Count(&total).Error; err != nil {
-		return nil, 0, err
+		return nil, 0, WrapDBError("查询单据总数失败", err)
 	}
 	var rows []wmsmodel.InventoryDoc
 	if err := tx.Order("id DESC").Offset((page - 1) * size).Limit(size).Find(&rows).Error; err != nil {
-		return nil, 0, err
+		return nil, 0, WrapDBError("查询单据列表失败", err)
 	}
 	return rows, total, nil
 }
 
 func CreateDraftDoc(ctx context.Context, in CreateDocInput) (*wmsmodel.InventoryDoc, error) {
 	if !wmsmodel.IsValidDocType(in.DocType) {
-		return nil, fmt.Errorf("单据类型非法")
+		return nil, InvalidError("单据类型非法")
 	}
 	if len(in.Items) == 0 {
-		return nil, fmt.Errorf("单据明细不能为空")
+		return nil, InvalidError("单据明细不能为空")
 	}
 	if in.WarehouseID == 0 {
-		return nil, fmt.Errorf("仓库ID不能为空")
+		return nil, InvalidError("仓库ID不能为空")
 	}
 	if err := validateDocItems(in.Items); err != nil {
 		return nil, err
@@ -77,7 +77,7 @@ func CreateDraftDoc(ctx context.Context, in CreateDocInput) (*wmsmodel.Inventory
 			return err
 		}
 		if err := tx.Create(doc).Error; err != nil {
-			return err
+			return WrapDBError("创建单据失败", err)
 		}
 		items := make([]wmsmodel.InventoryDocItem, 0, len(in.Items))
 		for _, item := range in.Items {
@@ -88,7 +88,10 @@ func CreateDraftDoc(ctx context.Context, in CreateDocInput) (*wmsmodel.Inventory
 				Remark: strings.TrimSpace(item.Remark),
 			})
 		}
-		return tx.Create(&items).Error
+		if err := tx.Create(&items).Error; err != nil {
+			return WrapDBError("创建单据明细失败", err)
+		}
+		return nil
 	})
 	if err != nil {
 		return nil, err
@@ -98,31 +101,34 @@ func CreateDraftDoc(ctx context.Context, in CreateDocInput) (*wmsmodel.Inventory
 
 func GetDocDetail(ctx context.Context, id uint64) (*DocDetail, error) {
 	if id == 0 {
-		return nil, fmt.Errorf("单据ID不能为空")
+		return nil, InvalidError("单据ID不能为空")
 	}
 	var doc wmsmodel.InventoryDoc
 	if err := db.DB.WithContext(ctx).Where("id = ?", id).First(&doc).Error; err != nil {
-		return nil, fmt.Errorf("单据不存在")
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, NotFoundError("单据不存在")
+		}
+		return nil, WrapDBError("查询单据失败", err)
 	}
 	var items []wmsmodel.InventoryDocItem
 	if err := db.DB.WithContext(ctx).Where("doc_id = ?", id).Order("id ASC").Find(&items).Error; err != nil {
-		return nil, err
+		return nil, WrapDBError("查询单据明细失败", err)
 	}
 	return &DocDetail{Doc: doc, Items: items}, nil
 }
 
 func UpdateDraftDoc(ctx context.Context, id uint64, in UpdateDocInput) error {
 	if id == 0 {
-		return fmt.Errorf("单据ID不能为空")
+		return InvalidError("单据ID不能为空")
 	}
 	if !wmsmodel.IsValidDocType(in.DocType) {
-		return fmt.Errorf("单据类型非法")
+		return InvalidError("单据类型非法")
 	}
 	if len(in.Items) == 0 {
-		return fmt.Errorf("单据明细不能为空")
+		return InvalidError("单据明细不能为空")
 	}
 	if in.WarehouseID == 0 {
-		return fmt.Errorf("仓库ID不能为空")
+		return InvalidError("仓库ID不能为空")
 	}
 	if err := validateDocItems(in.Items); err != nil {
 		return err
@@ -134,7 +140,7 @@ func UpdateDraftDoc(ctx context.Context, id uint64, in UpdateDocInput) error {
 			return err
 		}
 		if doc.Status != wmsmodel.DocStatusDraft {
-			return fmt.Errorf("单据状态非法，只有草稿单允许编辑")
+			return ConflictError("单据状态非法，只有草稿单允许编辑")
 		}
 		if err := ensureWarehouseExists(tx, in.WarehouseID); err != nil {
 			return err
@@ -144,10 +150,10 @@ func UpdateDraftDoc(ctx context.Context, id uint64, in UpdateDocInput) error {
 			"doc_type":     in.DocType,
 			"remark":       strings.TrimSpace(in.Remark),
 		}).Error; err != nil {
-			return err
+			return WrapDBError("更新单据失败", err)
 		}
 		if err := tx.Where("doc_id = ?", id).Delete(&wmsmodel.InventoryDocItem{}).Error; err != nil {
-			return err
+			return WrapDBError("删除单据明细失败", err)
 		}
 		items := make([]wmsmodel.InventoryDocItem, 0, len(in.Items))
 		for _, item := range in.Items {
@@ -158,13 +164,16 @@ func UpdateDraftDoc(ctx context.Context, id uint64, in UpdateDocInput) error {
 				Remark: strings.TrimSpace(item.Remark),
 			})
 		}
-		return tx.Create(&items).Error
+		if err := tx.Create(&items).Error; err != nil {
+			return WrapDBError("写入单据明细失败", err)
+		}
+		return nil
 	})
 }
 
 func CancelDraftDoc(ctx context.Context, id uint64) error {
 	if id == 0 {
-		return fmt.Errorf("单据ID不能为空")
+		return InvalidError("单据ID不能为空")
 	}
 	return db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		doc, err := lockDoc(tx, id)
@@ -172,19 +181,22 @@ func CancelDraftDoc(ctx context.Context, id uint64) error {
 			return err
 		}
 		if doc.Status != wmsmodel.DocStatusDraft {
-			return fmt.Errorf("单据状态非法，只有草稿单允许作废")
+			return ConflictError("单据状态非法，只有草稿单允许作废")
 		}
 		now := time.Now()
-		return tx.Model(&wmsmodel.InventoryDoc{}).Where("id = ?", id).Updates(map[string]any{
+		if err := tx.Model(&wmsmodel.InventoryDoc{}).Where("id = ?", id).Updates(map[string]any{
 			"status":      wmsmodel.DocStatusCanceled,
 			"canceled_at": now,
-		}).Error
+		}).Error; err != nil {
+			return WrapDBError("作废单据失败", err)
+		}
+		return nil
 	})
 }
 
 func CompleteDraftDoc(ctx context.Context, id uint64) error {
 	if id == 0 {
-		return fmt.Errorf("单据ID不能为空")
+		return InvalidError("单据ID不能为空")
 	}
 
 	return db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
@@ -193,7 +205,7 @@ func CompleteDraftDoc(ctx context.Context, id uint64) error {
 			return err
 		}
 		if doc.Status != wmsmodel.DocStatusDraft {
-			return fmt.Errorf("单据状态非法，只有草稿单允许完成")
+			return ConflictError("单据状态非法，只有草稿单允许完成")
 		}
 
 		warehouse, err := lockWarehouse(tx, doc.WarehouseID)
@@ -201,15 +213,15 @@ func CompleteDraftDoc(ctx context.Context, id uint64) error {
 			return err
 		}
 		if warehouse.Status != wmsmodel.WarehouseStatusEnabled {
-			return fmt.Errorf("仓库停用，不能完成单据")
+			return ForbiddenError("仓库停用，不能完成单据")
 		}
 
 		var items []wmsmodel.InventoryDocItem
 		if err := tx.Where("doc_id = ?", doc.ID).Order("id ASC").Find(&items).Error; err != nil {
-			return err
+			return WrapDBError("查询单据明细失败", err)
 		}
 		if len(items) == 0 {
-			return fmt.Errorf("单据明细不能为空")
+			return ConflictError("单据明细不能为空")
 		}
 
 		for _, item := range items {
@@ -222,13 +234,13 @@ func CompleteDraftDoc(ctx context.Context, id uint64) error {
 			change := item.Qty
 			if doc.DocType == wmsmodel.DocTypeOutbound {
 				if before < item.Qty {
-					return fmt.Errorf("库存不足，SKU=%d 当前=%d 需要=%d", item.SkuID, before, item.Qty)
+					return ConflictError(fmt.Sprintf("库存不足，SKU=%d 当前=%d 需要=%d", item.SkuID, before, item.Qty))
 				}
 				change = -item.Qty
 			}
 			after = before + change
 			if err := tx.Model(&wmsmodel.InventoryStock{}).Where("id = ?", stock.ID).Update("qty", after).Error; err != nil {
-				return err
+				return WrapDBError("更新库存失败", err)
 			}
 			mv := wmsmodel.InventoryMovement{
 				WarehouseID: doc.WarehouseID,
@@ -243,14 +255,17 @@ func CompleteDraftDoc(ctx context.Context, id uint64) error {
 				Remark:      strings.TrimSpace(item.Remark),
 			}
 			if err := tx.Create(&mv).Error; err != nil {
-				return err
+				return WrapDBError("写入库存流水失败", err)
 			}
 		}
 		now := time.Now()
-		return tx.Model(&wmsmodel.InventoryDoc{}).Where("id = ?", doc.ID).Updates(map[string]any{
+		if err := tx.Model(&wmsmodel.InventoryDoc{}).Where("id = ?", doc.ID).Updates(map[string]any{
 			"status":       wmsmodel.DocStatusCompleted,
 			"completed_at": now,
-		}).Error
+		}).Error; err != nil {
+			return WrapDBError("更新单据状态失败", err)
+		}
+		return nil
 	})
 }
 
@@ -258,10 +273,10 @@ func lockDoc(tx *gorm.DB, id uint64) (*wmsmodel.InventoryDoc, error) {
 	var doc wmsmodel.InventoryDoc
 	err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id = ?", id).First(&doc).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, fmt.Errorf("单据不存在")
+		return nil, NotFoundError("单据不存在")
 	}
 	if err != nil {
-		return nil, err
+		return nil, WrapDBError("查询单据失败", err)
 	}
 	return &doc, nil
 }
@@ -270,10 +285,10 @@ func lockWarehouse(tx *gorm.DB, id uint64) (*wmsmodel.Warehouse, error) {
 	var row wmsmodel.Warehouse
 	err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id = ?", id).First(&row).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, fmt.Errorf("仓库不存在")
+		return nil, NotFoundError("仓库不存在")
 	}
 	if err != nil {
-		return nil, err
+		return nil, WrapDBError("查询仓库失败", err)
 	}
 	return &row, nil
 }
@@ -281,10 +296,10 @@ func lockWarehouse(tx *gorm.DB, id uint64) (*wmsmodel.Warehouse, error) {
 func ensureWarehouseExists(tx *gorm.DB, warehouseID uint64) error {
 	var cnt int64
 	if err := tx.Model(&wmsmodel.Warehouse{}).Where("id = ?", warehouseID).Count(&cnt).Error; err != nil {
-		return err
+		return WrapDBError("查询仓库失败", err)
 	}
 	if cnt == 0 {
-		return fmt.Errorf("仓库不存在")
+		return NotFoundError("仓库不存在")
 	}
 	return nil
 }
@@ -292,10 +307,10 @@ func ensureWarehouseExists(tx *gorm.DB, warehouseID uint64) error {
 func validateDocItems(items []DocItemInput) error {
 	for _, item := range items {
 		if item.SkuID == 0 {
-			return fmt.Errorf("SKU不能为空")
+			return InvalidError("SKU不能为空")
 		}
 		if item.Qty <= 0 {
-			return fmt.Errorf("数量必须大于0")
+			return InvalidError("数量必须大于0")
 		}
 	}
 	return nil
@@ -310,19 +325,19 @@ func lockOrCreateStock(tx *gorm.DB, doc *wmsmodel.InventoryDoc, item wmsmodel.In
 		return &stock, nil
 	}
 	if !errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, err
+		return nil, WrapDBError("查询库存失败", err)
 	}
 	if doc.DocType == wmsmodel.DocTypeOutbound {
-		return nil, fmt.Errorf("库存不足，SKU=%d 当前=0 需要=%d", item.SkuID, item.Qty)
+		return nil, ConflictError(fmt.Sprintf("库存不足，SKU=%d 当前=0 需要=%d", item.SkuID, item.Qty))
 	}
 	newStock := wmsmodel.InventoryStock{WarehouseID: doc.WarehouseID, SkuID: item.SkuID}
 	if err := tx.Where("warehouse_id = ? AND sku_id = ?", doc.WarehouseID, item.SkuID).FirstOrCreate(&newStock).Error; err != nil {
-		return nil, err
+		return nil, WrapDBError("创建库存记录失败", err)
 	}
 	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 		Where("warehouse_id = ? AND sku_id = ?", doc.WarehouseID, item.SkuID).
 		First(&stock).Error; err != nil {
-		return nil, err
+		return nil, WrapDBError("锁定库存失败", err)
 	}
 	return &stock, nil
 }
