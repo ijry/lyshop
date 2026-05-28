@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -140,6 +141,37 @@ func TestCompleteDraftDocConflictWhenRepeated(t *testing.T) {
 	var movements []wmsmodel.InventoryMovement
 	require.NoError(t, testDB.Where("doc_id = ?", doc.ID).Find(&movements).Error)
 	require.Len(t, movements, 1)
+}
+
+func TestGenDocNoUniquenessAndFormat(t *testing.T) {
+	seen := make(map[string]struct{}, 200)
+	for i := 0; i < 200; i++ {
+		docNo := genDocNo(wmsmodel.DocTypeOutbound)
+		require.True(t, strings.HasPrefix(docNo, "WO"))
+		_, exists := seen[docNo]
+		require.False(t, exists, "doc_no duplicated: %s", docNo)
+		seen[docNo] = struct{}{}
+	}
+	require.True(t, strings.HasPrefix(genDocNo(wmsmodel.DocTypeInbound), "WI"))
+	require.True(t, strings.HasPrefix(genDocNo("other"), "WD"))
+}
+
+func TestCreateWarehouseDuplicateCodeConflict(t *testing.T) {
+	testDB := setupWmsTestDB(t)
+	ctx := context.Background()
+
+	first := &wmsmodel.Warehouse{Code: "WH-DUP", Name: "仓库1", Status: wmsmodel.WarehouseStatusEnabled}
+	require.NoError(t, CreateWarehouse(ctx, first))
+
+	second := &wmsmodel.Warehouse{Code: "WH-DUP", Name: "仓库2", Status: wmsmodel.WarehouseStatusEnabled}
+	err := CreateWarehouse(ctx, second)
+	require.Error(t, err)
+	require.Equal(t, ErrorKindConflict, ErrorKindOf(err))
+	require.ErrorContains(t, err, "仓库编码已存在")
+
+	var count int64
+	require.NoError(t, testDB.Model(&wmsmodel.Warehouse{}).Where("code = ?", "WH-DUP").Count(&count).Error)
+	require.Equal(t, int64(1), count)
 }
 
 func setupWmsTestDB(t *testing.T) *gorm.DB {

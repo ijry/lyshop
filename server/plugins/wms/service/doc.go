@@ -18,6 +18,8 @@ type DocDetail struct {
 	Items []wmsmodel.InventoryDocItem `json:"items"`
 }
 
+const maxDocNoRetry = 3
+
 func ListDocs(ctx context.Context, q DocListQuery) ([]wmsmodel.InventoryDoc, int64, error) {
 	page, size := normalizePage(q.Page, q.Size)
 	tx := db.DB.WithContext(ctx).Model(&wmsmodel.InventoryDoc{})
@@ -65,38 +67,50 @@ func CreateDraftDoc(ctx context.Context, in CreateDocInput) (*wmsmodel.Inventory
 		return nil, err
 	}
 
-	doc := &wmsmodel.InventoryDoc{
-		DocNo:       genDocNo(in.DocType),
-		DocType:     in.DocType,
-		Status:      wmsmodel.DocStatusDraft,
-		WarehouseID: in.WarehouseID,
-		Remark:      strings.TrimSpace(in.Remark),
-	}
-	err := db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := ensureWarehouseExists(tx, in.WarehouseID); err != nil {
-			return err
+	for attempt := 0; attempt < maxDocNoRetry; attempt++ {
+		doc := &wmsmodel.InventoryDoc{
+			DocNo:       genDocNo(in.DocType),
+			DocType:     in.DocType,
+			Status:      wmsmodel.DocStatusDraft,
+			WarehouseID: in.WarehouseID,
+			Remark:      strings.TrimSpace(in.Remark),
 		}
-		if err := tx.Create(doc).Error; err != nil {
-			return WrapDBError("创建单据失败", err)
+		err := db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+			if err := ensureWarehouseExists(tx, in.WarehouseID); err != nil {
+				return err
+			}
+			if err := tx.Create(doc).Error; err != nil {
+				if isDocNoUniqueConflict(err) {
+					return err
+				}
+				return WrapDBError("创建单据失败", err)
+			}
+			items := make([]wmsmodel.InventoryDocItem, 0, len(in.Items))
+			for _, item := range in.Items {
+				items = append(items, wmsmodel.InventoryDocItem{
+					DocID:  doc.ID,
+					SkuID:  item.SkuID,
+					Qty:    item.Qty,
+					Remark: strings.TrimSpace(item.Remark),
+				})
+			}
+			if err := tx.Create(&items).Error; err != nil {
+				return WrapDBError("创建单据明细失败", err)
+			}
+			return nil
+		})
+		if err == nil {
+			return doc, nil
 		}
-		items := make([]wmsmodel.InventoryDocItem, 0, len(in.Items))
-		for _, item := range in.Items {
-			items = append(items, wmsmodel.InventoryDocItem{
-				DocID:  doc.ID,
-				SkuID:  item.SkuID,
-				Qty:    item.Qty,
-				Remark: strings.TrimSpace(item.Remark),
-			})
+		if isDocNoUniqueConflict(err) {
+			if attempt == maxDocNoRetry-1 {
+				return nil, ConflictError("单据号冲突，请重试")
+			}
+			continue
 		}
-		if err := tx.Create(&items).Error; err != nil {
-			return WrapDBError("创建单据明细失败", err)
-		}
-		return nil
-	})
-	if err != nil {
 		return nil, err
 	}
-	return doc, nil
+	return nil, ConflictError("单据号冲突，请重试")
 }
 
 func GetDocDetail(ctx context.Context, id uint64) (*DocDetail, error) {
@@ -340,4 +354,12 @@ func lockOrCreateStock(tx *gorm.DB, doc *wmsmodel.InventoryDoc, item wmsmodel.In
 		return nil, WrapDBError("锁定库存失败", err)
 	}
 	return &stock, nil
+}
+
+func isDocNoUniqueConflict(err error) bool {
+	if !IsUniqueConstraintError(err) {
+		return false
+	}
+	lower := strings.ToLower(err.Error())
+	return strings.Contains(lower, "doc_no") || strings.Contains(lower, "inventory_doc")
 }

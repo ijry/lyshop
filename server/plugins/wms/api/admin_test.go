@@ -133,6 +133,47 @@ func TestAdminInvalidQueryParams(t *testing.T) {
 	require.Equal(t, 400, warningOnlyInvalid.Code)
 }
 
+func TestAdminRequiredBodyFields(t *testing.T) {
+	router, testDB := setupAdminTestRouter(t)
+
+	warehouse := wmsmodel.Warehouse{Code: "WH-REQ", Name: "必填仓", Status: wmsmodel.WarehouseStatusEnabled}
+	require.NoError(t, testDB.Create(&warehouse).Error)
+	stock := wmsmodel.InventoryStock{WarehouseID: warehouse.ID, SkuID: 901, Qty: 1}
+	require.NoError(t, testDB.Create(&stock).Error)
+
+	missingStatusResp := doJSONRequestWithPerm(t, router, http.MethodPut, fmt.Sprintf("/admin/wms/warehouses/%d/status", warehouse.ID), `{}`, "*")
+	require.Equal(t, 400, missingStatusResp.Code)
+
+	missingSafeQtyResp := doJSONRequestWithPerm(t, router, http.MethodPut, fmt.Sprintf("/admin/wms/stocks/%d/safety", stock.ID), `{}`, "*")
+	require.Equal(t, 400, missingSafeQtyResp.Code)
+}
+
+func TestAdminCompleteDocForbiddenWhenWarehouseDisabled(t *testing.T) {
+	router, testDB := setupAdminTestRouter(t)
+
+	warehouse := wmsmodel.Warehouse{Code: "WH-FBD", Name: "停用仓", Status: wmsmodel.WarehouseStatusEnabled}
+	require.NoError(t, testDB.Create(&warehouse).Error)
+	require.NoError(t, testDB.Model(&wmsmodel.Warehouse{}).Where("id = ?", warehouse.ID).Update("status", wmsmodel.WarehouseStatusDisabled).Error)
+	require.NoError(t, testDB.Create(&wmsmodel.InventoryStock{
+		WarehouseID: warehouse.ID,
+		SkuID:       666,
+		Qty:         20,
+	}).Error)
+
+	doc, err := wmssvc.CreateDraftDoc(context.Background(), wmssvc.CreateDocInput{
+		WarehouseID: warehouse.ID,
+		DocType:     wmsmodel.DocTypeOutbound,
+		Items: []wmssvc.DocItemInput{
+			{SkuID: 666, Qty: 5},
+		},
+	})
+	require.NoError(t, err)
+
+	resp := doJSONRequestWithPerm(t, router, http.MethodPost, fmt.Sprintf("/admin/wms/docs/%d/complete", doc.ID), "", "*")
+	require.Equal(t, 403, resp.Code)
+	require.Contains(t, resp.Msg, "仓库停用")
+}
+
 func TestAdminDocNotFoundMapping(t *testing.T) {
 	router, _ := setupAdminTestRouter(t)
 	resp := doJSONRequestWithPerm(t, router, http.MethodGet, "/admin/wms/docs/999999", "", "*")

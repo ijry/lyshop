@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type ErrorKind string
@@ -70,4 +71,24 @@ func ErrorKindOf(err error) ErrorKind {
 		return bizErr.Kind
 	}
 	return ErrorKindUnknown
+}
+
+func IsUniqueConstraintError(err error) bool {
+	if err == nil {
+		return false
+	}
+	raw := strings.ToLower(err.Error())
+	patterns := []string{
+		"error 1062",
+		"duplicate entry",
+		"duplicated key",
+		"unique constraint failed",
+		"violates unique constraint",
+	}
+	for _, p := range patterns {
+		if strings.Contains(raw, p) {
+			return true
+		}
+	}
+	return false
 }

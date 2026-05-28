@@ -94,13 +94,17 @@ func updateWarehouseStatus(c *gin.Context) {
 		return
 	}
 	var req struct {
-		Status int8 `json:"status"`
+		Status *int8 `json:"status"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Fail(c, 400, err.Error())
 		return
 	}
-	if err := wmssvc.UpdateWarehouseStatus(c.Request.Context(), id, req.Status); err != nil {
+	if req.Status == nil {
+		response.Fail(c, 400, "status 必填")
+		return
+	}
+	if err := wmssvc.UpdateWarehouseStatus(c.Request.Context(), id, *req.Status); err != nil {
 		writeServiceError(c, err)
 		return
 	}
@@ -149,13 +153,17 @@ func updateStockSafety(c *gin.Context) {
 		return
 	}
 	var req struct {
-		SafeQty int `json:"safe_qty"`
+		SafeQty *int `json:"safe_qty"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Fail(c, 400, err.Error())
 		return
 	}
-	if err := wmssvc.UpdateStockSafety(c.Request.Context(), id, req.SafeQty); err != nil {
+	if req.SafeQty == nil {
+		response.Fail(c, 400, "safe_qty 必填")
+		return
+	}
+	if err := wmssvc.UpdateStockSafety(c.Request.Context(), id, *req.SafeQty); err != nil {
 		writeServiceError(c, err)
 		return
 	}
@@ -321,8 +329,10 @@ func writeServiceError(c *gin.Context, err error) {
 		response.Fail(c, 400, err.Error())
 	case wmssvc.ErrorKindNotFound:
 		response.Fail(c, 404, err.Error())
-	case wmssvc.ErrorKindConflict, wmssvc.ErrorKindForbidden:
+	case wmssvc.ErrorKindConflict:
 		response.Fail(c, 409, err.Error())
+	case wmssvc.ErrorKindForbidden:
+		response.Fail(c, 403, err.Error())
 	default:
 		response.Fail(c, 500, err.Error())
 	}

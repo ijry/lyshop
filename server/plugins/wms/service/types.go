@@ -1,7 +1,10 @@
 package service
 
 import (
+	"crypto/rand"
+	"encoding/binary"
 	"fmt"
+	"sync/atomic"
 	"time"
 )
 
@@ -62,6 +65,8 @@ type UpdateDocInput struct {
 	Items       []DocItemInput `json:"items"`
 }
 
+var docNoSeq atomic.Uint64
+
 func normalizePage(page, size int) (int, int) {
 	if page <= 0 {
 		page = 1
@@ -79,5 +84,14 @@ func genDocNo(docType string) string {
 	} else if docType == "outbound" {
 		prefix = "WO"
 	}
-	return fmt.Sprintf("%s%s", prefix, time.Now().Format("20060102150405.000000"))
+	seq := docNoSeq.Add(1) % 10000
+	return fmt.Sprintf("%s%d%04d%04d", prefix, time.Now().UnixNano(), seq, randomSuffix())
+}
+
+func randomSuffix() uint16 {
+	var b [2]byte
+	if _, err := rand.Read(b[:]); err == nil {
+		return binary.BigEndian.Uint16(b[:]) % 10000
+	}
+	return uint16(time.Now().UnixNano() % 10000)
 }

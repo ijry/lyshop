@@ -44,6 +44,9 @@ func CreateWarehouse(ctx context.Context, w *wmsmodel.Warehouse) error {
 		w.Status = wmsmodel.WarehouseStatusEnabled
 	}
 	if err := db.DB.WithContext(ctx).Create(w).Error; err != nil {
+		if IsUniqueConstraintError(err) {
+			return ConflictError("仓库编码已存在")
+		}
 		return WrapDBError("创建仓库失败", err)
 	}
 	return nil
@@ -76,6 +79,9 @@ func UpdateWarehouse(ctx context.Context, id uint64, in *wmsmodel.Warehouse) err
 		"phone":   strings.TrimSpace(in.Phone),
 	}
 	if err := db.DB.WithContext(ctx).Model(&wmsmodel.Warehouse{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+		if IsUniqueConstraintError(err) {
+			return ConflictError("仓库编码已存在")
+		}
 		return WrapDBError("更新仓库失败", err)
 	}
 	return nil
