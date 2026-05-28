@@ -9,7 +9,9 @@ import {
   getAfterSaleDetail,
   receiveAfterSale,
   refundAfterSale,
-} from '@/api/order'
+  addAfterSaleMessage,
+  addAfterSaleEvidence,
+} from '@/api/after-sale'
 
 const loading = ref(false)
 const actionLoading = ref(false)
@@ -58,6 +60,40 @@ const canClose = computed(() =>
   ].includes(currentStatus.value),
 )
 const needReshipTip = computed(() => currentStatus.value === 'reship_pending' && detail.case_type === 'exchange')
+
+const steps = [
+  { key: 'applied', label: '申请' },
+  { key: 'approved_wait_user_return', label: '审核' },
+  { key: 'user_returning', label: '寄回' },
+  { key: 'warehouse_received', label: '收货' },
+  { key: 'refunded', label: '退款' },
+]
+function stepActive(idx: number) {
+  const order = ['applied', 'approved_wait_user_return', 'user_returning', 'warehouse_received', 'refund_pending', 'refunded', 'reshipped']
+  const cur = order.indexOf(String(detail.status))
+  return cur >= idx
+}
+const messages = computed(() => (Array.isArray(detail.messages) ? detail.messages : []))
+const evidences = computed(() => (Array.isArray(detail.evidences) ? detail.evidences : []))
+const msgInput = ref('')
+const sendingMsg = ref(false)
+
+async function onSendMsg() {
+  if (!msgInput.value.trim()) return
+  sendingMsg.value = true
+  try {
+    await addAfterSaleMessage(detail.id, { from: 'merchant', content: msgInput.value.trim() })
+    msgInput.value = ''; await loadData()
+  } finally { sendingMsg.value = false }
+}
+
+function onUploadEvidence() {
+  uni.chooseImage({ count: 3, success: async (res) => {
+    const images = (res.tempFilePaths || []).map((_: any, i: number) => `https://picsum.photos/200/200?random=evi-${Date.now()}-${i}`)
+    await addAfterSaleEvidence(detail.id, { images, remark: '商家凭证' })
+    await loadData()
+  } })
+}
 
 function formatDate(v?: string) {
   return v ? String(v).slice(0, 19).replace('T', ' ') : '-'
@@ -237,6 +273,12 @@ onLoad((opts) => {
   <view class="page">
     <view v-if="loading" class="empty">加载中...</view>
     <template v-else>
+      <view v-if="!loading" class="progress">
+        <view v-for="(step, idx) in steps" :key="step.key" :class="['step', stepActive(idx) ? 'active' : '']">
+          <view class="dot">{{ idx + 1 }}</view>
+          <text class="label">{{ step.label }}</text>
+        </view>
+      </view>
       <view class="card">
         <view class="head">
           <text>售后 #{{ detail.id }}</text>
@@ -285,6 +327,39 @@ onLoad((opts) => {
           <view class="item-sub">方向：{{ item.direction_label || item.direction || '-' }} · 业务：{{ item.biz_type_label || item.biz_type || '-' }}</view>
           <view class="item-sub">状态：{{ item.logistics_status_label || item.logistics_status || '-' }}</view>
           <view class="item-sub">创建时间：{{ formatDate(item.created_at) }}</view>
+        </view>
+      </view>
+
+      <view class="card">
+        <view class="section-title">协商沟通</view>
+        <view v-if="!messages.length" class="empty-row">暂无沟通记录</view>
+        <view v-for="m in messages" :key="m.id" :class="['msg', m.from === 'merchant' ? 'right' : '']">
+          <view class="msg-body">
+            <text class="who">{{ m.from === 'merchant' ? '商家' : '买家' }}</text>
+            <text class="text">{{ m.content }}</text>
+            <view v-if="m.images && m.images.length" class="imgs">
+              <image v-for="img in m.images" :key="img" :src="img" mode="aspectFill" class="img" />
+            </view>
+            <text class="time">{{ formatDate(m.created_at) }}</text>
+          </view>
+        </view>
+        <view class="msg-input">
+          <up-input v-model="msgInput" placeholder="回复买家" />
+          <up-button type="primary" size="mini" :loading="sendingMsg" @click="onSendMsg">发送</up-button>
+        </view>
+      </view>
+
+      <view class="card">
+        <view class="section-title">
+          <text>商家凭证</text>
+          <up-button size="mini" plain @click="onUploadEvidence">上传凭证</up-button>
+        </view>
+        <view v-if="!evidences.length" class="empty-row">暂未上传凭证</view>
+        <view v-for="e in evidences" :key="e.id" class="ev">
+          <view class="ev-images">
+            <image v-for="img in e.images" :key="img" :src="img" mode="aspectFill" class="img" />
+          </view>
+          <text class="time">{{ formatDate(e.created_at) }} · {{ e.remark || '' }}</text>
         </view>
       </view>
     </template>
@@ -336,4 +411,22 @@ onLoad((opts) => {
 .empty-row { color: var(--eapp-text-muted); font-size: 24rpx; text-align: center; padding: 30rpx 0; }
 .popup-body { padding: 24rpx; box-sizing: border-box; }
 .popup-title { font-size: 30rpx; font-weight: 700; margin-bottom: 14rpx; }
+.progress { background: var(--eapp-card); border: 1px solid var(--eapp-border); border-radius: 22rpx; padding: 20rpx; display: flex; justify-content: space-between; align-items: center; }
+.step { display: flex; flex-direction: column; align-items: center; gap: 6rpx; flex: 1; }
+.step .dot { width: 44rpx; height: 44rpx; border-radius: 50%; background: var(--eapp-border); color: #fff; display: flex; align-items: center; justify-content: center; }
+.step.active .dot { background: var(--eapp-primary); }
+.step .label { font-size: 22rpx; color: var(--eapp-text-muted); }
+.step.active .label { color: var(--eapp-text); }
+.msg { display: flex; margin-top: 10rpx; }
+.msg.right { justify-content: flex-end; }
+.msg-body { max-width: 70%; background: var(--eapp-bg); padding: 12rpx 14rpx; border-radius: 16rpx; }
+.msg.right .msg-body { background: var(--eapp-primary-soft); }
+.who { display: block; font-size: 20rpx; color: var(--eapp-text-muted); }
+.text { font-size: 24rpx; color: var(--eapp-text); }
+.imgs { display: flex; gap: 8rpx; margin-top: 6rpx; }
+.img { width: 120rpx; height: 120rpx; border-radius: 10rpx; }
+.time { display: block; font-size: 20rpx; color: var(--eapp-text-faint); margin-top: 4rpx; }
+.msg-input { margin-top: 12rpx; display: flex; gap: 10rpx; align-items: center; }
+.ev { margin-top: 10rpx; padding-top: 10rpx; border-top: 1px dashed var(--eapp-border); }
+.ev-images { display: flex; gap: 8rpx; flex-wrap: wrap; }
 </style>

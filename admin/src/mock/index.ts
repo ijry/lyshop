@@ -501,6 +501,17 @@ function buildAfterSaleRows() {
 }
 
 afterSalesSource.push(...buildAfterSaleRows())
+
+// Seed 3 after-sale records for eapp
+afterSalesSource.push(
+  { id: 8001, order_id: 1, status: 'applied', status_label: '待审核', case_type: 'refund_only', case_type_label: '仅退款', reason: '少件', refund_amount: 99, created_at: '2026-05-27T10:00:00Z', messages: [], evidences: [], logs: [{ id: 1, action: 'apply', action_label: '申请', from_status: '', to_status: 'applied', to_status_label: '待审核', content: '买家提交申请', created_at: '2026-05-27T10:00:00Z' }], shipments: [] },
+  { id: 8002, order_id: 2, status: 'user_returning', status_label: '退货中', case_type: 'return_refund', case_type_label: '退货退款', reason: '不喜欢', refund_amount: 199, created_at: '2026-05-26T15:30:00Z', messages: [
+    { id: 1, from: 'user', content: '我已寄回，请查收', images: [], created_at: '2026-05-26T18:00:00Z' },
+    { id: 2, from: 'merchant', content: '好的，签收后会立即处理退款', images: [], created_at: '2026-05-26T19:00:00Z' },
+  ], evidences: [], logs: [], shipments: [{ id: 1, company: 'SF', tracking_no: 'SF889977', direction: 'inbound', direction_label: '回寄', biz_type: 'return', biz_type_label: '回寄', logistics_status: 'in_transit', logistics_status_label: '运输中', created_at: '2026-05-26T17:30:00Z' }] },
+  { id: 8003, order_id: 3, status: 'refund_pending', status_label: '退款中', case_type: 'refund_only', case_type_label: '仅退款', reason: '商品损坏', refund_amount: 459, created_at: '2026-05-25T09:00:00Z', messages: [], evidences: [{ id: 1, images: ['https://picsum.photos/200/200?random=evi1'], remark: '商品破损照片', created_at: '2026-05-25T09:10:00Z' }], logs: [], shipments: [] },
+)
+
 for (const order of orderListSource) touchOrderAfterSaleSummary(Number(order.id))
 
 function buildReviewRows() {
@@ -1562,12 +1573,18 @@ export function matchMock(method: string, url: string, params?: Record<string, a
   }
   if (key === 'GET /admin/api/after-sales') {
     const status = String(query.status || '').trim()
+    const type = String(query.type || '')
     const orderID = Number(query.order_id || 0)
+    const timeStart = String(query.time_start || '')
+    const timeEnd = String(query.time_end || '')
     const page = Math.max(1, Number(query.page || 1))
     const size = Math.max(1, Number(query.size || 20))
     let list = afterSalesSource.slice()
     if (status) list = list.filter((item: any) => String(item.status || '') === status)
+    if (type) list = list.filter((item: any) => String(item.case_type || '') === type)
     if (orderID > 0) list = list.filter((item: any) => Number(item.order_id || 0) === orderID)
+    if (timeStart) list = list.filter((item: any) => String(item.created_at || '') >= timeStart)
+    if (timeEnd) list = list.filter((item: any) => String(item.created_at || '') <= timeEnd)
     const offset = (page - 1) * size
     const pageList = list.slice(offset, offset + size).map((item: any) => withAfterSaleLabels(item))
     return { matched: true, data: { list: pageList, total: list.length, page, size } }
@@ -1578,6 +1595,28 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     return { matched: true, data: target ? withAfterSaleLabels(target) : null }
   }
   if (key.startsWith('POST /admin/api/after-sales/')) {
+    // Messages route
+    if (methodUpper === 'POST' && /\/admin\/api\/after-sales\/\d+\/messages$/.test(url)) {
+      const id = Number(url.split('/')[4] || 0)
+      let target = afterSalesSource.find((row: any) => Number(row.id || 0) === id)
+      if (!target) {
+        target = { id, status: 'applied', case_type: 'refund_only', order_id: 1, messages: [], evidences: [], logs: [], shipments: [], created_at: new Date().toISOString() }
+        afterSalesSource.push(target)
+      }
+      target.messages = target.messages || []
+      target.messages.push({ id: Date.now(), from: String(params?.from || 'merchant'), content: String(params?.content || ''), images: Array.isArray(params?.images) ? params.images : [], created_at: new Date().toISOString() })
+      return { matched: true, data: { id, messages: clone(target.messages) } }
+    }
+
+    // Evidences route
+    if (methodUpper === 'POST' && /\/admin\/api\/after-sales\/\d+\/evidences$/.test(url)) {
+      const id = Number(url.split('/')[4] || 0)
+      const target = afterSalesSource.find((row: any) => Number(row.id || 0) === id)
+      if (!target) return { matched: true, data: null }
+      target.evidences = target.evidences || []
+      target.evidences.push({ id: Date.now(), images: Array.isArray(params?.images) ? params.images : [], remark: String(params?.remark || ''), created_at: new Date().toISOString() })
+      return { matched: true, data: { id, evidences: clone(target.evidences) } }
+    }
     const id = Number(url.split('/')[4] || 0)
     const action = String(url.split('/')[5] || '')
     const target = afterSalesSource.find((item: any) => Number(item.id) === id)
