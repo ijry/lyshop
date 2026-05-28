@@ -1,7 +1,7 @@
 {
 	"id": "lyshop-app",
 	"name": "lyshop",
-	"displayName": "lyshop新一代基于go免费开源的插件化商城系统100%前后端开源商用无忧。",
+	"displayName": "lyshop新一代基于go免费开源的插件化商城系统前后端完全开源商用无忧。",
 	"version": "2.0.0",
 	"description": "全插件化商城，多端覆盖。聚合AI生图、IM客服与营销引擎，支持RBAC权限及Docker一键部署。",
 	"keywords": [
