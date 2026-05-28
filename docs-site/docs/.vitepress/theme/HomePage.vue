@@ -55,7 +55,7 @@ const capabilities = [
 const channels = [
   { name: 'PC 商城', desc: '面向桌面端用户的完整商城体验', href: 'web-demo/index.html' },
   { name: 'H5 / App / 小程序', desc: '基于 uni-app 复用移动端购物链路', href: 'demo/index.html' },
-  { name: '商家 eapp', desc: '商家移动端运营工作台演示', href: 'eapp-demo/index.html#/pages/login/index' },
+  { name: '商家 eapp', desc: '商家移动端运营工作台演示', href: 'eapp-demo/index.html#/pages/dashboard/index' },
   { name: '管理后台', desc: '面向商家运营与系统管理', href: 'guide/features' },
 ]
 </script>

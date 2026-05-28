@@ -4,8 +4,20 @@ export default {
   onShow() {
     const pages = getCurrentPages()
     const route = pages[pages.length - 1]?.route || ''
-    const token = uni.getStorageSync('eapp_admin_token') || ''
+    const isMock = import.meta.env.VITE_MOCK === 'true'
+    const token = String(uni.getStorageSync('eapp_admin_token') || '')
     const isLogin = route === 'pages/login/index'
+
+    if (isMock) {
+      if (!token) {
+        uni.setStorageSync('eapp_admin_token', 'demo_admin_token')
+        uni.setStorageSync('eapp_admin_username', 'admin')
+      }
+      if (isLogin) {
+        uni.switchTab({ url: '/pages/dashboard/index' })
+      }
+      return
+    }
 
     if (!token && !isLogin) {
       uni.reLaunch({ url: '/pages/login/index' })

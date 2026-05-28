@@ -4,7 +4,7 @@
  *
  * What it does:
  *   1. Temporarily patches eapp manifest.json to use hash router + relative base
- *   2. Builds eapp H5
+ *   2. Builds eapp H5 with VITE_MOCK=true (shared admin mock data)
  *   3. Restores manifest.json
  *   4. Copies build output to docs-site/docs/public/eapp-demo/
  *
@@ -43,7 +43,7 @@ try {
   execSync(`${uniCmd} build`, {
     cwd: eappDir,
     stdio: 'inherit',
-    env: { ...process.env, UNI_INPUT_DIR: eappDir },
+    env: { ...process.env, VITE_MOCK: 'true', UNI_INPUT_DIR: eappDir },
   })
   console.log('[eapp-demo] H5 build complete')
 
@@ -78,4 +78,3 @@ function copyDir(src, dest) {
     }
   }
 }
-
