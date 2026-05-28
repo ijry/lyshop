@@ -25,7 +25,13 @@ const router = createRouter({
         { path: 'order/after-sale/detail/:id', name: 'nav.afterSaleDetail', component: () => import('@/views/order/AfterSaleDetail.vue'), meta: { titleKey: 'nav.afterSaleDetail' } },
         { path: 'review/list', name: 'nav.reviewList', component: () => import('@/views/review/ReviewList.vue'), meta: { titleKey: 'nav.reviewList' } },
         // WMS
-        { path: 'wms/stock', name: 'nav.stockManage', component: () => import('@/views/wms/StockList.vue'), meta: { titleKey: 'nav.stockManage' } },
+        { path: 'wms/stock', name: 'nav.stockManage', component: () => import('@/views/wms/StockLedger.vue'), meta: { titleKey: 'nav.stockManage' } },
+        { path: 'wms/warehouse', name: 'nav.warehouseManage', component: () => import('@/views/wms/WarehouseList.vue'), meta: { titleKey: 'nav.warehouseManage' } },
+        { path: 'wms/inbound', name: 'nav.inboundDocs', component: () => import('@/views/wms/DocList.vue'), meta: { titleKey: 'nav.inboundDocs' } },
+        { path: 'wms/outbound', name: 'nav.outboundDocs', component: () => import('@/views/wms/DocList.vue'), meta: { titleKey: 'nav.outboundDocs' } },
+        { path: 'wms/docs', name: 'nav.wmsDocList', component: () => import('@/views/wms/DocList.vue'), meta: { titleKey: 'nav.wmsDocList' } },
+        { path: 'wms/movements', name: 'nav.wmsMovementList', component: () => import('@/views/wms/MovementList.vue'), meta: { titleKey: 'nav.wmsMovementList' } },
+        { path: 'wms/docs/:id', name: 'nav.wmsDocEditor', component: () => import('@/views/wms/DocEditor.vue'), meta: { titleKey: 'nav.wmsDocEditor' } },
         // Marketing
         { path: 'marketing/coupon',   name: 'nav.couponManage', component: () => import('@/views/marketing/CouponList.vue'), meta: { titleKey: 'nav.couponManage' } },
         { path: 'marketing/seckill/activity', name: 'nav.seckillActivityManage', component: () => import('@/views/marketing/SeckillActivityList.vue'), meta: { titleKey: 'nav.seckillActivityManage' } },
