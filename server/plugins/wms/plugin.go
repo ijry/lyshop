@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 
 	"github.com/gin-gonic/gin"
+	"github.com/ijry/lyshop/core/plugin"
 	wmsapi "github.com/ijry/lyshop/plugins/wms/api"
 	wmsmodel "github.com/ijry/lyshop/plugins/wms/model"
-	"github.com/ijry/lyshop/core/plugin"
 	"gorm.io/gorm"
 )
 
@@ -33,12 +33,10 @@ func (p *wmsPlugin) RegisterRoutes(_ *gin.RouterGroup, admin *gin.RouterGroup) {
 func (p *wmsPlugin) Migrate(db *gorm.DB) error {
 	return db.AutoMigrate(
 		&wmsmodel.Warehouse{},
-		&wmsmodel.WmsStock{},
-		&wmsmodel.WmsInbound{},
-		&wmsmodel.WmsInboundItem{},
-		&wmsmodel.WmsOutbound{},
-		&wmsmodel.WmsOutboundItem{},
-		&wmsmodel.WmsStockLog{},
+		&wmsmodel.InventoryStock{},
+		&wmsmodel.InventoryMovement{},
+		&wmsmodel.InventoryDoc{},
+		&wmsmodel.InventoryDocItem{},
 	)
 }
 

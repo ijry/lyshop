@@ -6,81 +6,65 @@ import (
 
 	"github.com/ijry/lyshop/core/db"
 	wmsmodel "github.com/ijry/lyshop/plugins/wms/model"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
-// Inbound adds qty to stock for a given warehouse+SKU and records a log.
-func Inbound(ctx context.Context, warehouseID, skuID uint64, qty int, refID uint64, refType string) error {
-	if qty <= 0 {
-		return fmt.Errorf("inbound qty must be positive")
-	}
-	return db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		// Upsert stock record
-		stock := wmsmodel.WmsStock{WarehouseID: warehouseID, SkuID: skuID}
-		tx.Where("warehouse_id = ? AND sku_id = ?", warehouseID, skuID).FirstOrCreate(&stock)
-
-		before := stock.Qty
-		after := before + qty
-		if err := tx.Model(&stock).UpdateColumn("qty", after).Error; err != nil {
-			return err
-		}
-		return tx.Create(&wmsmodel.WmsStockLog{
-			WarehouseID: warehouseID, SkuID: skuID,
-			Type: "inbound", Qty: qty, BeforeQty: before, AfterQty: after,
-			RefID: refID, RefType: refType,
-		}).Error
-	})
+type StockView struct {
+	wmsmodel.InventoryStock
+	IsWarning  bool `json:"is_warning"`
+	WarningGap int  `json:"warning_gap"`
 }
 
-// Outbound deducts qty from stock. Returns error if insufficient.
-func Outbound(ctx context.Context, warehouseID, skuID uint64, qty int, refID uint64, refType string) error {
-	if qty <= 0 {
-		return fmt.Errorf("outbound qty must be positive")
+func ListStocks(ctx context.Context, q StockListQuery) ([]StockView, int64, error) {
+	page, size := normalizePage(q.Page, q.Size)
+	tx := db.DB.WithContext(ctx).Model(&wmsmodel.InventoryStock{})
+	if q.WarehouseID > 0 {
+		tx = tx.Where("warehouse_id = ?", q.WarehouseID)
 	}
-	return db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		var stock wmsmodel.WmsStock
-		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-			Where("warehouse_id = ? AND sku_id = ?", warehouseID, skuID).
-			First(&stock).Error; err != nil {
-			return fmt.Errorf("库存记录不存在")
-		}
-		if stock.Qty < qty {
-			return fmt.Errorf("库存不足 (当前=%d, 需要=%d)", stock.Qty, qty)
-		}
-		before := stock.Qty
-		after := before - qty
-		tx.Model(&stock).UpdateColumn("qty", after)
-		return tx.Create(&wmsmodel.WmsStockLog{
-			WarehouseID: warehouseID, SkuID: skuID,
-			Type: "outbound", Qty: -qty, BeforeQty: before, AfterQty: after,
-			RefID: refID, RefType: refType,
-		}).Error
-	})
-}
+	if q.SkuID > 0 {
+		tx = tx.Where("sku_id = ?", q.SkuID)
+	}
+	if q.WarningOnly {
+		tx = tx.Where("qty < safe_qty")
+	}
 
-// ListStocks returns paginated stock records for a warehouse.
-func ListStocks(ctx context.Context, warehouseID uint64, page, size int) ([]wmsmodel.WmsStock, int64, error) {
-	if page <= 0 { page = 1 }
-	if size <= 0 || size > 100 { size = 20 }
-	tx := db.DB.WithContext(ctx).Model(&wmsmodel.WmsStock{})
-	if warehouseID > 0 {
-		tx = tx.Where("warehouse_id = ?", warehouseID)
-	}
 	var total int64
-	tx.Count(&total)
-	var list []wmsmodel.WmsStock
-	err := tx.Offset((page - 1) * size).Limit(size).Find(&list).Error
-	return list, total, err
+	if err := tx.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	var rows []wmsmodel.InventoryStock
+	if err := tx.Order("id DESC").Offset((page - 1) * size).Limit(size).Find(&rows).Error; err != nil {
+		return nil, 0, err
+	}
+
+	list := make([]StockView, 0, len(rows))
+	for _, row := range rows {
+		gap := row.SafeQty - row.Qty
+		if gap < 0 {
+			gap = 0
+		}
+		list = append(list, StockView{
+			InventoryStock: row,
+			IsWarning:      row.Qty < row.SafeQty,
+			WarningGap:     gap,
+		})
+	}
+	return list, total, nil
 }
 
-// ListWarehouses returns all active warehouses.
-func ListWarehouses(ctx context.Context) ([]wmsmodel.Warehouse, error) {
-	var list []wmsmodel.Warehouse
-	err := db.DB.WithContext(ctx).Where("status = 1").Find(&list).Error
-	return list, err
-}
-
-func CreateWarehouse(ctx context.Context, w *wmsmodel.Warehouse) error {
-	return db.DB.WithContext(ctx).Create(w).Error
+func UpdateStockSafety(ctx context.Context, id uint64, safeQty int) error {
+	if id == 0 {
+		return fmt.Errorf("库存ID不能为空")
+	}
+	if safeQty < 0 {
+		return fmt.Errorf("安全库存不能小于0")
+	}
+	tx := db.DB.WithContext(ctx).Model(&wmsmodel.InventoryStock{}).Where("id = ?", id).Update("safe_qty", safeQty)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	if tx.RowsAffected == 0 {
+		return fmt.Errorf("库存记录不存在")
+	}
+	return nil
 }
