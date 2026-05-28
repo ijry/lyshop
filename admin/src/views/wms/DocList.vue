@@ -24,7 +24,7 @@
         <option value="">{{ $t('wms.allDocStatuses') }}</option>
         <option value="draft">{{ $t('wms.docStatusDraft') }}</option>
         <option value="completed">{{ $t('wms.docStatusCompleted') }}</option>
-        <option value="voided">{{ $t('wms.docStatusVoided') }}</option>
+        <option value="canceled">{{ $t('wms.docStatusCanceled') }}</option>
       </select>
       <select v-model.number="query.warehouse_id" class="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none">
         <option :value="0">{{ $t('stock.allWarehouse') }}</option>
@@ -107,8 +107,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { createDoc, listDocs, listWarehouses, type WmsDoc, type WmsDocStatus, type WmsDocType, type WmsWarehouse } from '@/api/wms'
-import { notify } from '@/utils/notify'
+import { listDocs, listWarehouses, type WmsDoc, type WmsDocStatus, type WmsDocType, type WmsWarehouse } from '@/api/wms'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -116,6 +115,7 @@ const router = useRouter()
 const docs = ref<WmsDoc[]>([])
 const warehouses = ref<WmsWarehouse[]>([])
 const total = ref(0)
+const prevFixedType = ref<WmsDocType | ''>('')
 const query = ref({
   type: '',
   status: '',
@@ -138,13 +138,18 @@ const pageTitle = computed(() => {
 })
 
 function applyFixedType() {
-  query.value.type = fixedType.value || query.value.type
+  if (fixedType.value) {
+    query.value.type = fixedType.value
+  } else if (prevFixedType.value) {
+    query.value.type = ''
+  }
+  prevFixedType.value = fixedType.value
 }
 
 function statusLabel(status: WmsDocStatus) {
   if (status === 'draft') return t('wms.docStatusDraft')
   if (status === 'completed') return t('wms.docStatusCompleted')
-  return t('wms.docStatusVoided')
+  return t('wms.docStatusCanceled')
 }
 
 function statusClass(status: WmsDocStatus) {
@@ -162,14 +167,13 @@ function formatDate(value?: string) {
 }
 
 async function loadWarehouses() {
-  const rows = await listWarehouses()
-  warehouses.value = Array.isArray(rows) ? rows : []
+  const data = await listWarehouses()
+  warehouses.value = Array.isArray(data?.list) ? data.list : []
 }
 
 async function loadDocs() {
-  applyFixedType()
   const data = await listDocs({
-    type: (query.value.type as WmsDocType) || undefined,
+    doc_type: (query.value.type as WmsDocType) || undefined,
     status: (query.value.status as WmsDocStatus) || undefined,
     warehouse_id: query.value.warehouse_id > 0 ? Number(query.value.warehouse_id) : undefined,
     doc_no: query.value.doc_no || undefined,
@@ -187,31 +191,29 @@ function onSearch() {
 
 async function createDraftDoc() {
   const warehouseID = query.value.warehouse_id || Number(warehouses.value[0]?.id || 0)
-  if (!warehouseID) {
-    notify(t('wms.noWarehouseHint'))
-    return
-  }
   const type = (fixedType.value || query.value.type || 'inbound') as WmsDocType
-  const data = await createDoc({
-    type,
-    status: 'draft',
-    warehouse_id: warehouseID,
-    items: [],
-    remark: '',
+  router.push({
+    path: '/wms/docs/new',
+    query: {
+      type,
+      warehouse_id: warehouseID || undefined,
+      back_to: route.fullPath,
+    },
   })
-  if (!data?.id) {
-    notify(t('common.saveFailed'))
-    return
-  }
-  router.push(`/wms/docs/${data.id}`)
 }
 
 function goEdit(id: number) {
-  router.push(`/wms/docs/${id}`)
+  router.push({
+    path: `/wms/docs/${id}`,
+    query: { back_to: route.fullPath },
+  })
 }
 
 function goView(id: number) {
-  router.push({ path: `/wms/docs/${id}`, query: { mode: 'view' } })
+  router.push({
+    path: `/wms/docs/${id}`,
+    query: { mode: 'view', back_to: route.fullPath },
+  })
 }
 
 function prevPage() {

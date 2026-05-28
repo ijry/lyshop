@@ -31,6 +31,7 @@ const router = createRouter({
         { path: 'wms/outbound', name: 'nav.outboundDocs', component: () => import('@/views/wms/DocList.vue'), meta: { titleKey: 'nav.outboundDocs' } },
         { path: 'wms/docs', name: 'nav.wmsDocList', component: () => import('@/views/wms/DocList.vue'), meta: { titleKey: 'nav.wmsDocList' } },
         { path: 'wms/movements', name: 'nav.wmsMovementList', component: () => import('@/views/wms/MovementList.vue'), meta: { titleKey: 'nav.wmsMovementList' } },
+        { path: 'wms/docs/new', name: 'nav.wmsDocCreate', component: () => import('@/views/wms/DocEditor.vue'), meta: { titleKey: 'nav.wmsDocEditor' } },
         { path: 'wms/docs/:id', name: 'nav.wmsDocEditor', component: () => import('@/views/wms/DocEditor.vue'), meta: { titleKey: 'nav.wmsDocEditor' } },
         // Marketing
         { path: 'marketing/coupon',   name: 'nav.couponManage', component: () => import('@/views/marketing/CouponList.vue'), meta: { titleKey: 'nav.couponManage' } },

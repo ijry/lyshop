@@ -104,7 +104,7 @@ function typeLabel(type: string) {
 
 async function loadWarehouses() {
   const data = await listWarehouses()
-  warehouses.value = Array.isArray(data) ? data : []
+  warehouses.value = Array.isArray(data?.list) ? data.list : []
 }
 
 async function loadRows() {

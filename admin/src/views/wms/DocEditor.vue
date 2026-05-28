@@ -8,24 +8,27 @@
       <div class="flex items-center gap-2">
         <button
           v-if="editable"
-          class="px-4 py-2 bg-slate-100 text-slate-700 text-sm rounded-lg hover:bg-slate-200"
+          class="px-4 py-2 bg-slate-100 text-slate-700 text-sm rounded-lg hover:bg-slate-200 disabled:opacity-50"
+          :disabled="submitting"
           @click="handleSave"
         >
           {{ $t('wms.saveDraft') }}
         </button>
         <button
           v-if="editable"
-          class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-500"
+          class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-500 disabled:opacity-50"
+          :disabled="submitting"
           @click="handleComplete"
         >
           {{ $t('wms.completeDoc') }}
         </button>
         <button
           v-if="editable"
-          class="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-500"
-          @click="handleVoid"
+          class="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-500 disabled:opacity-50"
+          :disabled="submitting"
+          @click="handleCancel"
         >
-          {{ $t('wms.voidDoc') }}
+          {{ $t('wms.cancelDoc') }}
         </button>
       </div>
     </div>
@@ -91,7 +94,7 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-50">
-            <tr v-for="(item, idx) in doc.items" :key="idx" class="hover:bg-slate-50">
+            <tr v-for="item in doc.items" :key="item._row_key" class="hover:bg-slate-50">
               <td class="px-4 py-3">
                 <input v-model.number="item.sku_id" :disabled="!editable" type="number" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
               </td>
@@ -105,7 +108,7 @@
                 <input v-model.number="item.unit_cost" :disabled="!editable" type="number" min="0" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
               </td>
               <td class="px-4 py-3">
-                <button v-if="editable" class="text-red-500 hover:underline text-xs" @click="removeItem(idx)">{{ $t('common.delete') }}</button>
+                <button v-if="editable" class="text-red-500 hover:underline text-xs" @click="removeItem(item._row_key)">{{ $t('common.delete') }}</button>
               </td>
             </tr>
             <tr v-if="!doc.items.length">
@@ -133,17 +136,26 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { completeDoc, getDocDetail, listWarehouses, saveDoc, voidDoc, type WmsDoc, type WmsDocItem, type WmsDocStatus, type WmsWarehouse } from '@/api/wms'
+import { cancelDoc, completeDoc, createDoc, getDocDetail, listWarehouses, saveDoc, type WmsDoc, type WmsDocItem, type WmsDocStatus, type WmsDocType, type WmsWarehouse } from '@/api/wms'
 import { notify } from '@/utils/notify'
 import { confirmAction } from '@/utils/dialog'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const doc = ref<WmsDoc | null>(null)
-const warehouses = ref<WmsWarehouse[]>([])
+type WmsDocItemRow = WmsDocItem & { _row_key: string }
+type WmsDocForm = Omit<WmsDoc, 'items'> & { items: WmsDocItemRow[] }
 
-const docID = computed(() => Number(route.params.id || 0))
+const doc = ref<WmsDocForm | null>(null)
+const warehouses = ref<WmsWarehouse[]>([])
+const submitting = ref(false)
+let rowSeq = 0
+
+const isNewMode = computed(() => String(route.params.id || '') === 'new')
+const docID = computed(() => {
+  if (isNewMode.value) return 0
+  return Number(route.params.id || 0)
+})
 const isViewMode = computed(() => String(route.query.mode || '') === 'view')
 const editable = computed(() => {
   if (!doc.value) return false
@@ -158,7 +170,7 @@ const totalQty = computed(() => {
 function statusLabel(status: WmsDocStatus) {
   if (status === 'draft') return t('wms.docStatusDraft')
   if (status === 'completed') return t('wms.docStatusCompleted')
-  return t('wms.docStatusVoided')
+  return t('wms.docStatusCanceled')
 }
 
 function statusClass(status: WmsDocStatus) {
@@ -171,7 +183,12 @@ function formatDate(value?: string) {
   return value ? String(value).slice(0, 19).replace('T', ' ') : '-'
 }
 
-function normalizeItems(items: WmsDocItem[] | undefined): WmsDocItem[] {
+function nextRowKey(seed?: number | string) {
+  rowSeq += 1
+  return seed ? `row_${seed}_${rowSeq}` : `row_new_${rowSeq}`
+}
+
+function normalizeItems(items: WmsDocItem[] | undefined): WmsDocItemRow[] {
   if (!Array.isArray(items)) return []
   return items.map((row) => ({
     id: row.id,
@@ -180,22 +197,50 @@ function normalizeItems(items: WmsDocItem[] | undefined): WmsDocItem[] {
     qty: Math.max(0, Number(row.qty || 0)),
     unit_cost: Math.max(0, Number(row.unit_cost || 0)),
     note: String(row.note || ''),
+    _row_key: nextRowKey(row.id),
   }))
 }
 
 async function loadWarehouses() {
-  const rows = await listWarehouses()
-  warehouses.value = Array.isArray(rows) ? rows : []
+  const data = await listWarehouses()
+  warehouses.value = Array.isArray(data?.list) ? data.list : []
+  if (isNewMode.value && doc.value && !doc.value.warehouse_id && warehouses.value.length) {
+    doc.value.warehouse_id = Number(warehouses.value[0].id || 0)
+  }
+}
+
+function initNewDoc() {
+  const type = String(route.query.type || 'inbound') === 'outbound' ? 'outbound' : 'inbound'
+  const warehouseID = Number(route.query.warehouse_id || warehouses.value[0]?.id || 0)
+  doc.value = {
+    id: 0,
+    doc_no: '',
+    type: type as WmsDocType,
+    status: 'draft',
+    warehouse_id: warehouseID,
+    warehouse_name: '',
+    remark: '',
+    items: [],
+    total_qty: 0,
+    created_at: '',
+    updated_at: '',
+  }
 }
 
 async function loadDoc() {
+  if (isNewMode.value) {
+    initNewDoc()
+    return
+  }
   if (!docID.value) {
     notify(t('wms.docNotFound'))
+    router.replace('/wms/docs')
     return
   }
   const data = await getDocDetail(docID.value)
   if (!data) {
     notify(t('wms.docNotFound'))
+    router.replace('/wms/docs')
     return
   }
   doc.value = {
@@ -206,12 +251,12 @@ async function loadDoc() {
 
 function addItem() {
   if (!doc.value || !editable.value) return
-  doc.value.items.push({ sku_id: 0, sku_name: '', qty: 1, unit_cost: 0 })
+  doc.value.items.push({ sku_id: 0, sku_name: '', qty: 1, unit_cost: 0, _row_key: nextRowKey() })
 }
 
-function removeItem(index: number) {
+function removeItem(rowKey: string) {
   if (!doc.value || !editable.value) return
-  doc.value.items.splice(index, 1)
+  doc.value.items = doc.value.items.filter((row) => row._row_key !== rowKey)
 }
 
 function validateBeforeSave() {
@@ -237,10 +282,19 @@ function validateBeforeSave() {
   return true
 }
 
-async function handleSave() {
-  if (!doc.value || !editable.value) return
-  if (!validateBeforeSave()) return
-  const payload: Partial<WmsDoc> = {
+function resolveErrorMessage(error: unknown, fallback: string) {
+  if (error instanceof Error && error.message) return error.message
+  return fallback
+}
+
+function getBackToPath() {
+  const backTo = String(route.query.back_to || '').trim()
+  return backTo.startsWith('/') ? backTo : '/wms/docs'
+}
+
+function buildDocPayload() {
+  if (!doc.value) return null
+  return {
     type: doc.value.type,
     warehouse_id: Number(doc.value.warehouse_id || 0),
     remark: String(doc.value.remark || ''),
@@ -253,28 +307,86 @@ async function handleSave() {
       note: String(row.note || ''),
     })),
   }
-  const saved = await saveDoc(doc.value.id, payload)
-  doc.value = { ...saved, items: normalizeItems(saved.items) }
+}
+
+async function persistDraft() {
+  if (!doc.value || !editable.value) return
+  const payload = buildDocPayload()
+  if (!payload) return
+  if (isNewMode.value) {
+    const created = await createDoc(payload)
+    if (!created?.id) {
+      throw new Error(t('wms.createDocFailed'))
+    }
+    doc.value = {
+      ...created,
+      items: normalizeItems(created.items),
+    }
+    await router.replace({
+      path: `/wms/docs/${created.id}`,
+      query: { back_to: getBackToPath() },
+    })
+    return
+  }
+  await saveDoc(doc.value.id, payload)
+}
+
+async function handleSave() {
+  if (!doc.value || !editable.value || submitting.value) return
+  if (!validateBeforeSave()) return
+  submitting.value = true
+  try {
+    await persistDraft()
+    if (doc.value?.id) {
+      await loadDoc()
+    }
+    notify(t('common.saveSuccess'))
+  } catch (error) {
+    notify(resolveErrorMessage(error, t('wms.saveDocFailed')))
+  } finally {
+    submitting.value = false
+  }
 }
 
 async function handleComplete() {
-  if (!doc.value || !editable.value) return
+  if (!doc.value || !editable.value || submitting.value) return
   if (!validateBeforeSave()) return
   if (!confirmAction(t('wms.confirmCompleteDoc'))) return
-  await handleSave()
-  const updated = await completeDoc(doc.value.id)
-  doc.value = { ...updated, items: normalizeItems(updated.items) }
+  submitting.value = true
+  try {
+    await persistDraft()
+    if (!doc.value?.id) throw new Error(t('wms.docNotFound'))
+    await completeDoc(doc.value.id)
+    await loadDoc()
+    notify(t('wms.completeSuccess'))
+  } catch (error) {
+    notify(resolveErrorMessage(error, t('wms.completeFailed')))
+  } finally {
+    submitting.value = false
+  }
 }
 
-async function handleVoid() {
-  if (!doc.value || !editable.value) return
-  if (!confirmAction(t('wms.confirmVoidDoc'))) return
-  const updated = await voidDoc(doc.value.id)
-  doc.value = { ...updated, items: normalizeItems(updated.items) }
+async function handleCancel() {
+  if (!doc.value || !editable.value || submitting.value) return
+  if (!confirmAction(t('wms.confirmCancelDoc'))) return
+  submitting.value = true
+  try {
+    if (!isNewMode.value && doc.value?.id) {
+      await cancelDoc(doc.value.id)
+      await loadDoc()
+    } else {
+      doc.value.status = 'canceled'
+    }
+    notify(t('wms.cancelSuccess'))
+  } catch (error) {
+    notify(resolveErrorMessage(error, t('wms.cancelFailed')))
+  } finally {
+    submitting.value = false
+  }
 }
 
 function goBack() {
-  router.back()
+  router.push(getBackToPath())
 }
 
 onMounted(async () => {

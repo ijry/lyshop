@@ -145,8 +145,8 @@ function closeForm() {
 }
 
 async function loadWarehouses() {
-  const rows = await listWarehouses({ keyword: keyword.value || undefined })
-  warehouses.value = Array.isArray(rows) ? rows : []
+  const data = await listWarehouses({ keyword: keyword.value || undefined })
+  warehouses.value = Array.isArray(data?.list) ? data.list : []
 }
 
 async function submitForm() {
