@@ -1404,11 +1404,158 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     return { matched: true, data: null }
   }
   if (key === 'GET /admin/api/orders') {
-    const status = toNumber(query.status)
-    const list = status > 0
-      ? orderListSource.filter((item: any) => toNumber(item.status) === status)
-      : orderListSource.slice()
-    return { matched: true, data: { ...orders, list, total: list.length } }
+    const keyword = String(query.keyword || '').trim().toLowerCase()
+    const status = String(query.status || '')
+    const amountMin = Number(query.amount_min || 0)
+    const amountMax = Number(query.amount_max || 0)
+    const company = String(query.logistics_company || '')
+    const province = String(query.province || '')
+    const payMethod = String(query.pay_method || '')
+    const hasAfterSale = query.has_after_sale === true || String(query.has_after_sale || '') === 'true' || query.has_after_sale === 1
+    const timeStart = String(query.time_start || '')
+    const timeEnd = String(query.time_end || '')
+
+    let list = clone(orderListSource)
+    if (status) list = list.filter((o: any) => String(o.status) === status)
+    if (keyword) {
+      list = list.filter((o: any) =>
+        String(o.id || '').includes(keyword) ||
+        String(o.user_nickname || '').toLowerCase().includes(keyword) ||
+        String(o.receiver_name || '').toLowerCase().includes(keyword) ||
+        (Array.isArray(o.items) && o.items.some((it: any) => String(it.title || '').toLowerCase().includes(keyword))))
+    }
+    if (amountMin > 0) list = list.filter((o: any) => Number(o.pay_amount || o.total_amount || 0) >= amountMin)
+    if (amountMax > 0) list = list.filter((o: any) => Number(o.pay_amount || o.total_amount || 0) <= amountMax)
+    if (company) list = list.filter((o: any) => Array.isArray(o.shipments) && o.shipments.some((s: any) => String(s.company || '') === company))
+    if (province) list = list.filter((o: any) => String(o.receiver_address || '').includes(province))
+    if (payMethod) list = list.filter((o: any) => String(o.pay_method || '') === payMethod)
+    if (hasAfterSale) list = list.filter((o: any) => o.has_after_sale === true || (Array.isArray(o.after_sales) && o.after_sales.length > 0))
+    if (timeStart) list = list.filter((o: any) => String(o.created_at || '') >= timeStart)
+    if (timeEnd) list = list.filter((o: any) => String(o.created_at || '') <= timeEnd)
+
+    return { matched: true, data: toPageData(list, Number(query.page || 1), Number(query.size || 20)) }
+  }
+
+  // Order action routes
+  if (methodUpper === 'POST' && /\/admin\/api\/orders\/\d+\/repricing$/.test(url)) {
+    const id = Number(url.split('/')[4] || 0)
+    const target = orderListSource.find((o: any) => Number(o.id || 0) === id)
+    if (!target) return { matched: true, data: null }
+    const items: any[] = Array.isArray(params?.items) ? params.items : []
+    let goodsTotal = 0
+    for (const it of items) {
+      const oi = (target.items || []).find((x: any) => Number(x.id || x.item_id || 0) === Number(it.item_id || 0))
+      if (oi) { oi.price = Number(it.price || 0); goodsTotal += Number(it.price || 0) * Number(oi.qty || 1) }
+    }
+    if (!goodsTotal) goodsTotal = Number(target.goods_amount || target.total_amount || 0)
+    target.amount_breakdown = {
+      goods_amount: goodsTotal,
+      discount_amount: Number(target.discount_amount || 0),
+      payable_amount: Math.max(0, goodsTotal - Number(target.discount_amount || 0)),
+    }
+    target.pay_amount = target.amount_breakdown.payable_amount
+    target.notes = target.notes || []
+    target.notes.push({ id: Date.now(), content: `改价：${params?.remark || ''}`, created_at: new Date().toISOString() })
+    return { matched: true, data: { id, amount_breakdown: clone(target.amount_breakdown) } }
+  }
+
+  if (methodUpper === 'POST' && /\/admin\/api\/orders\/\d+\/notes$/.test(url)) {
+    const id = Number(url.split('/')[4] || 0)
+    const target = orderListSource.find((o: any) => Number(o.id || 0) === id)
+    if (!target) return { matched: true, data: null }
+    target.notes = target.notes || []
+    target.notes.push({ id: Date.now(), content: String(params?.content || ''), created_at: new Date().toISOString(), visible_to: String(params?.visible_to || 'merchant_only') })
+    return { matched: true, data: { id, notes: clone(target.notes) } }
+  }
+
+  if (methodUpper === 'POST' && /\/admin\/api\/orders\/\d+\/remind-pay$/.test(url)) {
+    return { matched: true, data: { sent_at: new Date().toISOString(), channel: String(params?.channel || 'sms') } }
+  }
+
+  if (methodUpper === 'GET' && /\/admin\/api\/orders\/\d+\/print-template$/.test(url)) {
+    const id = Number(url.split('/')[4] || 0)
+    const target = orderListSource.find((o: any) => Number(o.id || 0) === id)
+    const name = target?.receiver_name || '--'
+    const addr = target?.receiver_address || '--'
+    const tpl = `<div style="font-family:sans-serif;padding:12px;"><h3>电子面单 #${id}</h3><div>收件人：${name}</div><div>地址：${addr}</div><div>商品：${(target?.items || []).map((x: any) => x.title).join('，')}</div><div style="margin-top:10px;font-weight:bold;">[ 顺丰速运 ] SF${1000000 + id}</div></div>`
+    return { matched: true, data: { template: tpl } }
+  }
+
+  if (methodUpper === 'GET' && /\/admin\/api\/orders\/\d+\/timeline$/.test(url)) {
+    const id = Number(url.split('/')[4] || 0)
+    const target = orderListSource.find((o: any) => Number(o.id || 0) === id)
+    const createdAt = String(target?.created_at || '2026-05-25T08:00:00Z')
+    const stages = [
+      { stage: 'created', status: '已下单', time: createdAt, content: '买家下单' },
+      { stage: 'paid', status: '已支付', time: createdAt.replace('08:00:00', '08:05:00'), content: '微信支付完成' },
+      { stage: 'shipped', status: '已发货', time: createdAt.replace('08:00:00', '12:00:00'), content: '顺丰已揽收' },
+      { stage: 'received', status: '已签收', time: createdAt.replace('08:00:00', '23:00:00'), content: '客户已签收' },
+      { stage: 'completed', status: '已完成', time: createdAt.replace('08:00:00', '23:30:00'), content: '订单完成' },
+    ]
+    const currentStatus = String(target?.status || '1')
+    const cutoff: Record<string, number> = { '1': 1, '2': 2, '3': 3, '4': 5, '5': 1 }
+    return { matched: true, data: stages.slice(0, cutoff[currentStatus] || stages.length) }
+  }
+
+  if (methodUpper === 'POST' && url === '/admin/api/orders/batch/ship') {
+    const rows: any[] = Array.isArray(params) ? params : []
+    const success_ids: number[] = []
+    const fail: Array<{ id: number; reason: string }> = []
+    for (const row of rows) {
+      const oid = Number(row?.order_id || 0)
+      const target = orderListSource.find((o: any) => Number(o.id || 0) === oid)
+      if (!target) { fail.push({ id: oid, reason: '订单不存在' }); continue }
+      if (String(target.status) === '5') { fail.push({ id: oid, reason: '订单已关闭' }); continue }
+      target.shipments = target.shipments || []
+      target.shipments.push({ id: Date.now() + oid, company: String(row.company || 'SF'), tracking_no: String(row.tracking_no || ''), delivery_type: 'express', logistics_status: 'created', logistics_status_label: '已下单', created_at: new Date().toISOString() })
+      target.status = '3'; target.status_label = '已发货'
+      success_ids.push(oid)
+    }
+    return { matched: true, data: { success_ids, fail } }
+  }
+
+  if (methodUpper === 'POST' && url === '/admin/api/orders/batch/notes') {
+    const ids: number[] = Array.isArray(params?.ids) ? params.ids : []
+    const content = String(params?.content || '')
+    const success_ids: number[] = []; const fail: Array<{ id: number; reason: string }> = []
+    for (const oid of ids) {
+      const t = orderListSource.find((o: any) => Number(o.id || 0) === Number(oid))
+      if (!t) { fail.push({ id: Number(oid), reason: '订单不存在' }); continue }
+      t.notes = t.notes || []; t.notes.push({ id: Date.now(), content, created_at: new Date().toISOString() })
+      success_ids.push(Number(oid))
+    }
+    return { matched: true, data: { success_ids, fail } }
+  }
+
+  if (methodUpper === 'POST' && url === '/admin/api/orders/batch/repricing') {
+    const ids: number[] = Array.isArray(params?.ids) ? params.ids : []
+    const adj = params?.adjustment || { type: 'percent', value: -10 }
+    const success_ids: number[] = []; const fail: Array<{ id: number; reason: string }> = []
+    for (const oid of ids) {
+      const t = orderListSource.find((o: any) => Number(o.id || 0) === Number(oid))
+      if (!t) { fail.push({ id: Number(oid), reason: '订单不存在' }); continue }
+      if (String(t.status) !== '1') { fail.push({ id: Number(oid), reason: '当前状态不可改价' }); continue }
+      const orig = Number(t.pay_amount || t.total_amount || 0)
+      const next = adj.type === 'percent' ? orig * (1 + Number(adj.value || 0) / 100) : orig + Number(adj.value || 0)
+      t.pay_amount = Math.max(0, Math.round(next * 100) / 100)
+      t.amount_breakdown = { goods_amount: t.pay_amount, discount_amount: 0, payable_amount: t.pay_amount }
+      success_ids.push(Number(oid))
+    }
+    return { matched: true, data: { success_ids, fail } }
+  }
+
+  if (methodUpper === 'POST' && url === '/admin/api/orders/batch/close') {
+    const ids: number[] = Array.isArray(params?.ids) ? params.ids : []
+    const reason = String(params?.reason || '')
+    const success_ids: number[] = []; const fail: Array<{ id: number; reason: string }> = []
+    for (const oid of ids) {
+      const t = orderListSource.find((o: any) => Number(o.id || 0) === Number(oid))
+      if (!t) { fail.push({ id: Number(oid), reason: '订单不存在' }); continue }
+      if (String(t.status) === '4') { fail.push({ id: Number(oid), reason: '已完成订单不能关闭' }); continue }
+      t.status = '5'; t.status_label = '已关闭'; t.close_reason = reason
+      success_ids.push(Number(oid))
+    }
+    return { matched: true, data: { success_ids, fail } }
   }
   if (key === 'GET /admin/api/reviews') {
     return { matched: true, data: listReviews(query) }

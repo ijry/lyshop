@@ -2,7 +2,8 @@
 import { onLoad } from '@dcloudio/uni-app'
 import { computed, reactive, ref } from 'vue'
 import StatusTag from '@/components/common/StatusTag.vue'
-import { getDeliveryMode, getOrderDetail, getShipmentTracks, shipOrder, syncShipment } from '@/api/order'
+import Timeline from '@/components/biz/Timeline.vue'
+import { addOrderNote, getDeliveryMode, getOrderDetail, getOrderTimeline, getShipmentTracks, remindPay, repriceOrder, shipOrder, syncShipment } from '@/api/order'
 
 const loading = ref(false)
 const actionLoading = ref(false)
@@ -10,6 +11,46 @@ const trackLoadingID = ref(0)
 const orderID = ref(0)
 const deliveryMode = ref<'express' | 'local' | 'both'>('express')
 const showShipPopup = ref(false)
+
+const timelineItems = ref<Array<{ key: string; title: string; time?: string; tone?: 'primary'|'success'|'warn'|'muted' }>>([])
+
+async function loadTimeline() {
+  if (!orderID.value) return
+  try {
+    const rows: any = await getOrderTimeline(orderID.value)
+    timelineItems.value = (Array.isArray(rows) ? rows : []).map((r: any) => ({
+      key: r.stage, title: r.status, time: formatDate(r.time),
+      tone: r.stage === 'completed' ? 'success' : 'primary',
+    }))
+  } catch {}
+}
+
+function openActionSheet() {
+  uni.showActionSheet({
+    itemList: ['改价', '添加备注', '打印面单', '催付款'],
+    success: async (res) => {
+      if (res.tapIndex === 0) {
+        if (String(detail.status) !== '1') { uni.showToast({ title: '当前状态不可改价', icon: 'none' }); return }
+        uni.showModal({ title: '改价', editable: true, placeholderText: '输入新的支付金额', success: async (m) => {
+          if (!m.confirm || !m.content) return
+          await repriceOrder(detail.id, { items: detail.items.map((it: any) => ({ item_id: it.id, price: Number(m.content) / (detail.items.length || 1) })), remark: '操作菜单改价' })
+          await loadData()
+        } })
+      } else if (res.tapIndex === 1) {
+        uni.showModal({ title: '添加备注', editable: true, success: async (m) => {
+          if (!m.confirm || !m.content) return
+          await addOrderNote(detail.id, { content: m.content })
+          uni.showToast({ title: '已添加', icon: 'success' })
+        } })
+      } else if (res.tapIndex === 2) {
+        uni.navigateTo({ url: `/pages/order/print-preview?id=${detail.id}` })
+      } else if (res.tapIndex === 3) {
+        await remindPay(detail.id, { channel: 'sms' })
+        uni.showToast({ title: '已催付', icon: 'success' })
+      }
+    },
+  })
+}
 
 const detail = reactive<any>({
   id: 0,
@@ -136,6 +177,7 @@ async function loadData() {
       ...(data || {}),
     })
     await loadTracks()
+    await loadTimeline()
   } finally {
     loading.value = false
   }
@@ -221,9 +263,14 @@ onLoad(async (opts) => {
     <view v-if="loading" class="empty">加载中...</view>
     <template v-else>
       <view class="card">
+        <view class="section-title">订单进度</view>
+        <Timeline :items="timelineItems" />
+      </view>
+      <view class="card">
         <view class="head">
           <text>订单 #{{ detail.id }}</text>
           <StatusTag :text="detail.status_label || detail.status || '-'" :type="detail.status" />
+          <text class="op" @click="openActionSheet">操作</text>
         </view>
         <view class="line">下单时间：{{ formatDate(detail.created_at) }}</view>
         <view class="line">收货人：{{ detail.receiver_name || '-' }}</view>
@@ -332,5 +379,6 @@ onLoad(async (opts) => {
 .empty-row { color: var(--eapp-text-muted); font-size: 24rpx; text-align: center; padding: 30rpx 0; }
 .popup-body { padding: 24rpx; box-sizing: border-box; }
 .popup-title { font-size: 30rpx; font-weight: 700; margin-bottom: 14rpx; }
+.op { color: var(--eapp-primary); font-size: 24rpx; padding-left: 16rpx; }
 .picker { min-height: 76rpx; border: 1px solid var(--eapp-border); border-radius: 12rpx; padding: 0 20rpx; display: flex; align-items: center; color: var(--eapp-text); }
 </style>
