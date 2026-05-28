@@ -1,0 +1,348 @@
+<template>
+  <view class="ly-charts-scatter" :style="{ width: containerWidth, height: containerHeight }">
+    <ly-canvas
+      ref="canvasRef"
+      class="chart-canvas"
+      :canvas-id="canvasId"
+      width="100"
+      height="100"
+      :use-root-height-and-width="true"
+      @ready="handleCanvasReady"
+      @touchstart="handleTouchStart"
+      @touchmove="handleTouchMove"
+      @touchend="handleTouchEnd"
+    />
+  </view>
+</template>
+
+<script lang="uts">
+import chartHelper from '../../libs/uvue/chartHelper.uts'
+
+export default {
+  name: 'ly-charts-scatter',
+  props: {
+    option: {
+      type: Object,
+      default: () => ({})
+    },
+    height: {
+      type: [String, Number],
+      default: 400
+    },
+    width: {
+      type: [String, Number],
+      default: '100%'
+    }
+  },
+  data() {
+    return {
+      canvasId: `scatter-chart-${Date.now()}`,
+      ctx: null as any,
+      canvasWidth: 0,
+      canvasHeight: 0,
+      grid: { top: 10, right: 20, bottom: 25, left: 50 },
+      seriesData: [] as any[],
+      touchInfo: {
+        startX: 0,
+        startY: 0
+      }
+    }
+  },
+  computed: {
+    containerHeight() {
+      return typeof this.height === 'number' ? `${this.height}px` : this.height
+    },
+    containerWidth() {
+      return typeof this.width === 'number' ? `${this.width}px` : this.width
+    }
+  },
+  watch: {
+    option: {
+      handler(newOption : any) {
+        this.drawChart(newOption)
+      },
+      deep: true
+    }
+  },
+  methods: {
+    initCanvas() {
+      const canvasRef = this.$refs['canvasRef'] as any
+      if (canvasRef && typeof canvasRef.refresh === 'function') {
+        canvasRef.refresh()
+      }
+    },
+    handleCanvasReady(event : any) {
+      const canvasRef = this.$refs['canvasRef'] as any
+      this.ctx = canvasRef
+      this.canvasWidth = event.width || canvasRef.getWidth()
+      this.canvasHeight = event.height || canvasRef.getHeight()
+      this.drawChart(this.option)
+    },
+    drawChart(option : any) {
+      if (!this.ctx || !option) {
+        return
+      }
+
+      try {
+        this.grid = { top: 10, right: 20, bottom: 25, left: 50 }
+        this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
+        if (option.backgroundColor) {
+          this.ctx.setFillStyle(option.backgroundColor)
+          this.ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight)
+        }
+
+        let titleHeight = 0
+        if (option.title && option.title.text) {
+          titleHeight = chartHelper.drawTitle(this.ctx, option.title, this.canvasWidth)
+        }
+        if (titleHeight > 0) {
+          this.grid.top = Math.max(this.grid.top, titleHeight + 10)
+        }
+
+        const series = option.series || []
+        const xAxis = option.xAxis || {}
+        const yAxis = option.yAxis || {}
+        const range = this.calculateScatterDataRange(series)
+
+        if (option.legend && option.legend.data) {
+          const legendData = series.map((item : any) => item.name)
+          chartHelper.drawLegend(
+            this.ctx,
+            { ...option.legend, data: legendData },
+            this.grid,
+            this.canvasWidth,
+            chartHelper.defaultColors,
+            this.canvasHeight,
+            titleHeight
+          )
+        }
+
+        if (option.grid !== false) {
+          chartHelper.drawGrid(this.ctx, this.grid, this.canvasWidth, this.canvasHeight, 5, range.minY, range.maxY, true)
+        }
+        chartHelper.drawAxis(this.ctx, this.grid, this.canvasWidth, this.canvasHeight, [range.minX, (range.minX + range.maxX) / 2, range.maxX], range.minY, range.maxY, xAxis, yAxis, 'scatter')
+        this.drawScatterSeries(series, range.minX, range.maxX, range.minY, range.maxY)
+        this.ctx.draw()
+      } catch (error) {
+        console.error('绘制散点图失败:', error)
+      }
+    },
+    calculateScatterDataRange(series : any[]) {
+      let minX = Number.MAX_VALUE
+      let maxX = Number.MIN_VALUE
+      let minY = Number.MAX_VALUE
+      let maxY = Number.MIN_VALUE
+      let hasData = false
+
+      if (!series || !Array.isArray(series)) {
+        return { minX: 0, maxX: 1, minY: 0, maxY: 1 }
+      }
+
+      series.forEach((serie : any) => {
+        if (serie && serie.type === 'scatter' && Array.isArray(serie.data)) {
+          serie.data.forEach((point : any) => {
+            if (Array.isArray(point) && point.length >= 2) {
+              const x = point[0]
+              const y = point[1]
+              if (typeof x === 'number' && typeof y === 'number' && !isNaN(x) && !isNaN(y)) {
+                minX = Math.min(minX, x)
+                maxX = Math.max(maxX, x)
+                minY = Math.min(minY, y)
+                maxY = Math.max(maxY, y)
+                hasData = true
+              }
+            }
+          })
+        }
+      })
+
+      if (!hasData) {
+        return { minX: 0, maxX: 1, minY: 0, maxY: 1 }
+      }
+
+      const xRange = maxX - minX
+      const yRange = maxY - minY
+      if (xRange === 0) {
+        minX -= 1
+        maxX += 1
+      } else {
+        const padding = xRange * 0.1
+        minX -= padding
+        maxX += padding
+      }
+
+      if (yRange === 0) {
+        minY -= 1
+        maxY += 1
+      } else {
+        const padding = yRange * 0.1
+        minY -= padding
+        maxY += padding
+      }
+
+      return { minX, maxX, minY, maxY }
+    },
+    drawScatterSeries(series : any[], minX : number, maxX : number, minY : number, maxY : number) {
+      if (!series || series.length === 0) {
+        return
+      }
+      const chartWidth = this.canvasWidth - this.grid.left - this.grid.right
+      const chartHeight = this.canvasHeight - this.grid.top - this.grid.bottom
+      this.seriesData = []
+
+      series.forEach((serie : any, index : number) => {
+        if (serie.type !== 'scatter') {
+          return
+        }
+        const color = serie.color || (serie.itemStyle && serie.itemStyle.color) || chartHelper.getColor(index)
+        const symbolSize = serie.symbolSize || 10
+        const points = [] as any[]
+        if (Array.isArray(serie.data)) {
+          serie.data.forEach((value : any) => {
+            if (Array.isArray(value) && value.length >= 2) {
+              const xValue = value[0]
+              const yValue = value[1]
+              const x = this.grid.left + ((xValue - minX) / (maxX - minX || 1)) * chartWidth
+              const y = this.grid.top + chartHeight - ((yValue - minY) / (maxY - minY || 1)) * chartHeight
+              points.push({
+                x,
+                y,
+                value: [xValue, yValue],
+                name: value[2] || `(${xValue}, ${yValue})`,
+                seriesName: serie.name || `Series ${index}`
+              })
+            }
+          })
+        }
+        this.seriesData.push({
+          name: serie.name || `Series ${index}`,
+          points,
+          color
+        })
+        if (points.length > 0) {
+          this.ctx.setFillStyle(color)
+          points.forEach((point : any) => {
+            this.drawSymbol(point.x, point.y, symbolSize, serie.symbol || 'circle')
+          })
+        }
+      })
+    },
+    drawSymbol(x : number, y : number, size : number, symbol : string) {
+      this.ctx.beginPath()
+      if (symbol === 'rect') {
+        this.ctx.rect(x - size / 2, y - size / 2, size, size)
+      } else if (symbol === 'triangle') {
+        const height = size * Math.sqrt(3) / 2
+        this.ctx.moveTo(x, y - height / 2)
+        this.ctx.lineTo(x - size / 2, y + height / 2)
+        this.ctx.lineTo(x + size / 2, y + height / 2)
+        this.ctx.closePath()
+      } else if (symbol === 'diamond') {
+        this.ctx.moveTo(x, y - size / 2)
+        this.ctx.lineTo(x - size / 2, y)
+        this.ctx.lineTo(x, y + size / 2)
+        this.ctx.lineTo(x + size / 2, y)
+        this.ctx.closePath()
+      } else {
+        this.ctx.arc(x, y, size / 2, 0, 2 * Math.PI)
+      }
+      this.ctx.fill()
+    },
+    handleTouchStart(event : any) {
+      const touch = event.touches && event.touches.length > 0 ? event.touches[0] : null
+      if (touch) {
+        this.touchInfo.startX = touch.x || 0
+        this.touchInfo.startY = touch.y || 0
+      }
+    },
+    handleTouchMove(event : any) {
+      if (event && typeof event.preventDefault === 'function') {
+        event.preventDefault()
+      }
+    },
+    handleTouchEnd(event : any) {
+      const touch = event.changedTouches && event.changedTouches.length > 0 ? event.changedTouches[0] : null
+      if (!touch) {
+        return
+      }
+      const endX = touch.x || 0
+      const endY = touch.y || 0
+      if (Math.abs(endX - this.touchInfo.startX) < 5 && Math.abs(endY - this.touchInfo.startY) < 5) {
+        this.handleChartClick(endX, endY)
+      }
+    },
+    handleChartClick(x : number, y : number) {
+      let minDistance = Infinity
+      let closestPoint = null as any
+      this.seriesData.forEach((series : any) => {
+        if (!series.points) {
+          return
+        }
+        series.points.forEach((point : any) => {
+          const distance = Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2))
+          if (distance < minDistance && distance < 20) {
+            minDistance = distance
+            closestPoint = {
+              seriesName: series.name,
+              name: point.name,
+              value: point.value,
+              color: series.color,
+              x: point.x,
+              y: point.y
+            }
+          }
+        })
+      })
+
+      if (closestPoint) {
+        this.$emit('click', {
+          componentType: 'series',
+          seriesType: 'scatter',
+          seriesName: closestPoint.seriesName,
+          name: closestPoint.name,
+          value: closestPoint.value,
+          color: closestPoint.color,
+          event: {
+            offsetX: closestPoint.x,
+            offsetY: closestPoint.y
+          }
+        })
+      }
+    },
+    setOption(option : any, notMerge : boolean = false) {
+      if (notMerge) {
+        this.drawChart(option)
+        return
+      }
+      try {
+        const newOption = JSON.parse(JSON.stringify(this.option))
+        Object.assign(newOption, option)
+        this.drawChart(newOption)
+      } catch (error) {
+        console.error('合并配置失败:', error)
+        this.drawChart(option)
+      }
+    },
+    resize() {
+      this.initCanvas()
+    }
+  },
+  mounted() {
+    this.$nextTick(() => {
+      this.initCanvas()
+    })
+  }
+}
+</script>
+
+<style scoped>
+.ly-charts-scatter {
+  position: relative;
+}
+
+.chart-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+</style>

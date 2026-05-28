@@ -1,0 +1,408 @@
+<template>
+  <view class="ly-charts-gauge" :style="{ width: widthStyle, height: heightStyle }">
+    <ly-canvas
+      ref="canvasRef"
+      class="chart-canvas"
+      :canvas-id="canvasId"
+      width="100"
+      height="100"
+      :use-root-height-and-width="true"
+      @ready="handleCanvasReady"
+      @touchend="tap"
+    />
+  </view>
+</template>
+
+<script lang="uts">
+import chartHelper from '../../libs/uvue/chartHelper.uts'
+
+export default {
+  name: 'ly-charts-gauge',
+  props: {
+    width: {
+      type: [String, Number],
+      default: 300
+    },
+    height: {
+      type: [String, Number],
+      default: 300
+    },
+    option: {
+      type: Object,
+      default: () => ({})
+    }
+  },
+  data() {
+    return {
+      canvasId: `chart-gauge-${Date.now()}`,
+      ctx: null as any,
+      canvasWidth: 300,
+      canvasHeight: 300,
+      progressValue: [] as any[],
+      animationTimer: null as any,
+      isInited: false
+    }
+  },
+  computed: {
+    widthStyle() {
+      return typeof this.width === 'number' ? `${this.width}px` : this.width
+    },
+    heightStyle() {
+      return typeof this.height === 'number' ? `${this.height}px` : this.height
+    }
+  },
+  watch: {
+    option: {
+      handler(newVal : any) {
+        this.updateChart(newVal)
+      },
+      deep: true
+    }
+  },
+  methods: {
+    init() {
+      const canvasRef = this.$refs['canvasRef'] as any
+      if (canvasRef && typeof canvasRef.refresh === 'function') {
+        canvasRef.refresh()
+      }
+    },
+    handleCanvasReady(event : any) {
+      const canvasRef = this.$refs['canvasRef'] as any
+      this.ctx = canvasRef
+      this.canvasWidth = event.width || canvasRef.getWidth()
+      this.canvasHeight = event.height || canvasRef.getHeight()
+      this.updateChart(this.option)
+    },
+    angleToRadBase(angle : number) {
+      if (angle >= 0) {
+        const normalizedAngle = angle / 360 * 2
+        return (2 - normalizedAngle) * Math.PI
+      }
+      const normalizedAngle = Math.abs(angle / 360 * 2)
+      return normalizedAngle * Math.PI
+    },
+    drawChart() {
+      if (!this.ctx) {
+        return
+      }
+      this.drawGauge(this.ctx)
+    },
+    drawGauge(ctx : any) {
+      const width = this.canvasWidth
+      const height = this.canvasHeight
+      const centerX = width / 2
+      const centerY = height / 2
+      const series = this.option.series && this.option.series.length > 0 ? this.option.series[0] : {}
+      const data = series.data && series.data.length > 0 ? series.data : [{ value: 0 }]
+      const values = data.map((item : any, index : number) => {
+        if (this.isInited && this.progressValue[index] !== undefined) {
+          return Number(this.progressValue[index])
+        }
+        return item.value || 0
+      })
+
+      const progress = series.progress || { show: false, width: 12 }
+      const itemStyle = series.itemStyle || {}
+      const axisLine = series.axisLine || { lineStyle: { width: 12 } }
+      const axisTick = series.axisTick || { show: true }
+      const splitLine = series.splitLine || { length: 10, lineStyle: { width: 2, color: '#999' } }
+      const axisLabel = series.axisLabel || { distance: 10, color: '#999', fontSize: 12 }
+      const anchor = series.anchor || { show: false, size: 1, itemStyle: { borderWidth: 1 } }
+      const detail = series.detail || { show: true, fontSize: 20, offsetCenter: [0, 0] }
+      const pointer = series.pointer || {}
+      const startAngle = series.startAngle !== undefined ? series.startAngle : 225
+      const endAngle = series.endAngle !== undefined ? series.endAngle : -45
+      const min = series.min !== undefined ? series.min : 0
+      const max = series.max !== undefined ? series.max : 100
+      const splitNumber = splitLine.splitNumber !== undefined ? splitLine.splitNumber : 10
+      const axisTickNumber = axisTick.splitNumber !== undefined ? axisTick.splitNumber : 5
+
+      const startRad = this.angleToRadBase(startAngle)
+      const endRad = this.angleToRadBase(endAngle)
+      let totalAngle = endAngle - startAngle
+      if (totalAngle < 0) {
+        totalAngle = Math.abs(totalAngle)
+      }
+
+      const radius = Math.min(width, height) / 2 * 0.8
+      const lineWidth = axisLine.lineStyle.width || 12
+      let progressWidth = progress.width || lineWidth
+      ctx.clearRect(0, 0, width, height)
+
+      ctx.beginPath()
+      ctx.arc(centerX, centerY, radius, startRad, endRad, false)
+      const lineStyleColor = axisLine.lineStyle.color
+      if (Array.isArray(lineStyleColor) && lineStyleColor.length > 0) {
+        for (let i = 0; i < lineStyleColor.length; i++) {
+          const item = lineStyleColor[i]
+          const percent = item[0]
+          const color = item[1]
+          const startPercent = i === 0 ? 0 : lineStyleColor[i - 1][0]
+          const segmentStartAngle = this.angleToRadBase(startAngle - startPercent * totalAngle)
+          const segmentEndAngle = this.angleToRadBase(startAngle - percent * totalAngle)
+          ctx.beginPath()
+          ctx.arc(centerX, centerY, radius, segmentStartAngle, segmentEndAngle, false)
+          ctx.setStrokeStyle(color)
+          ctx.setLineWidth(lineWidth)
+          ctx.setLineCap('butt')
+          ctx.stroke()
+        }
+      } else {
+        ctx.setStrokeStyle(lineStyleColor || '#E6EBF8')
+        ctx.setLineWidth(lineWidth)
+        ctx.setLineCap('butt')
+        ctx.stroke()
+      }
+
+      if (progress.show !== false) {
+        const progressRadiusOffset = 1
+        let currentRadius = radius
+        data.forEach((item : any, index : number) => {
+          const value = values[index]
+          if (values.length > 1) {
+            progressWidth = (lineWidth - (values.length + 1) * progressRadiusOffset) / values.length
+          }
+          const progressPercent = (value - min) / (max - min)
+          const clampedProgress = Math.max(0, Math.min(1, progressPercent))
+          const progressEndAngle = this.angleToRadBase(startAngle - clampedProgress * totalAngle)
+          if (values.length > 1) {
+            if (index === 0) {
+              currentRadius = radius + ((values.length / 2 + 0.5) * progressWidth) + progressRadiusOffset * Math.floor(values.length / 2)
+            }
+            currentRadius = currentRadius - progressWidth - progressRadiusOffset
+          } else {
+            currentRadius = radius - index * (progressWidth + progressRadiusOffset)
+          }
+
+          ctx.beginPath()
+          ctx.arc(centerX, centerY, currentRadius, startRad, progressEndAngle)
+          const dataItemStyle = item.itemStyle || {}
+          const progressColor = dataItemStyle.color || itemStyle.color || chartHelper.getColor(index)
+          ctx.setStrokeStyle(progressColor)
+          if (itemStyle.shadowColor) {
+            ctx.setShadow(itemStyle.shadowOffsetX || 0, itemStyle.shadowOffsetY || 0, itemStyle.shadowBlur || 0, itemStyle.shadowColor)
+          }
+          ctx.setLineWidth(progressWidth)
+          ctx.setLineCap('round')
+          ctx.stroke()
+          if (itemStyle.shadowColor) {
+            ctx.setShadow(0, 0, 0, 'rgba(0,0,0,0)')
+          }
+        })
+      }
+
+      if (axisTick.show !== false) {
+        for (let i = 0; i <= splitNumber; i++) {
+          if (i < splitNumber) {
+            for (let j = 1; j <= axisTickNumber; j++) {
+              const angle = this.angleToRadBase(startAngle - (i + j / (axisTickNumber + 1)) / splitNumber * totalAngle)
+              const axisTickDistance = axisTick.distance || 10
+              const tickLength = 5
+              const innerRadius = radius - tickLength - axisTickDistance
+              const outerRadius = radius - axisTickDistance
+              const startX = centerX + innerRadius * Math.cos(angle)
+              const startY = centerY + innerRadius * Math.sin(angle)
+              const endX = centerX + outerRadius * Math.cos(angle)
+              const endY = centerY + outerRadius * Math.sin(angle)
+              ctx.beginPath()
+              ctx.moveTo(startX, startY)
+              ctx.lineTo(endX, endY)
+              ctx.setStrokeStyle(axisTick.lineStyle ? axisTick.lineStyle.color : '#999')
+              ctx.setLineWidth(axisTick.lineStyle ? axisTick.lineStyle.width : 1)
+              ctx.stroke()
+            }
+          }
+        }
+      }
+
+      if (splitLine.show !== false) {
+        for (let i = 0; i <= splitNumber; i++) {
+          const angle = this.angleToRadBase(startAngle - (i / splitNumber) * totalAngle)
+          const splitLineDistance = splitLine.distance || 10
+          const innerRadius = radius - splitLine.length - splitLineDistance
+          const outerRadius = radius - splitLineDistance
+          const startX = centerX + innerRadius * Math.cos(angle)
+          const startY = centerY + innerRadius * Math.sin(angle)
+          const endX = centerX + outerRadius * Math.cos(angle)
+          const endY = centerY + outerRadius * Math.sin(angle)
+
+          ctx.beginPath()
+          ctx.moveTo(startX, startY)
+          ctx.lineTo(endX, endY)
+          ctx.setStrokeStyle(splitLine.lineStyle ? splitLine.lineStyle.color : '#999')
+          ctx.setLineWidth(splitLine.lineStyle ? splitLine.lineStyle.width : 2)
+          ctx.stroke()
+
+          if (axisLabel.show !== false) {
+            const labelDistance = axisLabel.distance || 10
+            const labelRadius = radius - splitLine.length - splitLineDistance - labelDistance
+            const labelX = centerX + labelRadius * Math.cos(angle)
+            const labelY = centerY + labelRadius * Math.sin(angle)
+            ctx.setFontSize(axisLabel.fontSize || 12)
+            ctx.setFillStyle(axisLabel.color || '#999')
+            ctx.setTextAlign('center')
+            ctx.setTextBaseline('middle')
+            const labelValue = min + (i / splitNumber) * (max - min)
+            ctx.fillText(labelValue.toString(), labelX, labelY)
+          }
+        }
+      }
+
+      if (data.length > 0 && pointer.show !== false) {
+        data.forEach((item : any, index : number) => {
+          const value = values[index]
+          const pointStyle = item.itemStyle || {}
+          const progressPercent = (value - min) / (max - min)
+          const clampedProgress = Math.max(0, Math.min(1, progressPercent))
+          const pointerAngle = this.angleToRadBase(startAngle - clampedProgress * totalAngle)
+          const pointerLength = pointer.length !== undefined ? pointer.length : radius
+          let pointerWidth = pointer.width !== undefined ? pointer.width : 6
+          pointerWidth = pointerWidth - index * 1.5
+          const pointerHeadLength = pointerLength * 0.7
+          const pointerHeadX = centerX + pointerHeadLength * Math.cos(pointerAngle)
+          const pointerHeadY = centerY + pointerHeadLength * Math.sin(pointerAngle)
+          const perpAngle = pointerAngle + Math.PI / 2
+          const halfWidth = pointerWidth / 2
+          const headBaseX1 = centerX + halfWidth * Math.cos(perpAngle)
+          const headBaseY1 = centerY + halfWidth * Math.sin(perpAngle)
+          const headBaseX2 = centerX - halfWidth * Math.cos(perpAngle)
+          const headBaseY2 = centerY - halfWidth * Math.sin(perpAngle)
+          const tailWidth = pointerWidth * 1.5
+          const halfTailWidth = tailWidth / 2
+          const tailBaseX1 = centerX + halfTailWidth * Math.cos(perpAngle)
+          const tailBaseY1 = centerY + halfTailWidth * Math.sin(perpAngle)
+          const tailBaseX2 = centerX - halfTailWidth * Math.cos(perpAngle)
+          const tailBaseY2 = centerY - halfTailWidth * Math.sin(perpAngle)
+          const pointerColor = pointStyle.color || chartHelper.getColor(index)
+
+          ctx.beginPath()
+          ctx.moveTo(pointerHeadX, pointerHeadY)
+          ctx.lineTo(headBaseX1, headBaseY1)
+          ctx.lineTo(headBaseX2, headBaseY2)
+          ctx.closePath()
+          ctx.setFillStyle(pointerColor)
+          if (pointStyle.shadowColor) {
+            ctx.setShadow(pointStyle.shadowOffsetX || 0, pointStyle.shadowOffsetY || 0, pointStyle.shadowBlur || 0, pointStyle.shadowColor)
+          }
+          ctx.fill()
+
+          ctx.beginPath()
+          ctx.moveTo(centerX, centerY)
+          ctx.lineTo(tailBaseX1, tailBaseY1)
+          ctx.lineTo(tailBaseX2, tailBaseY2)
+          ctx.closePath()
+          ctx.setFillStyle(pointerColor)
+          ctx.fill()
+          if (pointStyle.shadowColor) {
+            ctx.setShadow(0, 0, 0, 'rgba(0,0,0,0)')
+          }
+        })
+      }
+
+      if (anchor.show !== false) {
+        ctx.beginPath()
+        ctx.arc(centerX, centerY, anchor.size || 5, 0, 2 * Math.PI)
+        ctx.setFillStyle(anchor.itemStyle ? (anchor.itemStyle.color || '#fff') : '#fff')
+        ctx.fill()
+        ctx.beginPath()
+        ctx.arc(centerX, centerY, (anchor.size || 5) + ((anchor.itemStyle && anchor.itemStyle.borderWidth) || 2), 0, 2 * Math.PI)
+        ctx.setFillStyle(anchor.itemStyle ? (anchor.itemStyle.borderColor || '#333') : '#333')
+        ctx.fill()
+      }
+
+      if (detail.show !== false && data.length > 0) {
+        const firstData = data[0]
+        const value = values[0]
+        const name = firstData.name || ''
+        let text = value.toString()
+        if (detail.formatter) {
+          text = detail.formatter.replace('{value}', Math.round(value))
+        }
+        const offsetX = Array.isArray(detail.offsetCenter) && detail.offsetCenter.length > 0 ? detail.offsetCenter[0] : 0
+        const offsetY = Array.isArray(detail.offsetCenter) && detail.offsetCenter.length > 1 ? detail.offsetCenter[1] : 0
+        let valueY = centerY + 50 + offsetY
+        if (name) {
+          const rate = 0.6
+          ctx.setFontSize((detail.fontSize || 30) * rate)
+          ctx.setFillStyle(detail.color || '#333')
+          ctx.setTextAlign('center')
+          ctx.setTextBaseline('middle')
+          ctx.fillText(name, centerX + offsetX, centerY + 30 + offsetY)
+          valueY = centerY + 30 + offsetY + (detail.fontSize || 30) * rate * 1.7
+        }
+        ctx.setFontSize(detail.fontSize || 30)
+        ctx.setFillStyle(detail.color || '#333')
+        ctx.setTextAlign('center')
+        ctx.setTextBaseline('middle')
+        ctx.fillText(text, centerX + offsetX, valueY)
+      }
+
+      ctx.draw()
+    },
+    updateChart(option : any) {
+      if (!this.ctx || !option) {
+        return
+      }
+      const series = option.series && option.series.length > 0 ? option.series[0] : {}
+      const data = series.data && series.data.length > 0 ? series.data : [{ value: 0 }]
+      const values = data.map((item : any) => item.value || 0)
+      const detail = series.detail || { show: true, fontSize: 20, offsetCenter: [0, 0] }
+      this.isInited = true
+
+      if (detail.valueAnimation) {
+        if (this.animationTimer) {
+          clearInterval(this.animationTimer)
+        }
+        const startTime = Date.now()
+        const globalDuration = option.animationDuration !== undefined ? option.animationDuration : 1000
+        const duration = series.animationDuration !== undefined ? series.animationDuration : globalDuration
+        const startValues = this.progressValue.length > 0 ? this.progressValue.map((item : any) => Number(item)) : new Array(values.length).fill(0)
+        this.animationTimer = setInterval(() => {
+          const elapsed = Date.now() - startTime
+          const progress = Math.min(elapsed / duration, 1)
+          const easeOutQuart = 1 - Math.pow(1 - progress, 4)
+          this.progressValue = startValues.map((start : number, index : number) => {
+            const end = values[index] || 0
+            return Math.round(start + (end - start) * easeOutQuart)
+          })
+          this.drawChart()
+          if (progress >= 1) {
+            clearInterval(this.animationTimer)
+            this.animationTimer = null
+          }
+        }, 16)
+      } else {
+        this.progressValue = [...values]
+        this.drawChart()
+      }
+    },
+    tap(event : any) {
+      this.$emit('click', event)
+    },
+    refresh() {
+      this.drawChart()
+    }
+  },
+  mounted() {
+    this.init()
+  },
+  beforeUnmount() {
+    if (this.animationTimer) {
+      clearInterval(this.animationTimer)
+    }
+  }
+}
+</script>
+
+<style scoped>
+.ly-charts-gauge {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.chart-canvas {
+  width: 100%;
+  height: 100%;
+}
+</style>

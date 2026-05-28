@@ -1,0 +1,462 @@
+<template>
+  <view class="ly-charts-line" :style="{ width: containerWidth, height: containerHeight }">
+    <ly-canvas
+      ref="canvasRef"
+      class="chart-canvas"
+      :canvas-id="canvasId"
+      width="100"
+      height="100"
+      :use-root-height-and-width="true"
+      @ready="handleCanvasReady"
+      @touchstart="handleTouchStart"
+      @touchmove="handleTouchMove"
+      @touchend="handleTouchEnd"
+    />
+  </view>
+</template>
+
+<script lang="uts">
+import chartHelper from '../../libs/uvue/chartHelper.uts'
+
+export default {
+  name: 'ly-charts-line',
+  props: {
+    option: {
+      type: Object,
+      default: () => ({})
+    },
+    height: {
+      type: [String, Number],
+      default: 400
+    },
+    width: {
+      type: [String, Number],
+      default: '100%'
+    }
+  },
+  data() {
+    return {
+      canvasId: `line-chart-${Date.now()}`,
+      ctx: null as any,
+      canvasWidth: 0,
+      canvasHeight: 0,
+      grid: { top: 10, right: 20, bottom: 25, left: 50 },
+      seriesData: [] as any[],
+      touchInfo: {
+        startX: 0,
+        startY: 0
+      }
+    }
+  },
+  computed: {
+    containerHeight() {
+      return typeof this.height === 'number' ? `${this.height}px` : this.height
+    },
+    containerWidth() {
+      return typeof this.width === 'number' ? `${this.width}px` : this.width
+    }
+  },
+  watch: {
+    option: {
+      handler(newOption : any) {
+        this.drawChart(newOption)
+      },
+      deep: true
+    }
+  },
+  methods: {
+    initCanvas() {
+      const canvasRef = this.$refs['canvasRef'] as any
+      if (canvasRef && typeof canvasRef.refresh === 'function') {
+        canvasRef.refresh()
+      }
+    },
+    handleCanvasReady(event : any) {
+      const canvasRef = this.$refs['canvasRef'] as any
+      this.ctx = canvasRef
+      this.canvasWidth = event.width || canvasRef.getWidth()
+      this.canvasHeight = event.height || canvasRef.getHeight()
+      this.drawChart(this.option)
+    },
+    drawChart(option : any) {
+      if (!this.ctx || !option) {
+        return
+      }
+
+      try {
+        this.grid = { top: 10, right: 20, bottom: 25, left: 50 }
+        this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
+        if (option.backgroundColor) {
+          this.ctx.setFillStyle(option.backgroundColor)
+          this.ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight)
+        }
+
+        let titleHeight = 0
+        if (option.title && option.title.text) {
+          titleHeight = chartHelper.drawTitle(this.ctx, option.title, this.canvasWidth)
+        }
+        if (titleHeight > 0) {
+          this.grid.top = Math.max(this.grid.top, titleHeight + 10)
+        }
+
+        const series = option.series || []
+        const xAxis = option.xAxis || {}
+        const yAxis = option.yAxis || {}
+        const xAxisData = chartHelper.processXAxisData(xAxis, series)
+        const range = chartHelper.calculateDataRange(series)
+        const xAxisPadding = option.xAxisPadding || 0
+
+        if (option.legend && option.legend.data) {
+          chartHelper.drawLegend(
+            this.ctx,
+            { ...option.legend },
+            this.grid,
+            this.canvasWidth,
+            chartHelper.defaultColors,
+            this.canvasHeight,
+            titleHeight
+          )
+        }
+
+        let needRotateLabels = false
+        if (xAxisData && xAxisData.length > 0) {
+          const xAxisFontSize = (xAxis && xAxis.axisLabel && xAxis.axisLabel.fontSize) || 12
+          const chartWidth = this.canvasWidth - (this.grid.left || 0) - (this.grid.right || 0)
+          const avgLabelWidth = chartWidth / xAxisData.length
+          const maxLabelLength = Math.floor(avgLabelWidth / (xAxisFontSize * 0.6))
+          for (let i = 0; i < xAxisData.length; i++) {
+            if (String(xAxisData[i]).length > maxLabelLength && maxLabelLength > 0) {
+              needRotateLabels = true
+              break
+            }
+          }
+        }
+        if (needRotateLabels) {
+          this.grid.bottom = Math.max(this.grid.bottom, 60)
+        }
+
+        if (option.grid !== false) {
+          chartHelper.drawGrid(this.ctx, this.grid, this.canvasWidth, this.canvasHeight, xAxisData.length, range.minY, range.maxY, false, xAxisPadding)
+        }
+        chartHelper.drawAxis(this.ctx, this.grid, this.canvasWidth, this.canvasHeight, xAxisData, range.minY, range.maxY, xAxis, yAxis, 'line', xAxisPadding)
+        this.drawSeries(series, xAxisData, range.minY, range.maxY, chartHelper.adjustedYMin, chartHelper.adjustedYMax, xAxisPadding)
+        this.ctx.draw()
+      } catch (error) {
+        console.error('绘制折线图失败:', error)
+      }
+    },
+    drawSeries(series : any[], xAxisData : any[], minY : number, maxY : number, adjustedYMin : number, adjustedYMax : number, xAxisPadding : number = 0) {
+      if (!series || series.length === 0) {
+        return
+      }
+
+      const chartWidth = this.canvasWidth - this.grid.left - this.grid.right
+      const paddedChartWidth = chartWidth - 2 * xAxisPadding
+      const chartHeight = this.canvasHeight - this.grid.top - this.grid.bottom
+      this.seriesData = []
+
+      const useAdjustedY = adjustedYMin !== undefined && adjustedYMax !== undefined
+      const actualMinY = useAdjustedY ? adjustedYMin : minY
+      const actualMaxY = useAdjustedY ? adjustedYMax : maxY
+
+      series.forEach((serie : any, index : number) => {
+        if (serie.type !== 'line') {
+          return
+        }
+        const color = serie.color || (serie.itemStyle && serie.itemStyle.color) || chartHelper.getColor(index)
+        const fillArea = serie.areaStyle || serie.fillArea
+        const smooth = serie.smooth === true
+        const points = [] as any[]
+        if (Array.isArray(serie.data)) {
+          serie.data.forEach((value : any, i : number) => {
+            const actualValue = typeof value === 'object' && value !== null ? value.value : value
+            const x = this.grid.left + xAxisPadding + (xAxisData.length > 1 ? (i / (xAxisData.length - 1)) * paddedChartWidth : 0)
+            const y = this.grid.top + chartHeight - ((actualValue - actualMinY) / (actualMaxY - actualMinY || 1)) * chartHeight
+            points.push({
+              x,
+              y,
+              value: actualValue,
+              name: xAxisData[i] || i,
+              seriesName: serie.name || `Series ${index}`
+            })
+          })
+        }
+        if (fillArea && points.length > 0) {
+          this.drawFillArea(points, color, smooth, this.grid.top + chartHeight)
+        }
+      })
+
+      series.forEach((serie : any, index : number) => {
+        if (serie.type !== 'line') {
+          return
+        }
+
+        const color = serie.color || (serie.itemStyle && serie.itemStyle.color) || chartHelper.getColor(index)
+        const showSymbol = serie.showSymbol !== false
+        const smooth = serie.smooth === true
+        const lineWidth = (serie.lineStyle && serie.lineStyle.width) || 2
+        const label = serie.label || {}
+        const showLabel = label.show === true
+        const labelColor = label.color || '#666'
+        const labelPosition = label.position || 'top'
+        const points = [] as any[]
+
+        if (Array.isArray(serie.data)) {
+          serie.data.forEach((value : any, i : number) => {
+            const actualValue = typeof value === 'object' && value !== null ? value.value : value
+            const x = this.grid.left + xAxisPadding + (xAxisData.length > 1 ? (i / (xAxisData.length - 1)) * paddedChartWidth : 0)
+            const y = this.grid.top + chartHeight - ((actualValue - actualMinY) / (actualMaxY - actualMinY || 1)) * chartHeight
+            points.push({
+              x,
+              y,
+              value: actualValue,
+              name: xAxisData[i] || i,
+              seriesName: serie.name || `Series ${index}`
+            })
+          })
+        }
+
+        this.seriesData.push({
+          name: serie.name || `Series ${index}`,
+          points,
+          color
+        })
+
+        if (points.length > 0) {
+          this.ctx.setLineWidth(lineWidth)
+          this.ctx.setStrokeStyle(color)
+          this.ctx.setLineJoin('round')
+          this.ctx.setLineCap('round')
+          if (smooth && points.length > 1) {
+            this.drawSmoothLine(points)
+          } else {
+            this.drawStraightLine(points)
+          }
+          this.ctx.stroke()
+
+          if (showSymbol) {
+            this.ctx.setFillStyle(color)
+            points.forEach((point : any) => {
+              this.ctx.beginPath()
+              this.ctx.arc(point.x, point.y, 4, 0, 2 * Math.PI)
+              this.ctx.fill()
+
+              this.ctx.beginPath()
+              this.ctx.setFillStyle('#ffffff')
+              this.ctx.arc(point.x, point.y, 2, 0, 2 * Math.PI)
+              this.ctx.fill()
+              this.ctx.setFillStyle(color)
+            })
+          }
+
+          if (showLabel) {
+            this.drawLabels(points, labelColor, labelPosition)
+          }
+        }
+      })
+    },
+    drawFillArea(points : any[], color : string, smooth : boolean, chartBottom : number) {
+      if (!points || points.length === 0) {
+        return
+      }
+
+      this.ctx.beginPath()
+      this.ctx.moveTo(points[0].x, chartBottom)
+      this.ctx.lineTo(points[0].x, points[0].y)
+
+      if (smooth && points.length > 1) {
+        for (let i = 0; i < points.length - 1; i++) {
+          const p0 = i === 0 ? points[0] : points[i - 1]
+          const p1 = points[i]
+          const p2 = points[i + 1]
+          const p3 = i === points.length - 2 ? points[i + 1] : points[i + 2]
+          const cp1x = p1.x + (p2.x - p0.x) / 6
+          const cp1y = p1.y + (p2.y - p0.y) / 6
+          const cp2x = p2.x - (p3.x - p1.x) / 6
+          const cp2y = p2.y - (p3.y - p1.y) / 6
+          this.ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y)
+        }
+      } else {
+        for (let i = 1; i < points.length; i++) {
+          this.ctx.lineTo(points[i].x, points[i].y)
+        }
+      }
+
+      this.ctx.lineTo(points[points.length - 1].x, chartBottom)
+      this.ctx.closePath()
+      if (typeof color === 'string' && color.indexOf('#') === 0) {
+        const hex = color.replace('#', '')
+        const r = parseInt(hex.substring(0, 2), 16)
+        const g = parseInt(hex.substring(2, 4), 16)
+        const b = parseInt(hex.substring(4, 6), 16)
+        this.ctx.setFillStyle(`rgba(${r}, ${g}, ${b}, 0.3)`)
+      } else if (typeof color === 'string' && color.indexOf('rgb') === 0) {
+        const rgb = color.replace('rgb(', '').replace(')', '')
+        this.ctx.setFillStyle(`rgba(${rgb}, 0.3)`)
+      } else {
+        this.ctx.setFillStyle('rgba(84, 112, 198, 0.3)')
+      }
+      this.ctx.fill()
+    },
+    drawStraightLine(points : any[]) {
+      if (!points || points.length === 0) {
+        return
+      }
+      this.ctx.beginPath()
+      points.forEach((point : any, i : number) => {
+        if (i === 0) {
+          this.ctx.moveTo(point.x, point.y)
+        } else {
+          this.ctx.lineTo(point.x, point.y)
+        }
+      })
+    },
+    drawSmoothLine(points : any[]) {
+      if (!points || points.length < 2) {
+        return
+      }
+      this.ctx.beginPath()
+      this.ctx.moveTo(points[0].x, points[0].y)
+      if (points.length === 2) {
+        const controlX = (points[0].x + points[1].x) / 2
+        const controlY = (points[0].y + points[1].y) / 2
+        this.ctx.quadraticCurveTo(controlX, controlY, points[1].x, points[1].y)
+        return
+      }
+      for (let i = 0; i < points.length - 1; i++) {
+        const p0 = i === 0 ? points[0] : points[i - 1]
+        const p1 = points[i]
+        const p2 = points[i + 1]
+        const p3 = i === points.length - 2 ? points[i + 1] : points[i + 2]
+        const cp1x = p1.x + (p2.x - p0.x) / 6
+        const cp1y = p1.y + (p2.y - p0.y) / 6
+        const cp2x = p2.x - (p3.x - p1.x) / 6
+        const cp2y = p2.y - (p3.y - p1.y) / 6
+        this.ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y)
+      }
+    },
+    drawLabels(points : any[], color : string, position : string) {
+      points.forEach((point : any) => {
+        this.ctx.setFontSize(10)
+        this.ctx.setFillStyle(color)
+        this.ctx.setTextAlign('center')
+        this.ctx.setTextBaseline('bottom')
+        let x = point.x
+        let y = point.y
+        if (position === 'top') {
+          y -= 6
+        } else if (position === 'bottom') {
+          y += 6
+          this.ctx.setTextBaseline('top')
+        } else if (position === 'left') {
+          x -= 6
+          this.ctx.setTextAlign('right')
+          this.ctx.setTextBaseline('middle')
+        } else if (position === 'right') {
+          x += 6
+          this.ctx.setTextAlign('left')
+          this.ctx.setTextBaseline('middle')
+        } else {
+          y -= 10
+        }
+        this.ctx.fillText(point.value.toString(), x, y)
+      })
+    },
+    handleTouchStart(event : any) {
+      const touch = event.touches && event.touches.length > 0 ? event.touches[0] : null
+      if (touch) {
+        this.touchInfo.startX = touch.x || 0
+        this.touchInfo.startY = touch.y || 0
+      }
+    },
+    handleTouchMove(event : any) {
+      if (event && typeof event.preventDefault === 'function') {
+        event.preventDefault()
+      }
+    },
+    handleTouchEnd(event : any) {
+      const touch = event.changedTouches && event.changedTouches.length > 0 ? event.changedTouches[0] : null
+      if (!touch) {
+        return
+      }
+      const endX = touch.x || 0
+      const endY = touch.y || 0
+      if (Math.abs(endX - this.touchInfo.startX) < 5 && Math.abs(endY - this.touchInfo.startY) < 5) {
+        this.handleChartClick(endX, endY)
+      }
+    },
+    handleChartClick(x : number, y : number) {
+      let minDistance = Infinity
+      let closestPoint = null as any
+      this.seriesData.forEach((series : any) => {
+        if (!series.points) {
+          return
+        }
+        series.points.forEach((point : any) => {
+          const distance = Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2))
+          if (distance < minDistance && distance < 20) {
+            minDistance = distance
+            closestPoint = {
+              seriesName: series.name,
+              name: point.name,
+              value: point.value,
+              color: series.color,
+              x: point.x,
+              y: point.y
+            }
+          }
+        })
+      })
+
+      if (closestPoint) {
+        this.$emit('click', {
+          componentType: 'series',
+          seriesType: 'line',
+          seriesName: closestPoint.seriesName,
+          name: closestPoint.name,
+          value: closestPoint.value,
+          color: closestPoint.color,
+          event: {
+            offsetX: closestPoint.x,
+            offsetY: closestPoint.y
+          }
+        })
+      }
+    },
+    setOption(option : any, notMerge : boolean = false) {
+      if (notMerge) {
+        this.drawChart(option)
+        return
+      }
+      try {
+        const newOption = JSON.parse(JSON.stringify(this.option))
+        Object.assign(newOption, option)
+        this.drawChart(newOption)
+      } catch (error) {
+        console.error('合并配置失败:', error)
+        this.drawChart(option)
+      }
+    },
+    resize() {
+      this.initCanvas()
+    }
+  },
+  mounted() {
+    this.$nextTick(() => {
+      this.initCanvas()
+    })
+  }
+}
+</script>
+
+<style scoped>
+.ly-charts-line {
+  position: relative;
+}
+
+.chart-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+</style>

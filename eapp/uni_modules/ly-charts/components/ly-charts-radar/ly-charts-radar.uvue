@@ -1,0 +1,270 @@
+<template>
+  <view class="ly-charts-radar" :style="{ width: widthStyle, height: heightStyle }">
+    <ly-canvas
+      ref="canvasRef"
+      class="chart-canvas"
+      :canvas-id="canvasId"
+      width="100"
+      height="100"
+      :use-root-height-and-width="true"
+      @ready="handleCanvasReady"
+      @touchend="handleTouchEnd"
+    />
+  </view>
+</template>
+
+<script lang="uts">
+import chartHelper from '../../libs/uvue/chartHelper.uts'
+
+export default {
+  name: 'ly-charts-radar',
+  props: {
+    option: {
+      type: Object,
+      default: () => ({})
+    },
+    width: {
+      type: [String, Number],
+      default: '100%'
+    },
+    height: {
+      type: [String, Number],
+      default: 300
+    }
+  },
+  data() {
+    return {
+      canvasId: `u-charts-radar-${Date.now()}`,
+      ctx: null as any,
+      canvasWidth: 0,
+      canvasHeight: 0,
+      pointData: [] as any[]
+    }
+  },
+  computed: {
+    widthStyle() {
+      return typeof this.width === 'number' ? `${this.width}px` : this.width
+    },
+    heightStyle() {
+      return typeof this.height === 'number' ? `${this.height}px` : this.height
+    }
+  },
+  watch: {
+    option: {
+      handler() {
+        this.drawChart()
+      },
+      deep: true
+    }
+  },
+  methods: {
+    initCanvas() {
+      const canvasRef = this.$refs['canvasRef'] as any
+      if (canvasRef && typeof canvasRef.refresh === 'function') {
+        canvasRef.refresh()
+      }
+    },
+    handleCanvasReady(event : any) {
+      const canvasRef = this.$refs['canvasRef'] as any
+      this.ctx = canvasRef
+      this.canvasWidth = event.width || canvasRef.getWidth()
+      this.canvasHeight = event.height || canvasRef.getHeight()
+      this.drawChart()
+    },
+    drawChart() {
+      if (!this.ctx || !this.option) {
+        return
+      }
+
+      const radar = this.option.radar || {}
+      const indicators = radar.indicator || []
+      const series = this.option.series || []
+      if (!Array.isArray(indicators) || indicators.length === 0 || !Array.isArray(series) || series.length === 0) {
+        return
+      }
+
+      this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
+      if (this.option.backgroundColor) {
+        this.ctx.setFillStyle(this.option.backgroundColor)
+        this.ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight)
+      }
+
+      let chartTop = 10
+      if (this.option.title && this.option.title.text) {
+        chartTop = chartHelper.drawTitle(this.ctx, this.option.title, this.canvasWidth) + 10
+      }
+
+      const grid = { top: chartTop, right: 20, bottom: 20, left: 20 }
+      if (this.option.legend && this.option.legend.show !== false) {
+        chartHelper.drawLegend(
+          this.ctx,
+          { ...this.option.legend, data: series.map((item : any) => item.name || '') },
+          grid,
+          this.canvasWidth,
+          series.map((item : any, index : number) => item.color || (item.itemStyle && item.itemStyle.color) || chartHelper.getColor(index)),
+          this.canvasHeight,
+          chartTop - 10
+        )
+      }
+
+      const centerX = this.canvasWidth / 2
+      const centerY = grid.top + (this.canvasHeight - grid.top - grid.bottom) / 2
+      const maxRadius = Math.min(this.canvasWidth - grid.left - grid.right, this.canvasHeight - grid.top - grid.bottom) * 0.32
+      const levels = radar.splitNumber || 5
+      const angleStep = Math.PI * 2 / indicators.length
+
+      this.drawRadarGrid(centerX, centerY, maxRadius, indicators, levels, angleStep)
+      this.drawRadarLabels(centerX, centerY, maxRadius, indicators, angleStep)
+      this.drawRadarSeries(centerX, centerY, maxRadius, indicators, series, angleStep)
+      this.ctx.draw()
+    },
+    drawRadarGrid(centerX : number, centerY : number, radius : number, indicators : any[], levels : number, angleStep : number) {
+      for (let level = levels; level >= 1; level--) {
+        const currentRadius = radius * level / levels
+        this.ctx.beginPath()
+        indicators.forEach((_: any, index : number) => {
+          const angle = -Math.PI / 2 + index * angleStep
+          const x = centerX + currentRadius * Math.cos(angle)
+          const y = centerY + currentRadius * Math.sin(angle)
+          if (index === 0) {
+            this.ctx.moveTo(x, y)
+          } else {
+            this.ctx.lineTo(x, y)
+          }
+        })
+        this.ctx.closePath()
+        this.ctx.setStrokeStyle('#dfe5ef')
+        this.ctx.setLineWidth(1)
+        this.ctx.stroke()
+      }
+
+      indicators.forEach((_: any, index : number) => {
+        const angle = -Math.PI / 2 + index * angleStep
+        const x = centerX + radius * Math.cos(angle)
+        const y = centerY + radius * Math.sin(angle)
+        this.ctx.beginPath()
+        this.ctx.moveTo(centerX, centerY)
+        this.ctx.lineTo(x, y)
+        this.ctx.setStrokeStyle('#edf1f7')
+        this.ctx.setLineWidth(1)
+        this.ctx.stroke()
+      })
+    },
+    drawRadarLabels(centerX : number, centerY : number, radius : number, indicators : any[], angleStep : number) {
+      indicators.forEach((indicator : any, index : number) => {
+        const angle = -Math.PI / 2 + index * angleStep
+        const x = centerX + (radius + 16) * Math.cos(angle)
+        const y = centerY + (radius + 16) * Math.sin(angle)
+        this.ctx.setFontSize(12)
+        this.ctx.setFillStyle('#666')
+        this.ctx.setTextBaseline('middle')
+        if (Math.cos(angle) > 0.2) {
+          this.ctx.setTextAlign('left')
+        } else if (Math.cos(angle) < -0.2) {
+          this.ctx.setTextAlign('right')
+        } else {
+          this.ctx.setTextAlign('center')
+        }
+        this.ctx.fillText(indicator.name || '', x, y)
+      })
+    },
+    drawRadarSeries(centerX : number, centerY : number, radius : number, indicators : any[], series : any[], angleStep : number) {
+      this.pointData = []
+      series.forEach((serie : any, seriesIndex : number) => {
+        const dataItem = Array.isArray(serie.data) && serie.data.length > 0 ? serie.data[0] : null
+        if (!dataItem || !Array.isArray(dataItem.value)) {
+          return
+        }
+        const color = serie.color || (serie.itemStyle && serie.itemStyle.color) || chartHelper.getColor(seriesIndex)
+        const points = [] as any[]
+
+        this.ctx.beginPath()
+        indicators.forEach((indicator : any, index : number) => {
+          const max = indicator.max || 100
+          const value = dataItem.value[index] || 0
+          const ratio = Math.max(0, Math.min(1, value / max))
+          const currentRadius = radius * ratio
+          const angle = -Math.PI / 2 + index * angleStep
+          const x = centerX + currentRadius * Math.cos(angle)
+          const y = centerY + currentRadius * Math.sin(angle)
+          points.push({
+            x,
+            y,
+            value,
+            name: indicator.name,
+            seriesName: serie.name || `Series ${seriesIndex}`,
+            color
+          })
+          if (index === 0) {
+            this.ctx.moveTo(x, y)
+          } else {
+            this.ctx.lineTo(x, y)
+          }
+        })
+        this.ctx.closePath()
+        this.ctx.setFillStyle(typeof color === 'string' && color.indexOf('#') === 0 ? `${color}33` : color)
+        this.ctx.fill()
+        this.ctx.setStrokeStyle(color)
+        this.ctx.setLineWidth(2)
+        this.ctx.stroke()
+
+        points.forEach((point : any) => {
+          this.ctx.beginPath()
+          this.ctx.setFillStyle(color)
+          this.ctx.arc(point.x, point.y, 3, 0, Math.PI * 2)
+          this.ctx.fill()
+        })
+
+        this.pointData.push(...points)
+      })
+    },
+    handleTouchEnd(event : any) {
+      const touch = event.changedTouches && event.changedTouches.length > 0 ? event.changedTouches[0] : null
+      if (!touch) {
+        return
+      }
+      const x = touch.x || 0
+      const y = touch.y || 0
+      let closestPoint = null as any
+      let minDistance = Infinity
+      this.pointData.forEach((point : any) => {
+        const distance = Math.sqrt(Math.pow(point.x - x, 2) + Math.pow(point.y - y, 2))
+        if (distance < minDistance && distance < 18) {
+          minDistance = distance
+          closestPoint = point
+        }
+      })
+      if (closestPoint) {
+        this.$emit('click', {
+          componentType: 'series',
+          seriesType: 'radar',
+          seriesName: closestPoint.seriesName,
+          name: closestPoint.name,
+          value: closestPoint.value,
+          color: closestPoint.color,
+          event: {
+            offsetX: closestPoint.x,
+            offsetY: closestPoint.y
+          }
+        })
+      }
+    }
+  },
+  mounted() {
+    this.$nextTick(() => {
+      this.initCanvas()
+    })
+  }
+}
+</script>
+
+<style scoped>
+.ly-charts-radar {
+  position: relative;
+}
+
+.chart-canvas {
+  width: 100%;
+  height: 100%;
+}
+</style>

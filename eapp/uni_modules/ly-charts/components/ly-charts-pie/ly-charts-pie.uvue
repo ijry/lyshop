@@ -1,0 +1,273 @@
+<template>
+  <view class="ly-charts-pie" :style="{ width: widthStyle, height: heightStyle }">
+    <ly-canvas
+      ref="canvasRef"
+      class="chart-canvas"
+      :canvas-id="canvasId"
+      width="100"
+      height="100"
+      :use-root-height-and-width="true"
+      @ready="handleCanvasReady"
+      @touchstart="handleTouchStart"
+      @touchend="handleTouchEnd"
+    />
+  </view>
+</template>
+
+<script lang="uts">
+import chartHelper from '../../libs/uvue/chartHelper.uts'
+
+export default {
+  name: 'ly-charts-pie',
+  props: {
+    option: {
+      type: Object,
+      default: () => ({})
+    },
+    width: {
+      type: [String, Number],
+      default: '100%'
+    },
+    height: {
+      type: [String, Number],
+      default: 300
+    }
+  },
+  data() {
+    return {
+      canvasId: `ly-charts-pie-${Date.now()}`,
+      ctx: null as any,
+      canvasWidth: 0,
+      canvasHeight: 0,
+      sectorData: [] as any[],
+      touchPoint: {
+        x: 0,
+        y: 0
+      }
+    }
+  },
+  computed: {
+    widthStyle() {
+      return typeof this.width === 'number' ? `${this.width}px` : this.width
+    },
+    heightStyle() {
+      return typeof this.height === 'number' ? `${this.height}px` : this.height
+    }
+  },
+  watch: {
+    option: {
+      handler() {
+        this.drawChart()
+      },
+      deep: true
+    }
+  },
+  methods: {
+    initCanvas() {
+      const canvasRef = this.$refs['canvasRef'] as any
+      if (canvasRef && typeof canvasRef.refresh === 'function') {
+        canvasRef.refresh()
+      }
+    },
+    handleCanvasReady(event : any) {
+      const canvasRef = this.$refs['canvasRef'] as any
+      this.ctx = canvasRef
+      this.canvasWidth = event.width || canvasRef.getWidth()
+      this.canvasHeight = event.height || canvasRef.getHeight()
+      this.drawChart()
+    },
+    parsePercentOrNumber(value : any, total : number) {
+      if (typeof value === 'number') {
+        return value
+      }
+      if (typeof value === 'string' && value.endsWith('%')) {
+        return (parseFloat(value) / 100) * total
+      }
+      return parseFloat(value) || 0
+    },
+    drawChart() {
+      if (!this.ctx || !this.option) {
+        return
+      }
+
+      const series = this.option.series && this.option.series.length > 0 ? this.option.series[0] : {}
+      const data = series.data || []
+      if (!Array.isArray(data) || data.length === 0) {
+        this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
+        return
+      }
+
+      this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
+      if (this.option.backgroundColor) {
+        this.ctx.setFillStyle(this.option.backgroundColor)
+        this.ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight)
+      }
+
+      const grid = { top: 10, right: 20, bottom: 20, left: 20 }
+      let titleHeight = 0
+      if (this.option.title && this.option.title.text) {
+        titleHeight = chartHelper.drawTitle(this.ctx, this.option.title, this.canvasWidth)
+        grid.top = Math.max(grid.top, titleHeight + 10)
+      }
+
+      if (this.option.legend && this.option.legend.show !== false) {
+        chartHelper.drawLegend(
+          this.ctx,
+          { ...this.option.legend, data: data.map((item : any) => item.name || '') },
+          grid,
+          this.canvasWidth,
+          data.map((item : any, index : number) => item.itemStyle && item.itemStyle.color ? item.itemStyle.color : chartHelper.getColor(index)),
+          this.canvasHeight,
+          titleHeight
+        )
+      }
+
+      const availableWidth = this.canvasWidth - grid.left - grid.right
+      const availableHeight = this.canvasHeight - grid.top - grid.bottom
+      const center = Array.isArray(series.center) ? series.center : ['50%', '50%']
+      const centerX = grid.left + this.parsePercentOrNumber(center[0] || '50%', availableWidth)
+      const centerY = grid.top + this.parsePercentOrNumber(center[1] || '50%', availableHeight)
+
+      let outerRadius = series.radius || '65%'
+      let innerRadius = 0
+      if (Array.isArray(series.radius)) {
+        innerRadius = this.parsePercentOrNumber(series.radius[0], Math.min(availableWidth, availableHeight) / 2)
+        outerRadius = series.radius[1]
+      }
+      const outerRadiusPx = typeof outerRadius === 'string' && outerRadius.endsWith('%')
+        ? Math.min(availableWidth, availableHeight) * parseFloat(outerRadius) / 200
+        : Number(outerRadius) || Math.min(availableWidth, availableHeight) * 0.325
+      const innerRadiusPx = typeof innerRadius === 'string'
+        ? this.parsePercentOrNumber(innerRadius, outerRadiusPx)
+        : Number(innerRadius) || 0
+
+      const total = data.reduce((sum : number, item : any) => sum + (item.value || 0), 0)
+      let startAngle = -Math.PI / 2
+      this.sectorData = []
+
+      data.forEach((item : any, index : number) => {
+        const value = item.value || 0
+        const angle = total === 0 ? 0 : (value / total) * Math.PI * 2
+        const endAngle = startAngle + angle
+        const color = (item.itemStyle && item.itemStyle.color) || item.color || chartHelper.getColor(index)
+
+        this.ctx.beginPath()
+        this.ctx.moveTo(centerX, centerY)
+        this.ctx.setFillStyle(color)
+        this.ctx.arc(centerX, centerY, outerRadiusPx, startAngle, endAngle)
+        this.ctx.closePath()
+        this.ctx.fill()
+
+        if (innerRadiusPx > 0) {
+          this.ctx.beginPath()
+          this.ctx.setFillStyle(this.option.backgroundColor || '#ffffff')
+          this.ctx.arc(centerX, centerY, innerRadiusPx, 0, Math.PI * 2)
+          this.ctx.fill()
+        }
+
+        if (series.label && series.label.show) {
+          const midAngle = startAngle + angle / 2
+          const labelRadius = outerRadiusPx + 12
+          const labelX = centerX + labelRadius * Math.cos(midAngle)
+          const labelY = centerY + labelRadius * Math.sin(midAngle)
+          this.ctx.setFontSize((series.label && series.label.fontSize) || 12)
+          this.ctx.setFillStyle((series.label && series.label.color) || '#666')
+          this.ctx.setTextAlign(midAngle > Math.PI / 2 || midAngle < -Math.PI / 2 ? 'right' : 'left')
+          this.ctx.setTextBaseline('middle')
+          this.ctx.fillText(item.name || `${value}`, labelX, labelY)
+        }
+
+        this.sectorData.push({
+          startAngle,
+          endAngle,
+          centerX,
+          centerY,
+          innerRadius: innerRadiusPx,
+          outerRadius: outerRadiusPx,
+          name: item.name,
+          value,
+          color
+        })
+        startAngle = endAngle
+      })
+
+      this.ctx.draw()
+    },
+    handleTouchStart(event : any) {
+      const touch = event.touches && event.touches.length > 0 ? event.touches[0] : null
+      if (touch) {
+        this.touchPoint.x = touch.x || 0
+        this.touchPoint.y = touch.y || 0
+      }
+    },
+    handleTouchEnd(event : any) {
+      const touch = event.changedTouches && event.changedTouches.length > 0 ? event.changedTouches[0] : null
+      if (!touch) {
+        return
+      }
+      const x = touch.x || 0
+      const y = touch.y || 0
+      const sector = this.findSector(x, y)
+      if (sector) {
+        const payload = {
+          componentType: 'series',
+          seriesType: 'pie',
+          name: sector.name,
+          value: sector.value,
+          color: sector.color,
+          event: {
+            offsetX: x,
+            offsetY: y
+          }
+        }
+        this.$emit('click', payload)
+        this.$emit('tooltipShow', payload)
+      }
+    },
+    findSector(x : number, y : number) {
+      for (let i = 0; i < this.sectorData.length; i++) {
+        const sector = this.sectorData[i]
+        const dx = x - sector.centerX
+        const dy = y - sector.centerY
+        const distance = Math.sqrt(dx * dx + dy * dy)
+        if (distance < sector.innerRadius || distance > sector.outerRadius) {
+          continue
+        }
+        let angle = Math.atan2(dy, dx)
+        if (angle < -Math.PI / 2) {
+          angle += Math.PI * 2
+        }
+        if (angle >= sector.startAngle && angle <= sector.endAngle) {
+          return sector
+        }
+      }
+      return null
+    },
+    updateData(data : any[]) {
+      if (this.option.series && this.option.series[0]) {
+        this.option.series[0].data = data
+        this.drawChart()
+      }
+    },
+    getChartInstance() {
+      return null
+    }
+  },
+  mounted() {
+    this.$nextTick(() => {
+      this.initCanvas()
+    })
+  }
+}
+</script>
+
+<style scoped>
+.ly-charts-pie {
+  position: relative;
+}
+
+.chart-canvas {
+  width: 100%;
+  height: 100%;
+}
+</style>

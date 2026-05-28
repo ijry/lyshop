@@ -2,6 +2,7 @@
   "easycom": {
     "autoscan": true,
     "custom": {
+      "^ly-(.*)": "@/uni_modules/ly-charts/components/ly-$1/ly-$1.vue",
       "^u--(.*)": "uview-plus/components/u-$1/u-$1.vue",
       "^up-(.*)": "uview-plus/components/u-$1/u-$1.vue",
       "^u-([^-].*)": "uview-plus/components/u-$1/u-$1.vue"

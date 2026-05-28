@@ -46,6 +46,13 @@ page {
   --eapp-text: #1e293b;
   --eapp-text-muted: #64748b;
   --eapp-border: #e2e8f0;
+  --eapp-primary-soft: #eff6ff;
+  --eapp-success-soft: #dcfce7;
+  --eapp-warning-soft: #fef3c7;
+  --eapp-danger-soft: #fee2e2;
+  --eapp-accent-soft: #ffedd5;
+  --eapp-text-faint: #94a3b8;
+  --eapp-border-strong: #cbd5e1;
 }
 
 page {

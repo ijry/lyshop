@@ -1,0 +1,511 @@
+class ChartHelper {
+  defaultColors = [
+    '#5470c6', '#91cc75', '#fac858', '#ee6666',
+    '#73c0de', '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc'
+  ]
+
+  adjustedYMin = 0
+
+  adjustedYMax = 0
+
+  calculateDataRange(series : any[]) {
+    let minY = Number.MAX_VALUE
+    let maxY = Number.MIN_VALUE
+    if (!series || !Array.isArray(series)) {
+      return { minY: 0, maxY: 1 }
+    }
+
+    let hasData = false
+    series.forEach((serie : any) => {
+      if (serie && (serie.type === 'line' || serie.type === 'bar') && Array.isArray(serie.data)) {
+        serie.data.forEach((value : any) => {
+          const actualValue = typeof value === 'object' && value !== null ? value.value : value
+          if (typeof actualValue === 'number' && !isNaN(actualValue)) {
+            minY = Math.min(minY, actualValue)
+            maxY = Math.max(maxY, actualValue)
+            hasData = true
+          }
+        })
+      }
+    })
+
+    if (!hasData) {
+      return { minY: 0, maxY: 1 }
+    }
+
+    const range = maxY - minY
+    if (range === 0) {
+      minY -= 1
+      maxY += 1
+    } else {
+      const padding = range * 0.1
+      minY -= padding
+      maxY += padding
+    }
+
+    return { minY, maxY }
+  }
+
+  processXAxisData(xAxis : any, series : any[]) {
+    if (xAxis && Array.isArray(xAxis.data)) {
+      return xAxis.data
+    }
+    if (series && series.length > 0 && Array.isArray(series[0].data)) {
+      return series[0].data.map((_: any, index : number) => index)
+    }
+    return []
+  }
+
+  calculateYAxisTicks(min : number, max : number, tickCount : number = 5) {
+    if (min === max) {
+      if (min === 0) {
+        return {
+          min: 0,
+          max: 4,
+          step: 1,
+          tickCount: 4
+        }
+      }
+      const padding = Math.abs(min) * 0.1 || 1
+      return {
+        min: min - padding,
+        max: max + padding,
+        step: (padding * 2) / 4,
+        tickCount: 4
+      }
+    }
+
+    const range = max - min
+    const approxStep = range / tickCount
+    const magnitude = Math.pow(10, Math.floor(Math.log10(approxStep)))
+    const stdSteps = [1, 2, 5, 10]
+    let step = stdSteps[0] * magnitude
+
+    stdSteps.forEach((stdStep : number) => {
+      const tempStep = stdStep * magnitude
+      if (tempStep >= approxStep && step === stdSteps[0] * magnitude) {
+        step = tempStep
+      }
+    })
+
+    const adjustedMin = Math.floor(min / step) * step
+    const adjustedMax = Math.ceil(max / step) * step
+    const actualTickCount = Math.round((adjustedMax - adjustedMin) / step)
+
+    if (actualTickCount === 0) {
+      return {
+        min,
+        max: max + 1,
+        step: 1,
+        tickCount: 1
+      }
+    }
+
+    return {
+      min: adjustedMin,
+      max: adjustedMax,
+      step,
+      tickCount: actualTickCount
+    }
+  }
+
+  drawGrid(ctx : any, grid : any, canvasWidth : number, canvasHeight : number, xAxisCount : number, minY : number, maxY : number, drawVerticalLines : boolean = true, xAxisPadding : number = 0) {
+    if (!ctx || !grid) {
+      return
+    }
+
+    const chartWidth = canvasWidth - (grid.left || 0) - (grid.right || 0)
+    const chartHeight = canvasHeight - (grid.top || 0) - (grid.bottom || 0)
+    if (chartWidth <= 0 || chartHeight <= 0) {
+      return
+    }
+
+    ctx.setStrokeStyle('#eee')
+    ctx.setLineWidth(1)
+
+    const yAxisTicks = this.calculateYAxisTicks(minY, maxY, 5)
+    for (let i = 0; i <= yAxisTicks.tickCount; i++) {
+      const value = yAxisTicks.min + i * yAxisTicks.step
+      const ratio = (value - yAxisTicks.min) / (yAxisTicks.max - yAxisTicks.min)
+      const y = (grid.top || 0) + chartHeight - ratio * chartHeight
+      ctx.beginPath()
+      ctx.moveTo(grid.left || 0, y)
+      ctx.lineTo((grid.left || 0) + chartWidth, y)
+      ctx.stroke()
+    }
+
+    if (drawVerticalLines && xAxisCount > 1) {
+      for (let i = 0; i < xAxisCount; i++) {
+        const x = (grid.left || 0) + xAxisPadding + (i / (xAxisCount - 1)) * (chartWidth - 2 * xAxisPadding)
+        ctx.beginPath()
+        ctx.moveTo(x, grid.top || 0)
+        ctx.lineTo(x, (grid.top || 0) + chartHeight)
+        ctx.stroke()
+      }
+    }
+  }
+
+  drawAxis(ctx : any, grid : any, canvasWidth : number, canvasHeight : number, xAxisData : any[], minY : number, maxY : number, xAxisOpt : any, yAxisOpt : any, chartType : string = 'line', xAxisPadding : number = 0) {
+    if (!ctx || !grid) {
+      return
+    }
+
+    const chartWidth = canvasWidth - (grid.left || 0) - (grid.right || 0)
+    const chartHeight = canvasHeight - (grid.top || 0) - (grid.bottom || 0)
+    if (chartWidth <= 0 || chartHeight <= 0) {
+      return
+    }
+
+    ctx.setStrokeStyle('#ccc')
+    ctx.setLineWidth(1)
+
+    const showXAxisLine = xAxisOpt.axisLine && xAxisOpt.axisLine.show
+    if (showXAxisLine !== undefined ? showXAxisLine : true) {
+      ctx.beginPath()
+      ctx.moveTo(grid.left || 0, canvasHeight - (grid.bottom || 0))
+      ctx.lineTo((grid.left || 0) + chartWidth, canvasHeight - (grid.bottom || 0))
+      ctx.stroke()
+    }
+
+    const showYAxisLine = yAxisOpt.axisLine && yAxisOpt.axisLine.show
+    if (showYAxisLine !== undefined ? showYAxisLine : false) {
+      ctx.beginPath()
+      ctx.moveTo(grid.left || 0, grid.top || 0)
+      ctx.lineTo(grid.left || 0, canvasHeight - (grid.bottom || 0))
+      ctx.stroke()
+    }
+
+    const showXAxisLabel = xAxisOpt.axisLabel && xAxisOpt.axisLabel.show
+    if (showXAxisLabel !== undefined ? showXAxisLabel : true) {
+      const xAxisLabelColor = (xAxisOpt && xAxisOpt.axisLabel && xAxisOpt.axisLabel.color) || '#666'
+      const xAxisFontSize = (xAxisOpt && xAxisOpt.axisLabel && xAxisOpt.axisLabel.fontSize) || 12
+      ctx.setFillStyle(xAxisLabelColor)
+      ctx.setFont(`${xAxisFontSize}px sans-serif`)
+      ctx.setTextAlign('center')
+      ctx.setTextBaseline('top')
+
+      if (xAxisData && Array.isArray(xAxisData) && xAxisData.length > 0) {
+        if (chartType === 'bar') {
+          this.drawBarXAxisLabels(ctx, xAxisData, grid, chartWidth, canvasHeight, xAxisFontSize, xAxisPadding)
+        } else if (xAxisData.length <= 5) {
+          xAxisData.forEach((label : any, i : number) => {
+            const x = (grid.left || 0) + xAxisPadding + (i / Math.max(xAxisData.length - 1, 1)) * (chartWidth - 2 * xAxisPadding)
+            ctx.fillText(String(label), x, canvasHeight - (grid.bottom || 0) + 10)
+          })
+        } else {
+          this.drawXAxisLabels(ctx, xAxisData, grid, chartWidth, canvasHeight, xAxisFontSize, xAxisPadding)
+        }
+      }
+    }
+
+    const yAxisTicks = this.calculateYAxisTicks(minY, maxY, 5)
+    this.adjustedYMin = yAxisTicks.min
+    this.adjustedYMax = yAxisTicks.max
+    const showYAxisLabel = yAxisOpt.axisLabel && yAxisOpt.axisLabel.show
+    if (showYAxisLabel !== undefined ? showYAxisLabel : false) {
+      const yAxisLabelColor = (yAxisOpt && yAxisOpt.axisLabel && yAxisOpt.axisLabel.color) || '#666'
+      ctx.setFillStyle(yAxisLabelColor)
+      ctx.setTextAlign('right')
+      ctx.setTextBaseline('middle')
+
+      for (let i = 0; i <= yAxisTicks.tickCount; i++) {
+        const value = yAxisTicks.min + i * yAxisTicks.step
+        const ratio = (value - yAxisTicks.min) / (yAxisTicks.max - yAxisTicks.min)
+        const y = (grid.top || 0) + chartHeight - ratio * chartHeight
+        ctx.fillText(Math.round(value).toString(), (grid.left || 0) - 10, y)
+      }
+    }
+  }
+
+  drawBarXAxisLabels(ctx : any, xAxisData : any[], grid : any, chartWidth : number, canvasHeight : number, fontSize : number, xAxisPadding : number = 0) {
+    const labelCount = xAxisData.length
+    if (labelCount <= 0) {
+      return
+    }
+
+    const availableWidth = chartWidth - 2 * xAxisPadding
+    const avgLabelWidth = availableWidth / labelCount
+    const maxLabelLength = Math.floor(avgLabelWidth / (fontSize * 0.6))
+    let hasLongLabel = false
+    xAxisData.forEach((label : any) => {
+      if (String(label).length > maxLabelLength && maxLabelLength > 0) {
+        hasLongLabel = true
+      }
+    })
+
+    if (hasLongLabel) {
+      ctx.save()
+      ctx.setTextAlign('right')
+      ctx.setTextBaseline('middle')
+    } else {
+      ctx.setTextAlign('center')
+      ctx.setTextBaseline('top')
+    }
+
+    xAxisData.forEach((label : any, i : number) => {
+      const x = (grid.left || 0) + xAxisPadding + ((i + 0.5) / labelCount) * (chartWidth - 2 * xAxisPadding)
+      if (hasLongLabel) {
+        ctx.save()
+        ctx.translate(x, canvasHeight - (grid.bottom || 0) + 30)
+        ctx.rotate(-45 * Math.PI / 180)
+        ctx.fillText(String(label), 0, 0)
+        ctx.restore()
+      } else {
+        ctx.fillText(String(label), x, canvasHeight - (grid.bottom || 0) + 10)
+      }
+    })
+
+    if (hasLongLabel) {
+      ctx.restore()
+    }
+  }
+
+  drawXAxisLabels(ctx : any, xAxisData : any[], grid : any, chartWidth : number, canvasHeight : number, fontSize : number, xAxisPadding : number = 0) {
+    const labelCount = xAxisData.length
+    let totalLabelLength = 0
+    xAxisData.forEach((label : any) => {
+      totalLabelLength += String(label).length
+    })
+
+    const avgLabelLength = totalLabelLength / labelCount
+    const estimatedLabelWidth = Math.ceil(avgLabelLength * fontSize * 0.6 + 10)
+    let maxLabels = Math.max(Math.min(labelCount, Math.floor((chartWidth - 2 * xAxisPadding) / estimatedLabelWidth)), 2)
+    const indicesToShow = [] as number[]
+    if (labelCount > 0) {
+      indicesToShow.push(0)
+      if (labelCount > 1) {
+        indicesToShow.push(labelCount - 1)
+      }
+    }
+
+    const availableWidth = chartWidth - 2 * xAxisPadding
+    const avgLabelWidth = availableWidth / labelCount
+    const maxLabelLength = Math.floor(avgLabelWidth / (fontSize * 0.7))
+    let hasLongLabel = false
+    xAxisData.forEach((label : any) => {
+      if (String(label).length > maxLabelLength && maxLabelLength > 0) {
+        hasLongLabel = true
+        maxLabels = labelCount
+      }
+    })
+
+    if (hasLongLabel) {
+      ctx.save()
+      ctx.setTextAlign('right')
+      ctx.setTextBaseline('middle')
+    } else {
+      ctx.setTextAlign('center')
+      ctx.setTextBaseline('top')
+    }
+
+    if (maxLabels >= 3 && labelCount > 2) {
+      const middleLabels = Math.min(maxLabels - 2, labelCount - 2)
+      if (middleLabels > 0) {
+        const step = (labelCount - 1) / (middleLabels + 1)
+        for (let i = 1; i <= middleLabels; i++) {
+          const index = Math.round(i * step)
+          if (index > 0 && index < labelCount - 1 && indicesToShow.indexOf(index) === -1) {
+            indicesToShow.push(index)
+          }
+        }
+      }
+    }
+
+    indicesToShow.sort((a : number, b : number) => a - b)
+    indicesToShow.forEach((index : number) => {
+      const x = (grid.left || 0) + xAxisPadding + (index / Math.max(labelCount - 1, 1)) * (chartWidth - 2 * xAxisPadding)
+      const label = xAxisData[index] !== undefined ? xAxisData[index] : index
+      if (hasLongLabel) {
+        ctx.save()
+        ctx.translate(x + 20, canvasHeight - (grid.bottom || 0) + 10)
+        ctx.rotate(-45 * Math.PI / 180)
+        ctx.fillText(String(label), 0, 0)
+        ctx.restore()
+      } else {
+        ctx.fillText(String(label), x, canvasHeight - (grid.bottom || 0) + 10)
+      }
+    })
+
+    if (hasLongLabel) {
+      ctx.restore()
+    }
+  }
+
+  drawTitle(ctx : any, titleOption : any, canvasWidth : number) {
+    if (!ctx || !titleOption || !titleOption.text) {
+      return 0
+    }
+
+    const fontSize = (titleOption.textStyle && titleOption.textStyle.fontSize) || 16
+    const fontFamily = (titleOption.textStyle && titleOption.textStyle.fontFamily) || 'sans-serif'
+    const color = (titleOption.textStyle && titleOption.textStyle.color) || '#333'
+    ctx.setFont(`${fontSize}px ${fontFamily}`)
+    ctx.setFillStyle(color)
+    ctx.setTextAlign('center')
+    ctx.setTextBaseline('top')
+    ctx.fillText(titleOption.text, (canvasWidth || 0) / 2, 10)
+    return fontSize + 20
+  }
+
+  drawLegend(ctx : any, legendOption : any, grid : any, canvasWidth : number, colors : string[], canvasHeight : number, titleHeight : number = 0) {
+    if (!ctx || !legendOption || !Array.isArray(legendOption.data) || legendOption.data.length === 0) {
+      return 0
+    }
+
+    const topValue = legendOption.top
+    const bottomValue = legendOption.bottom
+    const leftValue = legendOption.left
+    const rightValue = legendOption.right
+    const hasTop = topValue !== undefined && topValue !== 'auto'
+    const hasBottom = bottomValue !== undefined && bottomValue !== 'auto'
+    const hasLeft = leftValue !== undefined && leftValue !== 'auto'
+    const hasRight = rightValue !== undefined && rightValue !== 'auto'
+    const isBottomDefault = !hasTop && !hasBottom
+    const itemHeight = 14
+    const itemSpacing = 8
+    const verticalPadding = 4
+    const symbolWidth = 20
+    const textSpacing = 5
+    let maxRowItems = Math.min(4, legendOption.data.length)
+    const availableWidth = (canvasWidth || 300) - (grid.left || 0) - 20
+    let currentRowWidth = 0
+    let itemsInRow = 0
+
+    ctx.setFont('12px sans-serif')
+    for (let i = 0; i < legendOption.data.length; i++) {
+      const name = legendOption.data[i]
+      const textWidth = ctx.measureText(name).width
+      const itemWidth = symbolWidth + textSpacing + textWidth + itemSpacing
+      if (currentRowWidth + itemWidth > availableWidth && itemsInRow > 0) {
+        maxRowItems = itemsInRow
+        break
+      }
+      currentRowWidth += itemWidth
+      itemsInRow++
+    }
+
+    maxRowItems = Math.max(1, Math.min(4, maxRowItems))
+    const rows = Math.ceil(legendOption.data.length / maxRowItems)
+    const legendHeight = rows * itemHeight + Math.max(0, rows - 1) * itemSpacing + verticalPadding * 2
+
+    let legendTop = 0
+    let totalLegendHeight = legendHeight
+    if (hasTop) {
+      let topPos = 0
+      if (typeof topValue === 'number') {
+        topPos = topValue
+      } else if (typeof topValue === 'string' && topValue.endsWith('%')) {
+        topPos = (parseInt(topValue) / 100) * canvasHeight
+      }
+      legendTop = topPos + titleHeight
+      totalLegendHeight = legendHeight + topPos + 5
+      if (grid.top !== undefined) {
+        grid.top = Math.max(grid.top, legendTop + legendHeight + 15)
+      }
+    } else if (hasBottom || isBottomDefault) {
+      let bottomPos = 0
+      if (typeof bottomValue === 'number') {
+        bottomPos = bottomValue
+      } else if (typeof bottomValue === 'string' && bottomValue.endsWith('%')) {
+        bottomPos = (parseInt(bottomValue) / 100) * canvasHeight
+      } else if (isBottomDefault) {
+        bottomPos = 5
+      }
+      legendTop = canvasHeight - legendHeight - bottomPos
+      totalLegendHeight = legendHeight + bottomPos + 10
+      if (grid.bottom !== undefined) {
+        grid.bottom += totalLegendHeight
+      }
+    } else {
+      legendTop = (grid.top || 0) - 18 + titleHeight
+      totalLegendHeight = legendHeight + 23
+      if (grid.top !== undefined) {
+        grid.top = Math.max(grid.top, legendTop + legendHeight + 5)
+      }
+    }
+
+    let legendLeft = grid.left || 0
+    if (hasLeft) {
+      if (typeof leftValue === 'number') {
+        legendLeft = leftValue
+      } else if (typeof leftValue === 'string' && leftValue.endsWith('%')) {
+        legendLeft = (parseInt(leftValue) / 100) * canvasWidth
+      } else if (leftValue === 'center' || leftValue === 'right') {
+        let maxWidthInRow = 0
+        for (let r = 0; r < rows; r++) {
+          let rowWidth = 0
+          const startIdx = r * maxRowItems
+          const endIdx = Math.min(startIdx + maxRowItems, legendOption.data.length)
+          for (let i = startIdx; i < endIdx; i++) {
+            const textWidth = ctx.measureText(legendOption.data[i]).width
+            rowWidth += symbolWidth + textSpacing + textWidth + itemSpacing
+          }
+          maxWidthInRow = Math.max(maxWidthInRow, rowWidth)
+        }
+        legendLeft = leftValue === 'center' ? (canvasWidth - maxWidthInRow) / 2 : canvasWidth - maxWidthInRow - (grid.right || 0)
+      }
+    } else if (hasRight) {
+      let maxWidthInRow = 0
+      for (let r = 0; r < rows; r++) {
+        let rowWidth = 0
+        const startIdx = r * maxRowItems
+        const endIdx = Math.min(startIdx + maxRowItems, legendOption.data.length)
+        for (let i = startIdx; i < endIdx; i++) {
+          const textWidth = ctx.measureText(legendOption.data[i]).width
+          rowWidth += symbolWidth + textSpacing + textWidth + itemSpacing
+        }
+        maxWidthInRow = Math.max(maxWidthInRow, rowWidth)
+      }
+      if (typeof rightValue === 'number') {
+        legendLeft = canvasWidth - maxWidthInRow - rightValue
+      } else if (typeof rightValue === 'string' && rightValue.endsWith('%')) {
+        legendLeft = canvasWidth - maxWidthInRow - (parseInt(rightValue) / 100) * canvasWidth
+      }
+    }
+
+    ctx.setFont('12px sans-serif')
+    ctx.setTextAlign('left')
+    ctx.setTextBaseline('middle')
+    for (let i = 0; i < legendOption.data.length; i++) {
+      const name = legendOption.data[i]
+      const color = colors[i % colors.length]
+      const row = Math.floor(i / maxRowItems)
+      const col = i % maxRowItems
+      let rowWidth = 0
+      const startIdx = row * maxRowItems
+      const endIdx = Math.min(startIdx + maxRowItems, legendOption.data.length)
+      for (let j = startIdx; j < endIdx; j++) {
+        rowWidth += symbolWidth + textSpacing + ctx.measureText(legendOption.data[j]).width + itemSpacing
+      }
+      let rowLeft = legendLeft
+      if (hasLeft && leftValue === 'center') {
+        rowLeft = legendLeft + ((canvasWidth - legendLeft * 2) - rowWidth) / 2
+      } else if (hasLeft && leftValue === 'right') {
+        rowLeft = legendLeft + (canvasWidth - legendLeft * 2) - rowWidth
+      }
+      let itemX = 0
+      for (let j = startIdx; j < startIdx + col; j++) {
+        itemX += symbolWidth + textSpacing + ctx.measureText(legendOption.data[j]).width + itemSpacing
+      }
+
+      const x = rowLeft + itemX
+      const y = legendTop + verticalPadding + row * (itemHeight + itemSpacing) + itemHeight / 2
+      ctx.beginPath()
+      ctx.setStrokeStyle(color)
+      ctx.setLineWidth(2)
+      ctx.moveTo(x, y)
+      ctx.lineTo(x + symbolWidth, y)
+      ctx.stroke()
+      ctx.setFillStyle((legendOption.textStyle && legendOption.textStyle.color) || '#666')
+      ctx.fillText(String(name), x + symbolWidth + textSpacing, y)
+    }
+
+    return totalLegendHeight
+  }
+
+  getColor(index : number) {
+    return this.defaultColors[index % this.defaultColors.length]
+  }
+}
+
+export default new ChartHelper()

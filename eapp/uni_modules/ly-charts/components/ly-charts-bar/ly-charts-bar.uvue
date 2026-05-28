@@ -1,0 +1,384 @@
+<template>
+  <view class="ly-charts-bar" :style="{ width: containerWidth, height: containerHeight }">
+    <ly-canvas
+      ref="canvasRef"
+      class="chart-canvas"
+      :canvas-id="canvasId"
+      width="100"
+      height="100"
+      :use-root-height-and-width="true"
+      @ready="handleCanvasReady"
+      @touchstart="handleTouchStart"
+      @touchmove="handleTouchMove"
+      @touchend="handleTouchEnd"
+    />
+  </view>
+</template>
+
+<script lang="uts">
+import chartHelper from '../../libs/uvue/chartHelper.uts'
+
+export default {
+  name: 'ly-charts-bar',
+  props: {
+    option: {
+      type: Object,
+      default: () => ({})
+    },
+    height: {
+      type: [String, Number],
+      default: 400
+    },
+    width: {
+      type: [String, Number],
+      default: '100%'
+    }
+  },
+  data() {
+    return {
+      canvasId: `bar-chart-${Date.now()}`,
+      ctx: null as any,
+      canvasWidth: 0,
+      canvasHeight: 0,
+      grid: { top: 10, right: 20, bottom: 25, left: 50 },
+      seriesData: [] as any[],
+      touchInfo: {
+        startX: 0,
+        startY: 0
+      }
+    }
+  },
+  computed: {
+    containerHeight() {
+      return typeof this.height === 'number' ? `${this.height}px` : this.height
+    },
+    containerWidth() {
+      return typeof this.width === 'number' ? `${this.width}px` : this.width
+    }
+  },
+  watch: {
+    option: {
+      handler(newOption : any) {
+        this.drawChart(newOption)
+      },
+      deep: true
+    }
+  },
+  methods: {
+    initCanvas() {
+      const canvasRef = this.$refs['canvasRef'] as any
+      if (canvasRef && typeof canvasRef.refresh === 'function') {
+        canvasRef.refresh()
+      }
+    },
+    handleCanvasReady(event : any) {
+      const canvasRef = this.$refs['canvasRef'] as any
+      this.ctx = canvasRef
+      this.canvasWidth = event.width || canvasRef.getWidth()
+      this.canvasHeight = event.height || canvasRef.getHeight()
+      this.drawChart(this.option)
+    },
+    calculateStackedDataRange(series : any[]) {
+      if (!series || series.length === 0) {
+        return { minY: 0, maxY: 1 }
+      }
+      const categoryCount = series[0] && Array.isArray(series[0].data) ? series[0].data.length : 0
+      let minY = 0
+      let maxY = 0
+
+      for (let i = 0; i < categoryCount; i++) {
+        let positiveTotal = 0
+        let negativeTotal = 0
+        series.forEach((serie : any) => {
+          if (serie.type !== 'bar' || !Array.isArray(serie.data)) {
+            return
+          }
+          const value = typeof serie.data[i] === 'object' && serie.data[i] !== null ? serie.data[i].value : serie.data[i]
+          if (typeof value !== 'number' || isNaN(value)) {
+            return
+          }
+          if (serie.stack) {
+            if (value >= 0) {
+              positiveTotal += value
+            } else {
+              negativeTotal += value
+            }
+          } else {
+            positiveTotal = Math.max(positiveTotal, value)
+            negativeTotal = Math.min(negativeTotal, value)
+          }
+        })
+        maxY = Math.max(maxY, positiveTotal)
+        minY = Math.min(minY, negativeTotal)
+      }
+
+      if (maxY === minY) {
+        maxY += 1
+      }
+      const range = maxY - minY
+      const padding = range === 0 ? 1 : range * 0.1
+      return {
+        minY: minY - padding,
+        maxY: maxY + padding
+      }
+    },
+    drawChart(option : any) {
+      if (!this.ctx || !option) {
+        return
+      }
+
+      try {
+        this.grid = { top: 10, right: 20, bottom: 25, left: 50 }
+        this.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
+        if (option.backgroundColor) {
+          this.ctx.setFillStyle(option.backgroundColor)
+          this.ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight)
+        }
+
+        let titleHeight = 0
+        if (option.title && option.title.text) {
+          titleHeight = chartHelper.drawTitle(this.ctx, option.title, this.canvasWidth)
+        }
+        if (titleHeight > 0) {
+          this.grid.top = Math.max(this.grid.top, titleHeight + 10)
+        }
+
+        const series = option.series || []
+        const xAxis = option.xAxis || {}
+        const yAxis = option.yAxis || {}
+        const xAxisData = chartHelper.processXAxisData(xAxis, series)
+        const range = this.calculateStackedDataRange(series)
+        const xAxisPadding = option.xAxisPadding !== undefined ? option.xAxisPadding : 10
+
+        if (option.legend && option.legend.data) {
+          const legendColors = series.map((serie : any, index : number) => serie.color || (serie.itemStyle && serie.itemStyle.color) || chartHelper.getColor(index))
+          chartHelper.drawLegend(
+            this.ctx,
+            { ...option.legend },
+            this.grid,
+            this.canvasWidth,
+            legendColors,
+            this.canvasHeight,
+            titleHeight
+          )
+        }
+
+        if (option.grid !== false) {
+          chartHelper.drawGrid(this.ctx, this.grid, this.canvasWidth, this.canvasHeight, xAxisData.length, range.minY, range.maxY, false, xAxisPadding)
+        }
+        chartHelper.drawAxis(this.ctx, this.grid, this.canvasWidth, this.canvasHeight, xAxisData, range.minY, range.maxY, xAxis, yAxis, 'bar', xAxisPadding)
+        this.drawBars(series, xAxisData, range.minY, range.maxY, chartHelper.adjustedYMin, chartHelper.adjustedYMax, xAxisPadding)
+        this.ctx.draw()
+      } catch (error) {
+        console.error('绘制柱状图失败:', error)
+      }
+    },
+    drawBars(series : any[], xAxisData : any[], minY : number, maxY : number, adjustedYMin : number, adjustedYMax : number, xAxisPadding : number = 0) {
+      const chartWidth = this.canvasWidth - this.grid.left - this.grid.right
+      const chartHeight = this.canvasHeight - this.grid.top - this.grid.bottom
+      const categoryCount = Math.max(xAxisData.length, 1)
+      const barSeries = series.filter((serie : any) => serie.type === 'bar')
+      const useAdjustedY = adjustedYMin !== undefined && adjustedYMax !== undefined
+      const actualMinY = useAdjustedY ? adjustedYMin : minY
+      const actualMaxY = useAdjustedY ? adjustedYMax : maxY
+      const baselineY = this.grid.top + chartHeight - ((0 - actualMinY) / (actualMaxY - actualMinY || 1)) * chartHeight
+      const categoryWidth = (chartWidth - 2 * xAxisPadding) / categoryCount
+      const stackMap = {} as any
+
+      this.seriesData = []
+      barSeries.forEach((serie : any, index : number) => {
+        const stackKey = serie.stack || `__single_${index}`
+        if (!stackMap[stackKey]) {
+          stackMap[stackKey] = []
+        }
+        stackMap[stackKey].push(serie)
+      })
+      const stackKeys = Object.keys(stackMap)
+      const groupCount = stackKeys.length
+      const groupWidth = categoryWidth * 0.72
+      const barGap = groupCount > 0 ? groupWidth / Math.max(groupCount, 1) : groupWidth
+      const barWidth = Math.max(8, barGap * 0.72)
+
+      const positiveStackMap = {} as any
+      const negativeStackMap = {} as any
+      stackKeys.forEach((key : string) => {
+        positiveStackMap[key] = new Array(categoryCount).fill(0)
+        negativeStackMap[key] = new Array(categoryCount).fill(0)
+      })
+
+      barSeries.forEach((serie : any, seriesIndex : number) => {
+        const stackKey = serie.stack || `__single_${seriesIndex}`
+        const groupIndex = stackKeys.indexOf(stackKey)
+        const color = serie.color || (serie.itemStyle && serie.itemStyle.color) || chartHelper.getColor(seriesIndex)
+        const label = serie.label || {}
+        const showLabel = label.show === true
+        const labelColor = label.color || '#666'
+        const labelPosition = label.position || 'top'
+        const points = [] as any[]
+
+        for (let i = 0; i < categoryCount; i++) {
+          const rawValue = Array.isArray(serie.data) ? serie.data[i] : 0
+          const value = typeof rawValue === 'object' && rawValue !== null ? rawValue.value : rawValue
+          const safeValue = typeof value === 'number' && !isNaN(value) ? value : 0
+          const groupCenter = this.grid.left + xAxisPadding + i * categoryWidth + categoryWidth / 2
+          const x = groupCenter - groupWidth / 2 + groupIndex * barGap + (barGap - barWidth) / 2
+
+          const stackStore = safeValue >= 0 ? positiveStackMap[stackKey] : negativeStackMap[stackKey]
+          const startValue = stackStore[i]
+          const endValue = startValue + safeValue
+          stackStore[i] = endValue
+
+          const startY = this.grid.top + chartHeight - ((startValue - actualMinY) / (actualMaxY - actualMinY || 1)) * chartHeight
+          const endY = this.grid.top + chartHeight - ((endValue - actualMinY) / (actualMaxY - actualMinY || 1)) * chartHeight
+          const topY = Math.min(startY, endY)
+          const height = Math.abs(endY - startY)
+
+          this.ctx.beginPath()
+          this.ctx.setFillStyle(color)
+          if (serie.barType === 'mountain') {
+            this.ctx.moveTo(x + barWidth / 2, topY)
+            this.ctx.lineTo(x, topY + height)
+            this.ctx.lineTo(x + barWidth, topY + height)
+            this.ctx.closePath()
+            this.ctx.fill()
+          } else {
+            this.ctx.fillRect(x, topY, barWidth, Math.max(height, 1))
+          }
+
+          const point = {
+            x,
+            y: topY,
+            width: barWidth,
+            height: Math.max(height, 1),
+            value: safeValue,
+            name: xAxisData[i] || i,
+            seriesName: serie.name || `Series ${seriesIndex}`,
+            color
+          }
+          points.push(point)
+
+          if (showLabel) {
+            this.ctx.setFontSize(10)
+            this.ctx.setFillStyle(labelColor)
+            this.ctx.setTextAlign('center')
+            this.ctx.setTextBaseline('bottom')
+            let labelX = x + barWidth / 2
+            let labelY = topY - 4
+            if (labelPosition === 'inside') {
+              this.ctx.setTextBaseline('middle')
+              labelY = topY + Math.max(height, 1) / 2
+            } else if (labelPosition === 'bottom') {
+              this.ctx.setTextBaseline('top')
+              labelY = topY + Math.max(height, 1) + 4
+            }
+            this.ctx.fillText(String(safeValue), labelX, labelY)
+          }
+        }
+
+        this.seriesData.push({
+          name: serie.name || `Series ${seriesIndex}`,
+          points,
+          color
+        })
+      })
+
+      if (actualMinY < 0 && actualMaxY > 0) {
+        this.ctx.beginPath()
+        this.ctx.setStrokeStyle('#ccc')
+        this.ctx.setLineWidth(1)
+        this.ctx.moveTo(this.grid.left, baselineY)
+        this.ctx.lineTo(this.canvasWidth - this.grid.right, baselineY)
+        this.ctx.stroke()
+      }
+    },
+    handleTouchStart(event : any) {
+      const touch = event.touches && event.touches.length > 0 ? event.touches[0] : null
+      if (touch) {
+        this.touchInfo.startX = touch.x || 0
+        this.touchInfo.startY = touch.y || 0
+      }
+    },
+    handleTouchMove(event : any) {
+      if (event && typeof event.preventDefault === 'function') {
+        event.preventDefault()
+      }
+    },
+    handleTouchEnd(event : any) {
+      const touch = event.changedTouches && event.changedTouches.length > 0 ? event.changedTouches[0] : null
+      if (!touch) {
+        return
+      }
+      const endX = touch.x || 0
+      const endY = touch.y || 0
+      if (Math.abs(endX - this.touchInfo.startX) < 5 && Math.abs(endY - this.touchInfo.startY) < 5) {
+        this.handleChartClick(endX, endY)
+      }
+    },
+    handleChartClick(x : number, y : number) {
+      let closestPoint = null as any
+      this.seriesData.forEach((series : any) => {
+        series.points.forEach((point : any) => {
+          if (x >= point.x && x <= point.x + point.width && y >= point.y && y <= point.y + point.height) {
+            closestPoint = {
+              seriesName: series.name,
+              name: point.name,
+              value: point.value,
+              color: point.color,
+              x: point.x + point.width / 2,
+              y: point.y
+            }
+          }
+        })
+      })
+      if (closestPoint) {
+        this.$emit('click', {
+          componentType: 'series',
+          seriesType: 'bar',
+          seriesName: closestPoint.seriesName,
+          name: closestPoint.name,
+          value: closestPoint.value,
+          color: closestPoint.color,
+          event: {
+            offsetX: closestPoint.x,
+            offsetY: closestPoint.y
+          }
+        })
+      }
+    },
+    setOption(option : any, notMerge : boolean = false) {
+      if (notMerge) {
+        this.drawChart(option)
+        return
+      }
+      try {
+        const newOption = JSON.parse(JSON.stringify(this.option))
+        Object.assign(newOption, option)
+        this.drawChart(newOption)
+      } catch (error) {
+        console.error('合并配置失败:', error)
+        this.drawChart(option)
+      }
+    },
+    resize() {
+      this.initCanvas()
+    }
+  },
+  mounted() {
+    this.$nextTick(() => {
+      this.initCanvas()
+    })
+  }
+}
+</script>
+
+<style scoped>
+.ly-charts-bar {
+  position: relative;
+}
+
+.chart-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+</style>
