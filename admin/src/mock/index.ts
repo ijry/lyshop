@@ -23,7 +23,50 @@ let afterSaleSeq = 8000
 const afterSalesSource: any[] = []
 const categoriesSource: any[] = clone(Array.isArray(categories) ? categories : [])
 const productListSource: any[] = clone(Array.isArray((products as any)?.list) ? (products as any).list : [])
+
+// Seed 3-level categories (overwrite simplified data)
+categoriesSource.length = 0
+const seedCats = [
+  { id: 1, parent_id: 0, name: '电子', sort: 1 },
+  { id: 2, parent_id: 0, name: '服饰', sort: 2 },
+  { id: 3, parent_id: 0, name: '家居', sort: 3 },
+  { id: 4, parent_id: 0, name: '食品', sort: 4 },
+  { id: 5, parent_id: 0, name: '美妆', sort: 5 },
+  { id: 11, parent_id: 1, name: '手机数码', sort: 1 },
+  { id: 12, parent_id: 1, name: '电脑办公', sort: 2 },
+  { id: 13, parent_id: 1, name: '智能穿戴', sort: 3 },
+  { id: 21, parent_id: 2, name: '女装', sort: 1 },
+  { id: 22, parent_id: 2, name: '男装', sort: 2 },
+  { id: 23, parent_id: 2, name: '鞋包配饰', sort: 3 },
+  { id: 31, parent_id: 3, name: '家具', sort: 1 },
+  { id: 32, parent_id: 3, name: '日用百货', sort: 2 },
+  { id: 41, parent_id: 4, name: '生鲜', sort: 1 },
+  { id: 42, parent_id: 4, name: '零食饮料', sort: 2 },
+  { id: 51, parent_id: 5, name: '彩妆', sort: 1 },
+  { id: 52, parent_id: 5, name: '护肤', sort: 2 },
+  { id: 111, parent_id: 11, name: '智能手机', sort: 1 },
+  { id: 112, parent_id: 11, name: '配件', sort: 2 },
+  { id: 211, parent_id: 21, name: '连衣裙', sort: 1 },
+  { id: 212, parent_id: 21, name: '外套', sort: 2 },
+]
+for (const c of seedCats) categoriesSource.push({ ...c, product_count: 0 })
+
 let categorySeq = Math.max(0, ...categoriesSource.map((item: any) => Number(item?.id || 0)))
+
+// Enrich first 6 products with SKU/category data
+for (let i = 0; i < Math.min(6, productListSource.length); i++) {
+  const p: any = productListSource[i]
+  p.category_id = [111, 112, 211, 211, 31, 51][i] || 111
+  p.category_path_name = ['电子 / 手机数码 / 智能手机', '电子 / 手机数码 / 配件', '服饰 / 女装 / 连衣裙', '服饰 / 女装 / 连衣裙', '家居 / 家具', '美妆 / 彩妆'][i] || ''
+  p.sales_count = 80 + i * 23
+  p.low_stock_threshold = 10
+  p.skus = [
+    { id: p.id * 10 + 1, attrs: [{ name: '颜色', value: '黑色' }, { name: '版本', value: '标准版' }], price: Number(p.price || 0), stock: 50 },
+    { id: p.id * 10 + 2, attrs: [{ name: '颜色', value: '白色' }, { name: '版本', value: '标准版' }], price: Number(p.price || 0), stock: 30 },
+    { id: p.id * 10 + 3, attrs: [{ name: '颜色', value: '黑色' }, { name: '版本', value: '尊享版' }], price: Math.round(Number(p.price || 0) * 1.2 * 100) / 100, stock: 20 },
+    { id: p.id * 10 + 4, attrs: [{ name: '颜色', value: '白色' }, { name: '版本', value: '尊享版' }], price: Math.round(Number(p.price || 0) * 1.2 * 100) / 100, stock: 15 },
+  ]
+}
 const decorVariantsSource: any[] = [
   {
     id: 1,
@@ -1374,6 +1417,21 @@ export function matchMock(method: string, url: string, params?: Record<string, a
   if (vipRuleResult) return vipRuleResult
   const vipSkuResult = vipCrud('/admin/api/vip/sku-prices', vipSkuPricesSource)
   if (vipSkuResult) return vipSkuResult
+
+  // Category tree helper
+  if (key === 'GET /admin/api/categories/tree') {
+    const list = clone(categoriesSource) as any[]
+    const map = new Map<number, any>()
+    for (const c of list) { c.children = []; map.set(Number(c.id), c) }
+    const roots: any[] = []
+    for (const c of list) {
+      const parent = Number(c.parent_id || 0)
+      if (parent && map.get(parent)) map.get(parent).children.push(c)
+      else roots.push(c)
+    }
+    return { matched: true, data: roots }
+  }
+
   if (key === 'GET /admin/api/categories') {
     return { matched: true, data: clone(categoriesSource) }
   }
@@ -1383,11 +1441,12 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     const now = new Date().toISOString()
     const row = {
       id: categorySeq,
-      parent_id: 0,
+      parent_id: Number(payload.parent_id || 0),
       name: String(payload.name || `分类${categorySeq}`),
       icon: String(payload.icon || ''),
       sort: Number(payload.sort || 0),
       status: Number(payload.status || 0) === 1 ? 1 : 0,
+      product_count: 0,
       created_at: now,
       updated_at: now,
     }
@@ -1414,6 +1473,71 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     if (idx >= 0) categoriesSource.splice(idx, 1)
     return { matched: true, data: null }
   }
+
+  // Enhanced product query
+  if (key === 'GET /admin/api/products') {
+    const keyword = String(query.keyword || '').trim().toLowerCase()
+    const status = query.status === undefined || query.status === '' ? null : Number(query.status)
+    const categoryID = Number(query.category_id || 0)
+    const lowStock = query.low_stock === true || String(query.low_stock || '') === 'true' || query.low_stock === 1
+    const sortBy = String(query.sort_by || '')
+
+    let list = clone(productListSource) as any[]
+    if (keyword) list = list.filter((p: any) => String(p.title || '').toLowerCase().includes(keyword))
+    if (status !== null) list = list.filter((p: any) => Number(p.status || 0) === status)
+    if (categoryID) list = list.filter((p: any) => Number(p.category_id || 0) === categoryID)
+    if (lowStock) list = list.filter((p: any) => Number(p.stock || 0) <= Number(p.low_stock_threshold || 10))
+    if (sortBy === 'sales') list.sort((a: any, b: any) => Number(b.sales_count || 0) - Number(a.sales_count || 0))
+    else if (sortBy === 'stock') list.sort((a: any, b: any) => Number(a.stock || 0) - Number(b.stock || 0))
+    else if (sortBy === 'price_asc') list.sort((a: any, b: any) => Number(a.price || 0) - Number(b.price || 0))
+    else if (sortBy === 'price_desc') list.sort((a: any, b: any) => Number(b.price || 0) - Number(a.price || 0))
+    else if (sortBy === 'created') list.sort((a: any, b: any) => String(b.created_at || '').localeCompare(String(a.created_at || '')))
+
+    return { matched: true, data: toPageData(list, Number(query.page || 1), Number(query.size || 20)) }
+  }
+
+  // Batch product routes
+  if (methodUpper === 'PUT' && url === '/admin/api/products/batch/status') {
+    const ids: number[] = Array.isArray(params?.ids) ? params.ids : []
+    const status = Number(params?.status || 0) === 1 ? 1 : 0
+    const success_ids: number[] = []; const fail: Array<{ id: number; reason: string }> = []
+    for (const pid of ids) {
+      const t = (productListSource as any[]).find((p: any) => Number(p.id || 0) === Number(pid))
+      if (!t) { fail.push({ id: Number(pid), reason: '商品不存在' }); continue }
+      t.status = status; success_ids.push(Number(pid))
+    }
+    return { matched: true, data: { success_ids, fail } }
+  }
+
+  if (methodUpper === 'PUT' && url === '/admin/api/products/batch/category') {
+    const ids: number[] = Array.isArray(params?.ids) ? params.ids : []
+    const cid = Number(params?.category_id || 0)
+    const success_ids: number[] = []; const fail: Array<{ id: number; reason: string }> = []
+    for (const pid of ids) {
+      const t = (productListSource as any[]).find((p: any) => Number(p.id || 0) === Number(pid))
+      if (!t) { fail.push({ id: Number(pid), reason: '商品不存在' }); continue }
+      t.category_id = cid; success_ids.push(Number(pid))
+    }
+    return { matched: true, data: { success_ids, fail } }
+  }
+
+  if (methodUpper === 'PUT' && url === '/admin/api/products/batch/price') {
+    const ids: number[] = Array.isArray(params?.ids) ? params.ids : []
+    const adj = params?.adjustment || { type: 'set', value: 0 }
+    const success_ids: number[] = []; const fail: Array<{ id: number; reason: string }> = []
+    for (const pid of ids) {
+      const t = (productListSource as any[]).find((p: any) => Number(p.id || 0) === Number(pid))
+      if (!t) { fail.push({ id: Number(pid), reason: '商品不存在' }); continue }
+      const orig = Number(t.price || 0)
+      let next = orig
+      if (adj.type === 'set') next = Number(adj.value || 0)
+      else if (adj.type === 'percent') next = orig * (1 + Number(adj.value || 0) / 100)
+      else if (adj.type === 'amount') next = orig + Number(adj.value || 0)
+      t.price = Math.max(0, Math.round(next * 100) / 100); success_ids.push(Number(pid))
+    }
+    return { matched: true, data: { success_ids, fail } }
+  }
+
   if (key === 'GET /admin/api/orders') {
     const keyword = String(query.keyword || '').trim().toLowerCase()
     const status = String(query.status || '')

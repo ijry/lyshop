@@ -12,3 +12,7 @@ export type ProductUpsertPayload = {
 export const createProduct = (payload: ProductUpsertPayload) => post<any>('/products', payload)
 export const updateProduct = (id: number | string, payload: ProductUpsertPayload) => put<any>(`/products/${id}`, payload)
 export const deleteProduct = (id: number | string) => del<any>(`/products/${id}`)
+
+export const batchUpdateProductStatus = (payload: { ids: number[]; status: 0 | 1 }) => put<any>('/products/batch/status', payload)
+export const batchUpdateProductCategory = (payload: { ids: number[]; category_id: number }) => put<any>('/products/batch/category', payload)
+export const batchUpdateProductPrice = (payload: { ids: number[]; adjustment: { type: 'set'|'percent'|'amount'; value: number; scope?: 'all'|'main_sku' } }) => put<any>('/products/batch/price', payload)
