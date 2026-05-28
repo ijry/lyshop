@@ -5,3 +5,6 @@ export const updateSiteSettings = (payload: any) => put<any>('/site-settings', p
 
 export const getAdmins = () => get<any>('/admins')
 export const getRoles = () => get<any>('/roles')
+
+export const getCurrentShop = () => get<any>('/shops/current')
+export const getAnnouncements = () => get<any>('/announcements')

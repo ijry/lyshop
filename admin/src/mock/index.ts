@@ -164,6 +164,45 @@ let wmsDocSeq = Math.max(0, ...wmsDocsSource.map((row: any) => Number(row.id || 
 let wmsDocItemSeq = Math.max(0, ...wmsDocsSource.flatMap((doc: any) => (Array.isArray(doc.items) ? doc.items : [])).map((row: any) => Number(row.id || 0)))
 let wmsMovementSeq = Math.max(0, ...wmsMovementsSource.map((row: any) => Number(row.id || 0)))
 
+const shopsCurrentSource: any = {
+  id: 1, name: '示范品牌旗舰店', logo: 'https://picsum.photos/200/200?random=shop1', owner: 'admin', decor_status: 'published',
+}
+
+const announcementsSource: any[] = [
+  { id: 1, title: '平台 2026 年 6 月例行升级通知', content: '6 月 3 日 02:00-03:00 短暂维护', type: 'normal', created_at: '2026-05-27T10:00:00Z' },
+  { id: 2, title: '618 大促招商进行中', content: '前往营销中心报名参与', type: 'urgent', created_at: '2026-05-26T09:00:00Z' },
+  { id: 3, title: '电子面单服务费下调', content: '6 月起部分快递公司面单费下调 10%', type: 'normal', created_at: '2026-05-25T14:00:00Z' },
+]
+
+function seedRandom(seed: number) {
+  const x = Math.sin(seed) * 10000
+  return x - Math.floor(x)
+}
+
+function buildRevenueTrend(days: number): { categories: string[]; series: Array<{ name: string; data: number[] }> } {
+  const categories: string[] = []
+  const data: number[] = []
+  const today = new Date('2026-05-28T00:00:00Z')
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today.getTime() - i * 86400000)
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0')
+    const dd = String(d.getUTCDate()).padStart(2, '0')
+    categories.push(`${mm}-${dd}`)
+    const seed = d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate()
+    const dayOfWeek = d.getUTCDay()
+    const base = 4800 + Math.sin(seed / 7) * 1200
+    const weekendBoost = (dayOfWeek === 0 || dayOfWeek === 6) ? 600 : 0
+    const noise = (seedRandom(seed) - 0.5) * 800
+    data.push(Math.max(800, Math.round(base + weekendBoost + noise)))
+  }
+  return { categories, series: [{ name: '营收', data }] }
+}
+
+function buildOrderTrend(days: number): { categories: string[]; series: Array<{ name: string; data: number[] }> } {
+  const r = buildRevenueTrend(days)
+  return { categories: r.categories, series: [{ name: '订单', data: r.series[0].data.map((v) => Math.max(2, Math.round(v / 120))) }] }
+}
+
 function clone<T>(v: T): T {
   return JSON.parse(JSON.stringify(v))
 }
@@ -698,22 +737,7 @@ const routes: Record<string, any> = {
     ],
   },
 
-  // Dashboard
-  'GET /admin/api/dashboard': {
-    today_orders: 56,
-    today_sales: 28960.50,
-    pending_refunds: 3,
-    online_sessions: 2,
-    sales_trend: [
-      { date: '2026-05-19', orders: 42, sales: 18660.00 },
-      { date: '2026-05-20', orders: 38, sales: 17280.00 },
-      { date: '2026-05-21', orders: 47, sales: 21340.00 },
-      { date: '2026-05-22', orders: 52, sales: 24120.50 },
-      { date: '2026-05-23', orders: 49, sales: 22590.00 },
-      { date: '2026-05-24', orders: 58, sales: 27630.00 },
-      { date: '2026-05-25', orders: 56, sales: 28960.50 },
-    ],
-  },
+  // Dashboard — handled dynamically in matchMock
 
   // Products
   'GET /admin/api/products': { list: productListSource, total: productListSource.length, page: 1, size: 20 },
@@ -932,6 +956,71 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     return { list: list.slice(offset, offset + s), total: list.length, page: p, size: s }
   }
   const methodUpper = method.toUpperCase()
+
+  // Dashboard — dynamic
+  if (key === 'GET /admin/api/dashboard') {
+    const pendingShip = orderListSource.filter((o: any) => Number(o.status) === 2).length
+    const pendingAfterSale = afterSalesSource.filter((a: any) => !['completed', 'closed', 'refunded', 'rejected'].includes(String(a.status || ''))).length
+    const todayOrders = 56
+    const todaySales = 28960.50
+    const todayAvgPrice = todayOrders > 0 ? Math.round(todaySales / todayOrders * 100) / 100 : 0
+    const statusMap: Record<string, number> = {}
+    for (const o of orderListSource) {
+      const s = String(o.status || '0')
+      statusMap[s] = (statusMap[s] || 0) + 1
+    }
+    const statusLabels: Record<string, string> = { '0': '待付款', '1': '待确认', '2': '待发货', '3': '已发货', '4': '已完成', '5': '已关闭' }
+    const statusDistribution = Object.entries(statusMap).map(([k, v]) => ({ name: statusLabels[k] || `状态${k}`, value: v }))
+    const hotProducts = productListSource.slice().sort((a: any, b: any) => Number(b.sold_qty || b.sales || 0) - Number(a.sold_qty || a.sales || 0)).slice(0, 5).map((p: any) => ({
+      id: Number(p.id || 0),
+      title: String(p.title || p.name || ''),
+      cover: String(p.cover || p.image || ''),
+      sold_qty: Number(p.sold_qty || p.sales || 0),
+    }))
+    const stockWarningList = productListSource.filter((p: any) => Number(p.stock || 0) < 10 && Number(p.stock || 0) >= 0).slice(0, 5).map((p: any) => ({
+      product_id: Number(p.id || 0),
+      sku_id: Number(p.sku_id || p.id || 0),
+      title: String(p.title || p.name || ''),
+      stock: Number(p.stock || 0),
+      threshold: 10,
+    }))
+    return {
+      matched: true,
+      data: {
+        today_orders: todayOrders,
+        today_sales: todaySales,
+        today_avg_price: todayAvgPrice,
+        pending_ship: pendingShip,
+        pending_after_sale: pendingAfterSale,
+        unread_message: 3,
+        stock_warning: stockWarningList.length,
+        compare: { revenue_yoy: 12.5, revenue_mom: 5.3, order_yoy: 8.2, order_mom: -2.1 },
+        trend: {
+          revenue_7d: buildRevenueTrend(7),
+          revenue_30d: buildRevenueTrend(30),
+          order_7d: buildOrderTrend(7),
+        },
+        status_distribution: statusDistribution,
+        hot_products: hotProducts,
+        announcements: clone(announcementsSource),
+        stock_warning_list: stockWarningList,
+      },
+    }
+  }
+
+  // Shop info
+  if (key === 'GET /admin/api/shops/current') {
+    return { matched: true, data: clone(shopsCurrentSource) }
+  }
+
+  // Announcements
+  if (key === 'GET /admin/api/announcements') {
+    const page = Math.max(1, Number(query.page || 1))
+    const size = Math.max(1, Number(query.size || 20))
+    const offset = (page - 1) * size
+    const list = announcementsSource.slice()
+    return { matched: true, data: { list: list.slice(offset, offset + size), total: list.length, page, size } }
+  }
 
   if (key === 'GET /admin/api/wms/warehouses') {
     const keyword = String(query.keyword || '').trim().toLowerCase()
