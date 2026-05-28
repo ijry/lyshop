@@ -21,6 +21,42 @@ export interface SiteSettings {
   color_hero_to: string
 }
 
+export interface PcDecorPagePayload {
+  pageStyle: {
+    background: {
+      mode: 'solid' | 'gradient' | 'image'
+      solidColor?: string
+      gradient?: {
+        angle: number
+        stops: Array<{ color: string; position: number }>
+      }
+      image?: {
+        url: string
+        size: 'cover' | 'contain' | 'auto' | 'custom'
+        customSize?: string
+        position: string
+        repeat: 'no-repeat' | 'repeat' | 'repeat-x' | 'repeat-y'
+        attachment: 'scroll' | 'fixed'
+      }
+      overlay?: {
+        enabled: boolean
+        color: string
+        opacity: number
+      }
+    }
+    content: {
+      maxWidth: number
+      gutterX: number
+      sectionGap: number
+    }
+    surface: {
+      radius: number
+      shadow: 'none' | 'sm' | 'md' | 'lg'
+    }
+  }
+  components: any[]
+}
+
 export interface MockPreset {
   key: string
   name: string
@@ -28,7 +64,7 @@ export interface MockPreset {
   products: { list: any[]; total: number; page: number; size: number }
   productDetail: any
   indexDecor: { components: any[] }
-  pcDecor: { components: any[] }
+  pcDecor: PcDecorPagePayload
   siteSettings: SiteSettings
   seckills: any
   groupBuy: any

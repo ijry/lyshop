@@ -2602,6 +2602,77 @@ export function matchMock(method: string, url: string, params?: any) {
 }),
 ```
 
+
+
+### 10.1.1 PC 装修高级样式结构（PcDecorPage）
+
+PC 装修接口路径不变（`/admin/api/decor/pc`、`/api/v1/pc/decor`），但 `components` 字段的数据体升级为页面对象：
+
+```json
+{
+  "components": {
+    "pageStyle": {
+      "background": {
+        "mode": "solid",
+        "solidColor": "#f8fafc",
+        "gradient": {
+          "angle": 135,
+          "stops": [
+            { "color": "#f8fafc", "position": 0 },
+            { "color": "#eef2ff", "position": 100 }
+          ]
+        },
+        "image": {
+          "url": "",
+          "size": "cover",
+          "customSize": "100% auto",
+          "position": "center top",
+          "repeat": "no-repeat",
+          "attachment": "scroll"
+        },
+        "overlay": { "enabled": false, "color": "#000000", "opacity": 0.2 }
+      },
+      "content": { "maxWidth": 1280, "gutterX": 24, "sectionGap": 24 },
+      "surface": { "radius": 12, "shadow": "none" }
+    },
+    "components": [
+      {
+        "id": "pc_hero",
+        "type": "hero",
+        "props": {},
+        "style": {
+          "marginTop": 24,
+          "marginBottom": 0,
+          "paddingX": 24,
+          "paddingY": 0,
+          "backgroundColor": "transparent",
+          "borderRadius": 12,
+          "borderWidth": 0,
+          "borderColor": "#e5e7eb",
+          "shadow": "none"
+        }
+      }
+    ]
+  }
+}
+```
+
+说明：
+
+- `pageStyle` 管页面级背景、遮罩、内容宽度和默认表面样式。
+- `components[].style` 是组件级覆盖，优先级高于 `pageStyle` 的默认值。
+- 背景图支持 URL + 上传配置，字段由 Admin 装修页直接产出。
+
+### 10.1.2 Mock 同步规则（admin/web/app）
+
+本次 PC 装修字段变更要求三端 Mock 同步：
+
+- `admin/src/mock/index.ts`：`GET/PUT /admin/api/decor/pc` 使用 `PcDecorPage` 结构。
+- `web/src/mock/index.ts`：`GET /api/v1/pc/decor` 返回同结构对象。
+- `app/mock/presets/types.ts` 与各行业预设：`pcDecor` 从 `{ components: any[] }` 升级为 `{ pageStyle, components }`。
+
+若仅改其中一端，会出现「后台预览正常、前台演示异常」或类型检查失败。
+
 ### 10.2 本地调试
 
 #### 后端调试

@@ -266,6 +266,30 @@ export const mother: MockPreset = {
     ],
   },
   pcDecor: {
+    pageStyle: {
+      background: {
+        mode: 'solid',
+        solidColor: '#f8fafc',
+        gradient: {
+          angle: 135,
+          stops: [
+            { color: '#f8fafc', position: 0 },
+            { color: '#eef2ff', position: 100 },
+          ],
+        },
+        image: {
+          url: '',
+          size: 'cover',
+          customSize: '100% auto',
+          position: 'center top',
+          repeat: 'no-repeat',
+          attachment: 'scroll',
+        },
+        overlay: { enabled: false, color: '#000000', opacity: 0.2 },
+      },
+      content: { maxWidth: 1280, gutterX: 24, sectionGap: 24 },
+      surface: { radius: 12, shadow: 'none' },
+    },
     components: [
       {
         type: 'hero', id: 'pc_hero',

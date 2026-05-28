@@ -62,7 +62,7 @@
           <div class="mx-auto flex justify-center" :style="{ width: `${1280 * previewScale}px`, minWidth: `${1280 * previewScale}px` }">
             <div class="border border-slate-200 rounded-xl overflow-hidden shadow-lg bg-white"
               :style="{ width: '1280px', transformOrigin: 'top center', transform: `scale(${previewScale})` }">
-              <PcDecorPreview :components="components" @select="selectComp" />
+              <PcDecorPreview :components="components" :pageStyle="pagePayload.pageStyle" @select="selectComp" />
             </div>
           </div>
         </div>
@@ -71,23 +71,28 @@
       <!-- Right: property editors -->
       <div class="w-80 bg-white rounded-xl border border-slate-100 p-4 shrink-0 overflow-y-auto">
         <p class="text-xs font-medium text-slate-500 mb-3">属性配置</p>
+        <div class="mb-5">
+          <p class="text-xs text-slate-500 mb-2">页面样式</p>
+          <PcPageStyleEditor v-model="pagePayload.pageStyle" />
+        </div>
         <div v-if="selectedComp">
           <div class="mb-4">
             <span class="text-sm font-medium text-slate-700">{{ pcCompTitleMap[selectedComp.type] || selectedComp.type }}</span>
           </div>
-          <HeroEditor          v-if="selectedComp.type === 'hero'"           v-model="selectedComp.props" />
-          <BannerEditor        v-else-if="selectedComp.type === 'banner'"       v-model="selectedComp.props" />
-          <CategoryNavEditor   v-else-if="selectedComp.type === 'category_nav'" v-model="selectedComp.props" />
-          <GridEditor          v-else-if="selectedComp.type === 'grid'"         v-model="selectedComp.props" />
-          <ProductGridEditor   v-else-if="selectedComp.type === 'product_grid'" v-model="selectedComp.props" />
-          <NoticeEditor        v-else-if="selectedComp.type === 'notice'"       v-model="selectedComp.props" />
-          <ImageAdEditor       v-else-if="selectedComp.type === 'image_ad'"     v-model="selectedComp.props" />
-          <RichTextEditor      v-else-if="selectedComp.type === 'rich_text'"    v-model="selectedComp.props" />
-          <MarketingZoneEditor v-else-if="selectedComp.type === 'marketing_zone'" v-model="selectedComp.props" />
-          <FeaturesEditor      v-else-if="selectedComp.type === 'features'"     v-model="selectedComp.props" />
-          <SpacerEditor        v-else-if="selectedComp.type === 'spacer'"       v-model="selectedComp.props" />
+          <HeroEditor            v-if="selectedComp.type === 'hero'"             v-model="selectedComp.props" />
+          <BannerEditor          v-else-if="selectedComp.type === 'banner'"       v-model="selectedComp.props" />
+          <CategoryNavEditor     v-else-if="selectedComp.type === 'category_nav'" v-model="selectedComp.props" />
+          <GridEditor            v-else-if="selectedComp.type === 'grid'"         v-model="selectedComp.props" />
+          <ProductGridEditor     v-else-if="selectedComp.type === 'product_grid'" v-model="selectedComp.props" />
+          <NoticeEditor          v-else-if="selectedComp.type === 'notice'"       v-model="selectedComp.props" />
+          <ImageAdEditor         v-else-if="selectedComp.type === 'image_ad'"     v-model="selectedComp.props" />
+          <RichTextEditor        v-else-if="selectedComp.type === 'rich_text'"    v-model="selectedComp.props" />
+          <MarketingZoneEditor   v-else-if="selectedComp.type === 'marketing_zone'" v-model="selectedComp.props" />
+          <FeaturesEditor        v-else-if="selectedComp.type === 'features'"     v-model="selectedComp.props" />
+          <SpacerEditor          v-else-if="selectedComp.type === 'spacer'"       v-model="selectedComp.props" />
+          <PcComponentStyleEditor v-model="selectedComp.style" />
         </div>
-        <div v-else class="text-center py-8 text-slate-300 text-sm">点击左侧组件进行编辑</div>
+        <div v-else class="text-center py-4 text-slate-300 text-sm">点击左侧组件进行编辑</div>
       </div>
     </div>
   </div>
@@ -97,7 +102,13 @@
 import { ref, computed, onMounted } from 'vue'
 import request from '@/api/request'
 import { notify } from '@/utils/notify'
-import { pcComponentLib, pcCompTitleMap, createPcDefaultProps } from '@/types/decor'
+import {
+  pcComponentLib,
+  pcCompTitleMap,
+  createPcDefaultProps,
+  createDefaultPcDecorPayload,
+  type PcDecorPagePayload,
+} from '@/types/decor'
 
 import PcDecorPreview from './PcDecorPreview.vue'
 import HeroEditor from './editors/HeroEditor.vue'
@@ -111,13 +122,22 @@ import RichTextEditor from './editors/RichTextEditor.vue'
 import MarketingZoneEditor from './editors/MarketingZoneEditor.vue'
 import FeaturesEditor from './editors/FeaturesEditor.vue'
 import SpacerEditor from './editors/SpacerEditor.vue'
+import PcPageStyleEditor from './widgets/PcPageStyleEditor.vue'
+import PcComponentStyleEditor from './widgets/PcComponentStyleEditor.vue'
 
-const components = ref<any[]>([])
+const pagePayload = ref<PcDecorPagePayload>(createDefaultPcDecorPayload())
 const selectedIndex = ref<number | null>(null)
 const saving = ref(false)
 const previewScale = ref(0.8)
 
 let draggedComp: any = null
+
+const components = computed<any[]>({
+  get: () => pagePayload.value.components || [],
+  set: (list) => {
+    pagePayload.value.components = Array.isArray(list) ? list : []
+  },
+})
 
 const selectedComp = computed(() =>
   selectedIndex.value !== null ? components.value[selectedIndex.value] : null
@@ -130,6 +150,7 @@ function appendComp(comp: any) {
     type: comp.type,
     id: `pc_${Date.now()}_${Math.random().toString(16).slice(2, 6)}`,
     props: createPcDefaultProps(comp.type),
+    style: {},
   })
   selectedIndex.value = components.value.length - 1
 }
@@ -166,7 +187,7 @@ function remove(i: number) {
 async function save() {
   saving.value = true
   try {
-    await request.put('/decor/pc', { components: components.value })
+    await request.put('/decor/pc', { components: pagePayload.value })
     notify('保存成功')
   } finally { saving.value = false }
 }
@@ -179,12 +200,51 @@ async function publish() {
 
 onMounted(async () => {
   const data: any = await request.get('/decor/pc')
-  if (data?.components) {
-    try {
-      components.value = typeof data.components === 'string'
-        ? JSON.parse(data.components)
-        : data.components
-    } catch {}
-  }
+  pagePayload.value = normalizePayload(data?.components)
 })
+
+function normalizePayload(raw: any): PcDecorPagePayload {
+  const fallback = createDefaultPcDecorPayload()
+  let parsed = raw
+  if (typeof raw === 'string') {
+    try {
+      parsed = JSON.parse(raw)
+    } catch {
+      return fallback
+    }
+  }
+  if (!parsed || typeof parsed !== 'object') return fallback
+  if (!Array.isArray(parsed.components)) return fallback
+  return {
+    pageStyle: {
+      ...fallback.pageStyle,
+      ...(parsed.pageStyle || {}),
+      background: {
+        ...fallback.pageStyle.background,
+        ...(parsed.pageStyle?.background || {}),
+        gradient: {
+          ...fallback.pageStyle.background.gradient,
+          ...(parsed.pageStyle?.background?.gradient || {}),
+        },
+        image: {
+          ...fallback.pageStyle.background.image,
+          ...(parsed.pageStyle?.background?.image || {}),
+        },
+        overlay: {
+          ...fallback.pageStyle.background.overlay,
+          ...(parsed.pageStyle?.background?.overlay || {}),
+        },
+      },
+      content: {
+        ...fallback.pageStyle.content,
+        ...(parsed.pageStyle?.content || {}),
+      },
+      surface: {
+        ...fallback.pageStyle.surface,
+        ...(parsed.pageStyle?.surface || {}),
+      },
+    },
+    components: parsed.components,
+  }
+}
 </script>

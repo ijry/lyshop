@@ -41,11 +41,34 @@ const decorVariantsSource: any[] = [
 ]
 const pcDecorSource: any = {
   id: 1,
-  components: JSON.stringify([
-    { type: 'hero', id: 'pc_hero', props: { badge: '限时秒杀进行中', title: '精选好物\n品质生活从这里开始', subtitle: '数千款精选商品，正品保障，极速发货。', btn_text: '立即选购', btn_link: '/products', btn2_text: '查看全部', btn2_link: '/products', bg_from: '#b91c1c', bg_to: '#991b1b' } },
-    { type: 'product_grid', id: 'pc_hot', props: { title: '热销推荐', source: 'hot', limit: 8, columns: 4 } },
-    { type: 'features', id: 'pc_features', props: { columns: 4, items: [{ icon: 'i-carbon-delivery-truck', title: '快递配送', desc: '全国包邮' }, { icon: 'i-carbon-checkmark-outline', title: '正品保障', desc: '假一赔十' }, { icon: 'i-carbon-renew', title: '无忧退换', desc: '7天退换' }, { icon: 'i-carbon-headset', title: '在线客服', desc: '随时响应' }] } },
-  ]),
+  components: JSON.stringify({
+    pageStyle: {
+      background: {
+        mode: 'solid',
+        solidColor: '#f8fafc',
+        gradient: {
+          angle: 135,
+          stops: [{ color: '#f8fafc', position: 0 }, { color: '#eef2ff', position: 100 }],
+        },
+        image: {
+          url: '',
+          size: 'cover',
+          customSize: '100% auto',
+          position: 'center top',
+          repeat: 'no-repeat',
+          attachment: 'scroll',
+        },
+        overlay: { enabled: false, color: '#000000', opacity: 0.2 },
+      },
+      content: { maxWidth: 1280, gutterX: 24, sectionGap: 24 },
+      surface: { radius: 12, shadow: 'none' },
+    },
+    components: [
+      { type: 'hero', id: 'pc_hero', props: { badge: '限时秒杀进行中', title: '精选好物\n品质生活从这里开始', subtitle: '数千款精选商品，正品保障，极速发货。', btn_text: '立即选购', btn_link: '/products', btn2_text: '查看全部', btn2_link: '/products', bg_from: '#b91c1c', bg_to: '#991b1b' }, style: {} },
+      { type: 'product_grid', id: 'pc_hot', props: { title: '热销推荐', source: 'hot', limit: 8, columns: 4 }, style: {} },
+      { type: 'features', id: 'pc_features', props: { columns: 4, items: [{ icon: 'i-carbon-delivery-truck', title: '快递配送', desc: '全国包邮' }, { icon: 'i-carbon-checkmark-outline', title: '正品保障', desc: '假一赔十' }, { icon: 'i-carbon-renew', title: '无忧退换', desc: '7天退换' }, { icon: 'i-carbon-headset', title: '在线客服', desc: '随时响应' }] }, style: {} },
+    ],
+  }),
   is_published: true,
 }
 
@@ -1049,7 +1072,8 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     return { matched: true, data: clone(pcDecorSource) }
   }
   if (key === 'PUT /admin/api/decor/pc') {
-    pcDecorSource.components = JSON.stringify((params as any)?.components || [])
+    const payload = (params as any)?.components
+    pcDecorSource.components = JSON.stringify(payload || { pageStyle: null, components: [] })
     return { matched: true, data: clone(pcDecorSource) }
   }
   if (key === 'POST /admin/api/decor/pc/publish') {

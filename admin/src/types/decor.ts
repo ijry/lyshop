@@ -66,6 +66,51 @@ export interface GridProps {
   items: Array<{ title: string; icon: string; bg: string; link: string }>
 }
 
+export interface PcDecorComponentStyle {
+  marginTop?: number
+  marginBottom?: number
+  paddingX?: number
+  paddingY?: number
+  backgroundColor?: string
+  borderRadius?: number
+  borderColor?: string
+  borderWidth?: number
+  shadow?: 'none' | 'sm' | 'md' | 'lg'
+}
+
+export interface PcDecorPageStyle {
+  background: {
+    mode: 'solid' | 'gradient' | 'image'
+    solidColor?: string
+    gradient?: {
+      angle: number
+      stops: Array<{ color: string; position: number }>
+    }
+    image?: {
+      url: string
+      size: 'cover' | 'contain' | 'auto' | 'custom'
+      customSize?: string
+      position: string
+      repeat: 'no-repeat' | 'repeat' | 'repeat-x' | 'repeat-y'
+      attachment: 'scroll' | 'fixed'
+    }
+    overlay?: {
+      enabled: boolean
+      color: string
+      opacity: number
+    }
+  }
+  content: {
+    maxWidth: number
+    gutterX: number
+    sectionGap: number
+  }
+  surface: {
+    radius: number
+    shadow: 'none' | 'sm' | 'md' | 'lg'
+  }
+}
+
 // ---- Discriminated union ----
 
 interface DecorBase {
@@ -90,7 +135,16 @@ export type PcDecorComponent =
   | (DecorBase & { type: 'features'; props: FeaturesProps })
   | (DecorBase & { type: 'grid'; props: GridProps })
 
+export type PcDecorComponentWithStyle = PcDecorComponent & {
+  style?: PcDecorComponentStyle
+}
+
 export type PcDecorComponentType = PcDecorComponent['type']
+
+export interface PcDecorPagePayload {
+  pageStyle: PcDecorPageStyle
+  components: PcDecorComponentWithStyle[]
+}
 
 // ---- Component library metadata ----
 
@@ -170,6 +224,51 @@ export function createPcDefaultProps(type: PcDecorComponentType): any {
     spacer: () => ({ height: 24, background: 'transparent' }),
   }
   return (defaults[type] || (() => ({})))()
+}
+
+export function createDefaultPcPageStyle(): PcDecorPageStyle {
+  return {
+    background: {
+      mode: 'solid',
+      solidColor: '#f8fafc',
+      gradient: {
+        angle: 135,
+        stops: [
+          { color: '#f8fafc', position: 0 },
+          { color: '#eef2ff', position: 100 },
+        ],
+      },
+      image: {
+        url: '',
+        size: 'cover',
+        customSize: '100% auto',
+        position: 'center top',
+        repeat: 'no-repeat',
+        attachment: 'scroll',
+      },
+      overlay: {
+        enabled: false,
+        color: '#000000',
+        opacity: 0.2,
+      },
+    },
+    content: {
+      maxWidth: 1280,
+      gutterX: 24,
+      sectionGap: 24,
+    },
+    surface: {
+      radius: 12,
+      shadow: 'none',
+    },
+  }
+}
+
+export function createDefaultPcDecorPayload(): PcDecorPagePayload {
+  return {
+    pageStyle: createDefaultPcPageStyle(),
+    components: [],
+  }
 }
 
 // ---- Preview message protocol ----

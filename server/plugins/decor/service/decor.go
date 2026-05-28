@@ -40,6 +40,14 @@ func emptyComponents() json.RawMessage {
 	return empty
 }
 
+func defaultComponentsForPage(pageKey string) json.RawMessage {
+	key := strings.ToLower(strings.TrimSpace(pageKey))
+	if key == "pc" {
+		return json.RawMessage(`{"pageStyle":{"background":{"mode":"solid","solidColor":"#f8fafc","overlay":{"enabled":false,"color":"#000000","opacity":0.2}},"content":{"maxWidth":1280,"gutterX":24,"sectionGap":24},"surface":{"radius":12,"shadow":"none"}},"components":[]}`)
+	}
+	return emptyComponents()
+}
+
 // GetPage returns the current page config for pageKey (merchantID=0 for single-tenant).
 func GetPage(ctx context.Context, merchantID uint64, pageKey string, variantKey ...string) (*decormodel.DecorPage, error) {
 	vKey := DefaultVariantKey
@@ -57,7 +65,7 @@ func GetPage(ctx context.Context, merchantID uint64, pageKey string, variantKey 
 			PageKey:     pageKey,
 			VariantKey:  vKey,
 			VariantName: DefaultVariantName,
-			Components:  emptyComponents(),
+			Components:  defaultComponentsForPage(pageKey),
 		}, nil
 	}
 	return &page, err
@@ -147,7 +155,7 @@ func ListVariants(ctx context.Context, merchantID uint64, pageKey string) ([]dec
 			PageKey:     pageKey,
 			VariantKey:  DefaultVariantKey,
 			VariantName: DefaultVariantName,
-			Components:  emptyComponents(),
+			Components:  defaultComponentsForPage(pageKey),
 		}}, nil
 	}
 	return rows, nil
@@ -159,7 +167,7 @@ func CreateVariantCopy(ctx context.Context, merchantID uint64, pageKey string, f
 		return nil, err
 	}
 	if src.ID == 0 {
-		src.Components = emptyComponents()
+		src.Components = defaultComponentsForPage(pageKey)
 	}
 	targetKey := normalizeVariantKey(newVariantKey)
 	targetName := normalizeVariantName(newVariantName)
