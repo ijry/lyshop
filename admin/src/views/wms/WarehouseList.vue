@@ -95,7 +95,13 @@
         </div>
         <div class="flex gap-3 mt-5">
           <button class="flex-1 px-4 py-2 bg-slate-100 rounded-lg text-sm" @click="closeForm">{{ $t('common.cancel') }}</button>
-          <button class="flex-1 px-4 py-2 bg-blue-700 text-white rounded-lg text-sm" @click="submitForm">{{ $t('common.save') }}</button>
+          <button
+            class="flex-1 px-4 py-2 bg-blue-700 text-white rounded-lg text-sm disabled:opacity-50"
+            :disabled="submitting"
+            @click="submitForm"
+          >
+            {{ submitting ? $t('common.saving') : $t('common.save') }}
+          </button>
         </div>
       </div>
     </div>
@@ -112,6 +118,7 @@ const { t } = useI18n()
 const warehouses = ref<WmsWarehouse[]>([])
 const keyword = ref('')
 const showForm = ref(false)
+const submitting = ref(false)
 const form = ref({
   id: 0,
   name: '',
@@ -150,6 +157,7 @@ async function loadWarehouses() {
 }
 
 async function submitForm() {
+  if (submitting.value) return
   if (!form.value.name.trim()) {
     notify(t('wms.warehouseNameRequired'))
     return
@@ -162,13 +170,22 @@ async function submitForm() {
     phone: form.value.phone.trim(),
     status: Number(form.value.status || 0) === 1 ? 1 : 0,
   }
-  if (form.value.id > 0) {
-    await updateWarehouse(form.value.id, payload)
-  } else {
-    await createWarehouse(payload)
+  submitting.value = true
+  try {
+    if (form.value.id > 0) {
+      await updateWarehouse(form.value.id, payload)
+    } else {
+      await createWarehouse(payload)
+    }
+    closeForm()
+    await loadWarehouses()
+    notify(t('common.saveSuccess'))
+  } catch (error) {
+    const message = error instanceof Error && error.message ? error.message : t('common.saveFailed')
+    notify(message)
+  } finally {
+    submitting.value = false
   }
-  closeForm()
-  await loadWarehouses()
 }
 
 onMounted(loadWarehouses)

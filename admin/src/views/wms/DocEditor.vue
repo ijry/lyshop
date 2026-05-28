@@ -87,9 +87,8 @@
           <thead class="bg-slate-50 border-b border-slate-100">
             <tr>
               <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('wms.skuId') }}</th>
-              <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('wms.skuName') }}</th>
               <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('stock.quantity') }}</th>
-              <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('wms.unitCost') }}</th>
+              <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('wms.remark') }}</th>
               <th class="px-4 py-3 text-left text-slate-500 font-medium">{{ $t('common.action') }}</th>
             </tr>
           </thead>
@@ -99,20 +98,17 @@
                 <input v-model.number="item.sku_id" :disabled="!editable" type="number" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
               </td>
               <td class="px-4 py-3">
-                <input v-model.trim="item.sku_name" :disabled="!editable" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
-              </td>
-              <td class="px-4 py-3">
                 <input v-model.number="item.qty" :disabled="!editable" type="number" min="1" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
               </td>
               <td class="px-4 py-3">
-                <input v-model.number="item.unit_cost" :disabled="!editable" type="number" min="0" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+                <input v-model.trim="item.remark" :disabled="!editable" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
               </td>
               <td class="px-4 py-3">
                 <button v-if="editable" class="text-red-500 hover:underline text-xs" @click="removeItem(item._row_key)">{{ $t('common.delete') }}</button>
               </td>
             </tr>
             <tr v-if="!doc.items.length">
-              <td colspan="5" class="px-4 py-10 text-center text-slate-400">{{ $t('wms.noItems') }}</td>
+              <td colspan="4" class="px-4 py-10 text-center text-slate-400">{{ $t('wms.noItems') }}</td>
             </tr>
           </tbody>
         </table>
@@ -193,10 +189,10 @@ function normalizeItems(items: WmsDocItem[] | undefined): WmsDocItemRow[] {
   return items.map((row) => ({
     id: row.id,
     sku_id: Number(row.sku_id || 0),
-    sku_name: String(row.sku_name || ''),
     qty: Math.max(0, Number(row.qty || 0)),
-    unit_cost: Math.max(0, Number(row.unit_cost || 0)),
-    note: String(row.note || ''),
+    remark: String(row.remark || ''),
+    sku_name: String(row.sku_name || ''),
+    unit_cost: row.unit_cost === undefined ? undefined : Math.max(0, Number(row.unit_cost || 0)),
     _row_key: nextRowKey(row.id),
   }))
 }
@@ -218,10 +214,8 @@ function initNewDoc() {
     type: type as WmsDocType,
     status: 'draft',
     warehouse_id: warehouseID,
-    warehouse_name: '',
     remark: '',
     items: [],
-    total_qty: 0,
     created_at: '',
     updated_at: '',
   }
@@ -251,7 +245,7 @@ async function loadDoc() {
 
 function addItem() {
   if (!doc.value || !editable.value) return
-  doc.value.items.push({ sku_id: 0, sku_name: '', qty: 1, unit_cost: 0, _row_key: nextRowKey() })
+  doc.value.items.push({ sku_id: 0, qty: 1, remark: '', _row_key: nextRowKey() })
 }
 
 function removeItem(rowKey: string) {
@@ -301,10 +295,8 @@ function buildDocPayload() {
     items: doc.value.items.map((row) => ({
       id: row.id,
       sku_id: Number(row.sku_id || 0),
-      sku_name: String(row.sku_name || ''),
       qty: Number(row.qty || 0),
-      unit_cost: Number(row.unit_cost || 0),
-      note: String(row.note || ''),
+      remark: String(row.remark || ''),
     })),
   }
 }
@@ -367,16 +359,18 @@ async function handleComplete() {
 }
 
 async function handleCancel() {
-  if (!doc.value || !editable.value || submitting.value) return
+  if (submitting.value) return
+  if (isNewMode.value) {
+    goBack()
+    return
+  }
+  if (!doc.value || !editable.value) return
+  if (!doc.value.id) return
   if (!confirmAction(t('wms.confirmCancelDoc'))) return
   submitting.value = true
   try {
-    if (!isNewMode.value && doc.value?.id) {
-      await cancelDoc(doc.value.id)
-      await loadDoc()
-    } else {
-      doc.value.status = 'canceled'
-    }
+    await cancelDoc(doc.value.id)
+    await loadDoc()
     notify(t('wms.cancelSuccess'))
   } catch (error) {
     notify(resolveErrorMessage(error, t('wms.cancelFailed')))

@@ -50,7 +50,13 @@
               </span>
             </td>
             <td class="px-4 py-3">
-              <button class="text-blue-600 hover:underline text-xs" @click="saveSafeQty(row.id)">{{ $t('wms.updateSafetyStock') }}</button>
+              <button
+                class="text-blue-600 hover:underline text-xs disabled:opacity-50"
+                :disabled="submittingId === row.id"
+                @click="saveSafeQty(row.id)"
+              >
+                {{ submittingId === row.id ? $t('common.saving') : $t('wms.updateSafetyStock') }}
+              </button>
             </td>
           </tr>
           <tr v-if="!rows.length">
@@ -93,6 +99,7 @@ const warehouses = ref<WmsWarehouse[]>([])
 const rows = ref<WmsStockLedgerRow[]>([])
 const total = ref(0)
 const safeQtyMap = ref<Record<number, number>>({})
+const submittingId = ref(0)
 const query = ref({
   warehouse_id: 0,
   keyword: '',
@@ -131,13 +138,23 @@ function onSearch() {
 }
 
 async function saveSafeQty(id: number) {
+  if (submittingId.value) return
   const safeQty = Number(safeQtyMap.value[id] || 0)
   if (safeQty < 0) {
     notify(t('wms.invalidSafetyStock'))
     return
   }
-  await updateSafetyStock(id, safeQty)
-  await loadRows()
+  submittingId.value = id
+  try {
+    await updateSafetyStock(id, safeQty)
+    await loadRows()
+    notify(t('common.saveSuccess'))
+  } catch (error) {
+    const message = error instanceof Error && error.message ? error.message : t('common.saveFailed')
+    notify(message)
+  } finally {
+    submittingId.value = 0
+  }
 }
 
 function prevPage() {

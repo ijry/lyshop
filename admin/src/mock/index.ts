@@ -1018,7 +1018,7 @@ export function matchMock(method: string, url: string, params?: Record<string, a
   }
 
   if (key === 'GET /admin/api/wms/docs') {
-    const type = String(query.doc_type || query.type || '')
+    const type = String(query.doc_type || '')
     const status = String(query.status || '')
     const warehouseID = Number(query.warehouse_id || 0)
     const docNo = String(query.doc_no || '').trim().toLowerCase()

@@ -55,8 +55,8 @@
           <tr v-for="row in docs" :key="row.id" class="hover:bg-slate-50">
             <td class="px-4 py-3 font-mono text-xs text-slate-600">{{ row.doc_no }}</td>
             <td class="px-4 py-3 text-slate-700">{{ typeLabel(row.type) }}</td>
-            <td class="px-4 py-3 text-slate-700">{{ row.warehouse_name || row.warehouse_id || '-' }}</td>
-            <td class="px-4 py-3 text-slate-700">{{ row.total_qty }}</td>
+            <td class="px-4 py-3 text-slate-700">{{ warehouseLabel(row) }}</td>
+            <td class="px-4 py-3 text-slate-700">{{ totalQtyLabel(row) }}</td>
             <td class="px-4 py-3">
               <span :class="statusClass(row.status)" class="px-2 py-1 rounded-full text-xs">
                 {{ statusLabel(row.status) }}
@@ -164,6 +164,20 @@ function typeLabel(type: WmsDocType) {
 
 function formatDate(value?: string) {
   return value ? String(value).slice(0, 19).replace('T', ' ') : '-'
+}
+
+function warehouseLabel(row: WmsDoc) {
+  if (row.warehouse_name) return row.warehouse_name
+  const found = warehouses.value.find((item) => Number(item.id || 0) === Number(row.warehouse_id || 0))
+  return found?.name || (row.warehouse_id ? String(row.warehouse_id) : '-')
+}
+
+function totalQtyLabel(row: WmsDoc) {
+  if (typeof row.total_qty === 'number') return String(row.total_qty)
+  if (Array.isArray(row.items) && row.items.length) {
+    return String(row.items.reduce((sum, item) => sum + Number(item.qty || 0), 0))
+  }
+  return '-'
 }
 
 async function loadWarehouses() {
