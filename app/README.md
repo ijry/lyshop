@@ -25,6 +25,7 @@
 - **IM 客服** — WebSocket 实时通信，多坐席，断线重连，声音提醒
 - **营销引擎** — 价格计算管线，秒杀/拼团/砍价/优惠券（可叠加）/积分/分销（2级返利）
 - **RBAC 权限** — 角色 + 细粒度权限，菜单按权限动态过滤
+- **本机单机版** — 支持 SQLite + 内嵌前端资源 + Windows GUI 启动器
 - **一键部署** — Docker Compose，MySQL + Redis + Nginx 全容器化
 
 ## 技术栈
@@ -118,6 +119,28 @@ npm run dev:h5:demo  # mock 演示模式
 cp config.example.yaml config.yaml
 docker compose up -d
 ```
+
+### 6. 本机单机（内嵌前端 + GUI 壳）
+
+```bash
+# 1) 构建前端并嵌入到后端资源目录（web/admin/h5）
+pwsh -File scripts/build-standalone.ps1
+
+# 2) 产物在 dist/
+# - lyshop.exe
+# - lyshop-gui.exe
+```
+
+启动 `lyshop-gui.exe` 后可直接在本机打开：
+
+- 商城：`http://127.0.0.1:8080/`
+- 后台：`http://127.0.0.1:8080/admin/`
+- H5：`http://127.0.0.1:8080/h5/`
+
+说明：
+
+- 默认 `database.dsn: lyshop.db`（SQLite）。
+- `redis.addr` 留空时会自动启用进程内嵌 Redis，适合个人单机使用。
 
 ## 文档
 

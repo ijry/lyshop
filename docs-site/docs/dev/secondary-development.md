@@ -91,6 +91,11 @@ go run main.go -config config.yaml
 # 服务默认监听 :8080
 ```
 
+说明：
+
+- `database.dsn` 默认是 `lyshop.db`（SQLite）。
+- `redis.addr` 留空会启用进程内嵌 Redis，适合本机单机调试。
+
 #### 前端启动
 
 ```bash
@@ -2849,10 +2854,30 @@ docker-compose up -d
 | 配置项 | 说明 | 示例 |
 |--------|------|------|
 | `database.dsn` | 数据库连接串（默认 SQLite，兼容 MySQL） | `lyshop.db` / `root:pass@tcp(mysql:3306)/lyshop?...` |
-| `redis.addr` | Redis 地址 | `redis:6379` |
+| `redis.addr` | Redis 地址（留空启用内嵌 Redis） | `""` / `redis:6379` |
 | `jwt.secret` | JWT 密钥（**务必修改**） | 随机字符串 |
 | `server.mode` | 运行模式 | `release` |
 | `plugins.enabled` | 启用的插件列表 | 见 config.example.yaml |
+
+### 10.6.1 单机内嵌前端 + GUI 启动器（Windows）
+
+适用于个人用户本机运行。流程：
+
+```bash
+# 在仓库根目录执行
+pwsh -File scripts/build-standalone.ps1
+```
+
+输出目录 `dist/`：
+
+- `lyshop.exe`
+- `lyshop-gui.exe`
+
+内嵌模式下服务端会直接提供前端路由：
+
+- `/` → PC 商城
+- `/admin/` → 管理后台（接口路径仍是 `/admin/api/*`）
+- `/h5/` → uni-app H5
 
 ### 10.7 Nginx 配置示例
 

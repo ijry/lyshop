@@ -1,10 +1,13 @@
 package app
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	apiadmin "github.com/ijry/lyshop/api/admin"
@@ -47,8 +50,8 @@ func Init(cfgPath string) error {
 	return nil
 }
 
-// Run builds the Gin engine, loads plugins, and starts the HTTP server.
-func Run() error {
+// BuildRouter creates a ready-to-run Gin engine with API and embedded frontend routes.
+func BuildRouter() (*gin.Engine, error) {
 	r := gin.New()
 	r.Use(middleware.Logger(), middleware.CORS(), gin.Recovery())
 	r.Use(i18n.LocaleMiddleware())
@@ -160,12 +163,57 @@ func Run() error {
 
 	// Load enabled plugins
 	if err := plugin.Load(config.Global.Plugins.Enabled, db.DB, front, adminAuth); err != nil {
-		return fmt.Errorf("load plugins: %w", err)
+		return nil, fmt.Errorf("load plugins: %w", err)
 	}
 
 	// WebSocket IM endpoint (registered after plugins so Hub is running)
 	imapi.RegisterWSRoute(r)
 
+	// Embedded standalone frontend routes (if embedded assets exist).
+	registerEmbeddedSites(r)
+
+	return r, nil
+}
+
+// Run keeps backward compatibility for CLI startup.
+func Run() error {
+	return RunWithContext(context.Background())
+}
+
+// RunWithContext starts HTTP server and supports graceful shutdown via context cancel.
+func RunWithContext(ctx context.Context) error {
+	r, err := BuildRouter()
+	if err != nil {
+		return err
+	}
+
 	addr := fmt.Sprintf(":%d", config.Global.Server.Port)
-	return r.Run(addr)
+	srv := &http.Server{
+		Addr:    addr,
+		Handler: r,
+	}
+
+	errCh := make(chan error, 1)
+	go func() {
+		if serveErr := srv.ListenAndServe(); serveErr != nil && !errors.Is(serveErr, http.ErrServerClosed) {
+			errCh <- serveErr
+			return
+		}
+		errCh <- nil
+	}()
+
+	select {
+	case <-ctx.Done():
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+		defer cancel()
+		if shutdownErr := srv.Shutdown(shutdownCtx); shutdownErr != nil && !errors.Is(shutdownErr, http.ErrServerClosed) {
+			return fmt.Errorf("shutdown http server: %w", shutdownErr)
+		}
+		return nil
+	case serveErr := <-errCh:
+		if serveErr != nil {
+			return fmt.Errorf("run http server: %w", serveErr)
+		}
+		return nil
+	}
 }

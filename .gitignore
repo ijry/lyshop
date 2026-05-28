@@ -31,3 +31,9 @@ docs-site/docs/public/demo/
 docs-site/docs/public/web-demo/
 docs-site/docs/public/admin-demo/
 docs-site/docs/public/eapp-demo/
+
+# Standalone embedded build artifacts
+/dist/
+server/internal/embedstatic/assets/web/
+server/internal/embedstatic/assets/admin/
+server/internal/embedstatic/assets/h5/

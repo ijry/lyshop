@@ -29,6 +29,8 @@ database:
 
 如需改为 MySQL，只需将 `database.dsn` 替换为 MySQL 连接串。
 
+`redis.addr` 留空时，后端会自动启用进程内嵌 Redis，适合个人单机运行。
+
 ### 管理后台
 
 ```bash
@@ -60,6 +62,25 @@ cd docs-site
 npm install
 npm run docs:dev
 ```
+
+## 单机内嵌部署（个人用户推荐）
+
+该模式会把 `web/admin/app(H5)` 构建产物嵌入后端二进制，并提供 Windows GUI 启动器。
+
+```bash
+pwsh -File scripts/build-standalone.ps1
+```
+
+产物目录：`dist/`
+
+- `lyshop.exe`：命令行后端
+- `lyshop-gui.exe`：Windows 无控制台 GUI 启动器
+
+内嵌模式路由：
+
+- 商城：`/`
+- 管理后台：`/admin/`（接口仍为 `/admin/api/*`）
+- H5：`/h5/`
 
 ## 生产构建
 

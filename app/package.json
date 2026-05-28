@@ -15,6 +15,7 @@
 		"dev:h5": "cross-env UNI_INPUT_DIR=. uni",
 		"dev:h5:demo": "cross-env UNI_INPUT_DIR=. VITE_MOCK=true uni",
 		"build:h5": "cross-env UNI_INPUT_DIR=. uni build",
+		"build:h5:embed": "node scripts/build-embed.js",
 		"build:h5:demo": "cross-env UNI_INPUT_DIR=. VITE_MOCK=true uni build",
 		"dev:mp-weixin": "cross-env UNI_INPUT_DIR=. uni -p mp-weixin",
 		"dev:mp-weixin:demo": "cross-env UNI_INPUT_DIR=. VITE_MOCK=true uni -p mp-weixin",

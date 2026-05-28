@@ -11,7 +11,10 @@ database:
   max_idle: 1
 
 redis:
-  addr: "redis:6379"
+  # 留空时自动启用进程内嵌 Redis（适合个人本机单机使用）
+  addr: ""
+  # 容器/独立 Redis 示例：
+  # addr: "redis:6379"
   password: ""
   db: 0
 
