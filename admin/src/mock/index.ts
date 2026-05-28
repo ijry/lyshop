@@ -490,6 +490,62 @@ function touchOrderAfterSaleSummary(orderID: number) {
 
 for (const order of orderListSource) ensureOrderExt(order)
 
+// Expand orders to 40 covering all statuses
+function expandOrderListTo40() {
+  if (orderListSource.length >= 40) return
+  const baseCount = orderListSource.length
+  const need = 40 - baseCount
+  const statuses = ['1', '2', '3', '4', '5']
+  const provinces = ['上海市浦东新区', '北京市朝阳区', '广东省广州市', '浙江省杭州市', '四川省成都市', '湖北省武汉市', '辽宁省沈阳市']
+  const companies = ['SF', 'ZTO', 'YTO', 'STO', 'YD', 'JD', 'EMS']
+  const pickFromProducts = (i: number) => {
+    const arr = (productListSource as any[]).slice(0, 6)
+    return arr[i % arr.length]
+  }
+  for (let i = 0; i < need; i++) {
+    const idx = baseCount + i + 1
+    const id = 10000 + idx
+    const status = statuses[i % statuses.length]
+    const product = pickFromProducts(i)
+    const qty = 1 + (i % 3)
+    const price = Number(product?.price || 199)
+    const goods = +(price * qty).toFixed(2)
+    const discount = +((goods * (i % 3 === 0 ? 0.1 : 0)).toFixed(2))
+    const pay = +(goods - discount).toFixed(2)
+    const dateOffset = 86400000 * (i % 14)
+    const created = new Date(Date.parse('2026-05-28T08:00:00Z') - dateOffset).toISOString()
+    const order: any = {
+      id,
+      status,
+      status_label: { '1': '待付款', '2': '待发货', '3': '已发货', '4': '已完成', '5': '已关闭' }[status],
+      pay_method: ['wechat', 'alipay', 'wechat'][i % 3],
+      user_nickname: ['张三', '李四', '王五', '赵六', '陈七', '何八'][i % 6],
+      receiver_name: ['张先生', '李女士', '王先生', '赵女士'][i % 4],
+      receiver_phone: '138****' + String(1000 + i).slice(-4),
+      receiver_address: provinces[i % provinces.length] + ` ${i + 1}号`,
+      goods_amount: goods,
+      discount_amount: discount,
+      pay_amount: pay,
+      total_amount: pay,
+      amount_breakdown: { goods_amount: goods, discount_amount: discount, payable_amount: pay },
+      created_at: created,
+      items: [{ id: idx * 100 + 1, product_id: product?.id, title: product?.title, cover: product?.cover || `https://picsum.photos/120/120?random=${1000 + i}`, qty, price }],
+      shipments: status === '3' || status === '4' ? [{ id: idx * 10, company: companies[i % companies.length], tracking_no: `SF${1000000 + idx}`, delivery_type: 'express', logistics_status: status === '4' ? 'signed' : 'in_transit', logistics_status_label: status === '4' ? '已签收' : '运输中', created_at: created }] : [],
+      logs: [],
+      notes: [],
+      has_after_sale: i % 7 === 0,
+    }
+    orderListSource.push(order)
+  }
+}
+expandOrderListTo40()
+
+// Add 2 more announcements (total 5)
+announcementsSource.push(
+  { id: 4, title: '物流时效升级', content: '部分城市顺丰提供「夜间寄」服务', type: 'normal', created_at: '2026-05-24T10:00:00Z' },
+  { id: 5, title: '商家服务热线变更', content: '客服热线已升级 7x24，新号码 400-000-XXXX', type: 'urgent', created_at: '2026-05-23T18:00:00Z' },
+)
+
 function buildAfterSaleRows() {
   const rows: any[] = []
   const target = orderListSource.find((item: any) => Number(item.id) === 2) || orderListSource[0]
