@@ -8,6 +8,7 @@ const cards = [
   { key: 'seckill', path: '/pages/marketing/seckill', color: '#ef4444' },
   { key: 'groupBuy', path: '/pages/marketing/group-buy', color: '#16a34a' },
   { key: 'bargain', path: '/pages/marketing/bargain', color: '#f97316' },
+  { key: 'vip', path: '/pages/vip/plan-list', color: '#8b5cf6' },
 ]
 
 function go(path: string) {

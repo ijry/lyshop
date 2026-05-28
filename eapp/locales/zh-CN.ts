@@ -40,7 +40,14 @@ export default {
       sku: '规格 SKU', category: '分类与标签', shipping: '物流与营销', status: '状态控制',
     },
   },
-  marketing: { coupon: '优惠券', seckill: '秒杀', groupBuy: '拼团', bargain: '砍价' },
+  marketing: { coupon: '优惠券', seckill: '秒杀', groupBuy: '拼团', bargain: '砍价', vip: 'VIP 会员' },
+  vip: {
+    plans: '会员套餐', levels: '会员等级', couponRules: '领券规则', skuPrices: 'SKU专属价',
+    name: '名称', months: '时长（月）', price: '价格', status: '状态',
+    growthMin: '最低成长值', discountRate: '折扣率',
+    couponName: '优惠券名称', monthlyLimit: '每月限领',
+    productId: '商品', skuId: 'SKU', levelId: '等级', vipPrice: '会员价',
+  },
   me: {
     title: '我的', messages: '消息中心', sessions: '客服会话',
     siteSettings: '店铺设置', admins: '管理员', roles: '角色权限', logout: '退出登录',
