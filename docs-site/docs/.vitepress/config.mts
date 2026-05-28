@@ -42,7 +42,10 @@ export default defineConfig({
       "/guide/": [
         {
           text: "产品指南",
-          items: [{ text: "功能介绍", link: "/guide/features" }]
+          items: [
+            { text: "功能介绍", link: "/guide/features" },
+            { text: "商家移动端 eapp", link: "/guide/eapp-merchant" }
+          ]
         }
       ],
       "/deploy/": [

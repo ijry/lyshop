@@ -1,0 +1,38 @@
+{
+  "id": "lyshop-eapp",
+  "name": "lyshop-eapp",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LYShop 商家移动端 eapp（H5/微信小程序/App）",
+  "scripts": {
+    "dev:h5": "cross-env UNI_INPUT_DIR=. uni",
+    "build:h5": "cross-env UNI_INPUT_DIR=. uni build",
+    "dev:mp-weixin": "cross-env UNI_INPUT_DIR=. uni -p mp-weixin",
+    "build:mp-weixin": "cross-env UNI_INPUT_DIR=. uni build -p mp-weixin",
+    "dev:app": "cross-env UNI_INPUT_DIR=. uni -p app",
+    "build:app": "cross-env UNI_INPUT_DIR=. uni build -p app",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@dcloudio/uni-app": "3.0.0-alpha-5010120260519001",
+    "pinia": "^2.1.0",
+    "uview-plus": "3.8.37",
+    "vue": "3.4.21",
+    "vue-i18n": "^9.14.5"
+  },
+  "devDependencies": {
+    "@dcloudio/types": "*",
+    "@dcloudio/uni-h5": "3.0.0-alpha-5010120260519001",
+    "@dcloudio/uni-mp-weixin": "3.0.0-alpha-5010120260519001",
+    "@dcloudio/vite-plugin-uni": "3.0.0-alpha-5010120260519001",
+    "@unocss/transformer-directives": "^66.7.0",
+    "@vitejs/plugin-vue": "^4.0.0",
+    "cross-env": "^7.0.3",
+    "sass": "^1.77.0",
+    "typescript": "^5.0.0",
+    "unocss": "^66.7.0",
+    "unocss-preset-weapp": "^66.0.2",
+    "vite": "^4.0.0",
+    "vitest": "^2.1.9"
+  }
+}

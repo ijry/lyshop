@@ -1,0 +1,30 @@
+{
+  "name": "lyshop-eapp",
+  "appid": "__UNI__LYSHOP_EAPP",
+  "description": "lyshop 商家移动端 eapp",
+  "versionName": "1.0.0",
+  "versionCode": "100",
+  "transformPx": false,
+  "h5": {
+    "devServer": {
+      "port": 9530
+    },
+    "router": {
+      "mode": "history",
+      "base": "/eapp/"
+    }
+  },
+  "mp-weixin": {
+    "appid": "",
+    "setting": {
+      "urlCheck": false
+    },
+    "usingComponents": true
+  },
+  "app-plus": {
+    "usingComponents": true,
+    "splashscreen": {
+      "alwaysShowBeforeRender": true
+    }
+  }
+}

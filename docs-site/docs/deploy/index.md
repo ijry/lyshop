@@ -35,6 +35,14 @@ npm install
 npm run dev:h5
 ```
 
+### 商家移动端 eapp
+
+```bash
+cd eapp
+npm install --legacy-peer-deps
+npm run dev:h5
+```
+
 ### 文档站
 
 ```bash
@@ -50,6 +58,20 @@ npm run docs:dev
 ```bash
 cd admin
 npm run build
+```
+
+### 商家移动端 eapp（H5）
+
+```bash
+cd eapp
+npm run build:h5
+```
+
+若需要构建微信小程序：
+
+```bash
+cd eapp
+npm run build:mp-weixin
 ```
 
 ### 文档站
@@ -91,3 +113,9 @@ server {
 - 环境变量与密钥管理
 - 数据卷持久化
 - 反向代理与 HTTPS
+
+## eapp 部署影响
+
+- 后端无新增配置项，继续复用现有 `/admin/api/*`。
+- Nginx 需新增 eapp H5 静态目录映射（如 `/eapp/`）。
+- 微信小程序与 App 仍按 uni-app 常规流程在对应平台发布，不依赖额外后端开关。

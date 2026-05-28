@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.hbuilderx/
+.idea/
+.vscode/
+coverage/
+*.log

@@ -1,0 +1,49 @@
+{
+  "easycom": {
+    "autoscan": true,
+    "custom": {
+      "^u--(.*)": "uview-plus/components/u-$1/u-$1.vue",
+      "^up-(.*)": "uview-plus/components/u-$1/u-$1.vue",
+      "^u-([^-].*)": "uview-plus/components/u-$1/u-$1.vue"
+    }
+  },
+  "pages": [
+    { "path": "pages/login/index", "style": { "navigationBarTitleText": "登录" } },
+    { "path": "pages/dashboard/index", "style": { "navigationBarTitleText": "工作台", "navigationStyle": "custom" } },
+    { "path": "pages/order/list", "style": { "navigationBarTitleText": "订单" } },
+    { "path": "pages/order/detail", "style": { "navigationBarTitleText": "订单详情" } },
+    { "path": "pages/order/after-sale-list", "style": { "navigationBarTitleText": "售后列表" } },
+    { "path": "pages/order/after-sale-detail", "style": { "navigationBarTitleText": "售后详情" } },
+    { "path": "pages/product/list", "style": { "navigationBarTitleText": "商品" } },
+    { "path": "pages/product/edit", "style": { "navigationBarTitleText": "商品编辑" } },
+    { "path": "pages/marketing/index", "style": { "navigationBarTitleText": "营销" } },
+    { "path": "pages/marketing/coupon", "style": { "navigationBarTitleText": "优惠券" } },
+    { "path": "pages/marketing/seckill", "style": { "navigationBarTitleText": "秒杀" } },
+    { "path": "pages/marketing/group-buy", "style": { "navigationBarTitleText": "拼团" } },
+    { "path": "pages/marketing/bargain", "style": { "navigationBarTitleText": "砍价" } },
+    { "path": "pages/me/index", "style": { "navigationBarTitleText": "我的" } },
+    { "path": "pages/me/messages", "style": { "navigationBarTitleText": "消息中心" } },
+    { "path": "pages/me/im-sessions", "style": { "navigationBarTitleText": "客服会话" } },
+    { "path": "pages/me/site-settings", "style": { "navigationBarTitleText": "店铺设置" } },
+    { "path": "pages/me/admins", "style": { "navigationBarTitleText": "管理员" } },
+    { "path": "pages/me/roles", "style": { "navigationBarTitleText": "角色权限" } }
+  ],
+  "tabBar": {
+    "color": "#64748b",
+    "selectedColor": "#2563eb",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      { "pagePath": "pages/dashboard/index", "text": "工作台" },
+      { "pagePath": "pages/order/list", "text": "订单" },
+      { "pagePath": "pages/product/list", "text": "商品" },
+      { "pagePath": "pages/marketing/index", "text": "营销" },
+      { "pagePath": "pages/me/index", "text": "我的" }
+    ]
+  },
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "backgroundColor": "#F8FAFC"
+  }
+}
