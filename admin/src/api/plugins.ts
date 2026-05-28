@@ -57,5 +57,3 @@ export const getDeliveryMode = () => request.get<never, { mode: string }>('/deli
 export const getWarehouses = () => request.get('/wms/warehouses')
 export const createWarehouse = (data: any) => request.post('/wms/warehouses', data)
 export const getStocks = (params?: any) => request.get('/wms/stocks', { params })
-export const doInbound = (data: any) => request.post('/wms/inbound', data)
-export const doOutbound = (data: any) => request.post('/wms/outbound', data)

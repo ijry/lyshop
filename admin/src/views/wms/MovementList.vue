@@ -38,13 +38,13 @@
         </thead>
         <tbody class="divide-y divide-slate-50">
           <tr v-for="row in rows" :key="row.id" class="hover:bg-slate-50">
-            <td class="px-4 py-3 text-slate-600">{{ formatDate(row.created_at) }}</td>
+            <td class="px-4 py-3 text-slate-600">{{ formatDate(row.occurred_at) }}</td>
             <td class="px-4 py-3 font-mono text-xs text-slate-600">{{ row.doc_no }}</td>
-            <td class="px-4 py-3 text-slate-700">{{ typeLabel(row.type) }}</td>
+            <td class="px-4 py-3 text-slate-700">{{ typeLabel(row.biz_type) }}</td>
             <td class="px-4 py-3 text-slate-700">{{ row.warehouse_name || row.warehouse_id }}</td>
             <td class="px-4 py-3 text-slate-700">{{ row.sku_name || '-' }} ({{ row.sku_id }})</td>
-            <td class="px-4 py-3 font-medium" :class="row.qty >= 0 ? 'text-green-600' : 'text-red-500'">
-              {{ row.qty >= 0 ? '+' : '' }}{{ row.qty }}
+            <td class="px-4 py-3 font-medium" :class="row.change_qty >= 0 ? 'text-green-600' : 'text-red-500'">
+              {{ row.change_qty >= 0 ? '+' : '' }}{{ row.change_qty }}
             </td>
             <td class="px-4 py-3 text-slate-600">{{ row.before_qty }} → {{ row.after_qty }}</td>
           </tr>

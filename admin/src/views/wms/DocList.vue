@@ -14,7 +14,6 @@
       <select
         v-model="query.type"
         class="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none"
-        :disabled="!!fixedType"
       >
         <option value="">{{ $t('wms.allDocTypes') }}</option>
         <option value="inbound">{{ $t('wms.docTypeInbound') }}</option>
@@ -115,7 +114,6 @@ const router = useRouter()
 const docs = ref<WmsDoc[]>([])
 const warehouses = ref<WmsWarehouse[]>([])
 const total = ref(0)
-const prevFixedType = ref<WmsDocType | ''>('')
 const query = ref({
   type: '',
   status: '',
@@ -125,26 +123,7 @@ const query = ref({
   size: 20,
 })
 
-const fixedType = computed<WmsDocType | ''>(() => {
-  if (route.path === '/wms/inbound') return 'inbound'
-  if (route.path === '/wms/outbound') return 'outbound'
-  return ''
-})
-
-const pageTitle = computed(() => {
-  if (fixedType.value === 'inbound') return t('nav.inboundDocs')
-  if (fixedType.value === 'outbound') return t('nav.outboundDocs')
-  return t('wms.docListTitle')
-})
-
-function applyFixedType() {
-  if (fixedType.value) {
-    query.value.type = fixedType.value
-  } else if (prevFixedType.value) {
-    query.value.type = ''
-  }
-  prevFixedType.value = fixedType.value
-}
+const pageTitle = computed(() => t('wms.docListTitle'))
 
 function statusLabel(status: WmsDocStatus) {
   if (status === 'draft') return t('wms.docStatusDraft')
@@ -205,7 +184,7 @@ function onSearch() {
 
 async function createDraftDoc() {
   const warehouseID = query.value.warehouse_id || Number(warehouses.value[0]?.id || 0)
-  const type = (fixedType.value || query.value.type || 'inbound') as WmsDocType
+  const type = (query.value.type || 'inbound') as WmsDocType
   router.push({
     path: '/wms/docs/new',
     query: {
@@ -246,13 +225,11 @@ watch(
   () => route.path,
   () => {
     query.value.page = 1
-    applyFixedType()
     loadDocs()
   },
 )
 
 onMounted(async () => {
-  applyFixedType()
   await loadWarehouses()
   await loadDocs()
 })

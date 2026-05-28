@@ -122,7 +122,7 @@ const wmsDocsSource: any[] = [
   {
     id: 1,
     doc_no: 'IN202605280001',
-    type: 'inbound',
+    doc_type: 'inbound',
     status: 'draft',
     warehouse_id: 1,
     warehouse_name: '主仓库',
@@ -138,7 +138,7 @@ const wmsDocsSource: any[] = [
   {
     id: 2,
     doc_no: 'OUT202605280001',
-    type: 'outbound',
+    doc_type: 'outbound',
     status: 'completed',
     warehouse_id: 1,
     warehouse_name: '主仓库',
@@ -153,8 +153,8 @@ const wmsDocsSource: any[] = [
   },
 ]
 const wmsMovementsSource: any[] = [
-  { id: 1, doc_id: 2, doc_no: 'OUT202605280001', type: 'outbound', warehouse_id: 1, warehouse_name: '主仓库', sku_id: 101, sku_name: '蓝牙耳机标准版', qty: -15, before_qty: 135, after_qty: 120, created_at: '2026-05-28T08:21:00Z' },
-  { id: 2, doc_id: 2, doc_no: 'OUT202605280001', type: 'outbound', warehouse_id: 1, warehouse_name: '主仓库', sku_id: 102, sku_name: '无线键盘', qty: -10, before_qty: 45, after_qty: 35, created_at: '2026-05-28T08:22:00Z' },
+  { id: 1, doc_id: 2, doc_no: 'OUT202605280001', biz_type: 'outbound', warehouse_id: 1, warehouse_name: '主仓库', sku_id: 101, sku_name: '蓝牙耳机标准版', change_qty: -15, before_qty: 135, after_qty: 120, occurred_at: '2026-05-28T08:21:00Z' },
+  { id: 2, doc_id: 2, doc_no: 'OUT202605280001', biz_type: 'outbound', warehouse_id: 1, warehouse_name: '主仓库', sku_id: 102, sku_name: '无线键盘', change_qty: -10, before_qty: 45, after_qty: 35, occurred_at: '2026-05-28T08:22:00Z' },
 ]
 let marketingActivitySeq = 100
 let marketingProductSeq = 5000
@@ -203,7 +203,7 @@ function normalizeWmsItems(rows: any[]): any[] {
         sku_name: String(row?.sku_name || `SKU-${skuID}`),
         qty,
         unit_cost: Math.max(0, Number(row?.unit_cost || 0)),
-        note: String(row?.note || ''),
+        remark: String(row?.remark || ''),
       }
     })
     .filter(Boolean)
@@ -232,7 +232,7 @@ function ensureWmsStock(warehouseID: number, skuID: number, skuName: string) {
 }
 
 function applyWmsDocStockChange(doc: any) {
-  const type = String(doc?.type || 'inbound')
+  const docType = String(doc?.doc_type || 'inbound')
   const warehouseID = Number(doc?.warehouse_id || 0)
   const now = wmsNowISO()
   const items = Array.isArray(doc?.items) ? doc.items : []
@@ -250,7 +250,7 @@ function applyWmsDocStockChange(doc: any) {
     const skuID = Number(item?.sku_id || 0)
     const qty = Math.max(0, Number(item?.qty || 0))
     if (!skuID || !qty) continue
-    const delta = type === 'inbound' ? qty : -qty
+    const delta = docType === 'inbound' ? qty : -qty
     const stockKey = `${warehouseID}_${skuID}`
     let entry = touched.get(stockKey)
     if (!entry) {
@@ -275,15 +275,15 @@ function applyWmsDocStockChange(doc: any) {
     pendingMovements.push({
       doc_id: Number(doc.id || 0),
       doc_no: String(doc.doc_no || ''),
-      type,
+      biz_type: docType,
       warehouse_id: warehouseID,
       warehouse_name: wmsWarehouseName(warehouseID),
       sku_id: skuID,
       sku_name: entry.sku_name,
-      qty: delta,
+      change_qty: delta,
       before_qty: beforeQty,
       after_qty: afterQty,
-      created_at: now,
+      occurred_at: now,
     })
   }
 
@@ -674,10 +674,9 @@ const routes: Record<string, any> = {
         sort: 50,
         menus: [
           { title: '仓储管理', title_key: 'menu.wms', icon: 'warehouse', path: '/wms', sort: 10, children: [
-            { title: '库存管理', title_key: 'menu.wms.stock', path: '/wms/stock' },
+            { title: '库存台账', title_key: 'menu.wms.stock', path: '/wms/stock' },
             { title: '仓库管理', title_key: 'menu.wms.warehouse', path: '/wms/warehouse' },
-            { title: '入库管理', title_key: 'menu.wms.inbound', path: '/wms/inbound' },
-            { title: '出库管理', title_key: 'menu.wms.outbound', path: '/wms/outbound' },
+            { title: '出入库单', title_key: 'menu.wms.docs', path: '/wms/docs' },
             { title: '库存流水', title_key: 'menu.wms.movements', path: '/wms/movements' },
           ]},
         ],
@@ -1018,19 +1017,18 @@ export function matchMock(method: string, url: string, params?: Record<string, a
   }
 
   if (key === 'GET /admin/api/wms/docs') {
-    const type = String(query.doc_type || '')
+    const docType = String(query.doc_type || '')
     const status = String(query.status || '')
     const warehouseID = Number(query.warehouse_id || 0)
     const docNo = String(query.doc_no || '').trim().toLowerCase()
     let list = wmsDocsSource.slice()
-    if (type) list = list.filter((row: any) => String(row.type || '') === type)
+    if (docType) list = list.filter((row: any) => String(row.doc_type || '') === docType)
     if (status) list = list.filter((row: any) => String(row.status || '') === status)
     if (warehouseID > 0) list = list.filter((row: any) => Number(row.warehouse_id || 0) === warehouseID)
     if (docNo) list = list.filter((row: any) => String(row.doc_no || '').toLowerCase().includes(docNo))
     list = list
       .map((row: any) => ({
         ...row,
-        doc_type: row.type,
         warehouse_name: wmsWarehouseName(Number(row.warehouse_id || 0)),
         total_qty: wmsDocTotalQty(row.items),
       }))
@@ -1041,7 +1039,7 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     const payload: any = params || {}
     const now = wmsNowISO()
     wmsDocSeq += 1
-    const type = String(payload.doc_type || payload.type || 'inbound') === 'outbound' ? 'outbound' : 'inbound'
+    const docType = String(payload.doc_type || 'inbound') === 'outbound' ? 'outbound' : 'inbound'
     const warehouseID = Number(payload.warehouse_id || wmsWarehousesSource[0]?.id || 0)
     const items = normalizeWmsItems(Array.isArray(payload.items) ? payload.items : [])
     if (!items.length) {
@@ -1049,9 +1047,9 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     }
     const row = {
       id: wmsDocSeq,
-      doc_no: nextWmsDocNo(type),
-      type,
-      status: String(payload.status || 'draft') === 'completed' ? 'completed' : 'draft',
+      doc_no: nextWmsDocNo(docType),
+      doc_type: docType,
+      status: 'draft',
       warehouse_id: warehouseID,
       warehouse_name: wmsWarehouseName(warehouseID),
       remark: String(payload.remark || ''),
@@ -1061,7 +1059,7 @@ export function matchMock(method: string, url: string, params?: Record<string, a
       updated_at: now,
     }
     wmsDocsSource.push(row)
-    return { matched: true, data: clone({ ...row, doc_type: row.type }) }
+    return { matched: true, data: clone(row) }
   }
   if (methodUpper === 'GET' && /\/admin\/api\/wms\/docs\/\d+$/.test(url)) {
     const id = Number(url.split('/').pop() || 0)
@@ -1074,7 +1072,6 @@ export function matchMock(method: string, url: string, params?: Record<string, a
       data: {
         doc: clone({
           ...target,
-          doc_type: target.type,
           items: undefined,
         }),
         items: clone(target.items || []),
@@ -1089,7 +1086,7 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     if (String(target.status || '') !== 'draft') {
       throw new Error('已完成或已取消单据不可编辑')
     }
-    target.type = String(payload.doc_type || payload.type || target.type || 'inbound') === 'outbound' ? 'outbound' : 'inbound'
+    target.doc_type = String(payload.doc_type || target.doc_type || 'inbound') === 'outbound' ? 'outbound' : 'inbound'
     target.warehouse_id = Number(payload.warehouse_id || target.warehouse_id || 0)
     target.warehouse_name = wmsWarehouseName(Number(target.warehouse_id || 0))
     target.remark = String(payload.remark || '')
@@ -1126,43 +1123,15 @@ export function matchMock(method: string, url: string, params?: Record<string, a
   if (key === 'GET /admin/api/wms/movements') {
     const warehouseID = Number(query.warehouse_id || 0)
     const skuID = Number(query.sku_id || 0)
+    const bizType = String(query.biz_type || '')
     const docNo = String(query.doc_no || '').trim().toLowerCase()
     let list = wmsMovementsSource.slice()
     if (warehouseID > 0) list = list.filter((row: any) => Number(row.warehouse_id || 0) === warehouseID)
     if (skuID > 0) list = list.filter((row: any) => Number(row.sku_id || 0) === skuID)
+    if (bizType) list = list.filter((row: any) => String(row.biz_type || '') === bizType)
     if (docNo) list = list.filter((row: any) => String(row.doc_no || '').toLowerCase().includes(docNo))
     list = list.sort((a: any, b: any) => Number(b.id || 0) - Number(a.id || 0))
     return { matched: true, data: toPageData(clone(list), Number(query.page || 1), Number(query.size || 20)) }
-  }
-
-  if (key === 'POST /admin/api/wms/inbound' || key === 'POST /admin/api/wms/outbound') {
-    const payload: any = params || {}
-    const type = key.endsWith('/inbound') ? 'inbound' : 'outbound'
-    const warehouseID = Number(payload.warehouse_id || wmsWarehousesSource[0]?.id || 0)
-    const skuID = Number(payload.sku_id || 0)
-    const qty = Math.max(0, Number(payload.qty || 0))
-    if (!skuID || !qty) return { matched: true, data: null }
-    wmsDocSeq += 1
-    wmsDocItemSeq += 1
-    const now = wmsNowISO()
-    const row = {
-      id: wmsDocSeq,
-      doc_no: nextWmsDocNo(type),
-      type,
-      status: 'draft',
-      warehouse_id: warehouseID,
-      warehouse_name: wmsWarehouseName(warehouseID),
-      remark: '快捷操作创建',
-      items: [{ id: wmsDocItemSeq, sku_id: skuID, sku_name: `SKU-${skuID}`, qty, unit_cost: 0 }],
-      total_qty: qty,
-      created_at: now,
-      updated_at: now,
-    }
-    wmsDocsSource.push(row)
-    applyWmsDocStockChange(row)
-    row.status = 'completed'
-    row.updated_at = wmsNowISO()
-    return { matched: true, data: clone(row) }
   }
 
   const marketingType = parseTypeFromPath(url)

@@ -71,6 +71,7 @@ export interface WmsStockLedgerQuery extends WmsPageQuery {
 export interface WmsMovementQuery extends WmsPageQuery {
   warehouse_id?: number
   sku_id?: number
+  biz_type?: WmsDocType
   doc_no?: string
 }
 
@@ -96,21 +97,20 @@ export interface WmsMovementRow {
   id: number
   doc_id: number
   doc_no: string
-  type: WmsDocType
+  biz_type: WmsDocType
   warehouse_id: number
-  warehouse_name: string
+  warehouse_name?: string
   sku_id: number
-  sku_name: string
-  qty: number
+  sku_name?: string
+  change_qty: number
   before_qty: number
   after_qty: number
-  created_at?: string
+  occurred_at?: string
 }
 
 interface WmsDocServer {
   id: number
   doc_no: string
-  type?: WmsDocType
   doc_type?: WmsDocType
   status?: WmsDocStatus | string
   warehouse_id: number
@@ -121,7 +121,7 @@ interface WmsDocServer {
 }
 
 function normalizeDocType(raw: any): WmsDocType {
-  return String(raw?.doc_type || raw?.type || 'inbound') === 'outbound' ? 'outbound' : 'inbound'
+  return String(raw?.doc_type || 'inbound') === 'outbound' ? 'outbound' : 'inbound'
 }
 
 function normalizeDocItems(items: any[] | undefined): WmsDocItem[] {
@@ -131,7 +131,7 @@ function normalizeDocItems(items: any[] | undefined): WmsDocItem[] {
     doc_id: Number(row?.doc_id || 0) || undefined,
     sku_id: Number(row?.sku_id || 0),
     qty: Number(row?.qty || 0),
-    remark: String(row?.remark || row?.note || ''),
+    remark: String(row?.remark || ''),
     sku_name: String(row?.sku_name || ''),
     unit_cost: row?.unit_cost === undefined ? undefined : Number(row.unit_cost || 0),
   }))
