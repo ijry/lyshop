@@ -6,6 +6,7 @@ on:
     paths:
       - "docs-site/**"
       - "app/**"
+      - "eapp/**"
       - "web/**"
       - "admin/**"
       - ".github/workflows/docs.yml"
@@ -14,6 +15,7 @@ on:
     paths:
       - "docs-site/**"
       - "app/**"
+      - "eapp/**"
       - "web/**"
       - "admin/**"
       - ".github/workflows/docs.yml"
@@ -55,6 +57,14 @@ jobs:
       - name: Build H5 demo (mock data)
         working-directory: app
         run: node scripts/build-demo.js
+
+      - name: Install eapp dependencies
+        working-directory: eapp
+        run: rm -f package-lock.json && npm install --legacy-peer-deps
+
+      - name: Build eapp demo (H5)
+        working-directory: docs-site
+        run: node scripts/build-eapp-demo.js
 
       - name: Install web dependencies
         working-directory: web

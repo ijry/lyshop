@@ -5,8 +5,9 @@
   "scripts": {
     "demo:build": "node ../app/scripts/build-demo.js",
     "web-demo:build": "node scripts/build-web-demo.js",
+    "eapp-demo:build": "node scripts/build-eapp-demo.js",
     "showcase:capture": "node scripts/capture-showcase.js",
-    "showcase:build": "npm run demo:build && npm run web-demo:build && npm run showcase:capture",
+    "showcase:build": "npm run demo:build && npm run web-demo:build && npm run eapp-demo:build && npm run showcase:capture",
     "docs:dev": "vitepress dev docs",
     "docs:build": "node scripts/prepare-docs-build.js && vitepress build docs",
     "docs:build-with-demo": "npm run showcase:build && npm run docs:build",

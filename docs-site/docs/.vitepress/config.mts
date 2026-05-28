@@ -33,7 +33,8 @@ export default defineConfig({
         items: [
           { text: "PC 商城演示", link: "/web-demo/index.html", target: "_blank" },
           { text: "管理后台演示（admin/admin123）", link: "/admin-demo/index.html", target: "_blank" },
-          { text: "H5 移动端演示（右下角浮窗）", link: "/" }
+          { text: "H5 移动端演示（右下角浮窗）", link: "/" },
+          { text: "商家 eapp 演示", link: "/eapp-demo/index.html#/pages/login/index", target: "_blank" }
         ]
       },
       { text: "AI花絮", link: "/ai-notes/" }

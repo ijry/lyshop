@@ -18,6 +18,31 @@ const showcase = [
   { title: '订单中心', image: 'h5-orders.png', desc: '订单状态、售后入口与履约进度聚合' },
 ]
 
+const merchantAppShots = [
+  { title: '商家工作台', image: 'eapp-dashboard.png', desc: '今日经营数据、待办事项与核心入口集中呈现' },
+  { title: '订单管理', image: 'eapp-orders.png', desc: '订单状态筛选、快速进入发货与售后处理流程' },
+  { title: '商品管理', image: 'eapp-products.png', desc: '商品搜索、上下架切换与高频编辑能力' },
+]
+
+const merchantFunctions = [
+  { title: '一屏经营概览', desc: '在移动端快速查看订单、销售额、待办和库存预警。' },
+  { title: '履约与售后联动', desc: '订单发货、物流同步、售后审核和退款动作打通。' },
+  { title: '商品运营闭环', desc: '商品上下架、编辑与营销活动挂接统一在商家端处理。' },
+  { title: '统一后台接口', desc: '直接复用 /admin/api/*，降低二次开发与维护成本。' },
+]
+
+const marketingAppShots = [
+  { title: '营销首页', image: 'eapp-marketing-index.png', desc: '优惠券、秒杀、拼团、砍价功能入口统一收拢' },
+  { title: '秒杀活动管理', image: 'eapp-marketing-seckill.png', desc: '活动切换、活动商品维护与状态管理移动化操作' },
+]
+
+const marketingFunctions = [
+  { title: '活动创建与维护', desc: '可在商家 App 快速创建活动并调整活动时间和状态。' },
+  { title: '活动商品管理', desc: '按活动绑定商品 SKU，并维护活动价、库存与限购。' },
+  { title: '多营销类型统一', desc: '秒杀、拼团、砍价复用统一的移动端管理交互。' },
+  { title: '运营即时响应', desc: '不依赖 PC，在手机端即可完成营销日常调整与巡检。' },
+]
+
 const capabilities = [
   { title: '商品与交易', desc: '商品、SKU、购物车、订单、支付、发货与售后串成完整电商闭环。' },
   { title: '营销增长', desc: '优惠券、秒杀、拼团、砍价、积分与签到按插件组织，便于按业务阶段启用。' },
@@ -30,6 +55,7 @@ const capabilities = [
 const channels = [
   { name: 'PC 商城', desc: '面向桌面端用户的完整商城体验', href: 'web-demo/index.html' },
   { name: 'H5 / App / 小程序', desc: '基于 uni-app 复用移动端购物链路', href: 'demo/index.html' },
+  { name: '商家 eapp', desc: '商家移动端运营工作台演示', href: 'eapp-demo/index.html#/pages/login/index' },
   { name: '管理后台', desc: '面向商家运营与系统管理', href: 'guide/features' },
 ]
 </script>
@@ -94,6 +120,66 @@ const channels = [
               <h3>{{ item.title }}</h3>
               <p>{{ item.desc }}</p>
             </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section merchant-app-section">
+      <div class="container">
+        <div class="section-heading">
+          <span class="section-kicker">商家 App 截图与功能</span>
+          <h2>商家移动端 eapp：掌上运营工作台</h2>
+          <p>围绕单店铺日常运营场景，把工作台、订单、商品等高频管理能力落到手机端。</p>
+        </div>
+        <div class="merchant-layout">
+          <div class="merchant-shot-grid">
+            <article v-for="item in merchantAppShots" :key="item.title" class="merchant-shot-card">
+              <div class="phone-shot">
+                <img :src="`${base}showcase/${item.image}`" :alt="`${item.title}截图`" />
+              </div>
+              <div class="showcase-copy">
+                <h3>{{ item.title }}</h3>
+                <p>{{ item.desc }}</p>
+              </div>
+            </article>
+          </div>
+          <aside class="merchant-feature-panel">
+            <h3>商家端核心能力</h3>
+            <ul class="feature-list">
+              <li v-for="item in merchantFunctions" :key="item.title">
+                <strong>{{ item.title }}</strong>
+                <p>{{ item.desc }}</p>
+              </li>
+            </ul>
+            <a class="btn primary" :href="`${base}guide/eapp-merchant`">查看商家 eapp 文档</a>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="section marketing-app-section">
+      <div class="container">
+        <div class="section-heading">
+          <span class="section-kicker">营销功能 App 端截图</span>
+          <h2>营销能力在商家 App 的移动化呈现</h2>
+          <p>从营销入口到活动商品配置，关键营销动作可在商家移动端直接完成。</p>
+        </div>
+        <div class="marketing-shot-grid">
+          <article v-for="item in marketingAppShots" :key="item.title" class="marketing-shot-card">
+            <div class="phone-shot">
+              <img :src="`${base}showcase/${item.image}`" :alt="`${item.title}截图`" />
+            </div>
+            <div class="showcase-copy">
+              <h3>{{ item.title }}</h3>
+              <p>{{ item.desc }}</p>
+            </div>
+          </article>
+        </div>
+        <div class="marketing-feature-grid">
+          <article v-for="item in marketingFunctions" :key="item.title" class="capability-card">
+            <h3>{{ item.title }}</h3>
+            <p>{{ item.desc }}</p>
           </article>
         </div>
       </div>
@@ -449,6 +535,14 @@ const channels = [
   padding-top: 24px;
 }
 
+.merchant-app-section {
+  background: #fff;
+}
+
+.marketing-app-section {
+  background: #f8fafc;
+}
+
 .showcase-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -487,6 +581,81 @@ const channels = [
   color: var(--ly-muted);
   font-size: 14px;
   line-height: 1.7;
+}
+
+.merchant-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.merchant-shot-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.merchant-shot-card,
+.marketing-shot-card {
+  border: 1px solid var(--ly-line);
+  border-radius: 12px;
+  background: #fff;
+  padding: 16px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+}
+
+.merchant-feature-panel {
+  border: 1px solid var(--ly-line);
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 22px;
+}
+
+.merchant-feature-panel h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.feature-list {
+  margin: 16px 0 20px;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 12px;
+}
+
+.feature-list li {
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+}
+
+.feature-list li strong {
+  display: block;
+  font-size: 15px;
+  color: var(--ly-ink);
+}
+
+.feature-list li p {
+  margin: 8px 0 0;
+  color: var(--ly-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.marketing-shot-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.marketing-feature-grid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
 }
 
 .capability-section,
@@ -646,8 +815,15 @@ const channels = [
   }
 
   .showcase-grid,
+  .merchant-shot-grid,
+  .marketing-shot-grid,
   .capability-grid,
-  .channel-grid {
+  .channel-grid,
+  .marketing-feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .merchant-layout {
     grid-template-columns: 1fr;
   }
 
@@ -704,6 +880,10 @@ const channels = [
     min-height: 220px;
   }
 
+  .merchant-shot-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .final-cta-inner {
     display: block;
   }
@@ -725,6 +905,10 @@ const channels = [
   }
 
   .showcase-card {
+    grid-template-columns: 1fr;
+  }
+
+  .merchant-shot-grid {
     grid-template-columns: 1fr;
   }
 

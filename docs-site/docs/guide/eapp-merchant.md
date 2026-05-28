@@ -2,6 +2,8 @@
 
 `eapp` 是 LYShop 的独立商家移动端工程，面向单店铺后台运营场景，支持 `H5 + 微信小程序 + App`。
 
+在线演示：<a href="https://ijry.github.io/lyshop/eapp-demo/index.html#/pages/login/index" target="_blank" rel="noreferrer">eapp 商家端 H5 演示</a>
+
 ## 功能说明
 
 - 五个主导航：工作台、订单、商品、营销、我的
