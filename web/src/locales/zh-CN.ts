@@ -4,8 +4,19 @@ export default {
     search: '搜索商品',
     login: '登录',
     navHome: '首页',
+    navScenes: '产品场景',
     navProducts: '全部商品',
     navOrders: '我的订单',
+    sceneHint: '切换演示行业，查看重点页面截图',
+    scenes: {
+      supermarket: { name: '商超便利', desc: '高频日用品采购场景，强调分类入口与促销聚合。' },
+      cake: { name: '糕点烘焙', desc: '生日蛋糕与甜品零售场景，突出预约与时段履约。' },
+      fresh: { name: '生鲜优选', desc: '果蔬海鲜极速达场景，强调冷链与时效承诺。' },
+      jewelry: { name: '珠宝奢品', desc: '高客单礼赠场景，聚焦品牌展示与信任背书。' },
+      farm: { name: '农场直供', desc: '产地直采溯源场景，强化季节性与原产地故事。' },
+      mother: { name: '母婴用品', desc: '家庭育儿囤货场景，强调分龄推荐与安全标准。' },
+      mall: { name: '综合商城', desc: '标准电商全链路场景，覆盖首页推荐到订单履约。' },
+    },
   },
 
   // Footer.vue

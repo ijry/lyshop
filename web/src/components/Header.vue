@@ -16,6 +16,38 @@
 
       <!-- Nav -->
       <nav class="hidden md:flex items-center gap-8">
+        <router-link to="/"
+          class="nav-link text-sm text-gray-600 transition-colors relative py-1"
+          active-class="nav-link-active font-medium">
+          {{ $t('header.navHome') }}
+        </router-link>
+
+        <div class="relative" @mouseenter="scenesOpen = true" @mouseleave="scenesOpen = false">
+          <button type="button"
+            class="scene-trigger text-sm text-gray-600 transition-colors relative py-1 flex items-center gap-1.5"
+            :class="scenesOpen ? 'text-[var(--color-primary)]' : ''">
+            {{ $t('header.navScenes') }}
+            <span class="i-carbon-chevron-down text-xs transition-transform" :class="scenesOpen ? 'rotate-180' : ''" />
+          </button>
+          <div v-if="scenesOpen"
+            class="absolute top-[calc(100%+12px)] left-1/2 -translate-x-1/2 w-[980px] z-60">
+            <div class="rounded-2xl border border-gray-100 shadow-2xl p-4 bg-white/95 backdrop-blur-md">
+              <p class="text-xs text-gray-400 px-1">{{ $t('header.sceneHint') }}</p>
+              <div class="grid grid-cols-4 gap-3 mt-3">
+                <button v-for="scene in sceneCards" :key="scene.key" type="button"
+                  class="scene-card rounded-xl overflow-hidden bg-white text-left transition-all"
+                  @click="openScene(scene.key)">
+                  <img :src="scene.image" :alt="scene.name" class="w-full h-24 object-cover" />
+                  <div class="p-3">
+                    <p class="text-sm font-semibold text-gray-900 leading-none">{{ scene.name }}</p>
+                    <p class="text-xs text-gray-500 mt-2 leading-5 line-clamp-2">{{ scene.desc }}</p>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <router-link v-for="nav in navs" :key="nav.path" :to="nav.path"
           class="nav-link text-sm text-gray-600 transition-colors relative py-1"
           active-class="nav-link-active font-medium">
@@ -69,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useCartStore } from '@/stores/cart'
 import { useAuthStore } from '@/stores/auth'
@@ -80,21 +112,45 @@ const cart = useCartStore()
 const auth = useAuthStore()
 const site = useSiteStore()
 const cartCount = computed(() => cart.count)
+const scenesOpen = ref(false)
 
 const navs = computed(() => [
-  { name: t('header.navHome'), path: '/' },
   { name: t('header.navProducts'), path: '/products' },
   { name: t('header.navOrders'), path: '/orders' },
+])
+
+const sceneCards = computed(() => [
+  { key: 'supermarket', image: '/showcase/scenes/supermarket-home.png', name: t('header.scenes.supermarket.name'), desc: t('header.scenes.supermarket.desc') },
+  { key: 'cake', image: '/showcase/scenes/cake-home.png', name: t('header.scenes.cake.name'), desc: t('header.scenes.cake.desc') },
+  { key: 'fresh', image: '/showcase/scenes/fresh-home.png', name: t('header.scenes.fresh.name'), desc: t('header.scenes.fresh.desc') },
+  { key: 'jewelry', image: '/showcase/scenes/jewelry-home.png', name: t('header.scenes.jewelry.name'), desc: t('header.scenes.jewelry.desc') },
+  { key: 'farm', image: '/showcase/scenes/farm-home.png', name: t('header.scenes.farm.name'), desc: t('header.scenes.farm.desc') },
+  { key: 'mother', image: '/showcase/scenes/mother-home.png', name: t('header.scenes.mother.name'), desc: t('header.scenes.mother.desc') },
+  { key: 'mall', image: '/showcase/scenes/mall-home.png', name: t('header.scenes.mall.name'), desc: t('header.scenes.mall.desc') },
 ])
 
 function switchLocale(lang: string) {
   locale.value = lang
   localStorage.setItem('locale', lang)
 }
+
+function openScene(key: string) {
+  const url = new URL(window.location.href)
+  if (key === 'mall') {
+    url.searchParams.delete('demo')
+  } else {
+    url.searchParams.set('demo', key)
+  }
+  url.hash = '#/'
+  window.location.href = url.toString()
+}
 </script>
 
 <style scoped>
 .nav-link:hover {
+  color: var(--color-primary, #dc2626);
+}
+.scene-trigger:hover {
   color: var(--color-primary, #dc2626);
 }
 .nav-link-active {
@@ -109,5 +165,13 @@ function switchLocale(lang: string) {
   height: 2px;
   background: var(--color-primary, #dc2626);
   border-radius: 9999px;
+}
+.scene-card {
+  border: 1px solid #e5e7eb;
+}
+.scene-card:hover {
+  border-color: var(--color-primary, #dc2626);
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.1);
 }
 </style>

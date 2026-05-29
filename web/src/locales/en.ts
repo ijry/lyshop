@@ -4,8 +4,19 @@ export default {
     search: 'Search products',
     login: 'Login',
     navHome: 'Home',
+    navScenes: 'Product Scenes',
     navProducts: 'All Products',
     navOrders: 'My Orders',
+    sceneHint: 'Switch demo industries and preview key page screenshots',
+    scenes: {
+      supermarket: { name: 'Supermarket', desc: 'High-frequency daily shopping flow with promo-first category navigation.' },
+      cake: { name: 'Cake & Bakery', desc: 'Dessert and celebration ordering flow focused on booking and time-slot delivery.' },
+      fresh: { name: 'Fresh Grocery', desc: 'Produce and seafood flow with cold-chain promise and fast delivery highlights.' },
+      jewelry: { name: 'Jewelry', desc: 'Premium gift-buying flow emphasizing brand trust and visual merchandising.' },
+      farm: { name: 'Farm Direct', desc: 'Origin-sourced products flow focused on traceability and seasonal storytelling.' },
+      mother: { name: 'Mother & Baby', desc: 'Family stocking flow with age-stage recommendations and safety focus.' },
+      mall: { name: 'General Mall', desc: 'Standard commerce flow covering discovery, product browsing, and order fulfillment.' },
+    },
   },
 
   // Footer.vue

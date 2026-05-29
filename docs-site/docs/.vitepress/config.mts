@@ -45,7 +45,20 @@ export default defineConfig({
           text: "产品指南",
           items: [
             { text: "功能介绍", link: "/guide/features" },
-            { text: "商家移动端 eapp", link: "/guide/eapp-merchant" }
+            { text: "商家移动端 eapp", link: "/guide/eapp-merchant" },
+            { text: "产品场景导航", link: "/guide/scenes/" }
+          ]
+        },
+        {
+          text: "产品场景",
+          items: [
+            { text: "综合商城", link: "/guide/scenes/mall" },
+            { text: "商超便利", link: "/guide/scenes/supermarket" },
+            { text: "生鲜优选", link: "/guide/scenes/fresh" },
+            { text: "珠宝奢品", link: "/guide/scenes/jewelry" },
+            { text: "农场直供", link: "/guide/scenes/farm" },
+            { text: "糕点烘焙", link: "/guide/scenes/cake" },
+            { text: "母婴用品", link: "/guide/scenes/mother" }
           ]
         }
       ],
