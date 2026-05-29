@@ -137,11 +137,17 @@ onReachBottom(() => h.loadMore())
         <text class="icon-btn" @click="openFilter">⚲</text>
       </template>
     </PageHeader>
-    <scroll-view scroll-x class="tabs">
-      <view class="tabs-inner">
-        <text v-for="(tab, idx) in tabs" :key="idx" :class="['tab', current === idx ? 'active' : '']" @click="onTabChange(idx)">{{ tab.name }}</text>
-      </view>
-    </scroll-view>
+    <up-tabs
+      :list="tabs"
+      :current="current"
+      :scrollable="true"
+      keyName="name"
+      @click="(item) => onTabChange(item.index)"
+      :activeStyle="{ color: '#fff', backgroundColor: 'var(--eapp-primary)', borderRadius: '999rpx', height: '56rpx', lineHeight: '56rpx', padding: '0 24rpx' }"
+      :inactiveStyle="{ color: 'var(--eapp-text-muted)', backgroundColor: 'var(--eapp-bg)', borderRadius: '999rpx', height: '56rpx', lineHeight: '56rpx', padding: '0 24rpx' }"
+      :itemStyle="{ padding: '0 4rpx', height: '80rpx' }"
+      lineColor="transparent"
+    />
     <view class="list">
       <EmptyState v-if="!h.loading.value && !h.list.value.length" title="暂无订单" desc="切换状态或调整筛选条件" />
       <OrderCard
@@ -190,10 +196,6 @@ onReachBottom(() => h.loadMore())
 <style scoped>
 .page { min-height: 100vh; background: var(--eapp-bg); }
 .icon-btn { font-size: 36rpx; padding: 0 12rpx; }
-.tabs { background: var(--eapp-card); position: sticky; top: 0; z-index: 20; white-space: nowrap; }
-.tabs-inner { display: inline-flex; padding: 16rpx 12rpx; gap: 8rpx; }
-.tab { padding: 10rpx 20rpx; border-radius: 999rpx; font-size: 24rpx; color: var(--eapp-text-muted); background: var(--eapp-bg); }
-.tab.active { background: var(--eapp-primary); color: #fff; }
 .list { padding: 20rpx; display: grid; gap: 16rpx; padding-bottom: 200rpx; }
 .loading { text-align: center; color: var(--eapp-text-muted); padding: 20rpx 0; }
 .row { display: flex; align-items: center; gap: 12rpx; }

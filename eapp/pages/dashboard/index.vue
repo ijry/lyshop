@@ -58,8 +58,6 @@ const todoItems = computed(() => [
   { key: 'pending_after_sale', title: t('dashboard.pendingAfterSale'), value: data.value.pending_after_sale, tone: 'danger' as const },
   { key: 'unread_message', title: t('dashboard.unreadMessage'), value: data.value.unread_message, tone: 'primary' as const },
   { key: 'stock_warning', title: t('dashboard.stockWarning'), value: data.value.stock_warning, tone: 'warning' as const },
-  { key: 'today_orders', title: t('dashboard.todayOrders'), value: data.value.today_orders, tone: 'primary' as const },
-  { key: 'today_sales', title: t('dashboard.todaySales'), value: `¥${Number(data.value.today_sales).toFixed(0)}`, tone: 'success' as const },
 ])
 
 /* ---------- action grid ---------- */
@@ -186,19 +184,7 @@ onShow(loadAll)
           color="#f59e0b"
         />
       </view>
-
-      <!-- Revenue Trend -->
-      <AreaChart :title="'营收趋势'" :loading="loading" :data="trendData">
-        <template #extra>
-          <view class="trend-toggle" @click="toggleTrend">
-            <text class="trend-toggle__text">{{ trendRange === '7d' ? '近7天' : '近30天' }}</text>
-          </view>
-        </template>
-      </AreaChart>
-
-      <!-- Order Status Ring -->
-      <RingChart title="订单状态分布" :loading="loading" :data="statusPie" />
-
+      
       <!-- Announcements -->
       <view v-if="announcements.length" class="section">
         <view class="section__title">公告通知</view>
@@ -222,6 +208,19 @@ onShow(loadAll)
         <view class="section__title">营销中心</view>
         <ActionGrid :items="marketingActions" @click="onMarketingClick" />
       </view>
+	  
+	  <!-- Revenue Trend -->
+	  <AreaChart :title="'营收趋势'" :loading="loading" :data="trendData">
+	    <template #extra>
+	      <view class="trend-toggle" @click="toggleTrend">
+	        <text class="trend-toggle__text">{{ trendRange === '7d' ? '近7天' : '近30天' }}</text>
+	      </view>
+	    </template>
+	  </AreaChart>
+	  
+	  <!-- Order Status Ring -->
+	  <RingChart title="订单状态分布" :loading="loading" :data="statusPie" />
+	  
 
       <!-- Hot Products Bar -->
       <BarChart

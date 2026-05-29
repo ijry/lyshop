@@ -88,16 +88,17 @@ onReachBottom(() => loadMore())
 <template>
   <view class="page">
     <!-- Tabs -->
-    <scroll-view scroll-x class="tabs">
-      <view class="tabs-inner">
-        <text
-          v-for="(tab, idx) in tabs"
-          :key="idx"
-          :class="['tab', current === idx ? 'active' : '']"
-          @click="onTab(idx)"
-        >{{ tab.name }}</text>
-      </view>
-    </scroll-view>
+    <up-tabs
+      :list="tabs"
+      :current="current"
+      :scrollable="true"
+      keyName="name"
+      @click="(item) => onTab(item.index)"
+      :activeStyle="{ color: '#fff', backgroundColor: 'var(--eapp-primary)', borderRadius: '999rpx', height: '56rpx', lineHeight: '56rpx', padding: '0 24rpx' }"
+      :inactiveStyle="{ color: 'var(--eapp-text-muted)', backgroundColor: 'var(--eapp-bg)', borderRadius: '999rpx', height: '56rpx', lineHeight: '56rpx', padding: '0 24rpx' }"
+      :itemStyle="{ padding: '0 4rpx', height: '80rpx' }"
+      lineColor="transparent"
+    />
 
     <!-- Search -->
     <view class="search-bar">
@@ -215,10 +216,6 @@ onReachBottom(() => loadMore())
 
 <style scoped>
 .page { min-height: 100vh; background: var(--eapp-bg); }
-.tabs { background: var(--eapp-card); position: sticky; top: 0; z-index: 20; white-space: nowrap; }
-.tabs-inner { display: inline-flex; padding: 16rpx 12rpx; gap: 8rpx; }
-.tab { padding: 10rpx 20rpx; border-radius: 999rpx; font-size: 24rpx; color: var(--eapp-text-muted); background: var(--eapp-bg); }
-.tab.active { background: var(--eapp-primary); color: #fff; }
 .search-bar { padding: 16rpx 20rpx; }
 .list { padding: 0 20rpx 20rpx; display: grid; gap: 14rpx; }
 .loading-hint { text-align: center; padding: 24rpx 0; font-size: 24rpx; color: var(--eapp-text-muted); }

@@ -8,6 +8,7 @@ import { updateDistributorStatus } from '@/api/distribution'
 const { t } = useI18n()
 const h = useDistributionList('distributors')
 const keyword = ref('')
+const current = ref(0)
 const statusTab = ref<number | ''>('')
 const tabs = [
   { label: '全部', value: '' as const },
@@ -22,8 +23,9 @@ function doSearch() {
   h.load(params)
 }
 
-function switchTab(val: number | '') {
-  statusTab.value = val
+function switchTab(item: any) {
+  current.value = item.index
+  statusTab.value = tabs[item.index].value
   doSearch()
 }
 
@@ -41,9 +43,17 @@ onShow(() => doSearch())
     <view class="top-bar">
       <up-input v-model="keyword" :placeholder="t('distribution.searchDistributor')" clearable @clear="doSearch" @confirm="doSearch" />
     </view>
-    <view class="tabs">
-      <view v-for="tab in tabs" :key="String(tab.value)" :class="['tab', statusTab === tab.value ? 'active' : '']" @click="switchTab(tab.value)">{{ tab.label }}</view>
-    </view>
+    <up-tabs
+      :list="tabs"
+      :current="current"
+      :scrollable="true"
+      keyName="label"
+      @click="switchTab"
+      :activeStyle="{ color: '#fff', backgroundColor: 'var(--eapp-primary)', borderRadius: '999rpx', height: '56rpx', lineHeight: '56rpx', padding: '0 24rpx' }"
+      :inactiveStyle="{ color: 'var(--eapp-text-muted)', backgroundColor: 'var(--eapp-bg)', borderRadius: '999rpx', height: '56rpx', lineHeight: '56rpx', padding: '0 24rpx' }"
+      :itemStyle="{ padding: '0 4rpx', height: '80rpx' }"
+      lineColor="transparent"
+    />
     <view v-if="!h.loading.value && !h.list.value.length" class="empty">暂无分销商</view>
     <view v-for="item in h.list.value" :key="item.id" class="card">
       <view class="row">
@@ -63,9 +73,6 @@ onShow(() => doSearch())
 <style scoped>
 .page { min-height: 100vh; background: var(--eapp-bg); padding: 20rpx; box-sizing: border-box; display: grid; gap: 14rpx; align-content: start; }
 .top-bar { display: flex; align-items: center; gap: 10rpx; }
-.tabs { display: flex; gap: 10rpx; }
-.tab { padding: 8rpx 20rpx; border-radius: 999rpx; font-size: 24rpx; background: #f1f5f9; color: #64748b; }
-.tab.active { background: #2563eb; color: #fff; }
 .card { background: #fff; border: 1px solid var(--eapp-border); border-radius: 20rpx; padding: 20rpx; }
 .row { display: flex; align-items: center; justify-content: space-between; }
 .name { font-size: 28rpx; font-weight: 600; }

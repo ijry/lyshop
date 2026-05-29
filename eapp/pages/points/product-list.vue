@@ -6,6 +6,7 @@ import { usePointsList } from '@/composables/usePointsList'
 
 const { t } = useI18n()
 const h = usePointsList('products')
+const current = ref(0)
 const typeTab = ref('')
 const typeTabs = [
   { label: '全部', value: '' },
@@ -54,8 +55,9 @@ function doSearch() {
   h.load(params)
 }
 
-function switchTab(val: string) {
-  typeTab.value = val
+function switchTab(item: any) {
+  current.value = item.index
+  typeTab.value = typeTabs[item.index].value
   doSearch()
 }
 
@@ -70,9 +72,17 @@ onShow(() => doSearch())
       <text class="title">{{ t('points.productMgmt') }}</text>
       <up-button size="mini" type="primary" @click="openCreate">新增商品</up-button>
     </view>
-    <view class="tabs">
-      <view v-for="tab in typeTabs" :key="tab.value" :class="['tab', typeTab === tab.value ? 'active' : '']" @click="switchTab(tab.value)">{{ tab.label }}</view>
-    </view>
+    <up-tabs
+      :list="typeTabs"
+      :current="current"
+      :scrollable="true"
+      keyName="label"
+      @click="switchTab"
+      :activeStyle="{ color: '#fff', backgroundColor: 'var(--eapp-primary)', borderRadius: '999rpx', height: '56rpx', lineHeight: '56rpx', padding: '0 24rpx' }"
+      :inactiveStyle="{ color: 'var(--eapp-text-muted)', backgroundColor: 'var(--eapp-bg)', borderRadius: '999rpx', height: '56rpx', lineHeight: '56rpx', padding: '0 24rpx' }"
+      :itemStyle="{ padding: '0 4rpx', height: '80rpx' }"
+      lineColor="transparent"
+    />
     <view v-if="!h.loading.value && !h.list.value.length" class="empty">暂无积分商品</view>
     <view v-for="item in h.list.value" :key="item.id" class="card">
       <view class="row">
@@ -126,9 +136,6 @@ onShow(() => doSearch())
 .page { min-height: 100vh; background: var(--eapp-bg); padding: 20rpx; box-sizing: border-box; display: grid; gap: 14rpx; align-content: start; }
 .top-bar { display: flex; align-items: center; justify-content: space-between; }
 .title { font-size: 32rpx; font-weight: 700; }
-.tabs { display: flex; gap: 10rpx; }
-.tab { padding: 8rpx 20rpx; border-radius: 999rpx; font-size: 24rpx; background: #f1f5f9; color: #64748b; }
-.tab.active { background: #2563eb; color: #fff; }
 .card { background: #fff; border: 1px solid var(--eapp-border); border-radius: 20rpx; padding: 20rpx; }
 .row { display: flex; align-items: center; justify-content: space-between; }
 .cover { width: 80rpx; height: 80rpx; border-radius: 12rpx; margin-right: 14rpx; flex-shrink: 0; }

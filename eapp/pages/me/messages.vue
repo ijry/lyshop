@@ -8,6 +8,7 @@ const loading = ref(false)
 const sending = ref(false)
 const form = reactive({ title: '', content: '' })
 const activeGroup = ref('')
+const currentTab = ref(0)
 
 const groupTabs = [
   { key: '', label: '全部' },
@@ -75,11 +76,17 @@ onShow(loadData)
       <up-button type="primary" :loading="sending" @click="onSend">发送消息</up-button>
     </view>
 
-    <scroll-view scroll-x class="tab-scroll">
-      <view class="tabs">
-        <view v-for="tab in groupTabs" :key="tab.key" :class="['tab', activeGroup === tab.key ? 'active' : '']" @click="activeGroup = tab.key; loadData()">{{ tab.label }}</view>
-      </view>
-    </scroll-view>
+    <up-tabs
+      :list="groupTabs"
+      :current="currentTab"
+      :scrollable="true"
+      keyName="label"
+      @click="(item) => { currentTab = item.index; activeGroup = groupTabs[item.index].key; loadData() }"
+      :activeStyle="{ color: '#fff', backgroundColor: 'var(--eapp-primary)', borderRadius: '999rpx', height: '56rpx', lineHeight: '56rpx', padding: '0 24rpx' }"
+      :inactiveStyle="{ color: 'var(--eapp-text-muted)', backgroundColor: 'var(--eapp-bg)', borderRadius: '999rpx', height: '56rpx', lineHeight: '56rpx', padding: '0 24rpx' }"
+      :itemStyle="{ padding: '0 4rpx', height: '80rpx' }"
+      lineColor="transparent"
+    />
 
     <view class="list">
       <view v-if="loading" class="empty">加载中...</view>
@@ -101,10 +108,6 @@ onShow(loadData)
 <style scoped>
 .page { min-height: 100vh; background: var(--eapp-bg); padding: 20rpx; box-sizing: border-box; }
 .card { background: #fff; border: 1px solid var(--eapp-border); border-radius: 20rpx; padding: 20rpx; }
-.tab-scroll { white-space: nowrap; margin-top: 14rpx; }
-.tabs { display: inline-flex; gap: 10rpx; }
-.tab { display: inline-block; padding: 8rpx 20rpx; font-size: 24rpx; border-radius: 999rpx; background: #fff; border: 1px solid var(--eapp-border); }
-.tab.active { background: var(--eapp-primary, #2563eb); color: #fff; border-color: var(--eapp-primary, #2563eb); }
 .list { margin-top: 14rpx; display: grid; gap: 12rpx; }
 .msg-item { background: #fff; border: 1px solid var(--eapp-border); border-radius: 20rpx; padding: 18rpx; }
 .msg-top { display: flex; align-items: center; justify-content: space-between; }
