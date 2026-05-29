@@ -67,3 +67,27 @@ export function buildBarOption(data: ChartCategoriesSeries, opts?: { horizontal?
 export function buildBarOpts(horizontal = false) {
   return { horizontal }
 }
+
+export type ChartRadar = {
+  indicator: Array<{ name: string; max: number }>
+  data: Array<{ name: string; value: number[] }>
+}
+
+export function buildRadarOption(data: ChartRadar) {
+  return {
+    color: EAPP_CHART_COLORS,
+    radar: { indicator: data.indicator, shape: 'polygon' },
+    series: [{ type: 'radar', data: data.data }],
+  }
+}
+
+export function buildGaugeOption(value: number, label?: string, max?: number) {
+  return {
+    series: [{
+      type: 'gauge',
+      data: [{ value, name: label || '' }],
+      max: max || 100,
+      detail: { formatter: '{value}%' },
+    }],
+  }
+}

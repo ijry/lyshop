@@ -258,6 +258,161 @@ function buildOrderTrend(days: number): { categories: string[]; series: Array<{ 
   return { categories: r.categories, series: [{ name: '订单', data: r.series[0].data.map((v) => Math.max(2, Math.round(v / 120))) }] }
 }
 
+function buildSalesAnalytics(days: number) {
+  const revenue = buildRevenueTrend(days)
+  const order = buildOrderTrend(days)
+  const gmv = revenue.series[0].data.reduce((s, v) => s + v, 0)
+  const orderCount = order.series[0].data.reduce((s, v) => s + v, 0)
+  const avgOrderValue = orderCount > 0 ? Math.round(gmv / orderCount * 100) / 100 : 0
+  const refundCount = Math.round(orderCount * 0.03)
+  const refundRate = orderCount > 0 ? Math.round(refundCount / orderCount * 10000) / 100 : 0
+  const wechatVal = Math.round(gmv * 0.55)
+  const alipayVal = Math.round(gmv * 0.3)
+  const balanceVal = gmv - wechatVal - alipayVal
+  const hourlyData: number[] = []
+  for (let h = 0; h < 24; h++) {
+    const seed = days * 1000 + h
+    const base = h >= 8 && h <= 22 ? 30 : 5
+    hourlyData.push(Math.max(0, Math.round(base + (seedRandom(seed) - 0.5) * 20)))
+  }
+  return {
+    summary: { gmv, order_count: orderCount, avg_order_value: avgOrderValue, refund_rate: refundRate, refund_count: refundCount },
+    revenue_trend: revenue,
+    order_trend: order,
+    pay_method_distribution: [{ name: '微信', value: wechatVal }, { name: '支付宝', value: alipayVal }, { name: '余额', value: balanceVal }],
+    hourly_distribution: { categories: Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')), series: [{ name: '订单量', data: hourlyData }] },
+  }
+}
+
+function buildProductAnalytics(days: number) {
+  const totalSku = productListSource.length * 4
+  const activeSeed = seedRandom(days * 77)
+  const activeSkuRate = Math.round((0.6 + activeSeed * 0.3) * 100) / 100
+  const avgTurnover = Math.round((1.5 + seedRandom(days * 88) * 2) * 100) / 100
+  const skuRanking = productListSource.slice().sort((a: any, b: any) => Number(b.sales_count || b.sales || 0) - Number(a.sales_count || a.sales || 0)).slice(0, 10).map((p: any, i: number) => ({
+    rank: i + 1,
+    title: String(p.title || p.name || ''),
+    cover: String(p.cover || p.image || ''),
+    sold_qty: Number(p.sales_count || p.sales || 0),
+    revenue: Math.round(Number(p.price || 0) * Number(p.sales_count || p.sales || 0)),
+  }))
+  const topCats = categoriesSource.filter((c: any) => Number(c.parent_id || 0) === 0)
+  const categorySales = topCats.map((c: any) => ({ name: String(c.name), value: Math.round(1000 + seedRandom(Number(c.id) * days) * 5000) }))
+  const priceRange = [
+    { name: '<50', value: Math.round(50 + seedRandom(days * 11) * 100) },
+    { name: '50-200', value: Math.round(100 + seedRandom(days * 12) * 200) },
+    { name: '200-500', value: Math.round(80 + seedRandom(days * 13) * 150) },
+    { name: '500-1000', value: Math.round(30 + seedRandom(days * 14) * 80) },
+    { name: '1000+', value: Math.round(10 + seedRandom(days * 15) * 40) },
+  ]
+  const inventoryStatus = [
+    { name: '充足', value: Math.round(60 + seedRandom(days * 16) * 30) },
+    { name: '预警', value: Math.round(10 + seedRandom(days * 17) * 20) },
+    { name: '缺货', value: Math.round(2 + seedRandom(days * 18) * 8) },
+  ]
+  return {
+    summary: { total_sku: totalSku, active_sku_rate: activeSkuRate, avg_inventory_turnover: avgTurnover },
+    sku_ranking: skuRanking,
+    category_sales: categorySales,
+    price_range: priceRange,
+    inventory_status: inventoryStatus,
+  }
+}
+
+function buildCustomerAnalytics(days: number) {
+  const totalCustomers = Math.round(500 + seedRandom(days * 31) * 2000)
+  const newCount = Math.round(totalCustomers * (0.15 + seedRandom(days * 32) * 0.15))
+  const returningCount = totalCustomers - newCount
+  const repurchaseRate = Math.round(returningCount / totalCustomers * 10000) / 100
+  const avgValue = Math.round((150 + seedRandom(days * 33) * 300) * 100) / 100
+  const orderValueData = [
+    Math.round(80 + seedRandom(days * 41) * 120),
+    Math.round(100 + seedRandom(days * 42) * 180),
+    Math.round(60 + seedRandom(days * 43) * 140),
+    Math.round(20 + seedRandom(days * 44) * 60),
+    Math.round(5 + seedRandom(days * 45) * 25),
+  ]
+  const freqData = [
+    Math.round(200 + seedRandom(days * 51) * 300),
+    Math.round(80 + seedRandom(days * 52) * 120),
+    Math.round(30 + seedRandom(days * 53) * 50),
+    Math.round(10 + seedRandom(days * 54) * 30),
+  ]
+  return {
+    summary: { total_customers: totalCustomers, new_customer_count: newCount, returning_count: returningCount, repurchase_rate: repurchaseRate, avg_customer_value: avgValue },
+    new_vs_returning: [{ name: '新客', value: newCount }, { name: '老客', value: returningCount }],
+    order_value_distribution: { categories: ['0-50', '50-100', '100-300', '300-1000', '1000+'], series: [{ name: '人数', data: orderValueData }] },
+    purchase_frequency: { categories: ['1次', '2次', '3次', '4次+'], series: [{ name: '人数', data: freqData }] },
+    rfm_radar: { indicator: [{ name: '最近消费(R)', max: 100 }, { name: '消费频次(F)', max: 100 }, { name: '消费金额(M)', max: 100 }], data: [{ name: '平均客户', value: [Math.round(70 + seedRandom(days * 61) * 20), Math.round(45 + seedRandom(days * 62) * 30), Math.round(60 + seedRandom(days * 63) * 25)] }] },
+  }
+}
+
+function buildTrafficAnalytics(days: number) {
+  const totalPv = Math.round(10000 + seedRandom(days * 71) * 50000)
+  const totalUv = Math.round(totalPv * (0.3 + seedRandom(days * 72) * 0.2))
+  const avgStay = Math.round(30 + seedRandom(days * 73) * 120)
+  const bounceRate = Math.round((20 + seedRandom(days * 74) * 40) * 100) / 100
+  const pvUvTrend = buildRevenueTrend(days)
+  const pvData = pvUvTrend.series[0].data.map((v) => Math.round(v * 2.5))
+  const uvData = pvData.map((v) => Math.round(v * (0.3 + seedRandom(days * 75) * 0.15)))
+  const channelDist = [
+    { name: '直接访问', value: Math.round(2000 + seedRandom(days * 81) * 5000) },
+    { name: '搜索引擎', value: Math.round(3000 + seedRandom(days * 82) * 8000) },
+    { name: '社交媒体', value: Math.round(1500 + seedRandom(days * 83) * 4000) },
+    { name: '广告投放', value: Math.round(800 + seedRandom(days * 84) * 2000) },
+    { name: '其他', value: Math.round(300 + seedRandom(days * 85) * 1000) },
+  ]
+  const deviceDist = [
+    { name: 'iOS', value: Math.round(3000 + seedRandom(days * 86) * 5000) },
+    { name: 'Android', value: Math.round(4000 + seedRandom(days * 87) * 6000) },
+    { name: 'PC', value: Math.round(1500 + seedRandom(days * 88) * 3000) },
+    { name: 'H5', value: Math.round(800 + seedRandom(days * 89) * 2000) },
+  ]
+  const stayData = [
+    Math.round(15 + seedRandom(days * 91) * 30),
+    Math.round(20 + seedRandom(days * 92) * 40),
+    Math.round(40 + seedRandom(days * 93) * 60),
+    Math.round(10 + seedRandom(days * 94) * 25),
+    Math.round(25 + seedRandom(days * 95) * 45),
+  ]
+  return {
+    summary: { total_pv: totalPv, total_uv: totalUv, avg_stay_seconds: avgStay, bounce_rate: bounceRate },
+    pv_uv_trend: { categories: pvUvTrend.categories, series: [{ name: 'PV', data: pvData }, { name: 'UV', data: uvData }] },
+    channel_distribution: channelDist,
+    device_distribution: deviceDist,
+    page_stay: { categories: ['首页', '商品列表', '商品详情', '购物车', '结算'], series: [{ name: '平均停留(秒)', data: stayData }] },
+  }
+}
+
+function buildConversionAnalytics(days: number) {
+  const visitBase = Math.round(10000 + seedRandom(days * 101) * 30000)
+  const cartRate = Math.round((12 + seedRandom(days * 102) * 8) * 100) / 100
+  const orderRate = Math.round((30 + seedRandom(days * 103) * 15) * 100) / 100
+  const payRate = Math.round((75 + seedRandom(days * 104) * 15) * 100) / 100
+  const cartCount = Math.round(visitBase * cartRate / 100)
+  const orderCount = Math.round(cartCount * orderRate / 100)
+  const payCount = Math.round(orderCount * payRate / 100)
+  const overallRate = Math.round(payCount / visitBase * 10000) / 100
+  const abandonedCartRate = Math.round((1 - orderRate / 100) * 10000) / 100
+  const visitToCartRate = cartRate
+  const cartToOrderRate = orderRate
+  const orderToPayRate = payRate
+  const trendBase = buildRevenueTrend(days)
+  const s1Data = trendBase.series[0].data.map((v) => Math.round((10 + seedRandom(v * 111) * 8) * 100) / 100)
+  const s2Data = trendBase.series[0].data.map((v) => Math.round((25 + seedRandom(v * 112) * 15) * 100) / 100)
+  const s3Data = trendBase.series[0].data.map((v) => Math.round((70 + seedRandom(v * 113) * 20) * 100) / 100)
+  return {
+    summary: { visit_to_cart_rate: visitToCartRate, cart_to_order_rate: cartToOrderRate, order_to_pay_rate: orderToPayRate, overall_rate: overallRate, abandoned_cart_rate: abandonedCartRate },
+    funnel: [
+      { step: '访问', count: visitBase, rate: 100 },
+      { step: '加购', count: cartCount, rate: cartRate },
+      { step: '下单', count: orderCount, rate: Math.round(orderCount / visitBase * 10000) / 100 },
+      { step: '支付', count: payCount, rate: Math.round(payCount / visitBase * 10000) / 100 },
+    ],
+    step_rates_trend: { categories: trendBase.categories, series: [{ name: '访问→加购', data: s1Data }, { name: '加购→下单', data: s2Data }, { name: '下单→支付', data: s3Data }] },
+  }
+}
+
 function clone<T>(v: T): T {
   return JSON.parse(JSON.stringify(v))
 }
@@ -695,11 +850,14 @@ function listReviews(params?: Record<string, any>) {
   const query = params || {}
   const productID = toNumber(query.product_id)
   const keyword = String(query.keyword || '').trim().toLowerCase()
+  const replyStatus = String(query.reply_status || '').trim()
   const page = Math.max(1, toNumber(query.page) || 1)
   const size = Math.max(1, toNumber(query.size) || 20)
   let list = reviewRows.slice()
   if (productID > 0) list = list.filter((item: any) => toNumber(item.product_id) === productID)
   if (keyword) list = list.filter((item: any) => String(item.content || '').toLowerCase().includes(keyword))
+  if (replyStatus === 'pending') list = list.filter((item: any) => !item.admin_reply)
+  else if (replyStatus === 'replied') list = list.filter((item: any) => !!item.admin_reply)
   const offset = (page - 1) * size
   const pageList = list.slice(offset, offset + size).map((item: any) => clone(item))
   return { list: pageList, total: list.length, page, size }
@@ -1125,6 +1283,23 @@ export function matchMock(method: string, url: string, params?: Record<string, a
   // Shop info
   if (key === 'GET /admin/api/shops/current') {
     return { matched: true, data: clone(shopsCurrentSource) }
+  }
+
+  // Analytics
+  if (key === 'GET /admin/api/analytics/sales') {
+    return { matched: true, data: buildSalesAnalytics(Number(query.days || 7)) }
+  }
+  if (key === 'GET /admin/api/analytics/products') {
+    return { matched: true, data: buildProductAnalytics(Number(query.days || 7)) }
+  }
+  if (key === 'GET /admin/api/analytics/customers') {
+    return { matched: true, data: buildCustomerAnalytics(Number(query.days || 7)) }
+  }
+  if (key === 'GET /admin/api/analytics/traffic') {
+    return { matched: true, data: buildTrafficAnalytics(Number(query.days || 7)) }
+  }
+  if (key === 'GET /admin/api/analytics/conversion') {
+    return { matched: true, data: buildConversionAnalytics(Number(query.days || 7)) }
   }
 
   // Announcements
