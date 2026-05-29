@@ -29,6 +29,7 @@
     { "path": "pages/vip/level-list", "style": { "navigationBarTitleText": "会员等级" } },
     { "path": "pages/vip/coupon-rule-list", "style": { "navigationBarTitleText": "会员领券规则" } },
     { "path": "pages/vip/sku-price-list", "style": { "navigationBarTitleText": "会员SKU价格" } },
+    { "path": "pages/decor/editor", "style": { "navigationBarTitleText": "店铺装修" } },
     { "path": "pages/me/index", "style": { "navigationBarTitleText": "我的" } },
     { "path": "pages/me/messages", "style": { "navigationBarTitleText": "消息中心" } },
     { "path": "pages/me/im-sessions", "style": { "navigationBarTitleText": "客服会话" } },
