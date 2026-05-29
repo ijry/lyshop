@@ -41,6 +41,12 @@ export default {
     },
   },
   marketing: { coupon: '优惠券', seckill: '秒杀', groupBuy: '拼团', bargain: '砍价', vip: 'VIP 会员', decor: '店铺装修' },
+  coupon: {
+    create: '新建', edit: '编辑', delete: '删除', send: '发券',
+    name: '名称', type: '类型', discount: '面额', status: '状态',
+    stackRule: '叠加规则', exclusive: '互斥', sameType: '同类可叠', crossType: '跨类可叠',
+    targetType: '目标用户', all: '全部', vipLevel: '会员等级', newUser: '新用户',
+  },
   vip: {
     plans: '会员套餐', levels: '会员等级', couponRules: '领券规则', skuPrices: 'SKU专属价',
     name: '名称', months: '时长（月）', price: '价格', status: '状态',

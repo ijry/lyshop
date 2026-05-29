@@ -1,8 +1,11 @@
 import { get } from '@/utils/request'
-import { post, put } from '@/utils/request'
+import { post, put, del } from '@/utils/request'
 
 export const getCoupons = (params?: any) => get<any>('/marketing/coupons', params)
 export const createCoupon = (payload: any) => post<any>('/marketing/coupons', payload)
+export const updateCoupon = (id: number | string, payload: any) => put<any>(`/marketing/coupons/${id}`, payload)
+export const deleteCoupon = (id: number | string) => del<any>(`/marketing/coupons/${id}`)
+export const sendCoupon = (id: number | string, payload: any) => post<any>(`/marketing/coupons/${id}/send`, payload)
 
 export const getSeckillActivities = (params?: any) => get<any>('/marketing/seckill/activities', params)
 export const getGroupBuyActivities = (params?: any) => get<any>('/marketing/group-buy/activities', params)

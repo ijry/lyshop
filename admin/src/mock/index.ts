@@ -132,6 +132,12 @@ const vipSkuPricesSource: any[] = [
   { id: 2, product_id: 1, sku_id: 1, level_id: 2, level_name: '金卡', vip_price: 4699, status: 1 },
   { id: 3, product_id: 1, sku_id: 2, level_id: 2, level_name: '金卡', vip_price: 5399, status: 1 },
 ]
+const couponsSource: any[] = [
+  { id: 1, name: '新人满100减20', type: 1, min_amount: 100, discount: 20, total_count: 1000, per_limit: 1, status: 1, used_count: 120, start_at: '2026-05-01T00:00:00Z', end_at: '2026-06-30T23:59:59Z', description: '新用户专享', stack_rule: 'exclusive', target_type: 'new_user', target_value: '' },
+  { id: 2, name: '全场9折券', type: 2, min_amount: 0, discount: 0.9, total_count: 500, per_limit: 1, status: 1, used_count: 85, start_at: '2026-05-01T00:00:00Z', end_at: '2026-07-31T23:59:59Z', description: '全场通用折扣', stack_rule: 'same_type', target_type: 'all', target_value: '' },
+  { id: 3, name: '无门槛5元券', type: 3, min_amount: 0, discount: 5, total_count: 0, per_limit: 3, status: 1, used_count: 300, start_at: '2026-05-01T00:00:00Z', end_at: '2026-12-31T23:59:59Z', description: '无门槛使用', stack_rule: 'cross_type', target_type: 'all', target_value: '' },
+]
+let couponSeq = 3
 const seckillActivitiesSource: any[] = [
   { id: 1, type: 'seckill', name: '午场秒杀', start_at: '2026-05-27T10:00:00Z', end_at: '2026-05-27T12:00:00Z', status: 1 },
   { id: 2, type: 'seckill', name: '晚场秒杀', start_at: '2026-05-27T20:00:00Z', end_at: '2026-05-27T22:00:00Z', status: 1 },
@@ -871,14 +877,6 @@ const routes: Record<string, any> = {
   },
 
   // Marketing
-  'GET /admin/api/marketing/coupons': {
-    list: [
-      { id: 1, name: '新人满100减20', type: 1, min_amount: 100, discount: 20, total_count: 1000, per_limit: 1, status: 1 },
-      { id: 2, name: '全场9折券', type: 2, min_amount: 0, discount: 0.9, total_count: 500, per_limit: 1, status: 1 },
-      { id: 3, name: '无门槛5元券', type: 3, min_amount: 0, discount: 5, total_count: 0, per_limit: 3, status: 1 },
-    ],
-    total: 3, page: 1, size: 20,
-  },
   'GET /admin/api/marketing/seckill/activities': { list: seckillActivitiesSource, total: seckillActivitiesSource.length, page: 1, size: 20 },
   'GET /admin/api/marketing/group-buy/activities': { list: groupBuyActivitiesSource, total: groupBuyActivitiesSource.length, page: 1, size: 20 },
   'GET /admin/api/marketing/bargain/activities': { list: bargainActivitiesSource, total: bargainActivitiesSource.length, page: 1, size: 20 },
@@ -1331,6 +1329,74 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     if (docNo) list = list.filter((row: any) => String(row.doc_no || '').toLowerCase().includes(docNo))
     list = list.sort((a: any, b: any) => Number(b.id || 0) - Number(a.id || 0))
     return { matched: true, data: toPageData(clone(list), Number(query.page || 1), Number(query.size || 20)) }
+  }
+
+  // Dynamic coupon CRUD
+  if (key === 'GET /admin/api/marketing/coupons') {
+    const keyword = String(query.keyword || '').trim().toLowerCase()
+    const status = query.status !== undefined && query.status !== null && String(query.status).trim() !== '' ? Number(query.status) : null
+    const type = query.type !== undefined && query.type !== null && String(query.type).trim() !== '' ? Number(query.type) : null
+    let list = clone(couponsSource)
+    if (keyword) list = list.filter((c: any) => String(c.name || '').toLowerCase().includes(keyword))
+    if (status !== null) list = list.filter((c: any) => Number(c.status || 0) === status)
+    if (type !== null) list = list.filter((c: any) => Number(c.type || 0) === type)
+    return { matched: true, data: toPageData(list, Number(query.page || 1), Number(query.size || 20)) }
+  }
+  if (key === 'POST /admin/api/marketing/coupons') {
+    couponSeq += 1
+    const payload: any = params || {}
+    couponsSource.push({
+      id: couponSeq,
+      name: String(payload.name || ''),
+      type: Number(payload.type || 1),
+      min_amount: Number(payload.min_amount || 0),
+      discount: Number(payload.discount || 0),
+      total_count: Number(payload.total_count || 0),
+      per_limit: Number(payload.per_limit || 1),
+      status: Number(payload.status || 0) === 1 ? 1 : 0,
+      used_count: 0,
+      start_at: String(payload.start_at || ''),
+      end_at: String(payload.end_at || ''),
+      description: String(payload.description || ''),
+      stack_rule: String(payload.stack_rule || 'exclusive'),
+      target_type: String(payload.target_type || 'all'),
+      target_value: String(payload.target_value || ''),
+    })
+    return { matched: true, data: { id: couponSeq } }
+  }
+  if (methodUpper === 'PUT' && /\/admin\/api\/marketing\/coupons\/\d+$/.test(url)) {
+    const id = Number(url.split('/').pop() || 0)
+    const target = couponsSource.find((c: any) => Number(c.id || 0) === id)
+    if (target) {
+      const payload: any = params || {}
+      if (payload.name !== undefined) target.name = String(payload.name)
+      if (payload.type !== undefined) target.type = Number(payload.type)
+      if (payload.min_amount !== undefined) target.min_amount = Number(payload.min_amount)
+      if (payload.discount !== undefined) target.discount = Number(payload.discount)
+      if (payload.total_count !== undefined) target.total_count = Number(payload.total_count)
+      if (payload.per_limit !== undefined) target.per_limit = Number(payload.per_limit)
+      if (payload.status !== undefined) target.status = Number(payload.status) === 1 ? 1 : 0
+      if (payload.start_at !== undefined) target.start_at = String(payload.start_at)
+      if (payload.end_at !== undefined) target.end_at = String(payload.end_at)
+      if (payload.description !== undefined) target.description = String(payload.description)
+      if (payload.stack_rule !== undefined) target.stack_rule = String(payload.stack_rule)
+      if (payload.target_type !== undefined) target.target_type = String(payload.target_type)
+      if (payload.target_value !== undefined) target.target_value = String(payload.target_value)
+    }
+    return { matched: true, data: null }
+  }
+  if (methodUpper === 'DELETE' && /\/admin\/api\/marketing\/coupons\/\d+$/.test(url)) {
+    const id = Number(url.split('/').pop() || 0)
+    const idx = couponsSource.findIndex((c: any) => Number(c.id || 0) === id)
+    if (idx >= 0) couponsSource.splice(idx, 1)
+    return { matched: true, data: null }
+  }
+  if (methodUpper === 'POST' && /\/admin\/api\/marketing\/coupons\/\d+\/send$/.test(url)) {
+    const id = Number(url.split('/')[5] || 0)
+    const target = couponsSource.find((c: any) => Number(c.id || 0) === id)
+    const count = Number((params as any)?.count || 1)
+    if (target) target.used_count = (target.used_count || 0) + count
+    return { matched: true, data: { sent_count: count } }
   }
 
   const marketingType = parseTypeFromPath(url)
