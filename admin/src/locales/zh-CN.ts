@@ -825,6 +825,7 @@ export default {
   'orderStatus.delivering': '待收货',
   'orderStatus.completed': '已完成',
   'orderStatus.afterSale': '售后',
+  'orderStatus.canceled': '已取消',
 
   'afterSaleStatus.applied': '已申请',
   'afterSaleStatus.waitReturn': '待用户回寄',

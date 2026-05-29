@@ -75,6 +75,9 @@
             <u-button size="mini" plain :text="$t('orderList.afterSaleProgress')" shape="circle" @click="goAfterSaleDetail(o.after_sale_summary.latest_case_id)" />
           </view>
           <view class="action-btn-wrap" v-if="o.status === 1">
+            <u-button size="mini" plain :text="$t('orderList.cancel')" shape="circle" :loading="actioningID === o.id && actioningType === 'cancel'" @click="toCancel(o)" />
+          </view>
+          <view class="action-btn-wrap" v-if="o.status === 1">
             <u-button size="mini" type="primary" :text="$t('orderList.goPay')" shape="circle" :loading="actioningID === o.id && actioningType === 'pay'" @click="toPay(o)" />
           </view>
           <view class="action-btn-wrap" v-if="canReview(o) && hasUnreviewed(o)">
@@ -97,17 +100,17 @@ const { t } = useI18n()
 const orders = ref<any[]>([])
 const activeTab = ref(0)
 const actioningID = ref<number>(0)
-const actioningType = ref<'pay' | 'review' | ''>('')
+const actioningType = ref<'pay' | 'review' | 'cancel' | ''>('')
 
 const tabs = computed(() => [
   { name: t('orderList.all') }, { name: t('orderList.pendingPayment') }, { name: t('orderList.pendingShipment') },
-  { name: t('orderList.pendingReceipt') }, { name: t('orderList.completed') }
+  { name: t('orderList.pendingReceipt') }, { name: t('orderList.completed') }, { name: t('orderList.canceled') }
 ])
-const statusValues = [0, 1, 2, 3, 4]
+const statusValues = [0, 1, 2, 3, 4, 6]
 
 const statusColors: Record<number, string> = {
   1: 'text-orange-500', 2: 'text-blue-500',
-  3: 'text-purple-500', 4: 'text-green-500', 5: 'text-red-500'
+  3: 'text-purple-500', 4: 'text-green-500', 5: 'text-red-500', 6: 'text-slate-500'
 }
 const statusLabel = (s: number) => orderStatusLabel(s)
 const statusColor = (s: number) => statusColors[s] || 'text-gray-400'
@@ -180,6 +183,30 @@ async function toPay(order: any) {
     actioningID.value = 0
     actioningType.value = ''
   }
+}
+
+async function toCancel(order: any) {
+  const id = Number(order?.id || 0)
+  if (!id || actioningID.value) return
+  uni.showModal({
+    title: t('orderList.cancel'),
+    content: t('orderList.confirmCancel'),
+    success: async (res) => {
+      if (!res.confirm) return
+      actioningID.value = id
+      actioningType.value = 'cancel'
+      try {
+        await post(`/api/v1/orders/${id}/cancel`)
+        uni.showToast({ title: t('orderList.cancelSuccess'), icon: 'success' })
+        await loadOrders()
+      } catch {
+        uni.showToast({ title: t('orderList.cancelFailed'), icon: 'none' })
+      } finally {
+        actioningID.value = 0
+        actioningType.value = ''
+      }
+    },
+  })
 }
 
 function toReview(order: any, mode: 'root' | 'append' = 'root') {

@@ -26,6 +26,7 @@
 - [商品接口](./product)
 - [订单接口](./order)
 - [仓储接口](./wms)
+- [库存预占规则](./stock-reservation)
 - [营销接口](./marketing)
 - [IM 接口](./im)
 - [支付接口](./payment)

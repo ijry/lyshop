@@ -11,6 +11,7 @@
 - 出入库单：统一单据模型，支持入库/出库、多 SKU 明细、草稿保存。
 - 单据流转：仅草稿可编辑，支持 `draft -> completed` 与 `draft -> canceled`。
 - 库存台账：按仓库、SKU、预警状态查询库存数量与安全库存。
+- 库存预占：支持订单预占、确认、释放三段式交易，维护 `reserved_qty`。
 - 安全库存：支持按库存记录维护 `safe_qty`，用于低库存预警识别。
 - 库存流水追溯：按仓库、SKU、业务类型、单号、时间区间查询变更明细。
 
@@ -54,6 +55,7 @@
 - `PUT /admin/api/wms/stocks/:id/safety`
 
 台账列表核心字段：`qty`、`safe_qty`、`is_warning`。
+预占口径新增字段：`reserved_qty`（已预占数量）。
 
 安全库存请求示例：
 
@@ -100,4 +102,7 @@
 - 无新增第三方依赖。
 - 无新增环境变量与配置项。
 - `wms` 插件在服务启动时自动迁移仓储相关表结构（仓库、库存、单据、单据明细、流水）。
+- 新增库存预占结构（自动迁移）：
+  - `inventory_stock.reserved_qty`
+  - `inventory_reservation`（预占单）
 - 权限沿用后台既有鉴权，读写分别使用 `wms:view`、`wms:edit`。

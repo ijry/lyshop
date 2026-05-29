@@ -825,6 +825,7 @@ export default {
   'orderStatus.delivering': 'Shipping',
   'orderStatus.completed': 'Completed',
   'orderStatus.afterSale': 'After-Sale',
+  'orderStatus.canceled': 'Canceled',
 
   'afterSaleStatus.applied': 'Applied',
   'afterSaleStatus.waitReturn': 'Awaiting Return',

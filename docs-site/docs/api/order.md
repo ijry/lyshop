@@ -14,16 +14,17 @@
 - `POST /api/v1/addresses`
 - `PUT /api/v1/addresses/:id`
 - `DELETE /api/v1/addresses/:id`
-- `GET /api/v1/orders?status=<0|1|2|3|4>&page=1&size=20`
+- `GET /api/v1/orders?status=<0|1|2|3|4|5|6>&page=1&size=20`
 - `GET /api/v1/orders/:id`
 - `GET /api/v1/orders/:id/review`
 - `POST /api/v1/orders/:id/pay`
+- `POST /api/v1/orders/:id/cancel`
 - `POST /api/v1/orders/:id/review`
 - `POST /api/v1/orders/:id/after-sales`
 - `GET /api/v1/after-sales/:id`
 - `POST /api/v1/after-sales/:id/return-shipments`
 - `POST /api/v1/upload`
-- `GET /admin/api/orders?status=<0|1|2|3|4|5>&page=1&size=20`
+- `GET /admin/api/orders?status=<0|1|2|3|4|5|6>&page=1&size=20`
 - `GET /admin/api/orders/:id`
 - `PUT /admin/api/orders/:id/ship`
 - `GET /admin/api/after-sales?status=&case_type=&order_id=&page=&size=`
@@ -51,6 +52,9 @@
 - `latest_shipment` 与 `shipments` 字段口径一致，同样兼容返回上述标签字段，便于列表快速展示中文物流摘要。
 - 前台与后台订单列表均可直接使用 `latest_shipment` 展示最新物流状态，并通过 `shipments[*].biz_type=reship` 标注补发摘要。
 - 前台与后台建议统一维护状态文案映射：订单状态、售后状态、物流状态与日志状态流转文案应保持一致。
+- 订单状态当前定义：`1待付款`、`2待发货`、`3待收货`、`4已完成`、`5售后`、`6已取消`。
+- 待付款订单支持用户主动取消：`POST /api/v1/orders/:id/cancel`。
+- 订单库存以 WMS 为真源：下单预占、支付确认、取消释放，详见 [库存预占规则](./stock-reservation)。
 - 售后相关查询接口在保留枚举字段的同时，兼容返回可读标签字段（`*_label`），用于前端直接展示中文文案。
 - 后台商品列表“管理评价”弹窗复用现有评价接口（`GET /admin/api/reviews`、`GET /admin/api/reviews/:id`、`POST /admin/api/reviews/:id/reply`），通过 `product_id` + `keyword` 组合筛选当前商品评价，无新增接口。
 - 管理端“管理评价”按钮按权限显隐：优先校验 JWT 权限码 `order:view`，并兼容以菜单 `/review/list` 作为兜底判断，避免无权限账号误触。
@@ -231,6 +235,7 @@
 ## 部署与配置影响
 
 - 本次仅为订单与售后能力增强，无新增部署步骤，无新增环境变量。
+- 订单库存交易依赖 WMS 预占模型，需确保 WMS 迁移已执行（`reserved_qty` 与 `inventory_reservation`）。
 - 活动来源链路新增后，`order_items` 会新增活动快照字段（`activity_product_id`、`activity_id`、`activity_type`、`activity_title`），需依赖服务启动自动迁移。
 - Redis 购物车键由单一 `sku_id` 兼容升级为 `sku_id:activity_product_id` 复合键（旧键可兼容读取），无新增配置项。
 - 后台商品列表评价弹窗仅涉及管理端前端交互改造，服务端接口、数据库结构与配置项均无变化。

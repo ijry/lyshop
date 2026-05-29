@@ -1123,6 +1123,15 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     }
     return { matched: true, data: null }
   }
+  if (upperMethod === 'POST' && path.startsWith('/api/v1/orders/') && path.endsWith('/cancel')) {
+    const id = Number(path.split('/')[4] || 0)
+    const target = getOrderByID(id)
+    if (target && Number(target.status) === 1) {
+      target.status = 6
+      target.updated_at = new Date().toISOString()
+    }
+    return { matched: true, data: null }
+  }
   if (upperMethod === 'GET' && path.startsWith('/api/v1/orders/') && path.endsWith('/review')) {
     const id = Number(path.split('/')[4] || 0)
     const meta = buildOrderReviewMeta(id)

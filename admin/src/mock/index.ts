@@ -159,7 +159,6 @@ const pointsProductsSource: any[] = [
   { id: 5, title: '品牌马克杯', type: 'physical', points_price: 5000, stock: 20, status: 0, cover: 'https://picsum.photos/120/120?random=pts5', description: '限量款陶瓷杯', created_at: '2026-05-10T08:00:00Z' },
   { id: 6, title: '会员专属壁纸', type: 'virtual', points_price: 100, stock: 999, status: 1, cover: 'https://picsum.photos/120/120?random=pts6', description: '高清数字壁纸下载', created_at: '2026-05-15T08:00:00Z' },
 ]
-let pointsExchangeSeq = 5
 const pointsExchangesSource: any[] = [
   { id: 1, user_id: 1001, user_nickname: '张三', product_id: 1, product_title: '10元无门槛优惠券', points_cost: 500, status: 'completed', created_at: '2026-05-20T10:00:00Z' },
   { id: 2, user_id: 1002, user_nickname: '李四', product_id: 2, product_title: '定制帆布袋', points_cost: 2000, status: 'pending_ship', created_at: '2026-05-22T10:00:00Z' },

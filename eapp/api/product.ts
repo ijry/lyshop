@@ -7,6 +7,9 @@ export type ProductUpsertPayload = {
   product: Record<string, any>
   skus?: Array<Record<string, any>>
   images?: Array<Record<string, any>>
+  spec_schema?: Array<{ name: string; values: string[] }>
+  sku_overrides?: Array<{ sku_key: string; sku_code?: string; price?: number; stock?: number }>
+  sku_generation_mode?: 'auto' | 'manual'
 }
 
 export const createProduct = (payload: ProductUpsertPayload) => post<any>('/products', payload)

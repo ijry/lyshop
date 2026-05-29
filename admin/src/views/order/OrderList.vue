@@ -126,6 +126,7 @@ const tabs = computed(() => [
   { label: t('orderStatus.delivering'), value: 3 },
   { label: t('orderStatus.completed'), value: 4 },
   { label: t('orderStatus.afterSale'), value: 5 },
+  { label: t('orderStatus.canceled'), value: 6 },
 ])
 
 const statusColors: Record<number, string> = {
@@ -134,6 +135,7 @@ const statusColors: Record<number, string> = {
   3: 'bg-purple-50 text-purple-700',
   4: 'bg-green-50 text-green-700',
   5: 'bg-red-50 text-red-600',
+  6: 'bg-slate-100 text-slate-600',
 }
 const statusLabel = (s: number) => orderStatusLabel(s) || t('common.noData')
 const statusClass = (s: number) => statusColors[s] || 'bg-slate-50 text-slate-400'

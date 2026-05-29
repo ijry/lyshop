@@ -12,6 +12,10 @@
           <view v-if="detail.paid_at">{{ $t('orderDetail.payTime') }}{{ formatDate(detail.paid_at) }}</view>
           <view v-if="detail.tracking_no">{{ $t('orderDetail.trackingNo') }}{{ detail.tracking_no }}</view>
         </view>
+        <view v-if="Number(detail.status) === 1" class="flex gap-16rpx mt-20rpx justify-end">
+          <u-button size="mini" plain :text="$t('orderList.cancel')" shape="circle" :loading="actioningType === 'cancel'" @click="cancelOrder" />
+          <u-button size="mini" type="primary" :text="$t('orderList.goPay')" shape="circle" :loading="actioningType === 'pay'" @click="payOrder" />
+        </view>
       </view>
 
       <view class="bg-white rounded-20rpx p-24rpx mb-20rpx">
@@ -153,7 +157,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { get } from '@/utils/request'
+import { get, post } from '@/utils/request'
 import {
   afterSaleStatusLabel,
   logisticsProviderLabel,
@@ -169,7 +173,8 @@ const { t } = useI18n()
 const detail = ref<any>({})
 const tracksMap = ref<Record<number, any[]>>({})
 const reviewItems = ref<any[]>([])
-const statusColors: Record<number, string> = { 1: 'text-orange-500', 2: 'text-blue-500', 3: 'text-purple-500', 4: 'text-green-500', 5: 'text-red-500' }
+const actioningType = ref<'pay' | 'cancel' | ''>('')
+const statusColors: Record<number, string> = { 1: 'text-orange-500', 2: 'text-blue-500', 3: 'text-purple-500', 4: 'text-green-500', 5: 'text-red-500', 6: 'text-slate-500' }
 const statusLabel = (s: number) => orderStatusLabel(s)
 const statusColor = (s: number) => statusColors[s] || 'text-gray-400'
 const payLabel = (m: string) => m === 'wechat' ? t('orderDetail.wechatPay') : m === 'alipay' ? t('orderDetail.alipayPay') : t('orderDetail.unpaid')
@@ -210,6 +215,43 @@ function goAfterSaleApply() {
 function goAfterSaleDetail(id: number) {
   if (!id) return
   uni.navigateTo({ url: `/pages/order/after-sale-detail?id=${id}` })
+}
+
+async function payOrder() {
+  const id = Number(detail.value?.id || 0)
+  if (!id || actioningType.value) return
+  actioningType.value = 'pay'
+  try {
+    await post(`/api/v1/orders/${id}/pay`)
+    uni.showToast({ title: t('orderConfirm.orderSuccess'), icon: 'success' })
+    detail.value = await get<any>(`/api/v1/orders/${id}`)
+  } catch {
+    uni.showToast({ title: t('afterSaleApply.submitFailed'), icon: 'none' })
+  } finally {
+    actioningType.value = ''
+  }
+}
+
+function cancelOrder() {
+  const id = Number(detail.value?.id || 0)
+  if (!id || actioningType.value) return
+  uni.showModal({
+    title: t('orderList.cancel'),
+    content: t('orderList.confirmCancel'),
+    success: async (res) => {
+      if (!res.confirm) return
+      actioningType.value = 'cancel'
+      try {
+        await post(`/api/v1/orders/${id}/cancel`)
+        uni.showToast({ title: t('orderList.cancelSuccess'), icon: 'success' })
+        detail.value = await get<any>(`/api/v1/orders/${id}`)
+      } catch {
+        uni.showToast({ title: t('orderList.cancelFailed'), icon: 'none' })
+      } finally {
+        actioningType.value = ''
+      }
+    },
+  })
 }
 
 onMounted(async () => {

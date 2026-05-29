@@ -37,6 +37,57 @@ const newTag = ref('')
 const specTemplates = ref<any[]>([])
 const showSpecPicker = ref(false)
 
+type SkuAttr = { name: string; value: string }
+
+function normalizeSkuAttrs(attrs: any): SkuAttr[] {
+  const list = Array.isArray(attrs) ? attrs : []
+  return list
+    .map((item: any) => ({
+      name: String(item?.name || '').trim(),
+      value: String(item?.value || '').trim(),
+    }))
+    .filter((item: SkuAttr) => item.name && item.value)
+    .sort((a: SkuAttr, b: SkuAttr) => {
+      if (a.name === b.name) return a.value.localeCompare(b.value)
+      return a.name.localeCompare(b.name)
+    })
+}
+
+function buildSkuKey(attrs: SkuAttr[]) {
+  const normalized = normalizeSkuAttrs(attrs)
+  if (!normalized.length) return '__default__'
+  return normalized.map((item: SkuAttr) => `${item.name}:${item.value}`).join('|')
+}
+
+function buildSpecSchema(rows: any[]) {
+  const groupMap = new Map<string, Set<string>>()
+  for (const row of rows) {
+    const attrs = normalizeSkuAttrs(row?.attrs)
+    for (const attr of attrs) {
+      if (!groupMap.has(attr.name)) groupMap.set(attr.name, new Set<string>())
+      groupMap.get(attr.name)?.add(attr.value)
+    }
+  }
+  return Array.from(groupMap.entries())
+    .map(([name, values]) => ({
+      name,
+      values: Array.from(values).sort((a, b) => a.localeCompare(b)),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name))
+}
+
+function buildSkuOverrides(rows: any[]) {
+  return rows.map((row: any) => {
+    const attrs = normalizeSkuAttrs(row?.attrs)
+    return {
+      sku_key: buildSkuKey(attrs),
+      sku_code: String(row?.sku_code || '').trim(),
+      price: Number(row?.price || 0),
+      stock: Number(row?.stock || 0),
+    }
+  })
+}
+
 async function loadSpecTemplates() {
   const data: any = await getSpecTemplates({ page: 1, size: 200 })
   specTemplates.value = Array.isArray(data?.list) ? data.list : []
@@ -72,7 +123,14 @@ async function loadData() {
     category_id: Number(data?.category_id || 0),
     category_path_name: String(data?.category_path_name || ''),
     tags: Array.isArray(data?.tags) ? data.tags : [],
-    skus: Array.isArray(data?.skus) ? data.skus : [],
+    skus: Array.isArray(data?.skus)
+      ? data.skus.map((sku: any) => ({
+        ...sku,
+        attrs: normalizeSkuAttrs(sku?.attrs),
+        price: Number(sku?.price || 0),
+        stock: Number(sku?.stock || 0),
+      }))
+      : [],
     low_stock_threshold: Number(data?.low_stock_threshold || 10),
     shipping_template: String(data?.shipping_template || 'default'),
     limit_per_order: Number(data?.limit_per_order || 0),
@@ -102,6 +160,8 @@ async function save() {
   if (!form.title.trim()) { uni.showToast({ title: '请输入商品标题', icon: 'none' }); return }
   saving.value = true
   try {
+    const specSchema = buildSpecSchema(form.skus)
+    const skuOverrides = buildSkuOverrides(form.skus)
     const payload: any = {
       product: {
         title: form.title.trim(), subtitle: form.subtitle.trim(),
@@ -120,11 +180,21 @@ async function save() {
         status: form.status,
         online_at: form.online_at, offline_at: form.offline_at,
       },
-      skus: form.skus.map((s: any) => ({ ...s, attrs: typeof s.attrs === 'string' ? s.attrs : JSON.stringify(s.attrs), price: Number(s.price), stock: Number(s.stock) })),
+      sku_generation_mode: 'auto',
+      spec_schema: specSchema,
+      sku_overrides: skuOverrides,
     }
-    if (id.value) await updateProduct(id.value, payload)
-    else await createProduct(payload)
-    uni.showToast({ title: '保存成功', icon: 'success' })
+    const res: any = id.value ? await updateProduct(id.value, payload) : await createProduct(payload)
+    const diff = res?.sku_diff
+    if (diff && typeof diff === 'object') {
+      uni.showToast({
+        title: `保存成功 +${Number(diff.added || 0)} / =${Number(diff.kept || 0)} / -${Number(diff.inactivated || 0)}`,
+        icon: 'none',
+        duration: 2500,
+      })
+    } else {
+      uni.showToast({ title: '保存成功', icon: 'success' })
+    }
     setTimeout(() => uni.navigateBack(), 350)
   } finally { saving.value = false }
 }

@@ -121,6 +121,7 @@ export default {
     pendingShipment: 'Pending Shipment',
     pendingReceipt: 'Pending Receipt',
     completed: 'Completed',
+    canceled: 'Canceled',
     empty: 'No orders',
     seckill: 'Flash Sale',
     groupBuy: 'Group Buy',
@@ -132,6 +133,10 @@ export default {
     viewDetail: 'View Details',
     afterSaleProgress: 'After-sale Progress',
     goPay: 'Pay Now',
+    cancel: 'Cancel Order',
+    confirmCancel: 'Are you sure to cancel this order?',
+    cancelSuccess: 'Order canceled',
+    cancelFailed: 'Cancel failed',
     review: 'Review',
   },
 
@@ -529,6 +534,7 @@ export default {
     3: 'Pending Receipt',
     4: 'Completed',
     5: 'After-sale',
+    6: 'Canceled',
   },
   afterSaleStatus: {
     applied: 'Applied',

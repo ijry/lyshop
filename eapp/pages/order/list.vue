@@ -21,7 +21,7 @@ const tabs = [
   { name: '待发货', status: '2' },
   { name: '已发货', status: '3' },
   { name: '已完成', status: '4' },
-  { name: '已关闭', status: '5' },
+  { name: '已取消', status: '6' },
   { name: '售后中', status: '', has_after_sale: true },
   { name: '待评价', status: '4', extra: 'pending_review' },
   { name: '待开票', status: '4', extra: 'pending_invoice' },

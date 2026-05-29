@@ -121,6 +121,7 @@ export default {
     pendingShipment: '待发货',
     pendingReceipt: '待收货',
     completed: '已完成',
+    canceled: '已取消',
     empty: '暂无订单',
     seckill: '秒杀',
     groupBuy: '拼团',
@@ -132,6 +133,10 @@ export default {
     viewDetail: '查看详情',
     afterSaleProgress: '售后进度',
     goPay: '去付款',
+    cancel: '取消订单',
+    confirmCancel: '确认取消该订单？',
+    cancelSuccess: '订单已取消',
+    cancelFailed: '取消失败',
     review: '评价',
   },
 
@@ -529,6 +534,7 @@ export default {
     3: '待收货',
     4: '已完成',
     5: '售后',
+    6: '已取消',
   },
   afterSaleStatus: {
     applied: '已申请',

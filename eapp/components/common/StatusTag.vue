@@ -15,7 +15,7 @@ const styleVars = computed(() => {
   if (t.includes('complete') || t.includes('success') || t.includes('refunded') || t.includes('enabled'))
     return { bg: '#dcfce7', color: '#166534' }
   // danger tones
-  if (t.includes('close') || t.includes('reject'))
+  if (t.includes('close') || t.includes('reject') || t === '6')
     return { bg: '#fee2e2', color: '#991b1b' }
   // neutral tone
   if (t.includes('disabled'))

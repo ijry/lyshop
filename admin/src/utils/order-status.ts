@@ -9,6 +9,7 @@ export function orderStatusLabels(): Record<number, string> {
     3: t('orderStatus.delivering'),
     4: t('orderStatus.completed'),
     5: t('orderStatus.afterSale'),
+    6: t('orderStatus.canceled'),
   }
 }
 

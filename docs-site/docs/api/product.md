@@ -32,6 +32,11 @@
 - `PUT /admin/api/products/:id`
   - 请求体兼容升级：支持可选字段 `skus: ProductSku[]`
   - 语义：提交时按商品维度替换 SKU 集合（用于商品管理页统一维护 SKU）
+  - 当前推荐模式：`sku_generation_mode=auto`
+    - `spec_schema`: 规格组定义（属性名 + 值集合）
+    - `sku_overrides`: 覆盖项（按 `sku_key` 指定价格/库存/编码）
+  - 返回 `sku_diff`：`{ added, kept, inactivated }`
+  - 旧 SKU 采用软删除（`status=inactive`），历史订单可继续读取。
 
 ### 新增接口
 
@@ -70,6 +75,9 @@
 
 - 无新增环境变量。
 - 无新增中间件或外部依赖。
+- SKU 模型新增字段（自动迁移）：
+  - `product_skus.sku_key`
+  - `product_skus.status`（`active|inactive`）
 - 活动来源详情双请求仅涉及前端调用链路与营销接口协同，无新增配置项。
 - 数据库新增迁移：
   - 新表 `product_favorites`
