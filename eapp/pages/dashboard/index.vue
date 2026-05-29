@@ -67,11 +67,11 @@ const actions = [
   { key: 'order', label: '订单管理', icon: '📦' },
   { key: 'product', label: '商品管理', icon: '🏷' },
   { key: 'after_sale', label: '售后处理', icon: '🔧' },
+  { key: 'review', label: '评价管理', icon: '⭐' },
   { key: 'decor', label: '店铺装修', icon: '🎨' },
   { key: 'marketing', label: '营销中心', icon: '📣', soon: true },
   { key: 'data', label: '数据报表', icon: '📊', soon: true },
   { key: 'wms', label: '仓储管理', icon: '🏭', soon: true },
-  { key: 'settings', label: '系统设置', icon: '⚙', soon: true },
 ]
 
 /* ---------- lifecycle ---------- */
@@ -100,6 +100,7 @@ function onActionClick(key: string) {
   if (key === 'order') uni.switchTab({ url: '/pages/order/list' })
   else if (key === 'product') uni.switchTab({ url: '/pages/product/list' })
   else if (key === 'after_sale') uni.navigateTo({ url: '/pages/order/after-sale-list' })
+  else if (key === 'review') uni.navigateTo({ url: '/pages/review/list' })
   else if (key === 'decor') uni.navigateTo({ url: '/pages/decor/index' })
 }
 
