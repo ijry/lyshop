@@ -1,17 +1,31 @@
 <script setup lang="ts">
 import { onShow } from '@dcloudio/uni-app'
-import { reactive, ref } from 'vue'
-import { getMessages, sendMessage } from '@/api/message'
+import { reactive, ref, computed } from 'vue'
+import { getMessages, sendMessage, markMessageRead } from '@/api/message'
 
 const list = ref<any[]>([])
 const loading = ref(false)
 const sending = ref(false)
 const form = reactive({ title: '', content: '' })
+const activeGroup = ref('')
+
+const groupTabs = [
+  { key: '', label: '全部' },
+  { key: 'system', label: '系统' },
+  { key: 'order', label: '订单' },
+  { key: 'marketing', label: '营销' },
+  { key: 'im', label: '客服' },
+]
+
+const filteredList = computed(() => {
+  if (!activeGroup.value) return list.value
+  return list.value.filter((item: any) => item.group === activeGroup.value)
+})
 
 async function loadData() {
   loading.value = true
   try {
-    const data: any = await getMessages({ page: 1, size: 20 })
+    const data: any = await getMessages({ page: 1, size: 50, group: activeGroup.value || undefined })
     list.value = Array.isArray(data?.list) ? data.list : Array.isArray(data) ? data : []
   } finally {
     loading.value = false
@@ -35,6 +49,19 @@ async function onSend() {
   }
 }
 
+async function onMarkRead(item: any) {
+  if (item.is_read) return
+  await markMessageRead(item.id)
+  item.is_read = 1
+  uni.showToast({ title: '已标记已读', icon: 'success' })
+}
+
+function priorityClass(p: string) {
+  if (p === 'urgent') return 'dot-urgent'
+  if (p === 'important') return 'dot-important'
+  return ''
+}
+
 onShow(loadData)
 </script>
 
@@ -48,11 +75,23 @@ onShow(loadData)
       <up-button type="primary" :loading="sending" @click="onSend">发送消息</up-button>
     </view>
 
+    <scroll-view scroll-x class="tab-scroll">
+      <view class="tabs">
+        <view v-for="tab in groupTabs" :key="tab.key" :class="['tab', activeGroup === tab.key ? 'active' : '']" @click="activeGroup = tab.key; loadData()">{{ tab.label }}</view>
+      </view>
+    </scroll-view>
+
     <view class="list">
       <view v-if="loading" class="empty">加载中...</view>
-      <view v-else-if="!list.length" class="empty">暂无消息</view>
-      <view v-for="item in list" :key="item.id" class="msg-item">
-        <view class="title">{{ item.title || '-' }}</view>
+      <view v-else-if="!filteredList.length" class="empty">暂无消息</view>
+      <view v-for="item in filteredList" :key="item.id" class="msg-item">
+        <view class="msg-top">
+          <view class="title-row">
+            <view v-if="item.priority && item.priority !== 'normal'" :class="['priority-dot', priorityClass(item.priority)]" />
+            <text class="title">{{ item.title || '-' }}</text>
+          </view>
+          <view v-if="!item.is_read" class="read-btn" @click="onMarkRead(item)">标记已读</view>
+        </view>
         <view class="content">{{ item.content || '-' }}</view>
       </view>
     </view>
@@ -62,9 +101,19 @@ onShow(loadData)
 <style scoped>
 .page { min-height: 100vh; background: var(--eapp-bg); padding: 20rpx; box-sizing: border-box; }
 .card { background: #fff; border: 1px solid var(--eapp-border); border-radius: 20rpx; padding: 20rpx; }
+.tab-scroll { white-space: nowrap; margin-top: 14rpx; }
+.tabs { display: inline-flex; gap: 10rpx; }
+.tab { display: inline-block; padding: 8rpx 20rpx; font-size: 24rpx; border-radius: 999rpx; background: #fff; border: 1px solid var(--eapp-border); }
+.tab.active { background: var(--eapp-primary, #2563eb); color: #fff; border-color: var(--eapp-primary, #2563eb); }
 .list { margin-top: 14rpx; display: grid; gap: 12rpx; }
 .msg-item { background: #fff; border: 1px solid var(--eapp-border); border-radius: 20rpx; padding: 18rpx; }
+.msg-top { display: flex; align-items: center; justify-content: space-between; }
+.title-row { display: flex; align-items: center; gap: 8rpx; }
+.priority-dot { width: 14rpx; height: 14rpx; border-radius: 50%; flex-shrink: 0; }
+.dot-urgent { background: #dc2626; }
+.dot-important { background: #f59e0b; }
 .title { font-size: 28rpx; font-weight: 600; }
+.read-btn { font-size: 22rpx; color: var(--eapp-primary, #2563eb); padding: 4rpx 12rpx; }
 .content { margin-top: 6rpx; color: var(--eapp-text-muted); font-size: 24rpx; }
 .empty { text-align: center; color: var(--eapp-text-muted); padding: 80rpx 0; }
 </style>

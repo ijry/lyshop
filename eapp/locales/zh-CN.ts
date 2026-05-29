@@ -81,6 +81,11 @@ export default {
     title: '我的', messages: '消息中心', sessions: '客服会话', autoReply: '自动回复',
     siteSettings: '店铺设置', admins: '管理员', roles: '角色权限', logout: '退出登录',
   },
+  message: {
+    all: '全部', system: '系统', order: '订单', marketing: '营销', im: '客服',
+    urgent: '紧急', important: '重要', normal: '普通',
+    markRead: '标记已读', unread: '未读',
+  },
   biz: {
     selected: '已选 {count} 项',
     batchResult: '批量操作结果',

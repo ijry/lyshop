@@ -43,6 +43,11 @@ export default {
     replyContent: 'Reply Content', buyer: 'Buyer', staff: 'Staff',
   },
   me: { title: 'Me', messages: 'Messages', sessions: 'Chats', autoReply: 'Auto Reply', siteSettings: 'Shop', admins: 'Admins', roles: 'Roles', logout: 'Sign Out' },
+  message: {
+    all: 'All', system: 'System', order: 'Order', marketing: 'Marketing', im: 'IM',
+    urgent: 'Urgent', important: 'Important', normal: 'Normal',
+    markRead: 'Mark Read', unread: 'Unread',
+  },
   biz: { selected: 'Selected {count}', batchResult: 'Batch Result', selectFirst: 'Select first', soon: 'Coming soon' },
   review: {
     title: 'Reviews',
