@@ -11,6 +11,7 @@ const cards = [
   { key: 'vip', path: '/pages/vip/plan-list', color: '#8b5cf6' },
   { key: 'decor', path: '/pages/decor/editor', color: '#0ea5e9' },
   { key: 'specTemplate', path: '/pages/product/spec-templates', color: '#64748b' },
+  { key: 'distribution', path: '/pages/distribution/index', color: '#d946ef' },
 ]
 
 function go(path: string) {

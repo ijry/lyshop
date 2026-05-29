@@ -132,6 +132,24 @@ const vipSkuPricesSource: any[] = [
   { id: 2, product_id: 1, sku_id: 1, level_id: 2, level_name: '金卡', vip_price: 4699, status: 1 },
   { id: 3, product_id: 1, sku_id: 2, level_id: 2, level_name: '金卡', vip_price: 5399, status: 1 },
 ]
+const distributorsSource: any[] = [
+  { id: 1, user_id: 1001, parent_id: 0, level: 1, total_earn: 1280.50, balance: 580.50, status: 1, nickname: '张三', phone: '138****1001', created_at: '2026-04-01T08:00:00Z', updated_at: '2026-05-28T10:00:00Z' },
+  { id: 2, user_id: 1002, parent_id: 1, level: 2, total_earn: 420.00, balance: 200.00, status: 1, nickname: '李四', phone: '138****1002', created_at: '2026-04-10T08:00:00Z', updated_at: '2026-05-28T10:00:00Z' },
+  { id: 3, user_id: 1003, parent_id: 1, level: 2, total_earn: 310.20, balance: 150.20, status: 1, nickname: '王五', phone: '138****1003', created_at: '2026-04-15T08:00:00Z', updated_at: '2026-05-28T10:00:00Z' },
+  { id: 4, user_id: 1004, parent_id: 2, level: 2, total_earn: 85.00, balance: 85.00, status: 0, nickname: '赵六', phone: '138****1004', created_at: '2026-05-01T08:00:00Z', updated_at: '2026-05-28T10:00:00Z' },
+  { id: 5, user_id: 1005, parent_id: 0, level: 1, total_earn: 960.00, balance: 400.00, status: 1, nickname: '陈七', phone: '138****1005', created_at: '2026-04-20T08:00:00Z', updated_at: '2026-05-28T10:00:00Z' },
+]
+const commissionsSource: any[] = [
+  { id: 1, order_id: 10001, distributor_id: 1, level: 1, amount: 49.90, status: 1, created_at: '2026-05-20T10:00:00Z' },
+  { id: 2, order_id: 10001, distributor_id: 5, level: 2, amount: 24.95, status: 1, created_at: '2026-05-20T10:00:00Z' },
+  { id: 3, order_id: 10002, distributor_id: 2, level: 1, amount: 39.90, status: 2, created_at: '2026-05-18T10:00:00Z' },
+  { id: 4, order_id: 10003, distributor_id: 1, level: 1, amount: 99.00, status: 2, created_at: '2026-05-15T10:00:00Z' },
+  { id: 5, order_id: 10004, distributor_id: 3, level: 1, amount: 29.90, status: 3, created_at: '2026-05-10T10:00:00Z' },
+  { id: 6, order_id: 10005, distributor_id: 1, level: 1, amount: 59.90, status: 1, created_at: '2026-05-25T10:00:00Z' },
+  { id: 7, order_id: 10005, distributor_id: 5, level: 2, amount: 29.95, status: 1, created_at: '2026-05-25T10:00:00Z' },
+  { id: 8, order_id: 10006, distributor_id: 2, level: 1, amount: 19.90, status: 2, created_at: '2026-05-12T10:00:00Z' },
+]
+const distributionConfigSource: any = { level1_rate: 0.10, level2_rate: 0.05 }
 const couponsSource: any[] = [
   { id: 1, name: '新人满100减20', type: 1, min_amount: 100, discount: 20, total_count: 1000, per_limit: 1, status: 1, used_count: 120, start_at: '2026-05-01T00:00:00Z', end_at: '2026-06-30T23:59:59Z', description: '新用户专享', stack_rule: 'exclusive', target_type: 'new_user', target_value: '' },
   { id: 2, name: '全场9折券', type: 2, min_amount: 0, discount: 0.9, total_count: 500, per_limit: 1, status: 1, used_count: 85, start_at: '2026-05-01T00:00:00Z', end_at: '2026-07-31T23:59:59Z', description: '全场通用折扣', stack_rule: 'same_type', target_type: 'all', target_value: '' },
@@ -1156,6 +1174,9 @@ const routes: Record<string, any> = {
   },
   'PUT /admin/api/site-settings': { success: true },
 
+  // Distribution
+  'GET /admin/api/distribution/config': distributionConfigSource,
+
   // Checkin
   'GET /admin/api/checkin/rules': [
     { id: 1, day: 0, points: 10 },
@@ -1772,6 +1793,68 @@ export function matchMock(method: string, url: string, params?: Record<string, a
   if (vipRuleResult) return vipRuleResult
   const vipSkuResult = vipCrud('/admin/api/vip/sku-prices', vipSkuPricesSource)
   if (vipSkuResult) return vipSkuResult
+
+  // Distribution routes
+  if (key === 'GET /admin/api/distribution/distributors') {
+    let list = clone(distributorsSource) as any[]
+    const keyword = String(query.keyword || '').trim().toLowerCase()
+    const hasStatus = query.status !== undefined && query.status !== null && String(query.status).trim() !== ''
+    const status = Number(query.status || 0)
+    if (keyword) list = list.filter((item: any) => String(item.nickname || '').toLowerCase().includes(keyword) || String(item.phone || '').includes(keyword))
+    if (hasStatus) list = list.filter((item: any) => Number(item.status || 0) === status)
+    return { matched: true, data: toPageData(list, Number(query.page || 1), Number(query.size || 20)) }
+  }
+  if (key.startsWith('GET /admin/api/distribution/distributors/') && !key.includes('/status')) {
+    const id = Number(url.split('/').pop() || 0)
+    const found = distributorsSource.find((item: any) => Number(item.id || 0) === id)
+    return { matched: true, data: found ? clone(found) : null }
+  }
+  if (methodUpper === 'PUT' && /\/admin\/api\/distribution\/distributors\/\d+\/status$/.test(url)) {
+    const parts = url.split('/')
+    const id = Number(parts[parts.length - 2] || 0)
+    const target = distributorsSource.find((item: any) => Number(item.id || 0) === id)
+    if (target) {
+      target.status = Number((params as any)?.status || 0)
+      target.updated_at = new Date().toISOString()
+    }
+    return { matched: true, data: null }
+  }
+  if (key === 'GET /admin/api/distribution/commissions') {
+    let list = clone(commissionsSource) as any[]
+    const distributorId = Number(query.distributor_id || 0)
+    const hasStatus = query.status !== undefined && query.status !== null && String(query.status).trim() !== ''
+    const status = Number(query.status || 0)
+    const hasLevel = query.level !== undefined && query.level !== null && String(query.level).trim() !== ''
+    const level = Number(query.level || 0)
+    if (distributorId > 0) list = list.filter((item: any) => Number(item.distributor_id || 0) === distributorId)
+    if (hasStatus) list = list.filter((item: any) => Number(item.status || 0) === status)
+    if (hasLevel) list = list.filter((item: any) => Number(item.level || 0) === level)
+    return { matched: true, data: toPageData(list, Number(query.page || 1), Number(query.size || 20)) }
+  }
+  if (methodUpper === 'PUT' && /\/admin\/api\/distribution\/commissions\/\d+\/settle$/.test(url)) {
+    const parts = url.split('/')
+    const id = Number(parts[parts.length - 2] || 0)
+    const target = commissionsSource.find((item: any) => Number(item.id || 0) === id)
+    if (target && Number(target.status) === 1) {
+      target.status = 2
+      const dist = distributorsSource.find((d: any) => Number(d.id || 0) === Number(target.distributor_id || 0))
+      if (dist) { dist.balance = Number(dist.balance || 0) + Number(target.amount || 0); dist.updated_at = new Date().toISOString() }
+    }
+    return { matched: true, data: null }
+  }
+  if (methodUpper === 'PUT' && /\/admin\/api\/distribution\/commissions\/\d+\/return$/.test(url)) {
+    const parts = url.split('/')
+    const id = Number(parts[parts.length - 2] || 0)
+    const target = commissionsSource.find((item: any) => Number(item.id || 0) === id)
+    if (target) target.status = 3
+    return { matched: true, data: null }
+  }
+  if (key === 'PUT /admin/api/distribution/config') {
+    const payload = params as any
+    if (payload?.level1_rate !== undefined) distributionConfigSource.level1_rate = Number(payload.level1_rate)
+    if (payload?.level2_rate !== undefined) distributionConfigSource.level2_rate = Number(payload.level2_rate)
+    return { matched: true, data: null }
+  }
 
   // Category tree helper
   if (key === 'GET /admin/api/categories/tree') {

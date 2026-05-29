@@ -5,7 +5,7 @@ export default {
   order: { all: 'All', pendingPay: 'Unpaid', pendingShip: 'To Ship', shipped: 'Shipped', completed: 'Completed', closed: 'Closed', hasAfterSale: 'After-sale', pendingReview: 'Review', pendingInvoice: 'Invoice', filterTitle: 'Order Filter', actions: { detail: 'Detail', reprice: 'Reprice', remindPay: 'Remind', ship: 'Ship', note: 'Note', print: 'Print' }, batch: { ship: 'Batch Ship', notes: 'Batch Note', close: 'Batch Close' } },
   afterSale: { all: 'All', applied: 'Applied', returning: 'Returning', refunding: 'Refunding', refunded: 'Refunded', closed: 'Closed', types: { all: 'All', refundOnly: 'Refund only', returnRefund: 'Return & refund', exchange: 'Exchange' }, progress: { applied: 'Apply', approved: 'Review', returning: 'Return', received: 'Receive', refunded: 'Refund' }, chatPlaceholder: 'Reply…', evidenceUpload: 'Upload evidence' },
   product: { search: 'Search', edit: 'Edit', onSale: 'List', offSale: 'Unlist', tabs: { all: 'All', onSale: 'On Sale', off: 'Stock', warning: 'Low' }, sortBy: { default: 'Default', sales: 'Sales', stock: 'Stock', priceAsc: 'Price asc', priceDesc: 'Price desc', created: 'Newest' }, batch: { shelfOn: 'List', shelfOff: 'Unlist', category: 'Category', price: 'Price' }, editSections: { base: 'Basics', covers: 'Covers', detail: 'Detail', pricing: 'Pricing', sku: 'SKU', category: 'Category', shipping: 'Shipping', status: 'Status' } },
-  marketing: { coupon: 'Coupon', seckill: 'Seckill', groupBuy: 'Group Buy', bargain: 'Bargain', vip: 'VIP', decor: 'Decor', specTemplate: 'Spec Templates' },
+  marketing: { coupon: 'Coupon', seckill: 'Seckill', groupBuy: 'Group Buy', bargain: 'Bargain', vip: 'VIP', decor: 'Decor', specTemplate: 'Spec Templates', distribution: 'Distribution' },
   coupon: {
     create: 'Create', edit: 'Edit', delete: 'Delete', send: 'Send',
     name: 'Name', type: 'Type', discount: 'Discount', status: 'Status',
@@ -56,6 +56,17 @@ export default {
     productScore: 'Product', logisticsScore: 'Logistics',
     images: 'Images', appends: 'Follow-ups',
     noReviews: 'No reviews',
+  },
+  distribution: {
+    totalDistributors: 'Total Distributors',
+    pendingCommission: 'Pending Commission',
+    settledTotal: 'Settled Total',
+    distributorMgmt: 'Distributors',
+    commissionMgmt: 'Commissions',
+    distributionConfig: 'Config',
+    searchDistributor: 'Search distributor',
+    level1Rate: 'Level 1 Rate',
+    level2Rate: 'Level 2 Rate',
   },
   analytics: {
     title: 'Analytics',

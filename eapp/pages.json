@@ -51,7 +51,11 @@
     { "path": "pages/wms/stock-ledger", "style": { "navigationBarTitleText": "库存台账" } },
     { "path": "pages/wms/doc-list", "style": { "navigationBarTitleText": "出入库单" } },
     { "path": "pages/wms/doc-editor", "style": { "navigationBarTitleText": "单据编辑" } },
-    { "path": "pages/wms/movement-list", "style": { "navigationBarTitleText": "库存流水" } }
+    { "path": "pages/wms/movement-list", "style": { "navigationBarTitleText": "库存流水" } },
+    { "path": "pages/distribution/index", "style": { "navigationBarTitleText": "分销管理" } },
+    { "path": "pages/distribution/distributor-list", "style": { "navigationBarTitleText": "分销商管理" } },
+    { "path": "pages/distribution/commission-list", "style": { "navigationBarTitleText": "佣金管理" } },
+    { "path": "pages/distribution/config", "style": { "navigationBarTitleText": "分销配置" } }
   ],
   "tabBar": {
     "color": "#64748b",
