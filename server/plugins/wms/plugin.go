@@ -37,6 +37,7 @@ func (p *wmsPlugin) Migrate(db *gorm.DB) error {
 		&wmsmodel.InventoryMovement{},
 		&wmsmodel.InventoryDoc{},
 		&wmsmodel.InventoryDocItem{},
+		&wmsmodel.InventoryReservation{},
 	)
 }
 

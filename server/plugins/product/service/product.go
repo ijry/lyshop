@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
 
 	"github.com/ijry/lyshop/core/db"
 	productmodel "github.com/ijry/lyshop/plugins/product/model"
@@ -121,7 +122,9 @@ func GetProduct(ctx context.Context, id uint64, userID uint64) (*ProductDetail, 
 	}
 	p.Detail = normalizeDetail(p.Detail)
 	detail := &ProductDetail{Product: p}
-	db.DB.WithContext(ctx).Where("product_id = ?", id).Find(&detail.SKUs)
+	db.DB.WithContext(ctx).
+		Where("product_id = ? AND (status = ? OR status = '')", id, productmodel.ProductSkuStatusActive).
+		Find(&detail.SKUs)
 	db.DB.WithContext(ctx).Where("product_id = ?", id).Order("sort asc").Find(&detail.Images)
 	favoritedSet, err := getFavoritedProductIDSet(ctx, userID, []uint64{id})
 	if err != nil {
@@ -133,15 +136,19 @@ func GetProduct(ctx context.Context, id uint64, userID uint64) (*ProductDetail, 
 
 func CreateProduct(ctx context.Context, p *productmodel.Product, skus []productmodel.ProductSku, images []productmodel.ProductImage) error {
 	p.Detail = normalizeDetail(p.Detail)
+	normalizedSkus, err := normalizeIncomingSkus(skus)
+	if err != nil {
+		return err
+	}
 	return db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(p).Error; err != nil {
 			return err
 		}
-		for i := range skus {
-			skus[i].ProductID = p.ID
+		for i := range normalizedSkus {
+			normalizedSkus[i].ProductID = p.ID
 		}
-		if len(skus) > 0 {
-			if err := tx.Create(&skus).Error; err != nil {
+		if len(normalizedSkus) > 0 {
+			if err := tx.Create(&normalizedSkus).Error; err != nil {
 				return err
 			}
 		}
@@ -191,21 +198,85 @@ func ReplaceProductImages(ctx context.Context, productID uint64, images []produc
 	})
 }
 
-func ReplaceProductSkus(ctx context.Context, productID uint64, skus []productmodel.ProductSku) error {
-	return db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Where("product_id = ?", productID).Delete(&productmodel.ProductSku{}).Error; err != nil {
+func ReplaceProductSkus(ctx context.Context, productID uint64, skus []productmodel.ProductSku) (*SkuDiffSummary, error) {
+	normalizedSkus, err := normalizeIncomingSkus(skus)
+	if err != nil {
+		return nil, err
+	}
+	diff := &SkuDiffSummary{}
+	err = db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var existing []productmodel.ProductSku
+		if err := tx.Where("product_id = ?", productID).Find(&existing).Error; err != nil {
 			return err
 		}
-		for i := range skus {
-			skus[i].ProductID = productID
+		existingByKey := make(map[string]productmodel.ProductSku, len(existing))
+		for _, row := range existing {
+			key := strings.TrimSpace(row.SkuKey)
+			if key == "" {
+				attrs, decodeErr := DecodeSkuAttrs(row.Attrs)
+				if decodeErr != nil {
+					return decodeErr
+				}
+				key = CanonicalSkuKey(attrs)
+			}
+			existingByKey[key] = row
 		}
-		if len(skus) > 0 {
-			if err := tx.Create(&skus).Error; err != nil {
+
+		incomingKeys := make(map[string]struct{}, len(normalizedSkus))
+		for _, row := range normalizedSkus {
+			key := row.SkuKey
+			incomingKeys[key] = struct{}{}
+
+			if current, ok := existingByKey[key]; ok {
+				if err := tx.Model(&productmodel.ProductSku{}).Where("id = ?", current.ID).Updates(map[string]any{
+					"attrs":    row.Attrs,
+					"price":    row.Price,
+					"stock":    row.Stock,
+					"sku_code": row.SkuCode,
+					"sku_key":  key,
+					"status":   productmodel.ProductSkuStatusActive,
+				}).Error; err != nil {
+					return err
+				}
+				diff.Kept++
+				continue
+			}
+
+			createRow := row
+			createRow.ProductID = productID
+			createRow.Status = productmodel.ProductSkuStatusActive
+			if err := tx.Create(&createRow).Error; err != nil {
 				return err
 			}
+			diff.Added++
+		}
+
+		for _, row := range existing {
+			key := strings.TrimSpace(row.SkuKey)
+			if key == "" {
+				attrs, decodeErr := DecodeSkuAttrs(row.Attrs)
+				if decodeErr != nil {
+					return decodeErr
+				}
+				key = CanonicalSkuKey(attrs)
+			}
+			if _, keep := incomingKeys[key]; keep {
+				continue
+			}
+			if row.Status == productmodel.ProductSkuStatusInactive {
+				continue
+			}
+			if err := tx.Model(&productmodel.ProductSku{}).Where("id = ?", row.ID).Update("status", productmodel.ProductSkuStatusInactive).Error; err != nil {
+				return err
+			}
+			diff.Inactivated++
 		}
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+	return diff, nil
 }
 
 func hasProductID(set map[uint64]struct{}, productID uint64) bool {

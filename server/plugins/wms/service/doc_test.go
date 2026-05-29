@@ -190,6 +190,7 @@ func setupWmsTestDB(t *testing.T) *gorm.DB {
 		&wmsmodel.InventoryMovement{},
 		&wmsmodel.InventoryDoc{},
 		&wmsmodel.InventoryDocItem{},
+		&wmsmodel.InventoryReservation{},
 	))
 	return gdb
 }

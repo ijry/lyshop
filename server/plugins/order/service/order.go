@@ -13,22 +13,22 @@ import (
 	"github.com/ijry/lyshop/core/marketing"
 	marketingsvc "github.com/ijry/lyshop/plugins/marketing/service"
 	ordermodel "github.com/ijry/lyshop/plugins/order/model"
-	productmodel "github.com/ijry/lyshop/plugins/product/model"
 	vipsvc "github.com/ijry/lyshop/plugins/vip/service"
+	wmssvc "github.com/ijry/lyshop/plugins/wms/service"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
 // CreateOrderReq is the request payload to create an order.
 type CreateOrderReq struct {
-	UserID        uint64   `json:"user_id"`
-	AddressID     uint64   `json:"address_id"`
-	PaymentMethod string   `json:"payment_method"`
+	UserID        uint64               `json:"user_id"`
+	AddressID     uint64               `json:"address_id"`
+	PaymentMethod string               `json:"payment_method"`
 	Items         []CreateOrderItemReq `json:"items"`
-	SkuIDs        []uint64 `json:"sku_ids"`
-	CouponIDs     []uint64 `json:"coupon_ids"`
-	PointsUse     int      `json:"points_use"`
-	Remark        string   `json:"remark"`
+	SkuIDs        []uint64             `json:"sku_ids"`
+	CouponIDs     []uint64             `json:"coupon_ids"`
+	PointsUse     int                  `json:"points_use"`
+	Remark        string               `json:"remark"`
 }
 
 type CreateOrderItemReq struct {
@@ -67,6 +67,15 @@ type OrderShipmentView struct {
 
 var validateActivityProductSourceFn = marketingsvc.ValidateActivityProductSource
 var increaseSoldQtyByActivityProductTxFn = marketingsvc.IncreaseSoldQtyByActivityProductTx
+var reserveStockTxFn = wmssvc.ReserveStockTx
+var confirmReservationTxFn = wmssvc.ConfirmReservationTx
+var releaseReservationTxFn = wmssvc.ReleaseReservationTx
+var pickDefaultWarehouseIDTxFn = wmssvc.PickDefaultWarehouseIDTx
+
+const (
+	orderReservationBizType = "order"
+	orderReserveExpire      = 15 * time.Minute
+)
 
 func cartSelectionKey(skuID, activityProductID uint64) string {
 	return fmt.Sprintf("%d:%d", skuID, activityProductID)
@@ -218,18 +227,30 @@ func CreateOrder(ctx context.Context, req CreateOrderReq) (*ordermodel.Order, er
 		if err := tx.Create(order).Error; err != nil {
 			return err
 		}
+		warehouseID, err := pickDefaultWarehouseIDTxFn(tx)
+		if err != nil {
+			return err
+		}
+		reservationItems := make([]wmssvc.ReservationItemInput, 0, len(items))
+		for _, item := range items {
+			reservationItems = append(reservationItems, wmssvc.ReservationItemInput{
+				SkuID: item.SkuID,
+				Qty:   item.Qty,
+			})
+		}
+		expireAt := time.Now().Add(orderReserveExpire)
+		if err := reserveStockTxFn(tx, wmssvc.ReserveStockInput{
+			BizType:     orderReservationBizType,
+			BizNo:       order.OrderNo,
+			WarehouseID: warehouseID,
+			Items:       reservationItems,
+			ExpiredAt:   &expireAt,
+		}); err != nil {
+			return err
+		}
 		for i := range items {
 			items[i].OrderID = order.ID
-			// Deduct SKU stock
-			res := tx.Model(&productmodel.ProductSku{}).
-				Where("id = ? AND stock >= ?", items[i].SkuID, items[i].Qty).
-				UpdateColumn("stock", gorm.Expr("stock - ?", items[i].Qty))
-			if res.Error != nil {
-				return res.Error
-			}
-			if res.RowsAffected == 0 {
-				return fmt.Errorf("order.err.insufficientStock (sku_id=%d)", items[i].SkuID)
-			}
+			items[i].WarehouseID = warehouseID
 			if items[i].ActivityProductID > 0 {
 				if err := increaseSoldQtyByActivityProductTxFn(tx, items[i].ActivityProductID, items[i].Qty); err != nil {
 					return err
@@ -578,6 +599,9 @@ func PayOrder(ctx context.Context, userID, orderID uint64) error {
 		if order.Status != ordermodel.OrderStatusPending {
 			return errors.New("order.err.cannotPay")
 		}
+		if err := confirmReservationTxFn(tx, orderReservationBizType, order.OrderNo); err != nil {
+			return err
+		}
 
 		now := time.Now()
 		if err := tx.Model(&ordermodel.Order{}).Where("id = ?", order.ID).Updates(map[string]any{
@@ -588,6 +612,27 @@ func PayOrder(ctx context.Context, userID, orderID uint64) error {
 		}
 
 		return vipsvc.GrantGrowthForPaidOrderTx(tx, userID, order.ID, order.TotalAmount)
+	})
+}
+
+func CancelOrder(ctx context.Context, userID, orderID uint64) error {
+	return db.DB.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var order ordermodel.Order
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("id = ? AND user_id = ?", orderID, userID).
+			First(&order).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return errors.New("order.err.cannotCancel")
+			}
+			return err
+		}
+		if order.Status != ordermodel.OrderStatusPending {
+			return errors.New("order.err.cannotCancel")
+		}
+		if err := releaseReservationTxFn(tx, orderReservationBizType, order.OrderNo, "user_cancel"); err != nil {
+			return err
+		}
+		return tx.Model(&ordermodel.Order{}).Where("id = ?", order.ID).Update("status", ordermodel.OrderStatusCanceled).Error
 	})
 }
 

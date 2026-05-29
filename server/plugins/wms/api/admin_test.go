@@ -216,6 +216,7 @@ func setupAdminTestRouter(t *testing.T) (*gin.Engine, *gorm.DB) {
 		&wmsmodel.InventoryMovement{},
 		&wmsmodel.InventoryDoc{},
 		&wmsmodel.InventoryDocItem{},
+		&wmsmodel.InventoryReservation{},
 	))
 
 	r := gin.New()

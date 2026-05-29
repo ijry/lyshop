@@ -14,6 +14,7 @@ var orderStatusI18nKeys = map[int8]string{
 	3: "order.status.delivering",
 	4: "order.status.completed",
 	5: "order.status.afterSale",
+	6: "order.status.canceled",
 }
 
 var afterSaleCaseTypeI18nKeys = map[string]string{

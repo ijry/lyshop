@@ -37,6 +37,7 @@ func RegisterFrontRoutes(g *gin.RouterGroup) {
 	auth.POST("/after-sales/:id/return-shipments", myAfterSaleReturnShipment)
 	auth.POST("/upload", frontUploadFile)
 	auth.POST("/orders/:id/pay", payOrder)
+	auth.POST("/orders/:id/cancel", cancelOrder)
 	auth.POST("/orders/:id/review", reviewOrder)
 }
 
@@ -202,6 +203,16 @@ func payOrder(c *gin.Context) {
 	userID, _ := c.Get("user_id")
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err := ordersvc.PayOrder(c.Request.Context(), userID.(uint64), id); err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, nil)
+}
+
+func cancelOrder(c *gin.Context) {
+	userID, _ := c.Get("user_id")
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err := ordersvc.CancelOrder(c.Request.Context(), userID.(uint64), id); err != nil {
 		response.Fail(c, 500, err.Error())
 		return
 	}

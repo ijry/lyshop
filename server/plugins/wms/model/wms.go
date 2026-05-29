@@ -43,6 +43,7 @@ type InventoryStock struct {
 	WarehouseID uint64 `gorm:"not null;index;uniqueIndex:uk_inventory_warehouse_sku" json:"warehouse_id"`
 	SkuID       uint64 `gorm:"not null;index;uniqueIndex:uk_inventory_warehouse_sku" json:"sku_id"`
 	Qty         int    `gorm:"not null;default:0"                                      json:"qty"`
+	ReservedQty int    `gorm:"not null;default:0"                                      json:"reserved_qty"`
 	SafeQty     int    `gorm:"not null;default:0"                                      json:"safe_qty"`
 }
 

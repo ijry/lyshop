@@ -19,4 +19,11 @@ type ProductSku struct {
 	Price     float64         `gorm:"type:decimal(10,2);not null" json:"price"`
 	Stock     int             `gorm:"not null;default:0"         json:"stock"`
 	SkuCode   string          `gorm:"size:128"                   json:"sku_code"`
+	SkuKey    string          `gorm:"size:255;not null;index:uk_product_sku_key,unique,priority:2" json:"sku_key"`
+	Status    string          `gorm:"size:16;not null;default:'active';index"                       json:"status"`
 }
+
+const (
+	ProductSkuStatusActive   = "active"
+	ProductSkuStatusInactive = "inactive"
+)

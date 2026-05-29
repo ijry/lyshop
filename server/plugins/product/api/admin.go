@@ -89,13 +89,24 @@ func adminGetProduct(c *gin.Context) {
 
 func adminCreateProduct(c *gin.Context) {
 	var req struct {
-		Product productmodel.Product        `json:"product"`
-		SKUs    []productmodel.ProductSku   `json:"skus"`
-		Images  []productmodel.ProductImage `json:"images"`
+		Product           productmodel.Product         `json:"product"`
+		SKUs              []productmodel.ProductSku    `json:"skus"`
+		Images            []productmodel.ProductImage  `json:"images"`
+		SpecSchema        []productsvc.SpecSchemaGroup `json:"spec_schema"`
+		SkuOverrides      []productsvc.SkuOverride     `json:"sku_overrides"`
+		SkuGenerationMode string                       `json:"sku_generation_mode"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Fail(c, 400, err.Error())
 		return
+	}
+	if req.SkuGenerationMode == "auto" {
+		generated, err := productsvc.BuildSkusFromSpecSchema(req.SpecSchema, req.Product.Price, req.SkuOverrides)
+		if err != nil {
+			response.Fail(c, 400, err.Error())
+			return
+		}
+		req.SKUs = generated
 	}
 	if len(req.Product.Detail) == 0 {
 		req.Product.Detail = json.RawMessage(`{"version":1,"blocks":[]}`)
@@ -104,15 +115,23 @@ func adminCreateProduct(c *gin.Context) {
 		response.Fail(c, 500, err.Error())
 		return
 	}
-	response.OK(c, req.Product)
+	response.OK(c, gin.H{
+		"product": req.Product,
+		"sku_diff": productsvc.SkuDiffSummary{
+			Added: len(req.SKUs),
+		},
+	})
 }
 
 func adminUpdateProduct(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	var req struct {
-		Product map[string]any              `json:"product"`
-		SKUs    []productmodel.ProductSku   `json:"skus"`
-		Images  []productmodel.ProductImage `json:"images"`
+		Product           map[string]any               `json:"product"`
+		SKUs              []productmodel.ProductSku    `json:"skus"`
+		Images            []productmodel.ProductImage  `json:"images"`
+		SpecSchema        []productsvc.SpecSchemaGroup `json:"spec_schema"`
+		SkuOverrides      []productsvc.SkuOverride     `json:"sku_overrides"`
+		SkuGenerationMode string                       `json:"sku_generation_mode"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Fail(c, 400, err.Error())
@@ -123,12 +142,36 @@ func adminUpdateProduct(c *gin.Context) {
 	if updates == nil {
 		updates = map[string]any{}
 	}
+	mode := req.SkuGenerationMode
+	if mode == "" {
+		mode = parseString(updates["sku_generation_mode"])
+	}
+	if mode == "auto" {
+		basePrice := 0.0
+		if p, ok := parseFloat64(updates["price"]); ok {
+			basePrice = p
+		} else {
+			detail, err := productsvc.GetProduct(c.Request.Context(), id, 0)
+			if err == nil && detail != nil {
+				basePrice = detail.Price
+			}
+		}
+		generated, err := productsvc.BuildSkusFromSpecSchema(req.SpecSchema, basePrice, req.SkuOverrides)
+		if err != nil {
+			response.Fail(c, 400, err.Error())
+			return
+		}
+		req.SKUs = generated
+	}
 	if err := productsvc.UpdateProduct(c.Request.Context(), id, updates); err != nil {
 		response.Fail(c, 500, err.Error())
 		return
 	}
+	var diff *productsvc.SkuDiffSummary
 	if req.SKUs != nil {
-		if err := productsvc.ReplaceProductSkus(c.Request.Context(), id, req.SKUs); err != nil {
+		var err error
+		diff, err = productsvc.ReplaceProductSkus(c.Request.Context(), id, req.SKUs)
+		if err != nil {
 			response.Fail(c, 500, err.Error())
 			return
 		}
@@ -139,7 +182,7 @@ func adminUpdateProduct(c *gin.Context) {
 			return
 		}
 	}
-	response.OK(c, nil)
+	response.OK(c, gin.H{"sku_diff": diff})
 }
 
 func adminDeleteProduct(c *gin.Context) {
@@ -149,4 +192,29 @@ func adminDeleteProduct(c *gin.Context) {
 		return
 	}
 	response.OK(c, nil)
+}
+
+func parseString(v any) string {
+	if s, ok := v.(string); ok {
+		return s
+	}
+	return ""
+}
+
+func parseFloat64(v any) (float64, bool) {
+	switch value := v.(type) {
+	case float64:
+		return value, true
+	case float32:
+		return float64(value), true
+	case int:
+		return float64(value), true
+	case int64:
+		return float64(value), true
+	case json.Number:
+		n, err := value.Float64()
+		return n, err == nil
+	default:
+		return 0, false
+	}
 }
