@@ -18,7 +18,7 @@ const loading = ref(true)
 
 onMounted(async () => {
   try {
-    const data = await get<any>('/api/v1/pc/decor')
+    const data = await get<any>('/api/v1/decor/pc')
     const payload = data?.components || {}
     pageStyle.value = payload?.pageStyle || null
     components.value = Array.isArray(payload?.components) ? payload.components : []

@@ -574,6 +574,7 @@ function removeAddress(id: number) {
 
 const routes: Record<string, any> = {
   'GET /admin/api/index/decor': indexDecor,
+  'GET /api/v1/decor/pc': pcDecor,
   'GET /api/v1/pc/decor': pcDecor,
   'GET /api/v1/site-settings': siteSettings,
   'GET /api/v1/categories': categories,
