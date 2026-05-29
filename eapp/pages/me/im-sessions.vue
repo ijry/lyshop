@@ -2,31 +2,43 @@
 import { onShow } from '@dcloudio/uni-app'
 import { ref } from 'vue'
 import { getImSessions } from '@/api/im'
+import EmptyState from '@/components/biz/EmptyState.vue'
 
 const list = ref<any[]>([])
+const loading = ref(false)
 
 async function loadData() {
-  const data: any = await getImSessions({ page: 1, size: 50 })
-  list.value = Array.isArray(data?.list) ? data.list : Array.isArray(data) ? data : []
+  loading.value = true
+  try {
+    const data: any = await getImSessions({ page: 1, size: 50 })
+    list.value = Array.isArray(data?.list) ? data.list : Array.isArray(data) ? data : []
+  } finally {
+    loading.value = false
+  }
 }
 
 function statusLabel(status: number) {
-  if (status === 1) return '等待中'
-  if (status === 2) return '进行中'
+  if (status === 1) return '等待接入'
+  if (status === 2) return '服务中'
   if (status === 3) return '已关闭'
   return ''
 }
 
-function statusClass(status: number) {
-  if (status === 1) return 'status-waiting'
-  if (status === 2) return 'status-active'
-  if (status === 3) return 'status-closed'
-  return ''
+function statusTone(status: number) {
+  if (status === 1) return 'warning'
+  if (status === 2) return 'success'
+  return 'muted'
 }
 
-function truncate(text: string, max = 30) {
-  if (!text) return '-'
-  return text.length > max ? text.slice(0, max) + '...' : text
+function timeAgo(t: string) {
+  if (!t) return ''
+  const d = new Date(t)
+  const now = new Date()
+  const diff = Math.floor((now.getTime() - d.getTime()) / 1000)
+  if (diff < 60) return '刚刚'
+  if (diff < 3600) return `${Math.floor(diff / 60)}分钟前`
+  if (diff < 86400) return `${Math.floor(diff / 3600)}小时前`
+  return t.slice(5, 16).replace('T', ' ')
 }
 
 function goChat(sessionId: number) {
@@ -38,31 +50,79 @@ onShow(loadData)
 
 <template>
   <view class="page">
-    <view v-if="!list.length" class="empty">暂无会话</view>
-    <view v-for="item in list" :key="item.id" class="card" @click="goChat(item.id)">
-      <view class="card-top">
-        <view class="title-row">
-          <text class="title">{{ item.user_nickname || item.user_id || '-' }}</text>
-          <view v-if="item.unread_count" class="unread">{{ item.unread_count > 99 ? '99+' : item.unread_count }}</view>
+    <view class="header">
+      <text class="header-title">客服会话</text>
+      <text class="header-count">{{ list.length }} 个会话</text>
+    </view>
+
+    <EmptyState v-if="!loading && !list.length" title="暂无会话" desc="等待买家发起咨询" />
+
+    <view class="list">
+      <view v-for="item in list" :key="item.id" class="session" @click="goChat(item.id)">
+        <view class="avatar-wrap">
+          <image v-if="item.user_avatar" :src="item.user_avatar" mode="aspectFill" class="avatar" />
+          <view v-else class="avatar avatar-placeholder">
+            <text>{{ (item.user_nickname || 'U')[0] }}</text>
+          </view>
+          <view v-if="statusTone(item.status) === 'success'" class="online-dot" />
         </view>
-        <text :class="['status-tag', statusClass(item.status)]">{{ statusLabel(item.status) }}</text>
+
+        <view class="session-body">
+          <view class="session-top">
+            <text class="nickname">{{ item.user_nickname || `用户${item.user_id}` }}</text>
+            <text class="time">{{ timeAgo(item.updated_at) }}</text>
+          </view>
+          <view class="session-bottom">
+            <text class="last-msg">{{ item.last_msg || '-' }}</text>
+            <view v-if="item.unread_count" class="unread">{{ item.unread_count > 99 ? '99+' : item.unread_count }}</view>
+          </view>
+        </view>
+
+        <view :class="['status-pill', `tone-${statusTone(item.status)}`]">
+          <text class="status-text">{{ statusLabel(item.status) }}</text>
+        </view>
       </view>
-      <view class="desc">{{ truncate(item.last_msg || item.last_message || '') }}</view>
     </view>
   </view>
 </template>
 
 <style scoped>
-.page { min-height: 100vh; background: var(--eapp-bg); padding: 20rpx; box-sizing: border-box; display: grid; gap: 12rpx; align-content: start; }
-.card { background: #fff; border: 1px solid var(--eapp-border); border-radius: 20rpx; padding: 20rpx; }
-.card-top { display: flex; align-items: center; justify-content: space-between; }
-.title-row { display: flex; align-items: center; gap: 10rpx; }
-.title { font-size: 28rpx; font-weight: 600; }
-.unread { min-width: 32rpx; height: 32rpx; line-height: 32rpx; text-align: center; font-size: 20rpx; background: #dc2626; color: #fff; border-radius: 999rpx; padding: 0 8rpx; }
-.status-tag { font-size: 20rpx; padding: 4rpx 12rpx; border-radius: 999rpx; }
-.status-waiting { background: #fef3c7; color: #d97706; }
-.status-active { background: #dcfce7; color: #16a34a; }
-.status-closed { background: #f1f5f9; color: #64748b; }
-.desc { margin-top: 8rpx; color: var(--eapp-text-muted); font-size: 24rpx; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.empty { text-align: center; color: var(--eapp-text-muted); padding: 80rpx 0; }
+.page { min-height: 100vh; background: var(--eapp-bg); }
+
+.header { padding: 24rpx 28rpx 16rpx; display: flex; align-items: baseline; justify-content: space-between; }
+.header-title { font-size: 34rpx; font-weight: 700; color: var(--eapp-text); }
+.header-count { font-size: 22rpx; color: var(--eapp-text-muted); }
+
+.list { padding: 0 20rpx 20rpx; display: grid; gap: 2rpx; }
+
+.session {
+  display: flex; align-items: center; gap: 20rpx;
+  background: var(--eapp-card); padding: 24rpx 20rpx;
+  border-bottom: 1rpx solid var(--eapp-border);
+}
+.session:first-child { border-radius: 20rpx 20rpx 0 0; }
+.session:last-child { border-radius: 0 0 20rpx 20rpx; border-bottom: none; }
+.session:only-child { border-radius: 20rpx; }
+
+.avatar-wrap { position: relative; flex-shrink: 0; }
+.avatar { width: 88rpx; height: 88rpx; border-radius: 50%; background: var(--eapp-bg); }
+.avatar-placeholder { display: flex; align-items: center; justify-content: center; background: var(--eapp-primary-soft); color: var(--eapp-primary); font-size: 30rpx; font-weight: 700; }
+.online-dot { position: absolute; bottom: 4rpx; right: 4rpx; width: 18rpx; height: 18rpx; background: var(--eapp-success); border: 3rpx solid var(--eapp-card); border-radius: 50%; }
+
+.session-body { flex: 1; min-width: 0; }
+.session-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8rpx; }
+.nickname { font-size: 28rpx; font-weight: 600; color: var(--eapp-text); }
+.time { font-size: 22rpx; color: var(--eapp-text-faint); flex-shrink: 0; }
+.session-bottom { display: flex; align-items: center; justify-content: space-between; gap: 12rpx; }
+.last-msg { font-size: 24rpx; color: var(--eapp-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.unread { min-width: 36rpx; height: 36rpx; line-height: 36rpx; text-align: center; font-size: 20rpx; background: var(--eapp-danger); color: #fff; border-radius: 999rpx; padding: 0 10rpx; flex-shrink: 0; }
+
+.status-pill { padding: 6rpx 16rpx; border-radius: 999rpx; flex-shrink: 0; }
+.status-text { font-size: 20rpx; }
+.tone-warning { background: var(--eapp-warning-soft); }
+.tone-warning .status-text { color: #d97706; }
+.tone-success { background: var(--eapp-success-soft); }
+.tone-success .status-text { color: #16a34a; }
+.tone-muted { background: #f1f5f9; }
+.tone-muted .status-text { color: #94a3b8; }
 </style>

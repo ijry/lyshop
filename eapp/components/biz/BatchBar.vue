@@ -26,7 +26,7 @@ function toneBg(tone?: string) {
 </script>
 
 <template>
-  <view class="batch-bar">
+  <view v-if="count > 0" class="batch-bar">
     <view class="batch-bar__info">
       <text class="batch-bar__count">已选 {{ count }} 项</text>
       <view class="batch-bar__cancel" @click="emit('cancel')">

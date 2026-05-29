@@ -1105,14 +1105,25 @@ const routes: Record<string, any> = {
 
   // IM
   'GET /admin/api/im/sessions': [
-    { id: 1, user_id: 1001, staff_id: 1, status: 2, last_msg: '这款耳机降噪效果怎么样？', unread_count: 1, updated_at: '2026-05-22T10:30:00Z' },
-    { id: 2, user_id: 1002, staff_id: 0, status: 1, last_msg: '你好，我想退货', unread_count: 3, updated_at: '2026-05-22T09:15:00Z' },
+    { id: 1, user_id: 1001, user_nickname: '张三', user_avatar: 'https://picsum.photos/80/80?random=u1', staff_id: 1, status: 2, last_msg: '这款耳机降噪效果怎么样？', unread_count: 1, updated_at: '2026-05-28T10:30:00Z' },
+    { id: 2, user_id: 1002, user_nickname: '李四', user_avatar: 'https://picsum.photos/80/80?random=u2', staff_id: 0, status: 1, last_msg: '你好，我想退货，订单号 10003', unread_count: 3, updated_at: '2026-05-28T09:15:00Z' },
+    { id: 3, user_id: 1003, user_nickname: '王五', user_avatar: 'https://picsum.photos/80/80?random=u3', staff_id: 1, status: 2, last_msg: '物流显示已签收但我没收到', unread_count: 0, updated_at: '2026-05-27T18:42:00Z' },
+    { id: 4, user_id: 1004, user_nickname: '赵六', user_avatar: 'https://picsum.photos/80/80?random=u4', staff_id: 1, status: 3, last_msg: '好的，感谢解答', unread_count: 0, updated_at: '2026-05-27T14:20:00Z' },
+    { id: 5, user_id: 1005, user_nickname: '陈七', user_avatar: 'https://picsum.photos/80/80?random=u5', staff_id: 0, status: 1, last_msg: '请问有没有大号的？', unread_count: 1, updated_at: '2026-05-28T11:05:00Z' },
+    { id: 6, user_id: 1006, user_nickname: '何八', user_avatar: 'https://picsum.photos/80/80?random=u6', staff_id: 1, status: 2, last_msg: '发票什么时候能开好？', unread_count: 2, updated_at: '2026-05-28T08:50:00Z' },
+    { id: 7, user_id: 1007, user_nickname: '孙九', user_avatar: 'https://picsum.photos/80/80?random=u7', staff_id: 0, status: 1, last_msg: '这个颜色和图片上差别大吗', unread_count: 1, updated_at: '2026-05-28T07:30:00Z' },
   ],
   'GET /admin/api/im/sessions/': { list: [
-    { id: 1, session_id: 1, sender_type: 1, content: '你好，我想问一下这款耳机', type: 'text', created_at: '2026-05-22T10:28:00Z' },
-    { id: 2, session_id: 1, sender_type: 2, content: '您好！请问有什么可以帮您？', type: 'text', created_at: '2026-05-22T10:29:00Z' },
-    { id: 3, session_id: 1, sender_type: 1, content: '这款耳机降噪效果怎么样？', type: 'text', created_at: '2026-05-22T10:30:00Z' },
-  ], total: 3 },
+    { id: 1, session_id: 1, sender_type: 1, content: '你好，我想问一下这款耳机', type: 'text', created_at: '2026-05-28T10:20:00Z' },
+    { id: 2, session_id: 1, sender_type: 2, content: '您好！请问有什么可以帮您？', type: 'text', created_at: '2026-05-28T10:21:00Z' },
+    { id: 3, session_id: 1, sender_type: 1, content: '这款耳机降噪效果怎么样？', type: 'text', created_at: '2026-05-28T10:22:00Z' },
+    { id: 4, session_id: 1, sender_type: 2, content: '降噪效果非常出色，采用主动降噪技术，可以有效过滤 90% 以上环境噪音。很多用户在通勤和办公场景反馈都很满意。', type: 'text', created_at: '2026-05-28T10:23:00Z' },
+    { id: 5, session_id: 1, sender_type: 1, content: '续航怎么样？', type: 'text', created_at: '2026-05-28T10:25:00Z' },
+    { id: 6, session_id: 1, sender_type: 2, content: '单次充电可使用约 30 小时，搭配充电仓总续航 120 小时。快充 10 分钟可使用 3 小时。', type: 'text', created_at: '2026-05-28T10:26:00Z' },
+    { id: 7, session_id: 1, sender_type: 1, content: '好的，那支持无线充电吗？', type: 'text', created_at: '2026-05-28T10:28:00Z' },
+    { id: 8, session_id: 1, sender_type: 2, content: '支持 Qi 无线充电，充电仓放上去就能充，很方便。', type: 'text', created_at: '2026-05-28T10:29:00Z' },
+    { id: 9, session_id: 1, sender_type: 1, content: '这款耳机降噪效果怎么样？', type: 'text', created_at: '2026-05-28T10:30:00Z' },
+  ], total: 9 },
 
   // AI
   'GET /admin/api/ai/models': [

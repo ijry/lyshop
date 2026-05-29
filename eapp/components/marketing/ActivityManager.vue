@@ -14,6 +14,9 @@ import StatusTag from '@/components/common/StatusTag.vue'
 
 const props = defineProps<{ kind: MarketingKind }>()
 
+const showStartPicker = ref(false)
+const showEndPicker = ref(false)
+
 const loading = ref(false)
 const activities = ref<any[]>([])
 const rows = ref<any[]>([])
@@ -336,9 +339,11 @@ onShow(loadRows)
         <view class="popup-title">{{ editingActivityID ? '编辑活动' : '新增活动' }}</view>
         <up-input v-model="activityForm.name" placeholder="活动名称" clearable />
         <view class="mt-12rpx" />
-        <up-input v-model="activityForm.start_at" placeholder="开始时间（ISO 或 2026-05-28T10:00:00Z）" clearable />
+        <view class="picker" @click="showStartPicker = true">{{ activityForm.start_at ? activityForm.start_at.slice(0, 16).replace('T', ' ') : '请选择开始时间' }}</view>
+        <up-datetime-picker :show="showStartPicker" v-model="activityForm.start_at" mode="datetime" @confirm="(e) => { activityForm.start_at = new Date(e.value).toISOString(); showStartPicker = false }" @cancel="showStartPicker = false" @close="showStartPicker = false" />
         <view class="mt-12rpx" />
-        <up-input v-model="activityForm.end_at" placeholder="结束时间（ISO 或 2026-05-30T10:00:00Z）" clearable />
+        <view class="picker" @click="showEndPicker = true">{{ activityForm.end_at ? activityForm.end_at.slice(0, 16).replace('T', ' ') : '请选择结束时间' }}</view>
+        <up-datetime-picker :show="showEndPicker" v-model="activityForm.end_at" mode="datetime" @confirm="(e) => { activityForm.end_at = new Date(e.value).toISOString(); showEndPicker = false }" @cancel="showEndPicker = false" @close="showEndPicker = false" />
         <view class="mt-12rpx" />
         <picker mode="selector" :range="[{ label: '启用', value: 1 }, { label: '禁用', value: 0 }]" range-key="label" @change="(e) => { activityForm.status = Number(([1,0][e.detail.value]) || 0) }">
           <view class="picker">{{ Number(activityForm.status || 0) === 1 ? '启用' : '禁用' }}</view>

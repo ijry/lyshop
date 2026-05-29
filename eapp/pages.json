@@ -70,7 +70,7 @@
     "list": [
       { "pagePath": "pages/dashboard/index", "text": "工作台" },
       { "pagePath": "pages/order/list", "text": "订单" },
-      { "pagePath": "pages/product/list", "text": "商品" },
+      { "pagePath": "pages/me/im-sessions", "text": "客服" },
       { "pagePath": "pages/me/index", "text": "我的" }
     ]
   },

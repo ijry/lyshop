@@ -11,6 +11,9 @@ const form = reactive({
   stack_rule: 'exclusive', target_type: 'all', target_value: '',
 })
 
+const showStartPicker = ref(false)
+const showEndPicker = ref(false)
+
 const stackRuleOptions = [
   { label: '互斥', value: 'exclusive' },
   { label: '同类可叠', value: 'same_type' },
@@ -84,9 +87,11 @@ function submit() {
       <view class="mt" />
       <up-input v-model="form.per_limit" type="number" placeholder="每人限领" />
       <view class="mt" />
-      <up-input v-model="form.start_at" placeholder="开始时间（ISO）" />
+      <view class="picker" @click="showStartPicker = true">{{ form.start_at ? form.start_at.slice(0, 16).replace('T', ' ') : '请选择开始时间' }}</view>
+      <up-datetime-picker :show="showStartPicker" v-model="form.start_at" mode="datetime" @confirm="(e: any) => { form.start_at = new Date(e.value).toISOString(); showStartPicker = false }" @cancel="showStartPicker = false" @close="showStartPicker = false" />
       <view class="mt" />
-      <up-input v-model="form.end_at" placeholder="结束时间（ISO）" />
+      <view class="picker" @click="showEndPicker = true">{{ form.end_at ? form.end_at.slice(0, 16).replace('T', ' ') : '请选择结束时间' }}</view>
+      <up-datetime-picker :show="showEndPicker" v-model="form.end_at" mode="datetime" @confirm="(e: any) => { form.end_at = new Date(e.value).toISOString(); showEndPicker = false }" @cancel="showEndPicker = false" @close="showEndPicker = false" />
       <view class="mt" />
       <up-input v-model="form.description" placeholder="说明" />
       <view class="mt" />

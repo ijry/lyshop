@@ -59,4 +59,9 @@ page {
   background: var(--eapp-bg);
   color: var(--eapp-text);
 }
+
+.u-button--mini {
+  width: auto !important;
+  flex-shrink: 0;
+}
 </style>

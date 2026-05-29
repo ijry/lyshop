@@ -10,6 +10,8 @@ import { getSpecTemplates } from '@/api/spec-template'
 const id = ref(0)
 const saving = ref(false)
 const showCatPicker = ref(false)
+const showOnlinePicker = ref(false)
+const showOfflinePicker = ref(false)
 
 const form = reactive<any>({
   title: '', subtitle: '', sell_points: [] as string[],
@@ -206,8 +208,10 @@ onLoad((opts) => { id.value = Number(opts?.id || 0); loadData() })
         <text>上架</text>
         <switch :checked="form.status === 1" @change="(e) => form.status = e.detail.value ? 1 : 0" />
       </view>
-      <up-input v-model="form.online_at" placeholder="上架时间 ISO（可选）" class="mt" />
-      <up-input v-model="form.offline_at" placeholder="下架时间 ISO（可选）" class="mt" />
+      <view class="picker" @click="showOnlinePicker = true">{{ form.online_at ? form.online_at.slice(0, 16).replace('T', ' ') : '上架时间（可选）' }}</view>
+      <up-datetime-picker :show="showOnlinePicker" v-model="form.online_at" mode="datetime" @confirm="(e) => { form.online_at = new Date(e.value).toISOString(); showOnlinePicker = false }" @cancel="showOnlinePicker = false" @close="showOnlinePicker = false" />
+      <view class="picker mt" @click="showOfflinePicker = true">{{ form.offline_at ? form.offline_at.slice(0, 16).replace('T', ' ') : '下架时间（可选）' }}</view>
+      <up-datetime-picker :show="showOfflinePicker" v-model="form.offline_at" mode="datetime" @confirm="(e) => { form.offline_at = new Date(e.value).toISOString(); showOfflinePicker = false }" @cancel="showOfflinePicker = false" @close="showOfflinePicker = false" />
     </view>
 
     <up-button type="primary" :loading="saving" class="save" @click="save">保存</up-button>
