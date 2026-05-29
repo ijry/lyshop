@@ -10,6 +10,7 @@ const cards = [
   { key: 'bargain', path: '/pages/marketing/bargain', color: '#f97316' },
   { key: 'vip', path: '/pages/vip/plan-list', color: '#8b5cf6' },
   { key: 'decor', path: '/pages/decor/editor', color: '#0ea5e9' },
+  { key: 'specTemplate', path: '/pages/product/spec-templates', color: '#64748b' },
 ]
 
 function go(path: string) {

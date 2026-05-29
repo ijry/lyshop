@@ -103,3 +103,55 @@
   - 秒杀活动管理、秒杀商品管理
   - 拼团活动管理、拼团商品管理
   - 砍价活动管理、砍价商品管理
+
+## 优惠券 CRUD (P2 新增)
+
+### 管理端
+
+#### 列表查询
+
+`GET /admin/api/marketing/coupons`
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| keyword | string | 按名称模糊搜索 |
+| status | number | 0=禁用, 1=启用 |
+| type | number | 1=满减, 2=折扣, 3=立减 |
+| page | number | 页码 |
+| size | number | 每页条数 |
+
+返回字段（新增）：
+- `used_count` — 已使用数量
+- `start_at` / `end_at` — 有效期
+- `description` — 说明
+- `stack_rule` — 叠加规则：`exclusive` / `same_type` / `cross_type`
+- `target_type` — 目标用户：`all` / `vip_level` / `new_user`
+- `target_value` — 目标值（如会员等级 ID）
+
+#### 创建
+
+`POST /admin/api/marketing/coupons`
+
+请求体包含上述所有字段（除 `used_count`）。
+
+#### 更新
+
+`PUT /admin/api/marketing/coupons/:id`
+
+请求体为需要更新的字段子集。
+
+#### 删除
+
+`DELETE /admin/api/marketing/coupons/:id`
+
+#### 定向发券
+
+`POST /admin/api/marketing/coupons/:id/send`
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| count | number | 发送数量 |
+
+返回：`{ sent_count: number }`
+
+发券后自动累加优惠券的 `used_count`。
