@@ -70,8 +70,15 @@ export default {
     inbound: '入库', outbound: '出库', draft: '草稿', completed: '已完成', cancelled: '已取消',
     safeQty: '安全库存', warning: '预警', docNo: '单据号', totalQty: '总数量',
   },
+  im: {
+    sessions: '客服会话', chat: '聊天', autoReply: '自动回复',
+    send: '发送', inputPlaceholder: '输入消息...',
+    waiting: '等待中', active: '进行中', closed: '已关闭',
+    keyword: '关键词', matchType: '匹配方式', exact: '精确匹配', contains: '包含匹配',
+    replyContent: '回复内容', buyer: '买家', staff: '客服',
+  },
   me: {
-    title: '我的', messages: '消息中心', sessions: '客服会话',
+    title: '我的', messages: '消息中心', sessions: '客服会话', autoReply: '自动回复',
     siteSettings: '店铺设置', admins: '管理员', roles: '角色权限', logout: '退出登录',
   },
   biz: {

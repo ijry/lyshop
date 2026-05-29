@@ -35,7 +35,14 @@ export default {
     inbound: 'Inbound', outbound: 'Outbound', draft: 'Draft', completed: 'Completed', cancelled: 'Cancelled',
     safeQty: 'Safety Stock', warning: 'Warning', docNo: 'Doc No.', totalQty: 'Total Qty',
   },
-  me: { title: 'Me', messages: 'Messages', sessions: 'Chats', siteSettings: 'Shop', admins: 'Admins', roles: 'Roles', logout: 'Sign Out' },
+  im: {
+    sessions: 'Sessions', chat: 'Chat', autoReply: 'Auto Reply',
+    send: 'Send', inputPlaceholder: 'Type a message...',
+    waiting: 'Waiting', active: 'Active', closed: 'Closed',
+    keyword: 'Keyword', matchType: 'Match Type', exact: 'Exact', contains: 'Contains',
+    replyContent: 'Reply Content', buyer: 'Buyer', staff: 'Staff',
+  },
+  me: { title: 'Me', messages: 'Messages', sessions: 'Chats', autoReply: 'Auto Reply', siteSettings: 'Shop', admins: 'Admins', roles: 'Roles', logout: 'Sign Out' },
   biz: { selected: 'Selected {count}', batchResult: 'Batch Result', selectFirst: 'Select first', soon: 'Coming soon' },
   review: {
     title: 'Reviews',

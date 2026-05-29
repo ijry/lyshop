@@ -11,6 +11,7 @@ const menus = computed(() => {
   const raw = [
     { key: 'messages', title: t('me.messages'), path: '/pages/me/messages', perm: 'message.list' },
     { key: 'sessions', title: t('me.sessions'), path: '/pages/me/im-sessions', perm: 'im.session.list' },
+    { key: 'autoReply', title: t('me.autoReply'), path: '/pages/im/auto-replies', perm: 'im.auto_reply.list' },
     { key: 'site', title: t('me.siteSettings'), path: '/pages/me/site-settings', perm: 'system.site.update' },
     { key: 'admins', title: t('me.admins'), path: '/pages/me/admins', perm: 'system.admin.list' },
     { key: 'roles', title: t('me.roles'), path: '/pages/me/roles', perm: 'system.role.list' },
