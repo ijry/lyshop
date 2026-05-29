@@ -69,10 +69,39 @@ const actions = [
   { key: 'after_sale', label: '售后处理', icon: '🔧' },
   { key: 'review', label: '评价管理', icon: '⭐' },
   { key: 'decor', label: '店铺装修', icon: '🎨' },
-  { key: 'marketing', label: '营销中心', icon: '📣', soon: true },
   { key: 'data', label: '数据报表', icon: '📊' },
   { key: 'wms', label: '仓储管理', icon: '🏭' },
 ]
+
+/* ---------- marketing grid ---------- */
+const marketingActions = [
+  { key: 'coupon', label: t('marketing.coupon'), icon: '🎫', color: '#2563eb' },
+  { key: 'seckill', label: t('marketing.seckill'), icon: '⚡', color: '#ef4444' },
+  { key: 'groupBuy', label: t('marketing.groupBuy'), icon: '👥', color: '#16a34a' },
+  { key: 'bargain', label: t('marketing.bargain'), icon: '💰', color: '#f97316' },
+  { key: 'vip', label: t('marketing.vip'), icon: '👑', color: '#8b5cf6' },
+  { key: 'decor', label: t('marketing.decor'), icon: '🎨', color: '#0ea5e9' },
+  { key: 'specTemplate', label: t('marketing.specTemplate'), icon: '📋', color: '#64748b' },
+  { key: 'distribution', label: t('marketing.distribution'), icon: '🔗', color: '#d946ef' },
+  { key: 'pointsMall', label: t('marketing.pointsMall'), icon: '💎', color: '#14b8a6' },
+]
+
+const marketingRoutes: Record<string, string> = {
+  coupon: '/pages/marketing/coupon',
+  seckill: '/pages/marketing/seckill',
+  groupBuy: '/pages/marketing/group-buy',
+  bargain: '/pages/marketing/bargain',
+  vip: '/pages/vip/plan-list',
+  decor: '/pages/decor/editor',
+  specTemplate: '/pages/product/spec-templates',
+  distribution: '/pages/distribution/index',
+  pointsMall: '/pages/points/index',
+}
+
+function onMarketingClick(key: string) {
+  const path = marketingRoutes[key]
+  if (path) uni.navigateTo({ url: path })
+}
 
 /* ---------- lifecycle ---------- */
 async function loadAll() {
@@ -186,6 +215,12 @@ onShow(loadAll)
       <view class="section">
         <view class="section__title">快捷入口</view>
         <ActionGrid :items="actions" @click="onActionClick" />
+      </view>
+
+      <!-- Marketing Center -->
+      <view class="section">
+        <view class="section__title">营销中心</view>
+        <ActionGrid :items="marketingActions" @click="onMarketingClick" />
       </view>
 
       <!-- Hot Products Bar -->

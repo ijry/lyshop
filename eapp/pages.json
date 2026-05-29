@@ -71,7 +71,6 @@
       { "pagePath": "pages/dashboard/index", "text": "工作台" },
       { "pagePath": "pages/order/list", "text": "订单" },
       { "pagePath": "pages/product/list", "text": "商品" },
-      { "pagePath": "pages/marketing/index", "text": "营销" },
       { "pagePath": "pages/me/index", "text": "我的" }
     ]
   },
