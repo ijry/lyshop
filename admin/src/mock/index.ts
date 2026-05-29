@@ -150,6 +150,23 @@ const commissionsSource: any[] = [
   { id: 8, order_id: 10006, distributor_id: 2, level: 1, amount: 19.90, status: 2, created_at: '2026-05-12T10:00:00Z' },
 ]
 const distributionConfigSource: any = { level1_rate: 0.10, level2_rate: 0.05 }
+let pointsProductSeq = 6
+const pointsProductsSource: any[] = [
+  { id: 1, title: '10元无门槛优惠券', type: 'coupon', points_price: 500, stock: 100, status: 1, cover: 'https://picsum.photos/120/120?random=pts1', description: '消费满0元可用', created_at: '2026-05-01T08:00:00Z' },
+  { id: 2, title: '定制帆布袋', type: 'physical', points_price: 2000, stock: 50, status: 1, cover: 'https://picsum.photos/120/120?random=pts2', description: '品牌定制环保袋', created_at: '2026-05-02T08:00:00Z' },
+  { id: 3, title: 'VIP月卡体验', type: 'virtual', points_price: 3000, stock: 200, status: 1, cover: 'https://picsum.photos/120/120?random=pts3', description: '30天VIP体验', created_at: '2026-05-03T08:00:00Z' },
+  { id: 4, title: '满100减20券', type: 'coupon', points_price: 800, stock: 80, status: 1, cover: 'https://picsum.photos/120/120?random=pts4', description: '消费满100可用', created_at: '2026-05-05T08:00:00Z' },
+  { id: 5, title: '品牌马克杯', type: 'physical', points_price: 5000, stock: 20, status: 0, cover: 'https://picsum.photos/120/120?random=pts5', description: '限量款陶瓷杯', created_at: '2026-05-10T08:00:00Z' },
+  { id: 6, title: '会员专属壁纸', type: 'virtual', points_price: 100, stock: 999, status: 1, cover: 'https://picsum.photos/120/120?random=pts6', description: '高清数字壁纸下载', created_at: '2026-05-15T08:00:00Z' },
+]
+let pointsExchangeSeq = 5
+const pointsExchangesSource: any[] = [
+  { id: 1, user_id: 1001, user_nickname: '张三', product_id: 1, product_title: '10元无门槛优惠券', points_cost: 500, status: 'completed', created_at: '2026-05-20T10:00:00Z' },
+  { id: 2, user_id: 1002, user_nickname: '李四', product_id: 2, product_title: '定制帆布袋', points_cost: 2000, status: 'pending_ship', created_at: '2026-05-22T10:00:00Z' },
+  { id: 3, user_id: 1003, user_nickname: '王五', product_id: 3, product_title: 'VIP月卡体验', points_cost: 3000, status: 'completed', created_at: '2026-05-23T10:00:00Z' },
+  { id: 4, user_id: 1001, user_nickname: '张三', product_id: 4, product_title: '满100减20券', points_cost: 800, status: 'completed', created_at: '2026-05-25T10:00:00Z' },
+  { id: 5, user_id: 1004, user_nickname: '赵六', product_id: 2, product_title: '定制帆布袋', points_cost: 2000, status: 'pending_ship', created_at: '2026-05-27T10:00:00Z' },
+]
 const couponsSource: any[] = [
   { id: 1, name: '新人满100减20', type: 1, min_amount: 100, discount: 20, total_count: 1000, per_limit: 1, status: 1, used_count: 120, start_at: '2026-05-01T00:00:00Z', end_at: '2026-06-30T23:59:59Z', description: '新用户专享', stack_rule: 'exclusive', target_type: 'new_user', target_value: '' },
   { id: 2, name: '全场9折券', type: 2, min_amount: 0, discount: 0.9, total_count: 500, per_limit: 1, status: 1, used_count: 85, start_at: '2026-05-01T00:00:00Z', end_at: '2026-07-31T23:59:59Z', description: '全场通用折扣', stack_rule: 'same_type', target_type: 'all', target_value: '' },
@@ -1177,6 +1194,9 @@ const routes: Record<string, any> = {
   // Distribution
   'GET /admin/api/distribution/config': distributionConfigSource,
 
+  // Points
+  'GET /admin/api/points/summary': null as any,
+
   // Checkin
   'GET /admin/api/checkin/rules': [
     { id: 1, day: 0, points: 10 },
@@ -1854,6 +1874,63 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     if (payload?.level1_rate !== undefined) distributionConfigSource.level1_rate = Number(payload.level1_rate)
     if (payload?.level2_rate !== undefined) distributionConfigSource.level2_rate = Number(payload.level2_rate)
     return { matched: true, data: null }
+  }
+
+  // Points routes
+  if (key === 'GET /admin/api/points/products') {
+    let list = clone(pointsProductsSource) as any[]
+    const type = String(query.type || '').trim()
+    const hasStatus = query.status !== undefined && query.status !== null && String(query.status).trim() !== ''
+    const status = Number(query.status || 0)
+    if (type) list = list.filter((item: any) => String(item.type || '') === type)
+    if (hasStatus) list = list.filter((item: any) => Number(item.status || 0) === status)
+    return { matched: true, data: toPageData(list, Number(query.page || 1), Number(query.size || 20)) }
+  }
+  if (key === 'POST /admin/api/points/products') {
+    pointsProductSeq += 1
+    const payload: any = params || {}
+    const row = { id: pointsProductSeq, title: String(payload.title || ''), type: String(payload.type || 'coupon'), points_price: Number(payload.points_price || 0), stock: Number(payload.stock || 0), status: Number(payload.status || 1), cover: String(payload.cover || ''), description: String(payload.description || ''), created_at: new Date().toISOString() }
+    pointsProductsSource.push(row)
+    return { matched: true, data: clone(row) }
+  }
+  if (methodUpper === 'PUT' && /\/admin\/api\/points\/products\/\d+$/.test(url)) {
+    const id = Number(url.split('/').pop() || 0)
+    const target = pointsProductsSource.find((item: any) => Number(item.id || 0) === id)
+    if (target) Object.assign(target, params || {})
+    return { matched: true, data: null }
+  }
+  if (methodUpper === 'DELETE' && /\/admin\/api\/points\/products\/\d+$/.test(url)) {
+    const id = Number(url.split('/').pop() || 0)
+    const idx = pointsProductsSource.findIndex((item: any) => Number(item.id || 0) === id)
+    if (idx >= 0) pointsProductsSource.splice(idx, 1)
+    return { matched: true, data: null }
+  }
+  if (key === 'GET /admin/api/points/exchanges') {
+    let list = clone(pointsExchangesSource) as any[]
+    const status = String(query.status || '').trim()
+    if (status) list = list.filter((item: any) => String(item.status || '') === status)
+    return { matched: true, data: toPageData(list, Number(query.page || 1), Number(query.size || 20)) }
+  }
+  if (methodUpper === 'PUT' && /\/admin\/api\/points\/exchanges\/\d+\/ship$/.test(url)) {
+    const parts = url.split('/')
+    const id = Number(parts[parts.length - 2] || 0)
+    const target = pointsExchangesSource.find((item: any) => Number(item.id || 0) === id)
+    if (target) target.status = 'shipped'
+    return { matched: true, data: null }
+  }
+  if (methodUpper === 'PUT' && /\/admin\/api\/points\/exchanges\/\d+\/complete$/.test(url)) {
+    const parts = url.split('/')
+    const id = Number(parts[parts.length - 2] || 0)
+    const target = pointsExchangesSource.find((item: any) => Number(item.id || 0) === id)
+    if (target) target.status = 'completed'
+    return { matched: true, data: null }
+  }
+  if (key === 'GET /admin/api/points/summary') {
+    const totalIssued = pointsExchangesSource.reduce((s: number, e: any) => s + Number(e.points_cost || 0), 0)
+    const totalConsumed = pointsExchangesSource.filter((e: any) => e.status === 'completed').reduce((s: number, e: any) => s + Number(e.points_cost || 0), 0)
+    const activeUsers = new Set(pointsExchangesSource.map((e: any) => Number(e.user_id || 0))).size
+    const productCount = pointsProductsSource.filter((p: any) => Number(p.status || 0) === 1).length
+    return { matched: true, data: { total_issued: totalIssued, total_consumed: totalConsumed, active_users: activeUsers, product_count: productCount } }
   }
 
   // Category tree helper

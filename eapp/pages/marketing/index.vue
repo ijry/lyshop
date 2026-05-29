@@ -12,6 +12,7 @@ const cards = [
   { key: 'decor', path: '/pages/decor/editor', color: '#0ea5e9' },
   { key: 'specTemplate', path: '/pages/product/spec-templates', color: '#64748b' },
   { key: 'distribution', path: '/pages/distribution/index', color: '#d946ef' },
+  { key: 'pointsMall', path: '/pages/points/index', color: '#14b8a6' },
 ]
 
 function go(path: string) {

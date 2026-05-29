@@ -40,7 +40,7 @@ export default {
       sku: '规格 SKU', category: '分类与标签', shipping: '物流与营销', status: '状态控制',
     },
   },
-  marketing: { coupon: '优惠券', seckill: '秒杀', groupBuy: '拼团', bargain: '砍价', vip: 'VIP 会员', decor: '店铺装修', specTemplate: '规格模板', distribution: '分销管理' },
+  marketing: { coupon: '优惠券', seckill: '秒杀', groupBuy: '拼团', bargain: '砍价', vip: 'VIP 会员', decor: '店铺装修', specTemplate: '规格模板', distribution: '分销管理', pointsMall: '积分商城' },
   coupon: {
     create: '新建', edit: '编辑', delete: '删除', send: '发券',
     name: '名称', type: '类型', discount: '面额', status: '状态',
@@ -110,6 +110,14 @@ export default {
     searchDistributor: '搜索分销商',
     level1Rate: '一级佣金比例',
     level2Rate: '二级佣金比例',
+  },
+  points: {
+    totalIssued: '发放积分总量',
+    totalConsumed: '消耗积分总量',
+    productCount: '积分商品数',
+    productMgmt: '商品管理',
+    exchangeRecords: '兑换记录',
+    checkinMgmt: '签到管理',
   },
   analytics: {
     title: '数据分析',

@@ -55,7 +55,10 @@
     { "path": "pages/distribution/index", "style": { "navigationBarTitleText": "分销管理" } },
     { "path": "pages/distribution/distributor-list", "style": { "navigationBarTitleText": "分销商管理" } },
     { "path": "pages/distribution/commission-list", "style": { "navigationBarTitleText": "佣金管理" } },
-    { "path": "pages/distribution/config", "style": { "navigationBarTitleText": "分销配置" } }
+    { "path": "pages/distribution/config", "style": { "navigationBarTitleText": "分销配置" } },
+    { "path": "pages/points/index", "style": { "navigationBarTitleText": "积分商城" } },
+    { "path": "pages/points/product-list", "style": { "navigationBarTitleText": "积分商品" } },
+    { "path": "pages/points/exchange-list", "style": { "navigationBarTitleText": "兑换记录" } }
   ],
   "tabBar": {
     "color": "#64748b",
