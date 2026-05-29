@@ -20,6 +20,7 @@
     { "path": "pages/product/list", "style": { "navigationBarTitleText": "商品" } },
     { "path": "pages/product/edit", "style": { "navigationBarTitleText": "商品编辑" } },
     { "path": "pages/product/category-tree", "style": { "navigationBarTitleText": "分类管理" } },
+    { "path": "pages/product/spec-templates", "style": { "navigationBarTitleText": "规格模板" } },
     { "path": "pages/marketing/index", "style": { "navigationBarTitleText": "营销" } },
     { "path": "pages/marketing/coupon", "style": { "navigationBarTitleText": "优惠券" } },
     { "path": "pages/marketing/seckill", "style": { "navigationBarTitleText": "秒杀" } },

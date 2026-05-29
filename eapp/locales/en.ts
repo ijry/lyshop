@@ -24,6 +24,11 @@ export default {
     addComponent: 'Add Component', editProps: 'Edit Props',
     copy: 'Copy', rename: 'Rename', delete: 'Delete',
   },
+  specTemplate: {
+    title: 'Spec Templates', name: 'Name', categories: 'Categories',
+    attrs: 'Attributes', create: 'Create', edit: 'Edit', delete: 'Delete',
+    apply: 'Apply Template', applied: 'Template Applied',
+  },
   me: { title: 'Me', messages: 'Messages', sessions: 'Chats', siteSettings: 'Shop', admins: 'Admins', roles: 'Roles', logout: 'Sign Out' },
   biz: { selected: 'Selected {count}', batchResult: 'Batch Result', selectFirst: 'Select first', soon: 'Coming soon' },
 }

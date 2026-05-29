@@ -5,6 +5,7 @@ import SkuMatrixEditor from '@/components/biz/SkuMatrixEditor.vue'
 import CategoryTreePicker from '@/components/biz/CategoryTreePicker.vue'
 import RichTextEditor from '@/components/biz/RichTextEditor.vue'
 import { createProduct, getProductDetail, updateProduct } from '@/api/product'
+import { getSpecTemplates } from '@/api/spec-template'
 
 const id = ref(0)
 const saving = ref(false)
@@ -30,6 +31,31 @@ const form = reactive<any>({
 const newSellPoint = ref('')
 const newCover = ref('')
 const newTag = ref('')
+
+const specTemplates = ref<any[]>([])
+const showSpecPicker = ref(false)
+
+async function loadSpecTemplates() {
+  const data: any = await getSpecTemplates({ page: 1, size: 200 })
+  specTemplates.value = Array.isArray(data?.list) ? data.list : []
+}
+
+function applySpecTemplate(tpl: any) {
+  if (!tpl?.attrs || !Array.isArray(tpl.attrs)) return
+  const skus: Array<{ attrs: Array<{ name: string; value: string }>; price: number; stock: number }> = []
+  function cross(idx: number): Array<Array<{ name: string; value: string }>> {
+    if (idx >= tpl.attrs.length) return [[]]
+    const sub = cross(idx + 1)
+    return (tpl.attrs[idx].values || []).flatMap((v: string) => sub.map((row: any) => [{ name: tpl.attrs[idx].name, value: v }, ...row]))
+  }
+  const combos = cross(0)
+  for (const attrs of combos) {
+    skus.push({ attrs, price: Number(form.price || 0), stock: 0 })
+  }
+  form.skus = skus
+  showSpecPicker.value = false
+  uni.showToast({ title: '已应用模板', icon: 'success' })
+}
 
 async function loadData() {
   if (!id.value) return
@@ -148,7 +174,9 @@ onLoad((opts) => { id.value = Number(opts?.id || 0); loadData() })
     </view>
 
     <view class="section">
-      <view class="section-title">规格 SKU</view>
+      <view class="section-title">规格 SKU
+        <up-button size="mini" plain @click="loadSpecTemplates().then(() => showSpecPicker = true)">应用规格模板</up-button>
+      </view>
       <SkuMatrixEditor :skus="form.skus" :base-price="form.price" @update="onSkusChange" />
     </view>
 
@@ -185,6 +213,17 @@ onLoad((opts) => { id.value = Number(opts?.id || 0); loadData() })
     <up-button type="primary" :loading="saving" class="save" @click="save">保存</up-button>
 
     <CategoryTreePicker :show="showCatPicker" :value="form.category_id" @close="showCatPicker = false" @pick="onPickCategory" />
+
+    <up-popup :show="showSpecPicker" mode="bottom" round="16" @close="showSpecPicker = false">
+      <view class="popup-body">
+        <view class="popup-title">选择规格模板</view>
+        <view v-if="!specTemplates.length" class="empty-tpl">暂无模板</view>
+        <view v-for="tpl in specTemplates" :key="tpl.id" class="tpl-item" @click="applySpecTemplate(tpl)">
+          <text class="tpl-name">{{ tpl.name }}</text>
+          <text class="tpl-desc">{{ (tpl.attrs || []).map((a: any) => a.name).join(' / ') }}</text>
+        </view>
+      </view>
+    </up-popup>
   </view>
 </template>
 
@@ -208,4 +247,10 @@ onLoad((opts) => { id.value = Number(opts?.id || 0); loadData() })
 .picker { padding: 14rpx; background: var(--eapp-bg); border-radius: 14rpx; font-size: 26rpx; }
 .row { display: flex; align-items: center; justify-content: space-between; padding: 8rpx 0; font-size: 26rpx; }
 .save { margin-top: 14rpx; }
+.popup-body { padding: 24rpx; box-sizing: border-box; }
+.popup-title { font-size: 30rpx; font-weight: 700; margin-bottom: 14rpx; }
+.empty-tpl { text-align: center; color: var(--eapp-text-muted); padding: 40rpx 0; }
+.tpl-item { padding: 16rpx; border: 1px solid var(--eapp-border); border-radius: 14rpx; margin-bottom: 10rpx; }
+.tpl-name { font-size: 28rpx; font-weight: 600; }
+.tpl-desc { display: block; margin-top: 6rpx; color: var(--eapp-text-muted); font-size: 22rpx; }
 </style>

@@ -59,6 +59,11 @@ export default {
     addComponent: '添加组件', editProps: '编辑属性',
     copy: '复制副本', rename: '重命名', delete: '删除',
   },
+  specTemplate: {
+    title: '规格模板', name: '模板名称', categories: '适用分类',
+    attrs: '属性组', create: '新建', edit: '编辑', delete: '删除',
+    apply: '应用规格模板', applied: '已应用模板',
+  },
   me: {
     title: '我的', messages: '消息中心', sessions: '客服会话',
     siteSettings: '店铺设置', admins: '管理员', roles: '角色权限', logout: '退出登录',

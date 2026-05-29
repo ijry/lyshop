@@ -138,6 +138,12 @@ const couponsSource: any[] = [
   { id: 3, name: '无门槛5元券', type: 3, min_amount: 0, discount: 5, total_count: 0, per_limit: 3, status: 1, used_count: 300, start_at: '2026-05-01T00:00:00Z', end_at: '2026-12-31T23:59:59Z', description: '无门槛使用', stack_rule: 'cross_type', target_type: 'all', target_value: '' },
 ]
 let couponSeq = 3
+const specTemplatesSource: any[] = [
+  { id: 1, name: '服装通用', category_ids: [21, 22], attrs: [{ name: '颜色', values: ['黑色', '白色', '红色', '蓝色'] }, { name: '尺码', values: ['S', 'M', 'L', 'XL', 'XXL'] }], status: 1 },
+  { id: 2, name: '数码配件', category_ids: [11, 12], attrs: [{ name: '颜色', values: ['黑色', '白色', '银色'] }, { name: '版本', values: ['标准版', '高配版'] }], status: 1 },
+  { id: 3, name: '鞋类', category_ids: [23], attrs: [{ name: '颜色', values: ['黑色', '棕色', '白色'] }, { name: '尺码', values: ['36', '37', '38', '39', '40', '41', '42', '43', '44'] }], status: 1 },
+]
+let specTemplateSeq = 3
 const seckillActivitiesSource: any[] = [
   { id: 1, type: 'seckill', name: '午场秒杀', start_at: '2026-05-27T10:00:00Z', end_at: '2026-05-27T12:00:00Z', status: 1 },
   { id: 2, type: 'seckill', name: '晚场秒杀', start_at: '2026-05-27T20:00:00Z', end_at: '2026-05-27T22:00:00Z', status: 1 },
@@ -1397,6 +1403,51 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     const count = Number((params as any)?.count || 1)
     if (target) target.used_count = (target.used_count || 0) + count
     return { matched: true, data: { sent_count: count } }
+  }
+
+  // Spec templates CRUD
+  if (key === 'GET /admin/api/spec-templates') {
+    const keyword = String(query.keyword || '').trim().toLowerCase()
+    const categoryID = Number(query.category_id || 0)
+    let list = clone(specTemplatesSource)
+    if (keyword) list = list.filter((t: any) => String(t.name || '').toLowerCase().includes(keyword))
+    if (categoryID > 0) list = list.filter((t: any) => Array.isArray(t.category_ids) && t.category_ids.includes(categoryID))
+    return { matched: true, data: toPageData(list, Number(query.page || 1), Number(query.size || 20)) }
+  }
+  if (methodUpper === 'GET' && /\/admin\/api\/spec-templates\/\d+$/.test(url)) {
+    const id = Number(url.split('/').pop() || 0)
+    const target = specTemplatesSource.find((t: any) => Number(t.id || 0) === id)
+    return { matched: true, data: target ? clone(target) : null }
+  }
+  if (key === 'POST /admin/api/spec-templates') {
+    specTemplateSeq += 1
+    const payload: any = params || {}
+    specTemplatesSource.push({
+      id: specTemplateSeq,
+      name: String(payload.name || ''),
+      category_ids: Array.isArray(payload.category_ids) ? payload.category_ids : [],
+      attrs: Array.isArray(payload.attrs) ? payload.attrs : [],
+      status: Number(payload.status || 0) === 1 ? 1 : 0,
+    })
+    return { matched: true, data: { id: specTemplateSeq } }
+  }
+  if (methodUpper === 'PUT' && /\/admin\/api\/spec-templates\/\d+$/.test(url)) {
+    const id = Number(url.split('/').pop() || 0)
+    const target = specTemplatesSource.find((t: any) => Number(t.id || 0) === id)
+    if (target) {
+      const payload: any = params || {}
+      if (payload.name !== undefined) target.name = String(payload.name)
+      if (payload.category_ids !== undefined) target.category_ids = Array.isArray(payload.category_ids) ? payload.category_ids : target.category_ids
+      if (payload.attrs !== undefined) target.attrs = Array.isArray(payload.attrs) ? payload.attrs : target.attrs
+      if (payload.status !== undefined) target.status = Number(payload.status) === 1 ? 1 : 0
+    }
+    return { matched: true, data: null }
+  }
+  if (methodUpper === 'DELETE' && /\/admin\/api\/spec-templates\/\d+$/.test(url)) {
+    const id = Number(url.split('/').pop() || 0)
+    const idx = specTemplatesSource.findIndex((t: any) => Number(t.id || 0) === id)
+    if (idx >= 0) specTemplatesSource.splice(idx, 1)
+    return { matched: true, data: null }
   }
 
   const marketingType = parseTypeFromPath(url)
