@@ -70,7 +70,7 @@ const actions = [
   { key: 'review', label: '评价管理', icon: '⭐' },
   { key: 'decor', label: '店铺装修', icon: '🎨' },
   { key: 'marketing', label: '营销中心', icon: '📣', soon: true },
-  { key: 'data', label: '数据报表', icon: '📊', soon: true },
+  { key: 'data', label: '数据报表', icon: '📊' },
   { key: 'wms', label: '仓储管理', icon: '🏭', soon: true },
 ]
 
@@ -102,6 +102,7 @@ function onActionClick(key: string) {
   else if (key === 'after_sale') uni.navigateTo({ url: '/pages/order/after-sale-list' })
   else if (key === 'review') uni.navigateTo({ url: '/pages/review/list' })
   else if (key === 'decor') uni.navigateTo({ url: '/pages/decor/index' })
+  else if (key === 'data') uni.navigateTo({ url: '/pages/analytics/index' })
 }
 
 function onScan() {

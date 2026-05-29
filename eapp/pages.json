@@ -37,7 +37,13 @@
     { "path": "pages/me/site-settings", "style": { "navigationBarTitleText": "店铺设置" } },
     { "path": "pages/me/admins", "style": { "navigationBarTitleText": "管理员" } },
     { "path": "pages/me/roles", "style": { "navigationBarTitleText": "角色权限" } },
-    { "path": "pages/review/list", "style": { "navigationBarTitleText": "评价管理" } }
+    { "path": "pages/review/list", "style": { "navigationBarTitleText": "评价管理" } },
+    { "path": "pages/analytics/index", "style": { "navigationBarTitleText": "数据分析" } },
+    { "path": "pages/analytics/sales", "style": { "navigationBarTitleText": "销售分析" } },
+    { "path": "pages/analytics/products", "style": { "navigationBarTitleText": "商品分析" } },
+    { "path": "pages/analytics/customers", "style": { "navigationBarTitleText": "客户分析" } },
+    { "path": "pages/analytics/traffic", "style": { "navigationBarTitleText": "流量分析" } },
+    { "path": "pages/analytics/conversion", "style": { "navigationBarTitleText": "转化分析" } }
   ],
   "tabBar": {
     "color": "#64748b",
