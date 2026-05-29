@@ -58,7 +58,9 @@
     { "path": "pages/distribution/config", "style": { "navigationBarTitleText": "分销配置" } },
     { "path": "pages/points/index", "style": { "navigationBarTitleText": "积分商城" } },
     { "path": "pages/points/product-list", "style": { "navigationBarTitleText": "积分商品" } },
-    { "path": "pages/points/exchange-list", "style": { "navigationBarTitleText": "兑换记录" } }
+    { "path": "pages/points/exchange-list", "style": { "navigationBarTitleText": "兑换记录" } },
+    { "path": "pages/checkin/rules", "style": { "navigationBarTitleText": "签到规则" } },
+    { "path": "pages/checkin/logs", "style": { "navigationBarTitleText": "签到记录" } }
   ],
   "tabBar": {
     "color": "#64748b",

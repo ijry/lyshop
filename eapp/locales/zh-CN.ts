@@ -119,6 +119,10 @@ export default {
     exchangeRecords: '兑换记录',
     checkinMgmt: '签到管理',
   },
+  checkin: {
+    rules: '签到规则',
+    logs: '签到记录',
+  },
   analytics: {
     title: '数据分析',
     sales: '销售分析', products: '商品分析', customers: '客户分析',

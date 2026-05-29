@@ -76,6 +76,10 @@ export default {
     exchangeRecords: 'Exchanges',
     checkinMgmt: 'Check-in',
   },
+  checkin: {
+    rules: 'Check-in Rules',
+    logs: 'Check-in Logs',
+  },
   analytics: {
     title: 'Analytics',
     sales: 'Sales', products: 'Products', customers: 'Customers',
