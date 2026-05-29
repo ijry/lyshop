@@ -29,6 +29,12 @@ export default {
     attrs: 'Attributes', create: 'Create', edit: 'Edit', delete: 'Delete',
     apply: 'Apply Template', applied: 'Template Applied',
   },
+  wms: {
+    title: 'WMS', warehouse: 'Warehouses', stock: 'Stock Ledger', doc: 'Documents', movement: 'Movements',
+    warehouseName: 'Name', code: 'Code', address: 'Address', contact: 'Contact', phone: 'Phone',
+    inbound: 'Inbound', outbound: 'Outbound', draft: 'Draft', completed: 'Completed', cancelled: 'Cancelled',
+    safeQty: 'Safety Stock', warning: 'Warning', docNo: 'Doc No.', totalQty: 'Total Qty',
+  },
   me: { title: 'Me', messages: 'Messages', sessions: 'Chats', siteSettings: 'Shop', admins: 'Admins', roles: 'Roles', logout: 'Sign Out' },
   biz: { selected: 'Selected {count}', batchResult: 'Batch Result', selectFirst: 'Select first', soon: 'Coming soon' },
   review: {

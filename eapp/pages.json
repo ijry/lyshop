@@ -43,7 +43,13 @@
     { "path": "pages/analytics/products", "style": { "navigationBarTitleText": "商品分析" } },
     { "path": "pages/analytics/customers", "style": { "navigationBarTitleText": "客户分析" } },
     { "path": "pages/analytics/traffic", "style": { "navigationBarTitleText": "流量分析" } },
-    { "path": "pages/analytics/conversion", "style": { "navigationBarTitleText": "转化分析" } }
+    { "path": "pages/analytics/conversion", "style": { "navigationBarTitleText": "转化分析" } },
+    { "path": "pages/wms/index", "style": { "navigationBarTitleText": "仓储管理" } },
+    { "path": "pages/wms/warehouse-list", "style": { "navigationBarTitleText": "仓库管理" } },
+    { "path": "pages/wms/stock-ledger", "style": { "navigationBarTitleText": "库存台账" } },
+    { "path": "pages/wms/doc-list", "style": { "navigationBarTitleText": "出入库单" } },
+    { "path": "pages/wms/doc-editor", "style": { "navigationBarTitleText": "单据编辑" } },
+    { "path": "pages/wms/movement-list", "style": { "navigationBarTitleText": "库存流水" } }
   ],
   "tabBar": {
     "color": "#64748b",

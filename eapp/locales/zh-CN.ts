@@ -64,6 +64,12 @@ export default {
     attrs: '属性组', create: '新建', edit: '编辑', delete: '删除',
     apply: '应用规格模板', applied: '已应用模板',
   },
+  wms: {
+    title: '仓储管理', warehouse: '仓库管理', stock: '库存台账', doc: '出入库单', movement: '库存流水',
+    warehouseName: '仓库名称', code: '编码', address: '地址', contact: '联系人', phone: '电话',
+    inbound: '入库', outbound: '出库', draft: '草稿', completed: '已完成', cancelled: '已取消',
+    safeQty: '安全库存', warning: '预警', docNo: '单据号', totalQty: '总数量',
+  },
   me: {
     title: '我的', messages: '消息中心', sessions: '客服会话',
     siteSettings: '店铺设置', admins: '管理员', roles: '角色权限', logout: '退出登录',
