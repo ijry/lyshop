@@ -15,26 +15,66 @@ type DashboardTrend struct {
 	Sales  float64 `json:"sales"`
 }
 
+type DashboardCompare struct {
+	RevenueYoY float64 `json:"revenue_yoy"`
+	RevenueMoM float64 `json:"revenue_mom"`
+	OrderYoY   float64 `json:"order_yoy"`
+	OrderMoM   float64 `json:"order_mom"`
+}
+
+type DashboardStatusDistribution struct {
+	Name  string `json:"name"`
+	Value int64  `json:"value"`
+}
+
+type DashboardHotProduct struct {
+	ID      int64  `json:"id"`
+	Title   string `json:"title"`
+	Cover   string `json:"cover"`
+	SoldQty int64  `json:"sold_qty"`
+}
+
+type DashboardStockWarning struct {
+	ProductID int64  `json:"product_id"`
+	SkuID     int64  `json:"sku_id"`
+	Title     string `json:"title"`
+	Stock     int64  `json:"stock"`
+	Threshold int64  `json:"threshold"`
+}
+
 type DashboardData struct {
-	TodayOrders    int64            `json:"today_orders"`
-	TodaySales     float64          `json:"today_sales"`
-	PendingRefunds int64            `json:"pending_refunds"`
-	OnlineSessions int64            `json:"online_sessions"`
-	SalesTrend     []DashboardTrend `json:"sales_trend"`
+	TodayOrders        int64                         `json:"today_orders"`
+	TodaySales         float64                       `json:"today_sales"`
+	TodayAvgPrice      float64                       `json:"today_avg_price"`
+	PendingShip        int64                         `json:"pending_ship"`
+	PendingAfterSale   int64                         `json:"pending_after_sale"`
+	PendingRefunds     int64                         `json:"pending_refunds"`
+	OnlineSessions     int64                         `json:"online_sessions"`
+	UnreadMessage      int64                         `json:"unread_message"`
+	StockWarning       int64                         `json:"stock_warning"`
+	Compare            DashboardCompare              `json:"compare"`
+	SalesTrend         []DashboardTrend              `json:"sales_trend"`
+	StatusDistribution []DashboardStatusDistribution `json:"status_distribution"`
+	HotProducts        []DashboardHotProduct         `json:"hot_products"`
+	StockWarningList   []DashboardStockWarning       `json:"stock_warning_list"`
 }
 
 func GetDashboard(ctx context.Context) (*DashboardData, error) {
 	now := time.Now()
 	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	todayEnd := todayStart.Add(24 * time.Hour)
-	trendStart := todayStart.AddDate(0, 0, -6)
+	trendStart := todayStart.AddDate(0, 0, -29) // 30 days
 
 	data := &DashboardData{
-		SalesTrend: make([]DashboardTrend, 0, 7),
+		SalesTrend:         make([]DashboardTrend, 0, 30),
+		StatusDistribution: make([]DashboardStatusDistribution, 0),
+		HotProducts:        make([]DashboardHotProduct, 0),
+		StockWarningList:   make([]DashboardStockWarning, 0),
+		Compare:            DashboardCompare{},
 	}
 
 	trendIndex := map[string]int{}
-	for i := 6; i >= 0; i-- {
+	for i := 29; i >= 0; i-- {
 		day := todayStart.AddDate(0, 0, -i)
 		date := day.Format("2006-01-02")
 		trendIndex[date] = len(data.SalesTrend)
@@ -70,6 +110,16 @@ func GetDashboard(ctx context.Context) (*DashboardData, error) {
 			return nil, err
 		}
 
+		if data.TodayOrders > 0 {
+			data.TodayAvgPrice = data.TodaySales / float64(data.TodayOrders)
+		}
+
+		if err := tx.Model(&ordermodel.Order{}).
+			Where("status = ?", ordermodel.OrderStatusPaid).
+			Count(&data.PendingShip).Error; err != nil {
+			return nil, err
+		}
+
 		var rows []struct {
 			Day    string  `json:"day"`
 			Orders int64   `json:"orders"`
@@ -98,9 +148,10 @@ func GetDashboard(ctx context.Context) (*DashboardData, error) {
 		}
 		if err := tx.Model(&ordermodel.AfterSaleCase{}).
 			Where("status NOT IN ?", closedStatuses).
-			Count(&data.PendingRefunds).Error; err != nil {
+			Count(&data.PendingAfterSale).Error; err != nil {
 			return nil, err
 		}
+		data.PendingRefunds = data.PendingAfterSale
 	}
 
 	if db.DB.Migrator().HasTable(&immodel.ImSession{}) {

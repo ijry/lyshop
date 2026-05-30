@@ -1,5 +1,11 @@
 import { get } from '@/utils/request'
 
+export type DashboardTrendPoint = {
+  date: string
+  orders: number
+  sales: number
+}
+
 export type DashboardData = {
   today_orders: number
   today_sales: number
@@ -9,11 +15,7 @@ export type DashboardData = {
   unread_message: number
   stock_warning: number
   compare: { revenue_yoy: number; revenue_mom: number; order_yoy: number; order_mom: number }
-  trend: {
-    revenue_7d: { categories: string[]; series: Array<{ name: string; data: number[] }> }
-    revenue_30d: { categories: string[]; series: Array<{ name: string; data: number[] }> }
-    order_7d: { categories: string[]; series: Array<{ name: string; data: number[] }> }
-  }
+  sales_trend: DashboardTrendPoint[]
   status_distribution: Array<{ name: string; value: number }>
   hot_products: Array<{ id: number; title: string; cover: string; sold_qty: number }>
   announcements: Array<{ id: number; title: string; content: string; type: string; created_at: string }>

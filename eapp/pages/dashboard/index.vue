@@ -25,7 +25,13 @@ const { loading, data, load: loadDashboard } = useDashboard()
 /* ---------- trend period toggle ---------- */
 const trendRange = ref<'7d' | '30d'>('7d')
 const trendData = computed<ChartCategoriesSeries>(() => {
-  return trendRange.value === '30d' ? data.value.trend.revenue_30d : data.value.trend.revenue_7d
+  const trend = data.value.sales_trend || []
+  const days = trendRange.value === '7d' ? 7 : 30
+  const sliced = trend.slice(-days)
+  return {
+    categories: sliced.map(t => t.date.slice(5)), // "2026-05-28" -> "05-28"
+    series: [{ name: '营收', data: sliced.map(t => t.sales) }],
+  }
 })
 function toggleTrend() {
   trendRange.value = trendRange.value === '7d' ? '30d' : '7d'
@@ -78,6 +84,7 @@ const marketingActions = [
   { key: 'groupBuy', label: t('marketing.groupBuy'), icon: '👥', color: '#16a34a' },
   { key: 'bargain', label: t('marketing.bargain'), icon: '💰', color: '#f97316' },
   { key: 'vip', label: t('marketing.vip'), icon: '👑', color: '#8b5cf6' },
+  { key: 'messageBroadcast', label: '消息群发', icon: '📢', color: '#ec4899' },
   { key: 'decor', label: t('marketing.decor'), icon: '🎨', color: '#0ea5e9' },
   { key: 'specTemplate', label: t('marketing.specTemplate'), icon: '📋', color: '#64748b' },
   { key: 'distribution', label: t('marketing.distribution'), icon: '🔗', color: '#d946ef' },
@@ -90,6 +97,7 @@ const marketingRoutes: Record<string, string> = {
   groupBuy: '/pages/marketing/group-buy',
   bargain: '/pages/marketing/bargain',
   vip: '/pages/vip/plan-list',
+  messageBroadcast: '/pages/me/messages',
   decor: '/pages/decor/editor',
   specTemplate: '/pages/product/spec-templates',
   distribution: '/pages/distribution/index',

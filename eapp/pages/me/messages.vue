@@ -9,13 +9,20 @@ const sending = ref(false)
 const form = reactive({ title: '', content: '' })
 const activeGroup = ref('')
 const currentTab = ref(0)
+const showSendModal = ref(false)
+
+// 监听导航栏按钮点击
+uni.onNavigationBarButtonTap((e) => {
+  if (e.index === 0) {
+    openSendModal()
+  }
+})
 
 const groupTabs = [
   { key: '', label: '全部' },
   { key: 'system', label: '系统' },
   { key: 'order', label: '订单' },
   { key: 'marketing', label: '营销' },
-  { key: 'im', label: '客服' },
 ]
 
 const filteredList = computed(() => {
@@ -44,10 +51,15 @@ async function onSend() {
     uni.showToast({ title: '发送成功', icon: 'success' })
     form.title = ''
     form.content = ''
+    showSendModal.value = false
     loadData()
   } finally {
     sending.value = false
   }
+}
+
+function openSendModal() {
+  showSendModal.value = true
 }
 
 async function onMarkRead(item: any) {
@@ -68,14 +80,6 @@ onShow(loadData)
 
 <template>
   <view class="page">
-    <view class="card">
-      <up-input v-model="form.title" placeholder="消息标题" />
-      <view class="mt-12rpx" />
-      <up-textarea v-model="form.content" placeholder="消息内容" />
-      <view class="mt-16rpx" />
-      <up-button type="primary" :loading="sending" @click="onSend">发送消息</up-button>
-    </view>
-
     <up-tabs
       :list="groupTabs"
       :current="currentTab"
@@ -102,12 +106,25 @@ onShow(loadData)
         <view class="content">{{ item.content || '-' }}</view>
       </view>
     </view>
+
+    <!-- 新增群发弹窗 -->
+    <up-popup :show="showSendModal" mode="bottom" round="20" @close="showSendModal = false">
+      <view class="modal-body">
+        <view class="modal-title">新增群发</view>
+        <up-input v-model="form.title" placeholder="消息标题" />
+        <view class="mt-16rpx" />
+        <up-textarea v-model="form.content" placeholder="消息内容" :autoHeight="true" />
+        <view class="mt-24rpx" />
+        <up-button type="primary" :loading="sending" @click="onSend">发送</up-button>
+        <view class="mt-12rpx" />
+        <up-button plain @click="showSendModal = false">取消</up-button>
+      </view>
+    </up-popup>
   </view>
 </template>
 
 <style scoped>
 .page { min-height: 100vh; background: var(--eapp-bg); padding: 20rpx; box-sizing: border-box; }
-.card { background: #fff; border: 1px solid var(--eapp-border); border-radius: 20rpx; padding: 20rpx; }
 .list { margin-top: 14rpx; display: grid; gap: 12rpx; }
 .msg-item { background: #fff; border: 1px solid var(--eapp-border); border-radius: 20rpx; padding: 18rpx; }
 .msg-top { display: flex; align-items: center; justify-content: space-between; }
@@ -119,4 +136,6 @@ onShow(loadData)
 .read-btn { font-size: 22rpx; color: var(--eapp-primary, #2563eb); padding: 4rpx 12rpx; }
 .content { margin-top: 6rpx; color: var(--eapp-text-muted); font-size: 24rpx; }
 .empty { text-align: center; color: var(--eapp-text-muted); padding: 80rpx 0; }
+.modal-body { padding: 32rpx 24rpx 48rpx; }
+.modal-title { font-size: 32rpx; font-weight: 700; margin-bottom: 24rpx; }
 </style>

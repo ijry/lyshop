@@ -5,7 +5,7 @@ const empty: DashboardData = {
   today_orders: 0, today_sales: 0, today_avg_price: 0,
   pending_ship: 0, pending_after_sale: 0, unread_message: 0, stock_warning: 0,
   compare: { revenue_yoy: 0, revenue_mom: 0, order_yoy: 0, order_mom: 0 },
-  trend: { revenue_7d: { categories: [], series: [] }, revenue_30d: { categories: [], series: [] }, order_7d: { categories: [], series: [] } },
+  sales_trend: [],
   status_distribution: [], hot_products: [], announcements: [], stock_warning_list: [],
 }
 

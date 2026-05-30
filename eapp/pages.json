@@ -32,7 +32,7 @@
     { "path": "pages/vip/sku-price-list", "style": { "navigationBarTitleText": "会员SKU价格" } },
     { "path": "pages/decor/editor", "style": { "navigationBarTitleText": "店铺装修" } },
     { "path": "pages/me/index", "style": { "navigationBarTitleText": "我的" } },
-    { "path": "pages/me/messages", "style": { "navigationBarTitleText": "消息中心" } },
+    { "path": "pages/me/messages", "style": { "navigationBarTitleText": "消息群发", "navigationBarButtons": [{ "text": "+ 新增", "color": "#2563eb" }] } },
     { "path": "pages/me/im-sessions", "style": { "navigationBarTitleText": "客服会话" } },
     { "path": "pages/me/site-settings", "style": { "navigationBarTitleText": "店铺设置" } },
     { "path": "pages/me/admins", "style": { "navigationBarTitleText": "管理员" } },

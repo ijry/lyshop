@@ -1314,6 +1314,27 @@ export function matchMock(method: string, url: string, params?: Record<string, a
       stock: Number(p.stock || 0),
       threshold: 10,
     }))
+
+    // Build sales_trend array (unified format for both admin and eapp)
+    const days = 30
+    const salesTrend: Array<{ date: string; sales: number; orders: number }> = []
+    const today = new Date('2026-05-28T00:00:00Z')
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(today.getTime() - i * 86400000)
+      const yyyy = d.getUTCFullYear()
+      const mm = String(d.getUTCMonth() + 1).padStart(2, '0')
+      const dd = String(d.getUTCDate()).padStart(2, '0')
+      const date = `${yyyy}-${mm}-${dd}`
+      const seed = yyyy * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate()
+      const dayOfWeek = d.getUTCDay()
+      const base = 4800 + Math.sin(seed / 7) * 1200
+      const weekendBoost = (dayOfWeek === 0 || dayOfWeek === 6) ? 600 : 0
+      const noise = (seedRandom(seed) - 0.5) * 800
+      const sales = Math.max(800, Math.round(base + weekendBoost + noise))
+      const orders = Math.max(2, Math.round(sales / 120))
+      salesTrend.push({ date, sales, orders })
+    }
+
     return {
       matched: true,
       data: {
@@ -1321,15 +1342,13 @@ export function matchMock(method: string, url: string, params?: Record<string, a
         today_sales: todaySales,
         today_avg_price: todayAvgPrice,
         pending_ship: pendingShip,
+        pending_refunds: pendingAfterSale,
         pending_after_sale: pendingAfterSale,
+        online_sessions: 0,
         unread_message: 3,
         stock_warning: stockWarningList.length,
         compare: { revenue_yoy: 12.5, revenue_mom: 5.3, order_yoy: 8.2, order_mom: -2.1 },
-        trend: {
-          revenue_7d: buildRevenueTrend(7),
-          revenue_30d: buildRevenueTrend(30),
-          order_7d: buildOrderTrend(7),
-        },
+        sales_trend: salesTrend,
         status_distribution: statusDistribution,
         hot_products: hotProducts,
         announcements: clone(announcementsSource),
