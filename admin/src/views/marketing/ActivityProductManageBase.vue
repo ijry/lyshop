@@ -19,10 +19,6 @@
             {{ act.name }} ({{ formatDate(act.start_at) }} ~ {{ formatDate(act.end_at) }})
           </option>
         </select>
-        <select v-model.number="filterProductID" class="border border-slate-200 rounded-lg px-3 py-2 text-sm">
-          <option :value="0">{{ $t('marketingProduct.filterProduct') }}</option>
-          <option v-for="item in productOptions" :key="item.id" :value="item.id">{{ item.title }} (ID: {{ item.id }})</option>
-        </select>
         <input v-model="keyword" :placeholder="$t('common.search')" class="border border-slate-200 rounded-lg px-3 py-2 text-sm" />
         <button class="px-4 py-2 bg-slate-100 rounded-lg text-sm hover:bg-slate-200" @click="loadProducts">{{ $t('common.search') }}</button>
       </div>
@@ -75,15 +71,19 @@
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('marketingProduct.selectProduct') }}</label>
-            <select
-              v-model.number="selectedProductID"
-              class="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm"
-              @change="onSelectProduct"
+            <div v-if="selectedProductID > 0" class="flex items-center gap-3 p-3 border border-slate-200 rounded-xl mb-2">
+              <img v-if="selectedProductCover" :src="selectedProductCover" class="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+              <div v-else class="w-10 h-10 rounded-lg bg-slate-100 flex-shrink-0" />
+              <span class="text-sm text-slate-700 flex-1 truncate">{{ selectedProductTitle }}</span>
+            </div>
+            <button
+              type="button"
               :disabled="editingID > 0"
+              @click="showProductSelector = true"
+              class="w-full border border-slate-200 rounded-xl px-4 py-2 text-sm text-left text-slate-500 hover:border-blue-400 hover:text-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <option :value="0">{{ $t('marketingProduct.selectProduct') }}</option>
-              <option v-for="item in productOptions" :key="item.id" :value="item.id">{{ item.title }} (ID: {{ item.id }})</option>
-            </select>
+              {{ selectedProductID > 0 ? $t('marketingProduct.changeProduct') : $t('marketingProduct.selectProductBtn') }}
+            </button>
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">{{ $t('marketingProduct.selectSku') }}</label>
@@ -125,6 +125,12 @@
         </div>
       </div>
     </div>
+
+    <ProductSelectorModal
+      :visible="showProductSelector"
+      @close="showProductSelector = false"
+      @select="onProductSelected"
+    />
   </div>
 </template>
 
@@ -132,6 +138,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import request from '@/api/request'
+import ProductSelectorModal from '@/components/common/ProductSelectorModal.vue'
 
 const props = defineProps<{ kind: 'seckill' | 'group-buy' | 'bargain' }>()
 const { t } = useI18n()
@@ -142,14 +149,15 @@ const activities = ref<any[]>([])
 const list = ref<any[]>([])
 const selectedActivityID = ref(0)
 const keyword = ref('')
-const filterProductID = ref(0)
 const showForm = ref(false)
 const editingID = ref(0)
 const error = ref('')
-const productOptions = ref<any[]>([])
 const selectedProductID = ref(0)
+const selectedProductTitle = ref('')
+const selectedProductCover = ref('')
 const selectedSkuID = ref(0)
 const skuOptions = ref<SkuOption[]>([])
+const showProductSelector = ref(false)
 
 const form = reactive<any>({
   product_id: 0,
@@ -221,11 +229,6 @@ async function loadActivities() {
   }
 }
 
-async function loadProductOptions() {
-  const data: any = await request.get('/products', { params: { page: 1, size: 200 } })
-  productOptions.value = data?.list || []
-}
-
 async function loadSkuOptions(productID: number) {
   skuOptions.value = []
   selectedSkuID.value = 0
@@ -252,7 +255,6 @@ async function loadProducts() {
   const data: any = await request.get(productEndpoint.value, {
     params: {
       activity_id: selectedActivityID.value,
-      product_id: filterProductID.value || undefined,
       keyword: keyword.value || undefined,
     },
   })
@@ -263,8 +265,11 @@ function onSelectActivity() {
   loadProducts()
 }
 
-async function onSelectProduct() {
-  form.product_id = Number(selectedProductID.value || 0)
+async function onProductSelected(product: any) {
+  selectedProductID.value = Number(product?.id || 0)
+  selectedProductTitle.value = String(product?.title || '')
+  selectedProductCover.value = String(product?.cover || '')
+  form.product_id = selectedProductID.value
   form.sku_id = 0
   await loadSkuOptions(form.product_id)
 }
@@ -278,6 +283,8 @@ function resetForm() {
   form.limit_per_order = 0
   form.total_stock_limit = 0
   selectedProductID.value = 0
+  selectedProductTitle.value = ''
+  selectedProductCover.value = ''
   selectedSkuID.value = 0
   skuOptions.value = []
   error.value = ''
@@ -299,6 +306,8 @@ async function openEdit(row: any) {
   form.limit_per_order = Number(row?.limit_per_order || 0)
   form.total_stock_limit = Number(row?.total_stock_limit || 0)
   selectedProductID.value = form.product_id
+  selectedProductTitle.value = String(row?.product_title || '')
+  selectedProductCover.value = String(row?.product_cover || '')
   selectedSkuID.value = form.sku_id
   skuOptions.value = [{
     id: form.sku_id,
@@ -379,7 +388,7 @@ async function removeRow(id: number) {
 }
 
 onMounted(async () => {
-  await Promise.all([loadActivities(), loadProductOptions()])
+  await loadActivities()
   await loadProducts()
 })
 </script>

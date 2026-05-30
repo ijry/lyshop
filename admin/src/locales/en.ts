@@ -504,6 +504,8 @@ export default {
   'marketingProduct.soldQty': 'Sold',
   'marketingProduct.invalidProductSku': 'Invalid Product ID or SKU ID',
   'marketingProduct.selectProduct': 'Select Product',
+  'marketingProduct.selectProductBtn': 'Select Product',
+  'marketingProduct.changeProduct': 'Change Product',
   'marketingProduct.selectSku': 'Select SKU',
   'marketingProduct.filterProduct': 'Filter by Product',
   'marketingProduct.duplicateSku': 'This SKU already exists in current activity',

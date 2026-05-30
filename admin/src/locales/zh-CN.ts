@@ -504,6 +504,8 @@ export default {
   'marketingProduct.soldQty': '已售',
   'marketingProduct.invalidProductSku': '请输入有效的商品ID和SKU ID',
   'marketingProduct.selectProduct': '选择商品',
+  'marketingProduct.selectProductBtn': '选择商品',
+  'marketingProduct.changeProduct': '更换商品',
   'marketingProduct.selectSku': '选择SKU',
   'marketingProduct.filterProduct': '按商品筛选',
   'marketingProduct.duplicateSku': '同一活动内该SKU已存在',
