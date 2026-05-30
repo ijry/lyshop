@@ -1,0 +1,31 @@
+server:
+  port: 8080
+  mode: debug
+
+database:
+  dsn: "root:password@tcp(127.0.0.1:3306)/lyshop?charset=utf8mb4&parseTime=True&loc=Local"
+  max_open: 100
+  max_idle: 10
+
+redis:
+  addr: "127.0.0.1:6379"
+  password: ""
+  db: 0
+
+jwt:
+  secret: "your-secret-key-change-in-production"
+  expire_hours: 168
+
+plugins:
+  enabled:
+    - product
+    - order
+    - marketing
+    - points_mall
+    - vip
+    - checkin
+    - message
+    - im
+    - wms
+    - decor
+    - ai_image

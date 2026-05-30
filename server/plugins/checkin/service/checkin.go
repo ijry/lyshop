@@ -3,11 +3,13 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sort"
 	"time"
 
-	"github.com/ijry/lyshop/core/db"
-	checkinmodel "github.com/ijry/lyshop/plugins/checkin/model"
+	"github.com/ijry/lyshop/server/core/db"
+	checkinmodel "github.com/ijry/lyshop/server/plugins/checkin/model"
+	pmservice "github.com/ijry/lyshop/server/plugins/points_mall/service"
 	"gorm.io/gorm"
 )
 
@@ -44,8 +46,11 @@ func Checkin(ctx context.Context, userID uint64) (points int, consecutive int, e
 		return 0, 0, err
 	}
 
-	// Add points to user (update user.points)
-	db.DB.WithContext(ctx).Exec("UPDATE users SET points = points + ? WHERE id = ?", points, userID)
+	// Add points to user using points_mall service
+	remark := fmt.Sprintf("每日签到（连续%d天）", consecutive)
+	if err := pmservice.AddPoints(ctx, userID, points, 1, remark); err != nil {
+		return 0, 0, err
+	}
 
 	return points, consecutive, nil
 }

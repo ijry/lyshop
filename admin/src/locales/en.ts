@@ -37,6 +37,12 @@ export default {
   'menu.checkin': 'Check-in',
   'menu.checkin.rules': 'Check-in Rules',
   'menu.checkin.logs': 'Check-in Logs',
+  'menu.pointsMall': 'Points Mall',
+  'menu.pointsProducts': 'Points Products',
+  'menu.pointsExchanges': 'Exchange Records',
+  'menu.pointsLogs': 'Points Logs',
+  'menu.pointsStats': 'Points Statistics',
+  'menu.pointsConfig': 'Points Config',
   'menu.decor': 'Page Designer',
   'menu.decor.editor': 'Homepage Designer',
 

@@ -21,6 +21,7 @@ import (
 	_ "github.com/ijry/lyshop/plugins/marketing"
 	_ "github.com/ijry/lyshop/plugins/message"
 	_ "github.com/ijry/lyshop/plugins/order"
+	_ "github.com/ijry/lyshop/plugins/points_mall"
 	_ "github.com/ijry/lyshop/plugins/product"
 	_ "github.com/ijry/lyshop/plugins/sms"
 	_ "github.com/ijry/lyshop/plugins/storage_cos"

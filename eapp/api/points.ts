@@ -8,8 +8,8 @@ export const deletePointsProduct = (id: number) => del<any>(`/points/products/${
 
 // Exchanges
 export const getPointsExchanges = (params?: any) => get<any>('/points/exchanges', params)
-export const shipExchange = (id: number) => put<any>(`/points/exchanges/${id}/ship`)
+export const shipExchange = (id: number, payload: any) => put<any>(`/points/exchanges/${id}/ship`, payload)
 export const completeExchange = (id: number) => put<any>(`/points/exchanges/${id}/complete`)
 
 // Summary
-export const getPointsSummary = () => get<any>('/points/summary')
+export const getPointsSummary = () => get<any>('/points/stats')

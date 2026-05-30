@@ -1,0 +1,50 @@
+{
+  "name": "points_mall",
+  "title": "积分商城",
+  "version": "1.0.0",
+  "description": "积分商城插件，支持积分商品兑换、积分日志、积分抵扣",
+  "author": "lyshop",
+  "depends": ["marketing"],
+  "menus": [
+    {
+      "title": "积分商城",
+      "title_key": "menu.pointsMall",
+      "icon": "gift",
+      "path": "/points-mall",
+      "sort": 50,
+      "children": [
+        {
+          "title": "积分商品",
+          "title_key": "menu.pointsProducts",
+          "path": "/points-mall/products",
+          "permission": "points_mall:view"
+        },
+        {
+          "title": "兑换记录",
+          "title_key": "menu.pointsExchanges",
+          "path": "/points-mall/exchanges",
+          "permission": "points_mall:view"
+        },
+        {
+          "title": "积分日志",
+          "title_key": "menu.pointsLogs",
+          "path": "/points-mall/logs",
+          "permission": "points_mall:view"
+        },
+        {
+          "title": "积分统计",
+          "title_key": "menu.pointsStats",
+          "path": "/points-mall/stats",
+          "permission": "points_mall:view"
+        },
+        {
+          "title": "积分配置",
+          "title_key": "menu.pointsConfig",
+          "path": "/points-mall/config",
+          "permission": "points_mall:edit"
+        }
+      ]
+    }
+  ],
+  "permissions": ["points_mall:view", "points_mall:edit"]
+}

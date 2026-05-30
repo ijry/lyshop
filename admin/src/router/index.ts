@@ -43,6 +43,12 @@ const router = createRouter({
         { path: 'vip/plans', name: 'nav.vipPlan', component: () => import('@/views/vip/PlanList.vue'), meta: { titleKey: 'nav.vipPlan' } },
         { path: 'vip/levels', name: 'nav.vipLevel', component: () => import('@/views/vip/LevelList.vue'), meta: { titleKey: 'nav.vipLevel' } },
         { path: 'vip/coupon-rules', name: 'nav.vipCouponRule', component: () => import('@/views/vip/CouponRuleList.vue'), meta: { titleKey: 'nav.vipCouponRule' } },
+        // Points Mall
+        { path: 'points-mall/products', name: 'nav.pointsProducts', component: () => import('@/views/points-mall/ProductList.vue'), meta: { titleKey: 'menu.pointsProducts' } },
+        { path: 'points-mall/exchanges', name: 'nav.pointsExchanges', component: () => import('@/views/points-mall/ExchangeList.vue'), meta: { titleKey: 'menu.pointsExchanges' } },
+        { path: 'points-mall/logs', name: 'nav.pointsLogs', component: () => import('@/views/points-mall/PointsLogs.vue'), meta: { titleKey: 'menu.pointsLogs' } },
+        { path: 'points-mall/stats', name: 'nav.pointsStats', component: () => import('@/views/points-mall/PointsStats.vue'), meta: { titleKey: 'menu.pointsStats' } },
+        { path: 'points-mall/config', name: 'nav.pointsConfig', component: () => import('@/views/points-mall/PointsConfig.vue'), meta: { titleKey: 'menu.pointsConfig' } },
         // System
         { path: 'system/site',   name: 'nav.siteSettings', component: () => import('@/views/system/SiteSettings.vue'), meta: { titleKey: 'nav.siteSettings' } },
         { path: 'system/config', name: 'nav.configCenter', component: () => import('@/views/system/PaymentConfig.vue'), meta: { titleKey: 'nav.configCenter' } },

@@ -37,6 +37,12 @@ export default {
   'menu.checkin': '签到管理',
   'menu.checkin.rules': '签到规则',
   'menu.checkin.logs': '签到记录',
+  'menu.pointsMall': '积分商城',
+  'menu.pointsProducts': '积分商品',
+  'menu.pointsExchanges': '兑换记录',
+  'menu.pointsLogs': '积分日志',
+  'menu.pointsStats': '积分统计',
+  'menu.pointsConfig': '积分配置',
   'menu.decor': '店铺装修',
   'menu.decor.editor': '首页装修',
 
