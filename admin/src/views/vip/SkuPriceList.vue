@@ -26,6 +26,15 @@
           </tr>
         </tbody>
       </table>
+      <div class="px-4 py-3 flex items-center justify-between border-t border-slate-100 text-sm text-slate-500">
+        <span>{{ $t('common.totalCount', { total }) }}</span>
+        <div class="flex gap-2">
+          <button :disabled="query.page <= 1" @click="prevPage"
+            class="px-3 py-1 rounded-lg border hover:bg-slate-50 disabled:opacity-40">{{ $t('common.prevPage') }}</button>
+          <button :disabled="query.page * query.size >= total" @click="nextPage"
+            class="px-3 py-1 rounded-lg border hover:bg-slate-50 disabled:opacity-40">{{ $t('common.nextPage') }}</button>
+        </div>
+      </div>
     </div>
     <div v-if="visible" class="fixed inset-0 bg-black/30 flex items-center justify-center z-50" @click.self="visible=false">
       <div class="bg-white rounded-2xl p-6 w-96 shadow-xl">
@@ -53,12 +62,27 @@ import { confirmAction } from '@/utils/dialog'
 const { t } = useI18n()
 
 const list = ref<any[]>([])
+const total = ref(0)
+const query = ref({ page: 1, size: 20 })
 const visible = ref(false)
 const form = ref<any>({ id: 0, sku_id: 0, level_name: '', vip_price: 0 })
 
 async function load() {
-  const data: any = await request.get('/vip/sku-prices')
+  const data: any = await request.get('/vip/sku-prices', { params: { page: query.value.page, size: query.value.size } })
   list.value = data.list || []
+  total.value = Number(data.total || 0)
+}
+
+function prevPage() {
+  if (query.value.page <= 1) return
+  query.value.page -= 1
+  load()
+}
+
+function nextPage() {
+  if (query.value.page * query.value.size >= total.value) return
+  query.value.page += 1
+  load()
 }
 function openCreate() {
   form.value = { id: 0, sku_id: 0, level_name: '', vip_price: 0 }

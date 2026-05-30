@@ -49,6 +49,15 @@
           </tr>
         </tbody>
       </table>
+      <div class="px-4 py-3 flex items-center justify-between border-t border-slate-100 text-sm text-slate-500">
+        <span>{{ $t('common.totalCount', { total }) }}</span>
+        <div class="flex gap-2">
+          <button :disabled="query.page <= 1" @click="prevPage"
+            class="px-3 py-1 rounded-lg border hover:bg-slate-50 disabled:opacity-40">{{ $t('common.prevPage') }}</button>
+          <button :disabled="query.page * query.size >= total" @click="nextPage"
+            class="px-3 py-1 rounded-lg border hover:bg-slate-50 disabled:opacity-40">{{ $t('common.nextPage') }}</button>
+        </div>
+      </div>
     </div>
 
     <div v-if="showDialog" class="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4">
@@ -133,6 +142,8 @@ type CategoryRow = {
 }
 
 const categories = ref<CategoryRow[]>([])
+const total = ref(0)
+const query = ref({ page: 1, size: 20 })
 const showDialog = ref(false)
 const saving = ref(false)
 const editingID = ref(0)
@@ -155,8 +166,21 @@ function resetForm() {
 }
 
 async function loadCategories() {
-  const data = await getCategories()
-  categories.value = Array.isArray(data) ? data : []
+  const data: any = await getCategories({ page: query.value.page, size: query.value.size })
+  categories.value = Array.isArray(data?.list) ? data.list : Array.isArray(data) ? data : []
+  total.value = Number(data?.total || categories.value.length)
+}
+
+function prevPage() {
+  if (query.value.page <= 1) return
+  query.value.page -= 1
+  loadCategories()
+}
+
+function nextPage() {
+  if (query.value.page * query.value.size >= total.value) return
+  query.value.page += 1
+  loadCategories()
 }
 
 function openCreate() {

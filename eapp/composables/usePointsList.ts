@@ -12,9 +12,17 @@ export function usePointsList(resource: PointsResource) {
     loading.value = true
     try {
       const res: any = await get(`/points/${resource}`, params)
-      list.value = Array.isArray(res?.list) ? res.list : Array.isArray(res) ? res : []
+      const newList = Array.isArray(res?.list) ? res.list : Array.isArray(res) ? res : []
+      // If page > 1, append to existing list; otherwise replace
+      if (params?.page && params.page > 1) {
+        list.value = list.value.concat(newList)
+      } else {
+        list.value = newList
+      }
     } catch {
-      list.value = []
+      if (!params?.page || params.page === 1) {
+        list.value = []
+      }
     } finally {
       loading.value = false
     }

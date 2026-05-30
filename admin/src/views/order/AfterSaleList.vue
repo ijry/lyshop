@@ -42,6 +42,15 @@
           </tr>
         </tbody>
       </table>
+      <div class="px-4 py-3 flex items-center justify-between border-t border-slate-100 text-sm text-slate-500">
+        <span>{{ $t('common.totalCount', { total }) }}</span>
+        <div class="flex gap-2">
+          <button :disabled="query.page <= 1" @click="prevPage"
+            class="px-3 py-1 rounded-lg border hover:bg-slate-50 disabled:opacity-40">{{ $t('common.prevPage') }}</button>
+          <button :disabled="query.page * query.size >= total" @click="nextPage"
+            class="px-3 py-1 rounded-lg border hover:bg-slate-50 disabled:opacity-40">{{ $t('common.nextPage') }}</button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -58,6 +67,8 @@ const route = useRoute()
 const router = useRouter()
 const list = ref<any[]>([])
 const activeStatus = ref('')
+const total = ref(0)
+const query = ref({ page: 1, size: 20 })
 
 const tabs = computed(() => [
   { label: t('afterSale.list.all'), value: '' },
@@ -84,15 +95,29 @@ function goDetail(id: number) {
 }
 
 async function load() {
-  const params: any = { page: 1, size: 20 }
+  const params: any = { page: query.value.page, size: query.value.size }
   if (route.query.order_id) params.order_id = Number(route.query.order_id)
   if (activeStatus.value) params.status = activeStatus.value
   const data: any = await getAfterSales(params)
   list.value = data?.list || []
+  total.value = Number(data?.total || 0)
 }
 
 function onTabChange(status: string) {
   activeStatus.value = status
+  query.value.page = 1
+  load()
+}
+
+function prevPage() {
+  if (query.value.page <= 1) return
+  query.value.page -= 1
+  load()
+}
+
+function nextPage() {
+  if (query.value.page * query.value.size >= total.value) return
+  query.value.page += 1
   load()
 }
 

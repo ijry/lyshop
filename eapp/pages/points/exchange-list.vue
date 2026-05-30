@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onShow } from '@dcloudio/uni-app'
+import { onShow, onPullDownRefresh, onReachBottom } from '@dcloudio/uni-app'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePointsList } from '@/composables/usePointsList'
@@ -9,6 +9,9 @@ const { t } = useI18n()
 const h = usePointsList('exchanges')
 const current = ref(0)
 const statusTab = ref('')
+const page = ref(1)
+const size = ref(20)
+const hasMore = ref(true)
 const tabs = [
   { label: '全部', value: '' },
   { label: '待发货', value: 'pending_ship' },
@@ -19,9 +22,31 @@ const statusLabels: Record<string, string> = { pending_ship: '待发货', shippe
 const statusColors: Record<string, string> = { pending_ship: 'pending', shipped: 'info', completed: 'on' }
 
 function doSearch() {
-  const params: any = { page: 1, size: 50 }
+  page.value = 1
+  hasMore.value = true
+  const params: any = { page: page.value, size: size.value }
   if (statusTab.value) params.status = statusTab.value
   h.load(params)
+}
+
+async function loadMore() {
+  if (h.loading.value || !hasMore.value) return
+  const prevLen = h.list.value.length
+  page.value += 1
+  const params: any = { page: page.value, size: size.value }
+  if (statusTab.value) params.status = statusTab.value
+  await h.load(params)
+  if (h.list.value.length === prevLen || h.list.value.length < page.value * size.value) {
+    hasMore.value = false
+  }
+}
+
+async function refresh() {
+  page.value = 1
+  hasMore.value = true
+  const params: any = { page: page.value, size: size.value }
+  if (statusTab.value) params.status = statusTab.value
+  await h.load(params)
 }
 
 function switchTab(item: any) {
@@ -43,6 +68,8 @@ async function doComplete(id: number) {
 }
 
 onShow(() => doSearch())
+onPullDownRefresh(async () => { await refresh(); uni.stopPullDownRefresh() })
+onReachBottom(() => loadMore())
 </script>
 
 <template>

@@ -32,6 +32,15 @@
           <tr v-if="!messages.length"><td colspan="5" class="px-4 py-8 text-center text-slate-400">{{ $t('message.list.noData') }}</td></tr>
         </tbody>
       </table>
+      <div class="px-4 py-3 flex items-center justify-between border-t border-slate-100 text-sm text-slate-500">
+        <span>{{ $t('common.totalCount', { total }) }}</span>
+        <div class="flex gap-2">
+          <button :disabled="query.page <= 1" @click="prevPage"
+            class="px-3 py-1 rounded-lg border hover:bg-slate-50 disabled:opacity-40">{{ $t('common.prevPage') }}</button>
+          <button :disabled="query.page * query.size >= total" @click="nextPage"
+            class="px-3 py-1 rounded-lg border hover:bg-slate-50 disabled:opacity-40">{{ $t('common.nextPage') }}</button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -45,6 +54,8 @@ const { t } = useI18n()
 
 const messages = ref<any[]>([])
 const filterGroup = ref('')
+const total = ref(0)
+const query = ref({ page: 1, size: 20 })
 
 const groupLabelMap: Record<string, string> = {
   system: t('message.group.system'),
@@ -60,8 +71,21 @@ const groupLabel = (g: string) => groupLabelMap[g] || g
 const groupClass = (g: string) => groupClasses[g] || 'bg-slate-50 text-slate-500'
 
 async function load() {
-  const data: any = await request.get('/messages', { params: { group: filterGroup.value } })
+  const data: any = await request.get('/messages', { params: { group: filterGroup.value, page: query.value.page, size: query.value.size } })
   messages.value = data?.list || []
+  total.value = Number(data?.total || 0)
+}
+
+function prevPage() {
+  if (query.value.page <= 1) return
+  query.value.page -= 1
+  load()
+}
+
+function nextPage() {
+  if (query.value.page * query.value.size >= total.value) return
+  query.value.page += 1
+  load()
 }
 
 onMounted(load)

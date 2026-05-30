@@ -37,6 +37,15 @@
           </tr>
         </tbody>
       </table>
+      <div class="px-4 py-3 flex items-center justify-between border-t border-slate-100 text-sm text-slate-500">
+        <span>{{ $t('common.totalCount', { total }) }}</span>
+        <div class="flex gap-2">
+          <button :disabled="query.page <= 1" @click="prevPage"
+            class="px-3 py-1 rounded-lg border hover:bg-slate-50 disabled:opacity-40">{{ $t('common.prevPage') }}</button>
+          <button :disabled="query.page * query.size >= total" @click="nextPage"
+            class="px-3 py-1 rounded-lg border hover:bg-slate-50 disabled:opacity-40">{{ $t('common.nextPage') }}</button>
+        </div>
+      </div>
     </div>
 
     <!-- Create coupon drawer -->
@@ -93,6 +102,8 @@ import request from '@/api/request'
 const { t } = useI18n()
 
 const coupons = ref<any[]>([])
+const total = ref(0)
+const query = ref({ page: 1, size: 20 })
 const showForm = ref(false)
 const saving = ref(false)
 const error = ref('')
@@ -104,8 +115,21 @@ const typeLabel = (type: number) => {
 }
 
 async function loadCoupons() {
-  const data: any = await request.get('/marketing/coupons')
+  const data: any = await request.get('/marketing/coupons', { params: { page: query.value.page, size: query.value.size } })
   coupons.value = data.list || []
+  total.value = Number(data.total || 0)
+}
+
+function prevPage() {
+  if (query.value.page <= 1) return
+  query.value.page -= 1
+  loadCoupons()
+}
+
+function nextPage() {
+  if (query.value.page * query.value.size >= total.value) return
+  query.value.page += 1
+  loadCoupons()
 }
 
 async function create() {
