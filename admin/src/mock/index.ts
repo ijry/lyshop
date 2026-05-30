@@ -257,11 +257,11 @@ const messagesSource: any[] = [
   { id: 1, user_id: 0, group: 'system', priority: 'urgent', title: '系统升级通知', content: 'LYShop 升级至 2.0，请及时更新', is_read: 0, created_at: '2026-05-22T10:00:00Z' },
   { id: 2, user_id: 1001, group: 'order', priority: 'important', title: '订单发货提醒', content: '您的订单已发货，请注意物流跟踪', is_read: 1, created_at: '2026-05-21T14:00:00Z' },
   { id: 3, user_id: 0, group: 'marketing', priority: 'normal', title: '618大促', content: '全场满300减50，限时3天', is_read: 0, created_at: '2026-05-20T08:00:00Z' },
-  { id: 4, user_id: 0, group: 'im', priority: 'urgent', title: '新客服消息', content: '有3条未读客服消息待处理', is_read: 0, created_at: '2026-05-22T11:30:00Z' },
+  { id: 4, user_id: 0, group: 'system', priority: 'urgent', title: '新订单提醒', content: '有3笔新订单待处理', is_read: 0, created_at: '2026-05-22T11:30:00Z' },
   { id: 5, user_id: 0, group: 'system', priority: 'normal', title: '数据备份完成', content: '每日数据备份已完成', is_read: 1, created_at: '2026-05-19T06:00:00Z' },
   { id: 6, user_id: 1002, group: 'order', priority: 'urgent', title: '退款审核提醒', content: '订单#20260521001申请退款，请尽快审核', is_read: 0, created_at: '2026-05-21T16:30:00Z' },
   { id: 7, user_id: 0, group: 'marketing', priority: 'important', title: '优惠券即将过期', content: '5张优惠券将于明日失效', is_read: 0, created_at: '2026-05-22T09:00:00Z' },
-  { id: 8, user_id: 0, group: 'im', priority: 'normal', title: '自动回复已触发', content: '关键词"退货"触发了自动回复3次', is_read: 1, created_at: '2026-05-20T15:00:00Z' },
+  { id: 8, user_id: 0, group: 'marketing', priority: 'normal', title: '秒杀活动即将开始', content: '明日10:00秒杀活动开始，请确认库存', is_read: 1, created_at: '2026-05-20T15:00:00Z' },
 ]
 
 const shopsCurrentSource: any = {

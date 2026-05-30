@@ -54,7 +54,6 @@ describe('mock messages with priority', () => {
     expect(groups.has('system')).toBe(true)
     expect(groups.has('order')).toBe(true)
     expect(groups.has('marketing')).toBe(true)
-    expect(groups.has('im')).toBe(true)
   })
 
   it('covers all priority levels', async () => {
