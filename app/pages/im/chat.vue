@@ -2,6 +2,12 @@
   <view class="bg-gray-50 flex flex-col" style="height: 100vh; overflow: hidden;">
     <u-navbar :title="$t('chat.title')" :placeholder="true" />
 
+    <!-- Queue notice -->
+    <view v-if="queuePosition > 0" class="bg-yellow-50 border-b-1 border-yellow-100 px-24rpx py-20rpx flex items-center gap-16rpx">
+      <u-icon name="clock" size="20" color="#d97706" />
+      <text class="text-yellow-700 text-26rpx flex-1">{{ $t('chat.queueNotice', { position: queuePosition }) }}</text>
+    </view>
+
     <!-- Messages -->
     <scroll-view
       scroll-y
@@ -20,8 +26,12 @@
         </view>
 
         <view v-for="m in messages" :key="m.id" class="mb-20rpx">
+          <!-- System message -->
+          <view v-if="m.sender_type === 0" class="flex justify-center mb-20rpx">
+            <text class="text-gray-400 text-24rpx bg-gray-100 px-24rpx py-8rpx rounded-full">{{ m.content }}</text>
+          </view>
           <!-- Message row -->
-          <view :class="m.sender_type === 1 ? 'flex-row-reverse' : ''"
+          <view v-else :class="m.sender_type === 1 ? 'flex-row-reverse' : ''"
             class="flex items-end gap-12rpx">
             <!-- Avatar -->
             <view :class="m.sender_type === 2 ? 'bg-blue-700' : 'bg-gray-300'"
@@ -74,6 +84,7 @@ const inputText = ref('')
 const scrollTop = ref(0)
 const sessionID = ref(0)
 const connected = ref(false)
+const queuePosition = ref(0)
 
 let ws: any = null
 let heartbeat: any = null
@@ -84,6 +95,7 @@ onMounted(async () => {
   const session = await get<any>('/api/v1/im/session')
   if (session) {
     sessionID.value = session.id
+    queuePosition.value = session.queue_position || 0
     const data = await get<any>('/api/v1/im/messages', { session_id: session.id, size: 50 })
     messages.value = (data?.list || []).reverse()
     scrollToBottom()
@@ -110,8 +122,34 @@ function connectWS(token: string) {
       if (frame.type === 'msg') {
         messages.value.push({
           id: Date.now(),
-          sender_type: frame.payload.sender_type || 2,
+          sender_type: frame.payload.sender_type ?? 2,
           content: frame.payload.content,
+        })
+        scrollToBottom()
+      } else if (frame.type === 'queue') {
+        queuePosition.value = frame.payload?.position || 0
+      } else if (frame.type === 'assign') {
+        if (frame.payload?.action === 'accepted') {
+          queuePosition.value = 0
+          messages.value.push({
+            id: Date.now(),
+            sender_type: 0,
+            content: t('chat.assignedNotice'),
+          })
+          scrollToBottom()
+        } else if (frame.payload?.action === 'transfer') {
+          messages.value.push({
+            id: Date.now(),
+            sender_type: 0,
+            content: t('chat.transferNotice'),
+          })
+          scrollToBottom()
+        }
+      } else if (frame.type === 'close') {
+        messages.value.push({
+          id: Date.now(),
+          sender_type: 0,
+          content: t('chat.closedNotice'),
         })
         scrollToBottom()
       }

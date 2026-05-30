@@ -11,18 +11,39 @@ const (
 	MsgTypeImage       = "image"
 	MsgTypeProductCard = "product_card"
 	MsgTypeOrderCard   = "order_card"
+	MsgTypeSystem      = "system" // 系统通知（接入、排队等）
 
-	SenderUser  int8 = 1
-	SenderStaff int8 = 2
+	SenderUser   int8 = 1
+	SenderStaff  int8 = 2
+	SenderSystem int8 = 0
 )
+
+// ImStaff tracks online status and load for each staff member.
+type ImStaff struct {
+	model.Base
+	AdminID     uint64 `gorm:"not null;uniqueIndex" json:"admin_id"`
+	IsOnline    int8   `gorm:"not null;default:0"   json:"is_online"`
+	MaxLoad     int    `gorm:"not null;default:5"   json:"max_load"`
+	CurrentLoad int    `gorm:"not null;default:0"   json:"current_load"`
+}
 
 type ImSession struct {
 	model.Base
-	UserID      uint64 `gorm:"not null;index"     json:"user_id"`
-	StaffID     uint64 `gorm:"not null;default:0;index" json:"staff_id"`
-	Status      int8   `gorm:"not null"           json:"status"`
-	LastMsg     string `gorm:"size:255"           json:"last_msg"`
-	UnreadCount int    `gorm:"not null;default:0" json:"unread_count"`
+	UserID        uint64 `gorm:"not null;index"           json:"user_id"`
+	StaffID       uint64 `gorm:"not null;default:0;index" json:"staff_id"`
+	Status        int8   `gorm:"not null"                 json:"status"`
+	QueuePosition int    `gorm:"not null;default:0"       json:"queue_position"`
+	LastMsg       string `gorm:"size:255"                 json:"last_msg"`
+	UnreadCount   int    `gorm:"not null;default:0"       json:"unread_count"`
+}
+
+// ImTransferLog records every session transfer for audit and history.
+type ImTransferLog struct {
+	model.Base
+	SessionID   uint64 `gorm:"not null;index" json:"session_id"`
+	FromStaffID uint64 `gorm:"not null"       json:"from_staff_id"`
+	ToStaffID   uint64 `gorm:"not null"       json:"to_staff_id"`
+	Remark      string `gorm:"size:255"       json:"remark"`
 }
 
 type ImMessage struct {

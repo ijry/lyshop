@@ -29,6 +29,7 @@ export default {
   'menu.vip.skuPrices': '会员价',
   'menu.im': '客服中心',
   'menu.im.sessions': '客服会话',
+  'menu.im.staffManage': '坐席管理',
   'menu.im.autoReply': '自动回复',
   'menu.message': '消息管理',
   'menu.message.list': '消息列表',
@@ -660,6 +661,13 @@ export default {
   'im.send': '发送',
   'im.avatarStaff': '客',
   'im.avatarUser': '用',
+  'im.online': '在线',
+  'im.offline': '离线',
+  'im.serving': '正在服务',
+  'im.accept': '接入',
+  'im.close': '结束',
+  'im.transfer': '转接',
+  'im.queuePosition': '排队第{position}位',
 
   // AI
   'ai.imageGen.title': 'AI 生图',

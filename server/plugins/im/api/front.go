@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -27,7 +26,6 @@ func RegisterFrontRoutes(g *gin.RouterGroup) {
 }
 
 // RegisterWSRoute registers the WebSocket endpoint on the root engine.
-// Call this separately with the raw *gin.Engine.
 func RegisterWSRoute(engine interface {
 	GET(string, ...gin.HandlerFunc) gin.IRoutes
 }) {
@@ -57,7 +55,6 @@ func getMessages(c *gin.Context) {
 }
 
 func wsHandler(c *gin.Context) {
-	// Extract JWT from query param
 	token := c.Query("token")
 	if token == "" {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, response.Err(401, "missing token"))
@@ -74,27 +71,17 @@ func wsHandler(c *gin.Context) {
 		return
 	}
 
-	var clientID string
-	var session interface {
-		GetID() uint64
-	}
-
 	if claims.Role == "admin" {
-		clientID = fmt.Sprintf("staff_%d", claims.UserID)
-		// Staff: get session_id from query
-		sessionID, _ := strconv.ParseUint(c.Query("session_id"), 10, 64)
-		s, _ := imsvc.GetOrCreateSession(c.Request.Context(), sessionID)
-		_ = strings.TrimSpace(clientID) // suppress unused warning
-		imsvc.HandleWSStaff(conn, clientID, s.ID)
+		clientID := fmt.Sprintf("staff_%d", claims.UserID)
+		imsvc.HandleWSStaff(conn, clientID, claims.UserID)
 		return
 	}
 
-	clientID = fmt.Sprintf("user_%d", claims.UserID)
+	clientID := fmt.Sprintf("user_%d", claims.UserID)
 	s, err := imsvc.GetOrCreateSession(c.Request.Context(), claims.UserID)
 	if err != nil {
 		conn.Close()
 		return
 	}
-	_ = session
 	imsvc.HandleWS(conn, clientID, s)
 }

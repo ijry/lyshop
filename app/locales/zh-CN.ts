@@ -497,6 +497,10 @@ export default {
     autoReply2: '可以的，这个问题我们支持处理。',
     autoReply3: '建议您在订单页查看物流进度，有问题我继续帮您。',
     autoReply4: '关于"{topic}"，我这边继续为您跟进。',
+    queueNotice: '当前排队第{position}位，请稍候...',
+    assignedNotice: '客服已接入，为您服务',
+    transferNotice: '会话已转接，客服继续为您服务',
+    closedNotice: '会话已结束',
   },
 
   // ---------- pages/login/index.vue ----------

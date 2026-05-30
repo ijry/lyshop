@@ -12,7 +12,31 @@ import (
 	immodel "github.com/ijry/lyshop/plugins/im/model"
 )
 
+// ListStaff returns all customer service staff.
+func ListStaff(ctx context.Context) ([]immodel.ImStaff, error) {
+	var list []immodel.ImStaff
+	err := db.DB.WithContext(ctx).Order("id asc").Find(&list).Error
+	return list, err
+}
+
+// CreateStaff creates a new staff record.
+func CreateStaff(ctx context.Context, staff *immodel.ImStaff) error {
+	return db.DB.WithContext(ctx).Create(staff).Error
+}
+
+// UpdateStaff updates staff max_load.
+func UpdateStaff(ctx context.Context, id uint64, maxLoad int) error {
+	return db.DB.WithContext(ctx).Model(&immodel.ImStaff{}).
+		Where("id = ?", id).Update("max_load", maxLoad).Error
+}
+
+// DeleteStaff removes a staff record.
+func DeleteStaff(ctx context.Context, id uint64) error {
+	return db.DB.WithContext(ctx).Delete(&immodel.ImStaff{}, id).Error
+}
+
 // GetOrCreateSession finds an open session for userID, or creates one.
+// If a staff is available, assigns immediately; otherwise queues.
 func GetOrCreateSession(ctx context.Context, userID uint64) (*immodel.ImSession, error) {
 	var session immodel.ImSession
 	err := db.DB.WithContext(ctx).
@@ -22,9 +46,482 @@ func GetOrCreateSession(ctx context.Context, userID uint64) (*immodel.ImSession,
 		session = immodel.ImSession{
 			UserID: userID, Status: immodel.SessionStatusWaiting,
 		}
-		err = db.DB.WithContext(ctx).Create(&session).Error
+		if err = db.DB.WithContext(ctx).Create(&session).Error; err != nil {
+			return &session, err
+		}
+		// Try to assign a staff immediately
+		if staffID := pickAvailableStaff(ctx); staffID > 0 {
+			assignSession(ctx, &session, staffID)
+		} else {
+			// Place in queue
+			pos := countWaiting(ctx)
+			db.DB.WithContext(ctx).Model(&session).Update("queue_position", pos)
+			session.QueuePosition = pos
+		}
 	}
-	return &session, err
+	return &session, nil
+}
+
+// pickAvailableStaff returns the staff_id with lowest load that is online and not full.
+func pickAvailableStaff(ctx context.Context) uint64 {
+	var staff immodel.ImStaff
+	err := db.DB.WithContext(ctx).
+		Where("is_online = 1 AND current_load < max_load").
+		Order("current_load asc").
+		First(&staff).Error
+	if err != nil {
+		return 0
+	}
+	return staff.AdminID
+}
+
+// assignSession sets staff on a session and increments staff load.
+func assignSession(ctx context.Context, session *immodel.ImSession, staffID uint64) {
+	db.DB.WithContext(ctx).Model(session).Updates(map[string]any{
+		"staff_id":       staffID,
+		"status":         immodel.SessionStatusOngoing,
+		"queue_position": 0,
+	})
+	session.StaffID = staffID
+	session.Status = immodel.SessionStatusOngoing
+	session.QueuePosition = 0
+	db.DB.WithContext(ctx).Model(&immodel.ImStaff{}).
+		Where("admin_id = ?", staffID).
+		UpdateColumn("current_load", db.DB.Raw("current_load + 1"))
+
+	// Push assign frame to staff
+	frame := Frame{Type: "assign", SessionID: session.ID, Payload: map[string]any{
+		"action": "new", "user_id": session.UserID,
+	}}
+	data, _ := json.Marshal(frame)
+	GlobalHub.Send(fmt.Sprintf("staff_%d", staffID), data)
+}
+
+// countWaiting returns the number of sessions currently waiting (for queue position).
+func countWaiting(ctx context.Context) int {
+	var count int64
+	db.DB.WithContext(ctx).Model(&immodel.ImSession{}).
+		Where("status = ?", immodel.SessionStatusWaiting).Count(&count)
+	return int(count)
+}
+
+// DrainQueue tries to assign waiting sessions to newly available staff.
+// Call this when a staff comes online or closes a session.
+func DrainQueue(ctx context.Context) {
+	var waiting []immodel.ImSession
+	db.DB.WithContext(ctx).
+		Where("status = ?", immodel.SessionStatusWaiting).
+		Order("queue_position asc, created_at asc").
+		Find(&waiting)
+
+	for _, s := range waiting {
+		staffID := pickAvailableStaff(ctx)
+		if staffID == 0 {
+			break // no more available staff
+		}
+		sess := s
+		assignSession(ctx, &sess, staffID)
+
+		// Notify user of their position change (now assigned)
+		queueFrame := Frame{Type: "assign", SessionID: sess.ID, Payload: map[string]any{
+			"action": "accepted",
+		}}
+		data, _ := json.Marshal(queueFrame)
+		GlobalHub.Send(fmt.Sprintf("user_%d", sess.UserID), data)
+	}
+
+	// Recompute queue positions for remaining waiters
+	var stillWaiting []immodel.ImSession
+	db.DB.WithContext(ctx).
+		Where("status = ?", immodel.SessionStatusWaiting).
+		Order("created_at asc").Find(&stillWaiting)
+	for i, s := range stillWaiting {
+		pos := i + 1
+		db.DB.WithContext(ctx).Model(&immodel.ImSession{}).
+			Where("id = ?", s.ID).Update("queue_position", pos)
+		// Notify user of updated position
+		posFrame := Frame{Type: "queue", SessionID: s.ID, Payload: map[string]any{
+			"position": pos,
+		}}
+		data, _ := json.Marshal(posFrame)
+		GlobalHub.Send(fmt.Sprintf("user_%d", s.UserID), data)
+	}
+}
+
+// GetStaffStatus returns the online status and load for a staff member.
+func GetStaffStatus(ctx context.Context, adminID uint64) (*immodel.ImStaff, error) {
+	var staff immodel.ImStaff
+	err := db.DB.WithContext(ctx).Where("admin_id = ?", adminID).First(&staff).Error
+	if err != nil {
+		// Return default offline record if not found
+		return &immodel.ImStaff{AdminID: adminID, IsOnline: 0, MaxLoad: 5, CurrentLoad: 0}, nil
+	}
+	return &staff, nil
+}
+
+// SetStaffOnline marks a staff as online/offline and drains queue if coming online.
+func SetStaffOnline(ctx context.Context, adminID uint64, online bool) {
+	onlineVal := int8(0)
+	if online {
+		onlineVal = 1
+	}
+	// Upsert staff record
+	var staff immodel.ImStaff
+	err := db.DB.WithContext(ctx).Where("admin_id = ?", adminID).First(&staff).Error
+	if err != nil {
+		staff = immodel.ImStaff{AdminID: adminID, MaxLoad: 5}
+		db.DB.WithContext(ctx).Create(&staff)
+	}
+	db.DB.WithContext(ctx).Model(&staff).Update("is_online", onlineVal)
+
+	if online {
+		DrainQueue(ctx)
+	}
+}
+
+// AcceptSession lets a staff manually accept a waiting session.
+func AcceptSession(ctx context.Context, sessionID, staffID uint64) error {
+	var session immodel.ImSession
+	if err := db.DB.WithContext(ctx).First(&session, sessionID).Error; err != nil {
+		return err
+	}
+	if session.Status != immodel.SessionStatusWaiting {
+		return fmt.Errorf("session is not waiting")
+	}
+	assignSession(ctx, &session, staffID)
+	DrainQueue(ctx) // recompute positions
+	return nil
+}
+
+// TransferSession reassigns a session from one staff to another.
+// The original staff loses the load slot; the new staff gains one.
+// A system message is inserted into the conversation and both staff are notified.
+func TransferSession(ctx context.Context, sessionID, fromStaffID, toStaffID uint64, remark string) error {
+	var session immodel.ImSession
+	if err := db.DB.WithContext(ctx).First(&session, sessionID).Error; err != nil {
+		return err
+	}
+	if session.Status != immodel.SessionStatusOngoing {
+		return fmt.Errorf("session is not ongoing")
+	}
+	if session.StaffID != fromStaffID {
+		return fmt.Errorf("session is not assigned to you")
+	}
+
+	// Write transfer log
+	log := &immodel.ImTransferLog{
+		SessionID:   sessionID,
+		FromStaffID: fromStaffID,
+		ToStaffID:   toStaffID,
+		Remark:      remark,
+	}
+	db.DB.WithContext(ctx).Create(log)
+
+	// Update session staff
+	db.DB.WithContext(ctx).Model(&session).Update("staff_id", toStaffID)
+	session.StaffID = toStaffID
+
+	// Adjust load counters
+	db.DB.WithContext(ctx).Model(&immodel.ImStaff{}).
+		Where("admin_id = ? AND current_load > 0", fromStaffID).
+		UpdateColumn("current_load", db.DB.Raw("current_load - 1"))
+	db.DB.WithContext(ctx).Model(&immodel.ImStaff{}).
+		Where("admin_id = ?", toStaffID).
+		UpdateColumn("current_load", db.DB.Raw("current_load + 1"))
+
+	// Insert system message visible to all parties
+	sysMsg := &immodel.ImMessage{
+		SessionID:  sessionID,
+		SenderType: immodel.SenderSystem,
+		SenderID:   0,
+		Type:       immodel.MsgTypeSystem,
+		Content:    fmt.Sprintf("会话已转接"),
+	}
+	if remark != "" {
+		sysMsg.Content = fmt.Sprintf("会话已转接：%s", remark)
+	}
+	SaveMessage(ctx, sysMsg)
+
+	sysMsgData, _ := json.Marshal(Frame{Type: "msg", SessionID: sessionID, Payload: map[string]any{
+		"msg_type":    immodel.MsgTypeSystem,
+		"content":     sysMsg.Content,
+		"sender_type": immodel.SenderSystem,
+	}})
+
+	// Notify original staff: remove session from their list
+	GlobalHub.Send(fmt.Sprintf("staff_%d", fromStaffID), mustMarshal(Frame{
+		Type: "assign", SessionID: sessionID,
+		Payload: map[string]any{"action": "transfer_out", "to_staff_id": toStaffID},
+	}))
+
+	// Notify new staff: add session to their list
+	GlobalHub.Send(fmt.Sprintf("staff_%d", toStaffID), mustMarshal(Frame{
+		Type: "assign", SessionID: sessionID,
+		Payload: map[string]any{"action": "transfer_in", "from_staff_id": fromStaffID, "user_id": session.UserID},
+	}))
+
+	// Push system message to user
+	GlobalHub.Send(fmt.Sprintf("user_%d", session.UserID), sysMsgData)
+
+	// Notify user about transfer
+	GlobalHub.Send(fmt.Sprintf("user_%d", session.UserID), mustMarshal(Frame{
+		Type: "assign", SessionID: sessionID,
+		Payload: map[string]any{"action": "transfer"},
+	}))
+
+	return nil
+}
+
+func mustMarshal(v any) []byte {
+	data, _ := json.Marshal(v)
+	return data
+}
+
+// CloseSession closes a session and frees staff load, then drains queue.
+func CloseSession(ctx context.Context, sessionID uint64) error {
+	var session immodel.ImSession
+	if err := db.DB.WithContext(ctx).First(&session, sessionID).Error; err != nil {
+		return err
+	}
+	db.DB.WithContext(ctx).Model(&session).Update("status", immodel.SessionStatusClosed)
+	if session.StaffID > 0 {
+		db.DB.WithContext(ctx).Model(&immodel.ImStaff{}).
+			Where("admin_id = ? AND current_load > 0", session.StaffID).
+			UpdateColumn("current_load", db.DB.Raw("current_load - 1"))
+	}
+	// Notify user session closed
+	closeFrame := Frame{Type: "close", SessionID: sessionID, Payload: map[string]any{}}
+	data, _ := json.Marshal(closeFrame)
+	GlobalHub.Send(fmt.Sprintf("user_%d", session.UserID), data)
+
+	DrainQueue(ctx)
+	return nil
+}
+
+// SaveMessage persists a message and updates session last_msg.
+func SaveMessage(ctx context.Context, msg *immodel.ImMessage) error {
+	if err := db.DB.WithContext(ctx).Create(msg).Error; err != nil {
+		return err
+	}
+	db.DB.WithContext(ctx).Model(&immodel.ImSession{}).Where("id = ?", msg.SessionID).
+		Updates(map[string]any{"last_msg": msg.Content, "unread_count": db.DB.Raw("unread_count + 1")})
+	return nil
+}
+
+// GetUnread returns all unread messages for a session (for offline replay).
+func GetUnread(ctx context.Context, sessionID uint64) ([]immodel.ImMessage, error) {
+	var list []immodel.ImMessage
+	err := db.DB.WithContext(ctx).
+		Where("session_id = ? AND is_read = 0", sessionID).
+		Order("id asc").Find(&list).Error
+	return list, err
+}
+
+// MarkRead marks all messages in a session as read.
+func MarkRead(ctx context.Context, sessionID uint64) error {
+	return db.DB.WithContext(ctx).Model(&immodel.ImMessage{}).
+		Where("session_id = ? AND is_read = 0", sessionID).
+		Update("is_read", 1).Error
+}
+
+// ListSessions returns sessions for admin seat view.
+func ListSessions(ctx context.Context, staffID uint64, status int8) ([]immodel.ImSession, error) {
+	tx := db.DB.WithContext(ctx)
+	if staffID > 0 { tx = tx.Where("staff_id = ?", staffID) }
+	if status > 0 { tx = tx.Where("status = ?", status) }
+	var list []immodel.ImSession
+	err := tx.Order("updated_at desc").Limit(50).Find(&list).Error
+	return list, err
+}
+
+// ListMessages returns message history for a session.
+func ListMessages(ctx context.Context, sessionID uint64, page, size int) ([]immodel.ImMessage, int64, error) {
+	if page <= 0 { page = 1 }
+	if size <= 0 || size > 100 { size = 50 }
+	var total int64
+	db.DB.WithContext(ctx).Model(&immodel.ImMessage{}).Where("session_id = ?", sessionID).Count(&total)
+	var list []immodel.ImMessage
+	err := db.DB.WithContext(ctx).Where("session_id = ?", sessionID).
+		Order("id desc").Offset((page-1)*size).Limit(size).Find(&list).Error
+	return list, total, err
+}
+
+// CheckAutoReply looks for a matching auto-reply rule and returns reply text.
+func CheckAutoReply(ctx context.Context, content string) string {
+	var rules []immodel.ImAutoReply
+	db.DB.WithContext(ctx).Where("status = 1").Order("sort asc").Find(&rules)
+	for _, r := range rules {
+		switch r.MatchType {
+		case 1: // exact
+			if content == r.Keyword { return r.Reply }
+		case 2: // contains
+			if strings.Contains(content, r.Keyword) { return r.Reply }
+		}
+	}
+	return ""
+}
+
+// HandleWSStaff manages a staff WebSocket connection (receive-only from hub).
+func HandleWSStaff(conn *websocket.Conn, clientID string, adminID uint64) {
+	ctx := context.Background()
+	SetStaffOnline(ctx, adminID, true)
+
+	client := &Client{ID: clientID, Conn: conn, Send: make(chan []byte, 64)}
+	GlobalHub.Register(client)
+	defer func() {
+		GlobalHub.Unregister(client)
+		SetStaffOnline(ctx, adminID, false)
+	}()
+
+	go func() {
+		for data := range client.Send {
+			if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
+				break
+			}
+		}
+	}()
+
+	conn.SetReadLimit(4096)
+	conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	conn.SetPongHandler(func(_ string) error {
+		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		return nil
+	})
+	for {
+		if _, _, err := conn.ReadMessage(); err != nil {
+			break
+		}
+		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	}
+}
+
+// PushToUser sends a staff message to the user of the given session via Hub.
+func PushToUser(sessionID uint64, msg *immodel.ImMessage) {
+	var session immodel.ImSession
+	if err := db.DB.First(&session, sessionID).Error; err != nil {
+		return
+	}
+	userKey := fmt.Sprintf("user_%d", session.UserID)
+	frame := Frame{Type: "msg", SessionID: sessionID, Payload: map[string]any{
+		"msg_id":      fmt.Sprintf("%d", msg.ID),
+		"msg_type":    msg.Type,
+		"content":     msg.Content,
+		"sender_type": msg.SenderType,
+	}}
+	data, _ := json.Marshal(frame)
+	GlobalHub.Send(userKey, data)
+}
+
+// HandleWS manages one WebSocket client lifecycle (readPump + writePump).
+func HandleWS(conn *websocket.Conn, clientID string, session *immodel.ImSession) {
+	client := &Client{ID: clientID, Conn: conn, Send: make(chan []byte, 64)}
+	GlobalHub.Register(client)
+	defer GlobalHub.Unregister(client)
+
+	ctx := context.Background()
+
+	// Send queue position if still waiting
+	if session.Status == immodel.SessionStatusWaiting && session.QueuePosition > 0 {
+		queueFrame := Frame{Type: "queue", SessionID: session.ID, Payload: map[string]any{
+			"position": session.QueuePosition,
+		}}
+		data, _ := json.Marshal(queueFrame)
+		client.Send <- data
+	}
+
+	// Replay unread messages on connect
+	unread, _ := GetUnread(ctx, session.ID)
+	for _, msg := range unread {
+		frame := Frame{Type: "msg", SessionID: session.ID, Payload: map[string]any{
+			"msg_id":      fmt.Sprintf("%d", msg.ID),
+			"msg_type":    msg.Type,
+			"content":     msg.Content,
+			"sender_type": msg.SenderType,
+		}}
+		data, _ := json.Marshal(frame)
+		client.Send <- data
+	}
+	MarkRead(ctx, session.ID)
+
+	// writePump: drain Send channel to connection
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case data, ok := <-client.Send:
+				if !ok {
+					conn.WriteMessage(websocket.CloseMessage, nil)
+					return
+				}
+				conn.WriteMessage(websocket.TextMessage, data)
+			case <-ticker.C:
+				conn.WriteMessage(websocket.PingMessage, nil)
+			}
+		}
+	}()
+
+	// readPump: receive messages from client
+	conn.SetReadLimit(4096)
+	conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	conn.SetPongHandler(func(_ string) error {
+		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		return nil
+	})
+	for {
+		_, raw, err := conn.ReadMessage()
+		if err != nil { break }
+		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+
+		var frame Frame
+		if err := json.Unmarshal(raw, &frame); err != nil { continue }
+
+		switch frame.Type {
+		case "msg":
+			content, _ := frame.Payload["content"].(string)
+			msgType, _ := frame.Payload["msg_type"].(string)
+			if msgType == "" { msgType = immodel.MsgTypeText }
+
+			msg := &immodel.ImMessage{
+				SessionID:  session.ID,
+				SenderType: immodel.SenderUser,
+				SenderID:   session.UserID,
+				Type:       msgType,
+				Content:    content,
+			}
+			SaveMessage(ctx, msg)
+
+			// Forward to staff if assigned
+			if session.StaffID > 0 {
+				staffKey := fmt.Sprintf("staff_%d", session.StaffID)
+				GlobalHub.Send(staffKey, raw)
+			}
+
+			// Auto-reply only when no staff assigned
+			if session.StaffID == 0 {
+				if reply := CheckAutoReply(ctx, content); reply != "" {
+					autoMsg := &immodel.ImMessage{
+						SessionID:  session.ID,
+						SenderType: immodel.SenderStaff,
+						SenderID:   0,
+						Type:       immodel.MsgTypeText,
+						Content:    reply,
+					}
+					SaveMessage(ctx, autoMsg)
+					replyFrame := Frame{Type: "msg", SessionID: session.ID, Payload: map[string]any{
+						"msg_type": immodel.MsgTypeText, "content": reply,
+					}}
+					data, _ := json.Marshal(replyFrame)
+					client.Send <- data
+				}
+			}
+
+		case "ping":
+			pong := Frame{Type: "pong"}
+			data, _ := json.Marshal(pong)
+			client.Send <- data
+		}
+	}
 }
 
 // SaveMessage persists a message and updates session last_msg.

@@ -29,6 +29,7 @@ export default {
   'menu.vip.skuPrices': 'VIP Pricing',
   'menu.im': 'Customer Service',
   'menu.im.sessions': 'Chat Sessions',
+  'menu.im.staffManage': 'Staff Management',
   'menu.im.autoReply': 'Auto Reply',
   'menu.message': 'Messages',
   'menu.message.list': 'Message List',
@@ -637,6 +638,13 @@ export default {
   'im.send': 'Send',
   'im.avatarStaff': 'S',
   'im.avatarUser': 'U',
+  'im.online': 'Online',
+  'im.offline': 'Offline',
+  'im.serving': 'Serving',
+  'im.accept': 'Accept',
+  'im.close': 'Close',
+  'im.transfer': 'Transfer',
+  'im.queuePosition': 'Queue #{position}',
 
   // AI
   'ai.imageGen.title': 'AI Image Gen',

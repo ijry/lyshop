@@ -35,9 +35,11 @@ func (p *imPlugin) RegisterRoutes(front, admin *gin.RouterGroup) {
 
 func (p *imPlugin) Migrate(db *gorm.DB) error {
 	return db.AutoMigrate(
+		&immodel.ImStaff{},
 		&immodel.ImSession{},
 		&immodel.ImMessage{},
 		&immodel.ImAutoReply{},
+		&immodel.ImTransferLog{},
 	)
 }
 

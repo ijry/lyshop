@@ -1,7 +1,13 @@
 import { defineStore } from 'pinia'
 import { i18n } from '@/locales'
+import { get } from '@/utils/request'
 
 const t = (key: string) => i18n.global.t(key)
+
+let ws: WebSocket | null = null
+let heartbeat: any = null
+let reconnectTimer: any = null
+let reconnectDelay = 3000
 
 export const useChatStore = defineStore('chat', {
   state: () => ({
@@ -9,13 +15,39 @@ export const useChatStore = defineStore('chat', {
     source: 'global',
     messages: [] as Array<{ id: number; sender_type: number; content: string }>,
     inputText: '',
+    connected: false,
+    queuePosition: 0,
+    sessionID: 0,
   }),
   actions: {
-    open(source = 'global') {
+    async open(source = 'global') {
       this.source = source
       this.show = true
       if (!this.messages.length) {
         this.messages.push({ id: Date.now(), sender_type: 2, content: t('chatStore.welcome') })
+      }
+
+      // Initialize session and WebSocket
+      if (!this.sessionID) {
+        try {
+          const session = await get<any>('/api/v1/im/session')
+          if (session) {
+            this.sessionID = session.id
+            this.queuePosition = session.queue_position || 0
+            const data = await get<any>('/api/v1/im/messages', { session_id: session.id, size: 50 })
+            const history = (data?.list || []).reverse()
+            if (history.length) {
+              this.messages = history
+            }
+          }
+
+          const token = localStorage.getItem('user_token')
+          if (token && !ws) {
+            this.connectWS(token)
+          }
+        } catch (err) {
+          console.error('Failed to initialize chat:', err)
+        }
       }
     },
     close() {
@@ -24,7 +56,19 @@ export const useChatStore = defineStore('chat', {
     send(text: string) {
       const content = text.trim()
       if (!content) return
+
       this.messages.push({ id: Date.now(), sender_type: 1, content })
+
+      if (ws?.readyState === WebSocket.OPEN && this.sessionID) {
+        ws.send(JSON.stringify({
+          type: 'msg',
+          session_id: this.sessionID,
+          payload: { msg_type: 'text', content }
+        }))
+        return
+      }
+
+      // Fallback: mock auto-reply
       setTimeout(() => {
         this.messages.push({
           id: Date.now() + 1,
@@ -33,5 +77,74 @@ export const useChatStore = defineStore('chat', {
         })
       }, 400)
     },
+    connectWS(token: string) {
+      const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
+      const host = location.hostname + ':8080'
+      ws = new WebSocket(`${protocol}//${host}/ws/im?token=${token}`)
+
+      ws.onopen = () => {
+        this.connected = true
+        reconnectDelay = 3000
+      }
+
+      ws.onmessage = (e) => {
+        try {
+          const frame = JSON.parse(e.data)
+          if (frame.type === 'msg') {
+            this.messages.push({
+              id: Date.now(),
+              sender_type: frame.payload.sender_type ?? 2,
+              content: frame.payload.content,
+            })
+          } else if (frame.type === 'queue') {
+            this.queuePosition = frame.payload?.position || 0
+          } else if (frame.type === 'assign') {
+            if (frame.payload?.action === 'accepted') {
+              this.queuePosition = 0
+              this.messages.push({
+                id: Date.now(),
+                sender_type: 0,
+                content: t('chatStore.assignedNotice'),
+              })
+            }
+          } else if (frame.type === 'close') {
+            this.messages.push({
+              id: Date.now(),
+              sender_type: 0,
+              content: t('chatStore.closedNotice'),
+            })
+          }
+        } catch {}
+      }
+
+      ws.onclose = () => {
+        this.connected = false
+        this.scheduleReconnect(token)
+      }
+
+      ws.onerror = () => {
+        this.connected = false
+      }
+
+      if (heartbeat) clearInterval(heartbeat)
+      heartbeat = setInterval(() => {
+        if (ws?.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'ping' }))
+        }
+      }, 30000)
+    },
+    scheduleReconnect(token: string) {
+      if (reconnectTimer) clearTimeout(reconnectTimer)
+      reconnectTimer = setTimeout(() => {
+        reconnectDelay = Math.min(reconnectDelay * 2, 30000)
+        this.connectWS(token)
+      }, reconnectDelay)
+    },
+    cleanup() {
+      if (heartbeat) clearInterval(heartbeat)
+      if (reconnectTimer) clearTimeout(reconnectTimer)
+      ws?.close()
+      ws = null
+    }
   },
 })

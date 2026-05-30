@@ -497,6 +497,10 @@ export default {
     autoReply2: 'Sure, we can help with this issue.',
     autoReply3: 'Please check logistics progress on the order page. Let me know if you need further help.',
     autoReply4: 'Regarding "{topic}", I\'ll follow up on this for you.',
+    queueNotice: 'You are #{position} in queue, please wait...',
+    assignedNotice: 'Agent connected',
+    transferNotice: 'Session transferred, agent will continue to assist you',
+    closedNotice: 'Session closed',
   },
 
   // ---------- pages/login/index.vue ----------
