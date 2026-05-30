@@ -48,15 +48,24 @@
       <div class="bg-white rounded-2xl p-6 w-96 shadow-xl">
         <h3 class="text-lg font-semibold text-slate-800 mb-4">{{ $t('system.admin.addTitle') }}</h3>
         <div class="space-y-3">
-          <input v-model="form.username" :placeholder="$t('system.admin.username')"
-            class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500" />
-          <input v-model="form.password" type="password" :placeholder="$t('system.admin.password')"
-            class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500" />
-          <select v-model="form.role_id"
-            class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500">
-            <option value="">{{ $t('system.admin.selectRole') }}</option>
-            <option v-for="r in roles" :key="r.id" :value="r.id">{{ r.name }}</option>
-          </select>
+          <div>
+            <label class="text-sm text-slate-600 mb-1 block">{{ $t('system.admin.username') }}</label>
+            <input v-model="form.username" :placeholder="$t('system.admin.username')"
+              class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500" />
+          </div>
+          <div>
+            <label class="text-sm text-slate-600 mb-1 block">{{ $t('system.admin.password') }}</label>
+            <input v-model="form.password" type="password" :placeholder="$t('system.admin.password')"
+              class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500" />
+          </div>
+          <div>
+            <label class="text-sm text-slate-600 mb-1 block">{{ $t('system.admin.role') }}</label>
+            <select v-model="form.role_id"
+              class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500">
+              <option value="">{{ $t('system.admin.selectRole') }}</option>
+              <option v-for="r in roles" :key="r.id" :value="r.id">{{ r.name }}</option>
+            </select>
+          </div>
         </div>
         <div class="flex gap-3 mt-5">
           <button @click="showCreate=false" class="flex-1 border border-slate-200 rounded-xl py-2.5 text-sm text-slate-600 hover:bg-slate-50">{{ $t('common.cancel') }}</button>

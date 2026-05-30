@@ -33,9 +33,18 @@
       <div class="bg-white rounded-2xl p-6 w-96 shadow-xl">
         <h3 class="text-lg font-semibold text-slate-800 mb-4">{{ form.id ? $t('vip.plan.editTitle') : $t('vip.plan.addTitle') }}</h3>
         <div class="space-y-3">
-          <input v-model="form.name" :placeholder="$t('vip.plan.name')" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm" />
-          <input v-model.number="form.months" type="number" :placeholder="$t('vip.plan.duration')" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm" />
-          <input v-model.number="form.price" type="number" :placeholder="$t('vip.plan.price')" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm" />
+          <div>
+            <label class="text-sm text-slate-600 mb-1 block">{{ $t('vip.plan.name') }}</label>
+            <input v-model="form.name" :placeholder="$t('vip.plan.name')" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm" />
+          </div>
+          <div>
+            <label class="text-sm text-slate-600 mb-1 block">{{ $t('vip.plan.duration') }}</label>
+            <input v-model.number="form.months" type="number" :placeholder="$t('vip.plan.duration')" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm" />
+          </div>
+          <div>
+            <label class="text-sm text-slate-600 mb-1 block">{{ $t('vip.plan.price') }}</label>
+            <input v-model.number="form.price" type="number" :placeholder="$t('vip.plan.price')" class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm" />
+          </div>
         </div>
         <div class="flex gap-3 mt-5">
           <button @click="visible=false" class="flex-1 border border-slate-200 rounded-xl py-2.5 text-sm text-slate-600">{{ $t('common.cancel') }}</button>
