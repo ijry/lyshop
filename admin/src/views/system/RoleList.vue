@@ -18,7 +18,7 @@
         </div>
         <div class="flex flex-wrap gap-1.5 mb-4">
           <span v-for="p in parsePerms(r.permissions)" :key="p"
-            class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs">{{ p }}</span>
+            class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-xs">{{ permLabel(p) }}</span>
           <span v-if="parsePerms(r.permissions).length === 0"
             class="text-slate-400 text-xs">{{ $t('system.role.noPermission') }}</span>
         </div>
@@ -44,14 +44,14 @@
           <label class="text-sm text-slate-600 mb-2 block">{{ $t('system.role.permConfig') }}</label>
           <div class="border border-slate-200 rounded-xl p-4 max-h-64 overflow-y-auto">
             <div v-for="group in permGroups" :key="group.prefix" class="mb-3 last:mb-0">
-              <p class="text-xs font-semibold text-slate-500 mb-1.5 uppercase">{{ group.prefix }}</p>
+              <p class="text-xs font-semibold text-slate-500 mb-1.5 uppercase">{{ permGroupLabel(group.prefix) }}</p>
               <div class="flex flex-wrap gap-2">
                 <label v-for="p in group.perms" :key="p"
                   class="flex items-center gap-1.5 text-sm cursor-pointer select-none"
                   :class="form.perms.includes(p) ? 'text-red-600' : 'text-slate-600'">
                   <input type="checkbox" :value="p" v-model="form.perms"
                     class="accent-red-600 w-3.5 h-3.5" />
-                  {{ p }}
+                  {{ permLabel(p) }}
                 </label>
               </div>
             </div>
@@ -93,6 +93,18 @@ const permGroups = computed(() => {
 function parsePerms(raw: any): string[] {
   if (Array.isArray(raw)) return raw
   try { return JSON.parse(raw) } catch { return [] }
+}
+
+function permLabel(perm: string): string {
+  const key = `perm.${perm}`
+  const label = t(key)
+  return label === key ? perm : label
+}
+
+function permGroupLabel(prefix: string): string {
+  const key = `permGroup.${prefix}`
+  const label = t(key)
+  return label === key ? prefix.toUpperCase() : label
 }
 
 function openCreate() {
