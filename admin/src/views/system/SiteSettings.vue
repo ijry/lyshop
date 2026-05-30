@@ -55,47 +55,6 @@
             </div>
           </div>
 
-          <!-- Hero 配置 -->
-          <div v-show="activeSection === 'hero'" class="space-y-4">
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ $t('system.site.badge') }}</label>
-              <input v-model="form.hero_badge" type="text" :placeholder="$t('system.site.badgeDefault')"
-                class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ $t('system.site.heroTitle') }}</label>
-              <textarea v-model="form.hero_title" rows="2" :placeholder="$t('system.site.heroTitleDefault')"
-                class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm resize-y focus:outline-none focus:border-red-500" />
-              <p class="text-xs text-slate-400 mt-1">{{ $t('system.site.heroTitleHint') }}</p>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ $t('system.site.heroSubtitle') }}</label>
-              <input v-model="form.hero_subtitle" type="text"
-                class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500" />
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ $t('system.site.heroBtnText') }}</label>
-                <input v-model="form.hero_btn_text" type="text" :placeholder="$t('system.site.heroBtnTextDefault')"
-                  class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500" />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ $t('system.site.heroBtnLink') }}</label>
-                <input v-model="form.hero_btn_link" type="text" placeholder="/products"
-                  class="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-red-500" />
-              </div>
-            </div>
-            <!-- Preview -->
-            <div class="mt-4 rounded-xl overflow-hidden">
-              <div class="p-6 text-white text-center"
-                :style="{ background: `linear-gradient(135deg, ${form.color_hero_from}, ${form.color_hero_to})` }">
-                <div class="text-xs opacity-80 mb-2">{{ form.hero_badge }}</div>
-                <div class="text-lg font-bold mb-1" v-html="form.hero_title.replace(/\\n/g, '<br>')"></div>
-                <div class="text-sm opacity-80">{{ form.hero_subtitle }}</div>
-              </div>
-            </div>
-          </div>
-
           <!-- 主题色 -->
           <div v-show="activeSection === 'theme'" class="space-y-5">
             <p class="text-sm text-slate-500 mb-2">{{ $t('system.site.themeColorHint') }}</p>
@@ -147,7 +106,6 @@ const { t } = useI18n()
 
 const sections = [
   { key: 'basic', title: t('system.site.basicInfo') },
-  { key: 'hero', title: t('system.site.hero') },
   { key: 'theme', title: t('system.site.themeColor') },
 ]
 
@@ -163,11 +121,6 @@ const form = reactive({
   seo_keywords: '商城,电商,开源',
   seo_description: '开源插件化商城系统',
   icp: '',
-  hero_badge: '限时秒杀进行中',
-  hero_title: '精选好物\\n品质生活从这里开始',
-  hero_subtitle: '数千款精选商品，正品保障，极速发货，让购物更简单。',
-  hero_btn_text: '立即选购',
-  hero_btn_link: '/products',
   color_primary: '#dc2626',
   color_primary_light: '#ef4444',
   color_primary_dark: '#b91c1c',
