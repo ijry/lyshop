@@ -139,11 +139,15 @@ export default {
   'dashboard.todaySales': "Today's Sales",
   'dashboard.pendingAfterSale': 'Pending After-Sale',
   'dashboard.onlineSessions': 'Online Sessions',
-  'dashboard.salesTrend': '7-Day Sales Trend',
+  'dashboard.salesTrend': 'Sales Trend',
   'dashboard.dataLoading': 'Loading data...',
   'dashboard.noTrendData': 'No trend data',
   'dashboard.salesAmount': 'Sales',
   'dashboard.orderCount': 'Orders',
+  'dashboard.range7d': '7 Days',
+  'dashboard.range1w': '1 Week',
+  'dashboard.range1m': '1 Month',
+  'dashboard.rangeCustom': 'Custom',
 
   // Product
   'product.list.title': 'Products',

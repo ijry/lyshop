@@ -1,7 +1,7 @@
 import request from './request'
 
 // ---- Dashboard ----
-export const getDashboard = () => request.get('/dashboard')
+export const getDashboard = (params?: any) => request.get('/dashboard', { params })
 
 // ---- Product ----
 export const getCategories = () => request.get<never, any[]>('/categories')

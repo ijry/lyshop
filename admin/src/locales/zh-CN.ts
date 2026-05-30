@@ -139,11 +139,15 @@ export default {
   'dashboard.todaySales': '今日销售额',
   'dashboard.pendingAfterSale': '待处理售后',
   'dashboard.onlineSessions': '在线客服会话',
-  'dashboard.salesTrend': '近 7 天销售趋势',
+  'dashboard.salesTrend': '销售趋势',
   'dashboard.dataLoading': '数据加载中...',
   'dashboard.noTrendData': '暂无趋势数据',
   'dashboard.salesAmount': '销售额',
   'dashboard.orderCount': '订单量',
+  'dashboard.range7d': '7天',
+  'dashboard.range1w': '1周',
+  'dashboard.range1m': '1月',
+  'dashboard.rangeCustom': '自定义',
 
   // Product
   'product.list.title': '商品列表',

@@ -14,12 +14,36 @@
     <div class="bg-white rounded-xl shadow-sm p-6 border border-slate-100">
       <div class="flex items-center justify-between mb-4">
         <h3 class="text-base font-semibold text-slate-800">{{ $t('dashboard.salesTrend') }}</h3>
-        <button
-          class="text-xs px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
-          @click="loadDashboard"
-        >
-          {{ $t('common.refresh') }}
-        </button>
+        <div class="flex items-center gap-2">
+          <button
+            v-for="range in timeRanges"
+            :key="range.value"
+            :class="[
+              'text-xs px-3 py-1.5 rounded-lg border transition-colors',
+              selectedRange === range.value
+                ? 'bg-blue-50 border-blue-500 text-blue-600'
+                : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+            ]"
+            @click="selectRange(range.value)"
+          >
+            {{ range.label }}
+          </button>
+          <el-date-picker
+            v-model="customDateRange"
+            type="daterange"
+            size="small"
+            :placeholder="$t('dashboard.rangeCustom')"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            @change="onCustomDateChange"
+          />
+          <button
+            class="text-xs px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
+            @click="loadDashboard"
+          >
+            {{ $t('common.refresh') }}
+          </button>
+        </div>
       </div>
 
       <p v-if="loading" class="text-slate-400 text-center py-12">{{ $t('dashboard.dataLoading') }}</p>
@@ -53,10 +77,15 @@ type DashboardData = {
   sales_trend: TrendPoint[]
 }
 
+type TimeRange = '7d' | '1w' | '1m' | 'custom'
+
 const loading = ref(false)
 const chartRef = ref<HTMLElement | null>(null)
 let chart: EChartsType | null = null
 let chartInit: ((dom: HTMLElement) => EChartsType) | null = null
+
+const selectedRange = ref<TimeRange>('7d')
+const customDateRange = ref<[string, string] | null>(null)
 
 const dashboard = ref<DashboardData>({
   today_orders: 0,
@@ -65,6 +94,12 @@ const dashboard = ref<DashboardData>({
   online_sessions: 0,
   sales_trend: [],
 })
+
+const timeRanges = computed(() => [
+  { value: '7d' as TimeRange, label: t('dashboard.range7d') },
+  { value: '1w' as TimeRange, label: t('dashboard.range1w') },
+  { value: '1m' as TimeRange, label: t('dashboard.range1m') },
+])
 
 const cards = computed(() => [
   { label: t('dashboard.todayOrders'), value: String(dashboard.value.today_orders || 0) },
@@ -76,6 +111,19 @@ const cards = computed(() => [
 const trend = computed(() => dashboard.value.sales_trend || [])
 const money = (v: number) => Number(v || 0).toFixed(2)
 const shortDate = (v: string) => (v || '').slice(5)
+
+function selectRange(range: TimeRange) {
+  selectedRange.value = range
+  customDateRange.value = null
+  loadDashboard()
+}
+
+function onCustomDateChange(dates: [string, string] | null) {
+  if (dates && dates.length === 2) {
+    selectedRange.value = 'custom'
+    loadDashboard()
+  }
+}
 
 async function ensureChartRuntime() {
   if (chartInit) return
@@ -110,12 +158,12 @@ async function renderChart() {
     },
     legend: {
       top: 0,
-      right: 0,
+      right: 20,
       data: [t('dashboard.salesAmount'), t('dashboard.orderCount')],
     },
     grid: {
       left: 56,
-      right: 56,
+      right: 80,
       top: 40,
       bottom: 32,
     },
@@ -174,7 +222,14 @@ function onResize() {
 async function loadDashboard() {
   loading.value = true
   try {
-    const data: any = await getDashboard()
+    const params: any = {}
+    if (selectedRange.value === 'custom' && customDateRange.value) {
+      params.start_date = customDateRange.value[0]
+      params.end_date = customDateRange.value[1]
+    } else if (selectedRange.value !== 'custom') {
+      params.range = selectedRange.value
+    }
+    const data: any = await getDashboard(params)
     if (!data) return
     dashboard.value = {
       today_orders: Number(data.today_orders || 0),
