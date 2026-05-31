@@ -27,7 +27,7 @@ function handleUnauthorized() {
 }
 
 async function mockRequest<T = any>(method: string, url: string, data?: any): Promise<T> {
-  const { matchMock } = await import('../../admin/src/mock/index')
+  const { matchMock } = await import('@/mock/index')
   const result = matchMock(String(method || 'GET').toUpperCase(), normalizeUrl(String(url || '')), data)
   await new Promise((resolve) => setTimeout(resolve, 80 + Math.random() * 120))
   if (result.matched) {
