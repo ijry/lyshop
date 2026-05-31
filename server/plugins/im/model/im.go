@@ -1,11 +1,21 @@
 package model
 
-import "github.com/ijry/lyshop/model"
+import (
+	"encoding/json"
+
+	"github.com/ijry/lyshop/model"
+)
 
 const (
 	SessionStatusWaiting  int8 = 1
 	SessionStatusOngoing  int8 = 2
 	SessionStatusClosed   int8 = 3
+
+	// SessionMode marks who is currently serving the session.
+	// New sessions start in "ai" mode (answered by the local LLM); when the
+	// user requests a human agent we switch to "human" (queue/assign flow).
+	SessionModeAI    = "ai"
+	SessionModeHuman = "human"
 
 	MsgTypeText        = "text"
 	MsgTypeImage       = "image"
@@ -16,6 +26,7 @@ const (
 	SenderUser   int8 = 1
 	SenderStaff  int8 = 2
 	SenderSystem int8 = 0
+	SenderAI     int8 = 3 // 本地大模型客服
 )
 
 // ImStaff tracks online status and load for each staff member.
@@ -29,12 +40,13 @@ type ImStaff struct {
 
 type ImSession struct {
 	model.Base
-	UserID        uint64 `gorm:"not null;index"           json:"user_id"`
-	StaffID       uint64 `gorm:"not null;default:0;index" json:"staff_id"`
-	Status        int8   `gorm:"not null"                 json:"status"`
-	QueuePosition int    `gorm:"not null;default:0"       json:"queue_position"`
-	LastMsg       string `gorm:"size:255"                 json:"last_msg"`
-	UnreadCount   int    `gorm:"not null;default:0"       json:"unread_count"`
+	UserID        uint64 `gorm:"not null;index"            json:"user_id"`
+	StaffID       uint64 `gorm:"not null;default:0;index"  json:"staff_id"`
+	Mode          string `gorm:"size:16;not null;default:'ai'" json:"mode"` // ai|human
+	Status        int8   `gorm:"not null"                  json:"status"`
+	QueuePosition int    `gorm:"not null;default:0"        json:"queue_position"`
+	LastMsg       string `gorm:"size:255"                  json:"last_msg"`
+	UnreadCount   int    `gorm:"not null;default:0"        json:"unread_count"`
 }
 
 // ImTransferLog records every session transfer for audit and history.
@@ -64,4 +76,18 @@ type ImAutoReply struct {
 	Reply     string `gorm:"type:text;not null" json:"reply"`
 	Sort      int    `gorm:"not null;default:0" json:"sort"`
 	Status    int8   `gorm:"not null;default:1" json:"status"`
+}
+
+// ImKnowledge is one entry in the AI customer-service RAG knowledge base.
+// Content is embedded into a vector (Embedding) when the local LLM exposes an
+// embeddings endpoint; otherwise retrieval falls back to keyword matching.
+type ImKnowledge struct {
+	model.Base
+	Title     string          `gorm:"size:255;not null"   json:"title"`
+	Content   string          `gorm:"type:text;not null"  json:"content"`
+	Tags      string          `gorm:"size:255"            json:"tags"` // 逗号分隔，便于关键词召回
+	Embedding json.RawMessage `gorm:"type:json"           json:"-"`    // []float64，前端无需返回
+	Indexed   int8            `gorm:"not null;default:0"  json:"indexed"` // 1=已向量化
+	Sort      int             `gorm:"not null;default:0"  json:"sort"`
+	Status    int8            `gorm:"not null;default:1"  json:"status"` // 1启用 0停用
 }

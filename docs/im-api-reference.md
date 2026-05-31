@@ -2,10 +2,10 @@
 
 ## 概述
 
-IM 客服插件提供实时客服聊天功能，支持 WebSocket 实时通信、多坐席管理、排队机制、会话转接等企业级客服功能。
+IM 客服插件提供实时客服聊天功能，支持 WebSocket 实时通信、多坐席管理、排队机制、会话转接等企业级客服功能，并内置基于本地大模型的 AI 智能客服（RAG 知识库 + 商品信息分析）。新会话默认由 AI 接待，用户可随时转人工排队。
 
 **插件标识**: `im`  
-**版本**: `1.0.0`  
+**版本**: `1.1.0`  
 **依赖**: 无
 
 ---
@@ -35,6 +35,7 @@ IM 客服插件提供实时客服聊天功能，支持 WebSocket 实时通信、
 
 **字段说明**:
 - `status`: 1=等待接入, 2=服务中, 3=已关闭
+- `mode`: `ai`=AI 接待中, `human`=人工接待/排队
 - `queue_position`: 排队位置，0表示未排队或已接入
 
 ---
@@ -78,7 +79,7 @@ IM 客服插件提供实时客服聊天功能，支持 WebSocket 实时通信、
 ```
 
 **字段说明**:
-- `sender_type`: 0=系统, 1=用户, 2=客服
+- `sender_type`: 0=系统, 1=用户, 2=人工客服, 3=AI 客服
 - `type`: text=文本, image=图片, product_card=商品卡片, order_card=订单卡片, system=系统消息
 
 ---
@@ -107,7 +108,9 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 
 | 类型 | 方向 | Payload | 说明 |
 |---|---|---|---|
-| `msg` | 双向 | `{msg_type, content, sender_type}` | 消息内容 |
+| `msg` | 双向 | `{msg_type, content, sender_type}` | 消息内容（`sender_type`：0系统/1用户/2人工/3AI） |
+| `typing` | 服务端→客户端 | `{sender_type}` | AI 正在生成回复的输入指示 |
+| `to_human` | 客户端→服务端 | `{}` | 用户请求转人工（等价于发送转人工关键词） |
 | `queue` | 服务端→客户端 | `{position}` | 排队位置更新 |
 | `assign` | 服务端→客户端 | `{action}` | 接入/转接通知 |
 | `close` | 服务端→客户端 | `{}` | 会话结束通知 |
@@ -385,6 +388,85 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 
 ---
 
+### 15. AI 知识库列表
+
+**接口**: `GET /admin/api/im/knowledge`  
+**权限**: `im:knowledge`  
+**参数**: `keyword`（可选，按标题/内容/标签检索）、`page`、`size`  
+**说明**: 分页返回知识库条目（`{list,total,page,size}`）
+
+---
+
+### 16. 新增知识条目
+
+**接口**: `POST /admin/api/im/knowledge`  
+**权限**: `im:knowledge`  
+**请求体**: `{ "title": "退货政策", "content": "7天无理由退货...", "tags": "退货,售后", "sort": 0, "status": 1 }`  
+**说明**: 创建后异步进行向量化（配置了向量模型时）
+
+---
+
+### 17. 更新知识条目
+
+**接口**: `PUT /admin/api/im/knowledge/:id`  
+**权限**: `im:knowledge`  
+**请求体**: 任意可选字段 `{title, content, tags, sort, status}`  
+**说明**: 内容变更后会重新向量化
+
+---
+
+### 18. 删除知识条目
+
+**接口**: `DELETE /admin/api/im/knowledge/:id`  
+**权限**: `im:knowledge`
+
+---
+
+### 19. 重建向量索引
+
+**接口**: `POST /admin/api/im/knowledge/reindex`  
+**权限**: `im:knowledge`  
+**响应**: `{ "indexed": 12 }`  
+**说明**: 对全部知识条目重新向量化；未配置向量模型时返回错误提示并退化为关键词召回
+
+---
+
+### 20. 测试大模型连通性
+
+**接口**: `POST /admin/api/im/ai/test`  
+**权限**: `im:knowledge`  
+**响应**: `{ "reply": "连接正常" }`  
+**说明**: 使用当前配置发起一次最小对话以校验服务地址与对话模型
+
+---
+
+## AI 智能客服
+
+### 接待流程
+
+1. 用户进入会话，`GetOrCreateSession` 创建 `mode=ai`、`status=2` 的会话，由本地大模型接待（无需排队）。
+2. 用户每条消息先落库，命中转人工关键词（或收到 `to_human` 帧）则调用 `SwitchToHuman` 进入人工流程；否则推送 `typing` 帧并异步生成回复。
+3. 回复生成：检索知识库（RAG）与在售商品信息，连同最近若干轮对话与系统提示词一并请求大模型，回复以 `sender_type=3` 推送给用户。
+4. 关闭 AI（`ai_enabled=false`）时，新会话回退到传统人工分配/排队流程。
+
+### 配置项（配置中心 → IM客服）
+
+| Key | 说明 |
+|---|---|
+| `ai_enabled` | 是否启用 AI 客服 |
+| `ai_base_url` | OpenAI 兼容服务地址，如 `http://localhost:11434/v1` |
+| `ai_api_key` | API Key（本地服务可留空） |
+| `ai_chat_model` | 对话模型，如 `qwen2.5:7b` |
+| `ai_embed_model` | 向量模型，如 `bge-m3`；留空则关键词召回 |
+| `ai_system_prompt` | 系统提示词（人设与回答约束） |
+| `ai_human_keywords` | 转人工关键词，逗号分隔 |
+| `ai_top_k` | 知识库召回条数（默认 3） |
+| `ai_temperature` | 采样温度（默认 0.3） |
+| `ai_product_search` | 是否启用商品信息分析 |
+| `ai_timeout_sec` | 大模型请求超时秒数（默认 30） |
+
+---
+
 ## 数据模型
 
 ### ImSession (会话表)
@@ -394,6 +476,7 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 | id | uint64 | 主键 |
 | user_id | uint64 | 用户ID (索引) |
 | staff_id | uint64 | 客服ID (索引，0表示未分配) |
+| mode | string | 接待模式 (`ai`=AI接待, `human`=人工) |
 | status | int8 | 状态 (1=等待, 2=服务中, 3=已关闭) |
 | queue_position | int | 排队位置 (0=未排队) |
 | last_msg | string | 最后一条消息 (255字符) |
@@ -409,7 +492,7 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 |---|---|---|
 | id | uint64 | 主键 |
 | session_id | uint64 | 会话ID (索引) |
-| sender_type | int8 | 发送者类型 (0=系统, 1=用户, 2=客服) |
+| sender_type | int8 | 发送者类型 (0=系统, 1=用户, 2=人工客服, 3=AI客服) |
 | sender_id | uint64 | 发送者ID |
 | type | string | 消息类型 (text/image/product_card/order_card/system) |
 | content | text | 消息内容 |
@@ -463,6 +546,23 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 
 ---
 
+### ImKnowledge (AI 知识库表)
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| id | uint64 | 主键 |
+| title | string | 标题 (255字符) |
+| content | text | 内容 |
+| tags | string | 标签，逗号分隔 (255字符) |
+| embedding | json | 内容向量（[]float64），未配置向量模型时为空 |
+| indexed | int8 | 是否已向量化 (0/1) |
+| sort | int | 排序 |
+| status | int8 | 状态 (0=停用, 1=启用) |
+| created_at | time | 创建时间 |
+| updated_at | time | 更新时间 |
+
+---
+
 ## 权限说明
 
 | 权限 | 说明 |
@@ -470,6 +570,7 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 | `im:view` | 查看客服会话和消息 |
 | `im:reply` | 回复消息、接入/结束/转接会话、设置在线状态 |
 | `im:staff:manage` | 管理客服坐席（增删改查） |
+| `im:knowledge` | 管理 AI 知识库、重建索引、测试大模型连通 |
 
 ---
 
@@ -487,6 +588,13 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 ---
 
 ## 更新日志
+
+### v1.1.0 (2026-06-01)
+- ✅ 本地大模型 AI 智能客服：新会话默认 AI 接待，输入“人工”或点击转人工进入排队
+- ✅ RAG 知识库：`im_knowledge` 表 + 向量召回（无向量模型时关键词召回兜底）
+- ✅ 商品信息分析：回答时检索在售商品价格/库存/销量
+- ✅ 知识库管理接口与 `im:knowledge` 权限、配置中心 `config_items`
+- ✅ 新增 WS 帧 `typing` / `to_human`，`sender_type` 扩展 AI=3
 
 ### v1.0.0 (2026-05-31)
 - ✅ 基础消息收发功能

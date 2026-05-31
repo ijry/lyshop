@@ -36,30 +36,97 @@ func DeleteStaff(ctx context.Context, id uint64) error {
 }
 
 // GetOrCreateSession finds an open session for userID, or creates one.
-// If a staff is available, assigns immediately; otherwise queues.
+//
+// When AI first-line service is enabled, a new session starts in "ai" mode and
+// is served by the local LLM immediately (no queue). The user can switch to a
+// human agent later by typing a human-request keyword (see SwitchToHuman).
+//
+// When AI is disabled, a new session falls back to the classic human flow:
+// assign an available staff immediately, otherwise queue.
 func GetOrCreateSession(ctx context.Context, userID uint64) (*immodel.ImSession, error) {
 	var session immodel.ImSession
 	err := db.DB.WithContext(ctx).
 		Where("user_id = ? AND status != ?", userID, immodel.SessionStatusClosed).
 		First(&session).Error
-	if err != nil {
+	if err == nil {
+		return &session, nil
+	}
+
+	if AIEnabled() {
 		session = immodel.ImSession{
-			UserID: userID, Status: immodel.SessionStatusWaiting,
+			UserID: userID,
+			Mode:   immodel.SessionModeAI,
+			Status: immodel.SessionStatusOngoing, // served by AI
 		}
 		if err = db.DB.WithContext(ctx).Create(&session).Error; err != nil {
 			return &session, err
 		}
-		// Try to assign a staff immediately
-		if staffID := pickAvailableStaff(ctx); staffID > 0 {
-			assignSession(ctx, &session, staffID)
-		} else {
-			// Place in queue
-			pos := countWaiting(ctx)
-			db.DB.WithContext(ctx).Model(&session).Update("queue_position", pos)
-			session.QueuePosition = pos
-		}
+		return &session, nil
+	}
+
+	// Classic human flow.
+	session = immodel.ImSession{
+		UserID: userID,
+		Mode:   immodel.SessionModeHuman,
+		Status: immodel.SessionStatusWaiting,
+	}
+	if err = db.DB.WithContext(ctx).Create(&session).Error; err != nil {
+		return &session, err
+	}
+	if staffID := pickAvailableStaff(ctx); staffID > 0 {
+		assignSession(ctx, &session, staffID)
+	} else {
+		pos := countWaiting(ctx)
+		db.DB.WithContext(ctx).Model(&session).Update("queue_position", pos)
+		session.QueuePosition = pos
 	}
 	return &session, nil
+}
+
+// SwitchToHuman transitions an AI session to the human queue/assign flow.
+// It records a system message, assigns an available staff or enqueues the user,
+// and notifies the user of the result. Idempotent: a session already in human
+// mode is left unchanged.
+func SwitchToHuman(ctx context.Context, sessionID uint64) error {
+	var session immodel.ImSession
+	if err := db.DB.WithContext(ctx).First(&session, sessionID).Error; err != nil {
+		return err
+	}
+	if session.Mode == immodel.SessionModeHuman {
+		return nil
+	}
+
+	// System notice into the transcript.
+	sysMsg := &immodel.ImMessage{
+		SessionID:  sessionID,
+		SenderType: immodel.SenderSystem,
+		Type:       immodel.MsgTypeSystem,
+		Content:    "正在为您转接人工客服…",
+	}
+	SaveMessage(ctx, sysMsg)
+	sysData, _ := json.Marshal(Frame{Type: "msg", SessionID: sessionID, Payload: map[string]any{
+		"msg_type": immodel.MsgTypeSystem, "content": sysMsg.Content, "sender_type": immodel.SenderSystem,
+	}})
+	GlobalHub.Send(fmt.Sprintf("user_%d", session.UserID), sysData)
+
+	db.DB.WithContext(ctx).Model(&session).Update("mode", immodel.SessionModeHuman)
+	session.Mode = immodel.SessionModeHuman
+
+	if staffID := pickAvailableStaff(ctx); staffID > 0 {
+		assignSession(ctx, &session, staffID)
+		// Tell the user a human accepted.
+		acc, _ := json.Marshal(Frame{Type: "assign", SessionID: sessionID, Payload: map[string]any{"action": "accepted"}})
+		GlobalHub.Send(fmt.Sprintf("user_%d", session.UserID), acc)
+	} else {
+		db.DB.WithContext(ctx).Model(&session).Update("status", immodel.SessionStatusWaiting)
+		session.Status = immodel.SessionStatusWaiting
+		pos := countWaiting(ctx)
+		db.DB.WithContext(ctx).Model(&session).Update("queue_position", pos)
+		session.QueuePosition = pos
+		qf, _ := json.Marshal(Frame{Type: "queue", SessionID: sessionID, Payload: map[string]any{"position": pos}})
+		GlobalHub.Send(fmt.Sprintf("user_%d", session.UserID), qf)
+	}
+	return nil
 }
 
 // pickAvailableStaff returns the staff_id with lowest load that is online and not full.
@@ -412,6 +479,31 @@ func PushToUser(sessionID uint64, msg *immodel.ImMessage) {
 	GlobalHub.Send(userKey, data)
 }
 
+// answerWithAI generates a RAG reply for an AI-mode session and pushes it to
+// the user. Runs in its own goroutine; failures degrade to a polite fallback
+// that nudges the user toward a human agent.
+func answerWithAI(session immodel.ImSession, userText string) {
+	ctx := context.Background()
+	reply, err := AIAnswer(ctx, &session, userText)
+	if err != nil || strings.TrimSpace(reply) == "" {
+		reply = "抱歉，我暂时无法回答这个问题。您可以换个说法，或输入“人工”转接人工客服。"
+	}
+	aiMsg := &immodel.ImMessage{
+		SessionID:  session.ID,
+		SenderType: immodel.SenderAI,
+		Type:       immodel.MsgTypeText,
+		Content:    reply,
+	}
+	SaveMessage(ctx, aiMsg)
+	data, _ := json.Marshal(Frame{Type: "msg", SessionID: session.ID, Payload: map[string]any{
+		"msg_id":      fmt.Sprintf("%d", aiMsg.ID),
+		"msg_type":    immodel.MsgTypeText,
+		"content":     reply,
+		"sender_type": immodel.SenderAI,
+	}})
+	GlobalHub.Send(fmt.Sprintf("user_%d", session.UserID), data)
+}
+
 // HandleWS manages one WebSocket client lifecycle (readPump + writePump).
 func HandleWS(conn *websocket.Conn, clientID string, session *immodel.ImSession) {
 	client := &Client{ID: clientID, Conn: conn, Send: make(chan []byte, 64)}
@@ -491,30 +583,49 @@ func HandleWS(conn *websocket.Conn, clientID string, session *immodel.ImSession)
 			}
 			SaveMessage(ctx, msg)
 
-			// Forward to staff if assigned
-			if session.StaffID > 0 {
-				staffKey := fmt.Sprintf("staff_%d", session.StaffID)
-				GlobalHub.Send(staffKey, raw)
+			// Reload current session state: mode/staff can change mid-connection
+			// (e.g. user switched to human, or a staff accepted/transferred).
+			var cur immodel.ImSession
+			if db.DB.WithContext(ctx).First(&cur, session.ID).Error == nil {
+				session = &cur
 			}
 
-			// Auto-reply only when no staff assigned
-			if session.StaffID == 0 {
-				if reply := CheckAutoReply(ctx, content); reply != "" {
+			// Human mode: forward to the assigned staff; otherwise the user is
+			// still queued (queue notice already delivered). Keep the legacy
+			// keyword auto-reply for unassigned human sessions (AI disabled).
+			if session.Mode == immodel.SessionModeHuman {
+				if session.StaffID > 0 {
+					GlobalHub.Send(fmt.Sprintf("staff_%d", session.StaffID), raw)
+				} else if reply := CheckAutoReply(ctx, content); reply != "" {
 					autoMsg := &immodel.ImMessage{
-						SessionID:  session.ID,
-						SenderType: immodel.SenderStaff,
-						SenderID:   0,
-						Type:       immodel.MsgTypeText,
-						Content:    reply,
+						SessionID: session.ID, SenderType: immodel.SenderStaff,
+						Type: immodel.MsgTypeText, Content: reply,
 					}
 					SaveMessage(ctx, autoMsg)
-					replyFrame := Frame{Type: "msg", SessionID: session.ID, Payload: map[string]any{
+					data, _ := json.Marshal(Frame{Type: "msg", SessionID: session.ID, Payload: map[string]any{
 						"msg_type": immodel.MsgTypeText, "content": reply,
-					}}
-					data, _ := json.Marshal(replyFrame)
+					}})
 					client.Send <- data
 				}
+				break
 			}
+
+			// AI mode (default). A human-request keyword hands off to a person.
+			cfg := LoadAIConfig()
+			if msgType == immodel.MsgTypeText && IsHumanRequest(cfg, content) {
+				SwitchToHuman(ctx, session.ID)
+				break
+			}
+			// Generate the AI reply off the read loop so further messages and
+			// pings stay responsive while the local LLM is thinking.
+			typing, _ := json.Marshal(Frame{Type: "typing", SessionID: session.ID, Payload: map[string]any{"sender_type": immodel.SenderAI}})
+			client.Send <- typing
+			sess := *session
+			go answerWithAI(sess, content)
+
+		case "to_human":
+			// Explicit "转人工" button: hand off regardless of locale/keywords.
+			SwitchToHuman(ctx, session.ID)
 
 		case "ping":
 			pong := Frame{Type: "pong"}

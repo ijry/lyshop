@@ -25,6 +25,115 @@ func RegisterAdminRoutes(g *gin.RouterGroup) {
 	g.DELETE("/im/staff/:id", middleware.RequirePermission("im:staff:manage"), adminDeleteStaff)
 	g.GET("/im/auto-replies", adminListAutoReplies)
 	g.POST("/im/auto-replies", adminCreateAutoReply)
+
+	// AI 知识库（RAG）管理
+	g.GET("/im/knowledge", middleware.RequirePermission("im:knowledge"), adminListKnowledge)
+	g.POST("/im/knowledge", middleware.RequirePermission("im:knowledge"), adminCreateKnowledge)
+	g.PUT("/im/knowledge/:id", middleware.RequirePermission("im:knowledge"), adminUpdateKnowledge)
+	g.DELETE("/im/knowledge/:id", middleware.RequirePermission("im:knowledge"), adminDeleteKnowledge)
+	g.POST("/im/knowledge/reindex", middleware.RequirePermission("im:knowledge"), adminReindexKnowledge)
+	// 本地大模型连通性测试
+	g.POST("/im/ai/test", middleware.RequirePermission("im:knowledge"), adminTestAI)
+}
+
+func adminListKnowledge(c *gin.Context) {
+	keyword := c.Query("keyword")
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	size, _ := strconv.Atoi(c.DefaultQuery("size", "20"))
+	list, total, err := imsvc.ListKnowledge(c.Request.Context(), keyword, page, size)
+	if err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, response.PageData{List: list, Total: total, Page: page, Size: size})
+}
+
+func adminCreateKnowledge(c *gin.Context) {
+	var req struct {
+		Title   string `json:"title" binding:"required"`
+		Content string `json:"content" binding:"required"`
+		Tags    string `json:"tags"`
+		Sort    int    `json:"sort"`
+		Status  int8   `json:"status"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	if req.Status == 0 {
+		req.Status = 1
+	}
+	k := &immodel.ImKnowledge{
+		Title: req.Title, Content: req.Content, Tags: req.Tags, Sort: req.Sort, Status: req.Status,
+	}
+	if err := imsvc.CreateKnowledge(c.Request.Context(), k); err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, k)
+}
+
+func adminUpdateKnowledge(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	var req struct {
+		Title   *string `json:"title"`
+		Content *string `json:"content"`
+		Tags    *string `json:"tags"`
+		Sort    *int    `json:"sort"`
+		Status  *int8   `json:"status"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	fields := map[string]any{}
+	if req.Title != nil {
+		fields["title"] = *req.Title
+	}
+	if req.Content != nil {
+		fields["content"] = *req.Content
+	}
+	if req.Tags != nil {
+		fields["tags"] = *req.Tags
+	}
+	if req.Sort != nil {
+		fields["sort"] = *req.Sort
+	}
+	if req.Status != nil {
+		fields["status"] = *req.Status
+	}
+	if err := imsvc.UpdateKnowledge(c.Request.Context(), id, fields); err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, nil)
+}
+
+func adminDeleteKnowledge(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err := imsvc.DeleteKnowledge(c.Request.Context(), id); err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, nil)
+}
+
+func adminReindexKnowledge(c *gin.Context) {
+	done, err := imsvc.ReindexKnowledge(c.Request.Context())
+	if err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	response.OK(c, gin.H{"indexed": done})
+}
+
+func adminTestAI(c *gin.Context) {
+	reply, err := imsvc.TestAIConnection(c.Request.Context())
+	if err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	response.OK(c, gin.H{"reply": reply})
 }
 
 func adminListSessions(c *gin.Context) {

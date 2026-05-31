@@ -1,8 +1,8 @@
 {
   "name": "im",
   "title": "IM客服",
-  "version": "1.0.0",
-  "description": "实时客服聊天，WebSocket，多坐席，离线消息",
+  "version": "1.1.0",
+  "description": "实时客服聊天，WebSocket，多坐席，离线消息；接入本地大模型 AI 客服（RAG 知识库 + 商品信息分析），用户输入“人工”转人工排队",
   "author": "lyshop",
   "depends": [],
   "menus": [
@@ -14,9 +14,23 @@
       "children": [
         { "title": "客服会话", "title_key": "menu.im.sessions", "path": "/im/sessions", "permission": "im:view" },
         { "title": "坐席管理", "title_key": "menu.im.staffManage", "path": "/im/staff-manage", "permission": "im:staff:manage" },
+        { "title": "AI知识库", "title_key": "menu.im.knowledge", "path": "/im/knowledge", "permission": "im:knowledge" },
         { "title": "自动回复", "title_key": "menu.im.autoReply", "path": "/im/auto-reply", "permission": "im:view" }
       ]
     }
   ],
-  "permissions": ["im:view", "im:reply", "im:staff:manage"]
+  "permissions": ["im:view", "im:reply", "im:staff:manage", "im:knowledge"],
+  "config_items": [
+    { "key": "ai_enabled", "label": "启用AI客服", "type": "switch", "placeholder": "开启后新会话先由本地大模型应答，用户输入“人工”再转人工" },
+    { "key": "ai_base_url", "label": "大模型服务地址", "type": "text", "placeholder": "OpenAI 兼容地址，如 http://localhost:11434/v1（Ollama）" },
+    { "key": "ai_api_key", "label": "API Key", "type": "password", "placeholder": "本地服务可留空" },
+    { "key": "ai_chat_model", "label": "对话模型", "type": "text", "placeholder": "如 qwen2.5:7b" },
+    { "key": "ai_embed_model", "label": "向量模型", "type": "text", "placeholder": "如 bge-m3；留空则用关键词召回" },
+    { "key": "ai_system_prompt", "label": "系统提示词", "type": "textarea", "placeholder": "AI 客服人设与回答约束" },
+    { "key": "ai_human_keywords", "label": "转人工关键词", "type": "text", "placeholder": "逗号分隔，默认：人工,转人工,人工客服,真人" },
+    { "key": "ai_top_k", "label": "知识库召回条数", "type": "number", "placeholder": "默认 3" },
+    { "key": "ai_temperature", "label": "温度", "type": "number", "placeholder": "0-1，默认 0.3" },
+    { "key": "ai_product_search", "label": "启用商品信息分析", "type": "switch", "placeholder": "回答时检索在售商品的价格/库存/销量等" },
+    { "key": "ai_timeout_sec", "label": "请求超时(秒)", "type": "number", "placeholder": "默认 30" }
+  ]
 }

@@ -501,6 +501,12 @@ export default {
     assignedNotice: '客服已接入，为您服务',
     transferNotice: '会话已转接，客服继续为您服务',
     closedNotice: '会话已结束',
+    aiAvatar: 'AI',
+    aiName: 'AI 智能助手',
+    aiThinking: 'AI 正在输入…',
+    aiHint: '当前由 AI 智能助手为您服务',
+    transferToHuman: '转人工',
+    transferNote: '正在为您转接人工客服…',
   },
 
   // ---------- pages/login/index.vue ----------
