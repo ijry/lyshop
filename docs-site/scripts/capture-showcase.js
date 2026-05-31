@@ -35,6 +35,31 @@ const captures = [
     viewport: { width: 1440, height: 960 },
     waitFor: '#app',
   },
+  // eapp (merchant mini-program H5)
+  {
+    name: 'eapp-orders',
+    path: '/eapp-demo/index.html#/pages/order/list',
+    viewport: { width: 390, height: 844 },
+    waitFor: 'uni-page-body',
+  },
+  {
+    name: 'eapp-dashboard',
+    path: '/eapp-demo/index.html#/pages/index/index',
+    viewport: { width: 390, height: 844 },
+    waitFor: 'uni-page-body',
+  },
+  {
+    name: 'eapp-products',
+    path: '/eapp-demo/index.html#/pages/product/list',
+    viewport: { width: 390, height: 844 },
+    waitFor: 'uni-page-body',
+  },
+  {
+    name: 'eapp-marketing-index',
+    path: '/eapp-demo/index.html#/pages/marketing/index',
+    viewport: { width: 390, height: 844 },
+    waitFor: 'uni-page-body',
+  },
 ]
 
 main().catch((error) => {
@@ -45,6 +70,7 @@ main().catch((error) => {
 async function main() {
   ensureDemoExists('demo/index.html')
   ensureDemoExists('web-demo/index.html')
+  ensureDemoExists('eapp-demo/index.html')
   fs.mkdirSync(outputDir, { recursive: true })
 
   const server = await createServer(publicDir, port)
