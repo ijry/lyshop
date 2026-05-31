@@ -517,6 +517,57 @@ export default {
     codeInvalid: '请输入6位验证码',
   },
 
+  // ---------- pages/distribution ----------
+  distribution: {
+    index: '分销中心',
+    apply: '申请分销商',
+    team: '我的团队',
+    orders: '分销订单',
+    withdrawals: '提现记录',
+    withdraw: '申请提现',
+  },
+
+  // ---------- pages ----------
+  pages: {
+    index: { title: '首页' },
+    product: { list: '商品列表', detail: '商品详情' },
+    cart: { index: '购物车' },
+    order: {
+      confirm: '确认订单',
+      list: '订单列表',
+      detail: '订单详情',
+      afterSaleApply: '申请售后',
+      afterSaleDetail: '售后详情',
+      review: '评价订单'
+    },
+    marketing: {
+      coupon: '优惠券',
+      seckill: '限时秒杀',
+      groupBuy: '拼团特惠',
+      bargain: '砍价免费拿'
+    },
+    im: { chat: '在线客服' },
+    user: {
+      index: '我的',
+      security: '账号安全',
+      favorites: '我的收藏',
+      address: '收货地址',
+      points: '我的积分',
+      vip: '会员中心'
+    },
+    message: { index: '消息中心', list: '消息列表' },
+    checkin: { index: '每日签到' },
+    distribution: {
+      index: '分销中心',
+      apply: '申请分销商',
+      team: '我的团队',
+      orders: '分销订单',
+      withdrawals: '提现记录',
+      withdraw: '申请提现'
+    },
+    login: { index: '登录' }
+  },
+
   // ---------- components/decor/DecorRender.vue ----------
   decor: {
     viewAll: '查看全部 >',

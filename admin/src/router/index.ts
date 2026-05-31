@@ -58,6 +58,11 @@ const router = createRouter({
         // Bargain
         { path: 'bargain/activities', name: 'nav.bargainActivities', component: () => import('@/views/bargain/ActivityList.vue'), meta: { titleKey: 'menu.bargainActivities' } },
         { path: 'bargain/products', name: 'nav.bargainProducts', component: () => import('@/views/bargain/ProductManage.vue'), meta: { titleKey: 'menu.bargainProducts' } },
+        // Distribution
+        { path: 'distribution/distributors', name: 'nav.distributorManage', component: () => import('@/views/distribution/DistributorList.vue'), meta: { titleKey: 'nav.distributorManage' } },
+        { path: 'distribution/orders', name: 'nav.distributionOrders', component: () => import('@/views/distribution/OrderList.vue'), meta: { titleKey: 'nav.distributionOrders' } },
+        { path: 'distribution/withdrawals', name: 'nav.distributionWithdrawals', component: () => import('@/views/distribution/WithdrawalList.vue'), meta: { titleKey: 'nav.distributionWithdrawals' } },
+        { path: 'distribution/config', name: 'nav.distributionConfig', component: () => import('@/views/distribution/ConfigForm.vue'), meta: { titleKey: 'nav.distributionConfig' } },
         // System
         { path: 'system/site',   name: 'nav.siteSettings', component: () => import('@/views/system/SiteSettings.vue'), meta: { titleKey: 'nav.siteSettings' } },
         { path: 'system/config', name: 'nav.configCenter', component: () => import('@/views/system/PaymentConfig.vue'), meta: { titleKey: 'nav.configCenter' } },

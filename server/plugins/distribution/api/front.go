@@ -5,13 +5,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/ijry/lyshop/core/api"
+	"github.com/ijry/lyshop/core/middleware"
 	"github.com/ijry/lyshop/server/plugins/distribution/model"
 	"github.com/ijry/lyshop/server/plugins/distribution/service"
 )
 
 // RegisterFrontRoutes 注册前端路由
 func RegisterFrontRoutes(r *gin.RouterGroup) {
-	g := r.Group("/api/v1/distribution")
+	g := r.Group("/api/v1/distribution").Use(middleware.RequireAuth)
 	{
 		// 分销商信息
 		g.GET("/info", getDistributorInfo)
@@ -31,10 +32,13 @@ func RegisterFrontRoutes(r *gin.RouterGroup) {
 }
 
 func getDistributorInfo(c *gin.Context) {
-	// TODO: 从上下文获取用户ID
-	userID := uint64(1)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		api.Unauthorized(c, "未登录")
+		return
+	}
 
-	distributor, err := service.GetDistributor(c.Request.Context(), userID)
+	distributor, err := service.GetDistributor(c.Request.Context(), userID.(uint64))
 	if err != nil {
 		api.Error(c, err)
 		return
@@ -56,11 +60,14 @@ func applyDistributor(c *gin.Context) {
 		return
 	}
 
-	// TODO: 从上下文获取用户ID
-	userID := uint64(1)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		api.Unauthorized(c, "未登录")
+		return
+	}
 
 	distributor := &model.Distributor{
-		UserID:   userID,
+		UserID:   userID.(uint64),
 		ParentID: req.ParentID,
 		Status:   "pending",
 		RealName: req.RealName,
@@ -77,10 +84,13 @@ func applyDistributor(c *gin.Context) {
 }
 
 func getTeam(c *gin.Context) {
-	// TODO: 从上下文获取用户ID
-	userID := uint64(1)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		api.Unauthorized(c, "未登录")
+		return
+	}
 
-	distributor, err := service.GetDistributor(c.Request.Context(), userID)
+	distributor, err := service.GetDistributor(c.Request.Context(), userID.(uint64))
 	if err != nil {
 		api.Error(c, err)
 		return
@@ -101,10 +111,13 @@ func listMyOrders(c *gin.Context) {
 	size, _ := strconv.Atoi(c.DefaultQuery("size", "20"))
 	status := c.Query("status")
 
-	// TODO: 从上下文获取用户ID
-	userID := uint64(1)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		api.Unauthorized(c, "未登录")
+		return
+	}
 
-	distributor, err := service.GetDistributor(c.Request.Context(), userID)
+	distributor, err := service.GetDistributor(c.Request.Context(), userID.(uint64))
 	if err != nil {
 		api.Error(c, err)
 		return
@@ -137,10 +150,13 @@ func createWithdrawal(c *gin.Context) {
 		return
 	}
 
-	// TODO: 从上下文获取用户ID
-	userID := uint64(1)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		api.Unauthorized(c, "未登录")
+		return
+	}
 
-	distributor, err := service.GetDistributor(c.Request.Context(), userID)
+	distributor, err := service.GetDistributor(c.Request.Context(), userID.(uint64))
 	if err != nil {
 		api.Error(c, err)
 		return
@@ -167,10 +183,13 @@ func listMyWithdrawals(c *gin.Context) {
 	size, _ := strconv.Atoi(c.DefaultQuery("size", "20"))
 	status := c.Query("status")
 
-	// TODO: 从上下文获取用户ID
-	userID := uint64(1)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		api.Unauthorized(c, "未登录")
+		return
+	}
 
-	distributor, err := service.GetDistributor(c.Request.Context(), userID)
+	distributor, err := service.GetDistributor(c.Request.Context(), userID.(uint64))
 	if err != nil {
 		api.Error(c, err)
 		return

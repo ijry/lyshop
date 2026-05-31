@@ -52,6 +52,11 @@ export default {
   'menu.bargain': '砍价活动',
   'menu.bargainActivities': '活动管理',
   'menu.bargainProducts': '商品管理',
+  'menu.distribution': '分销管理',
+  'menu.distributionDistributors': '分销商管理',
+  'menu.distributionOrders': '分销订单',
+  'menu.distributionWithdrawals': '提现管理',
+  'menu.distributionConfig': '分销配置',
   'menu.decor': '店铺装修',
   'menu.decor.editor': '首页装修',
 
@@ -139,6 +144,10 @@ export default {
   'nav.checkinLogs': '签到记录',
   'nav.messageList': '消息列表',
   'nav.messageSend': '发送消息',
+  'nav.distributorManage': '分销商管理',
+  'nav.distributionOrders': '分销订单',
+  'nav.distributionWithdrawals': '提现管理',
+  'nav.distributionConfig': '分销配置',
 
   // Login
   'login.username': '用户名',

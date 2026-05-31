@@ -32,6 +32,12 @@
     { "path": "pages/message/index",        "style": { "navigationBarTitleText": "%pages.message.index%" } },
     { "path": "pages/message/list",         "style": { "navigationBarTitleText": "%pages.message.list%" } },
     { "path": "pages/checkin/index",        "style": { "navigationBarTitleText": "%pages.checkin.index%" } },
+    { "path": "pages/distribution/index",   "style": { "navigationBarTitleText": "%pages.distribution.index%" } },
+    { "path": "pages/distribution/apply",   "style": { "navigationBarTitleText": "%pages.distribution.apply%" } },
+    { "path": "pages/distribution/team",    "style": { "navigationBarTitleText": "%pages.distribution.team%" } },
+    { "path": "pages/distribution/orders",  "style": { "navigationBarTitleText": "%pages.distribution.orders%" } },
+    { "path": "pages/distribution/withdrawals", "style": { "navigationBarTitleText": "%pages.distribution.withdrawals%" } },
+    { "path": "pages/distribution/withdraw", "style": { "navigationBarTitleText": "%pages.distribution.withdraw%" } },
     { "path": "pages/login/index",          "style": { "navigationBarTitleText": "%pages.login.index%" } }
   ],
   "tabBar": {
