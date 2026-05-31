@@ -46,6 +46,9 @@ export default {
   'menu.seckill': 'Flash Sale',
   'menu.seckillActivities': 'Activities',
   'menu.seckillProducts': 'Products',
+  'menu.groupBuy': 'Group Buy',
+  'menu.groupBuyActivities': 'Activities',
+  'menu.groupBuyProducts': 'Products',
   'menu.decor': 'Page Designer',
   'menu.decor.editor': 'Homepage Designer',
 

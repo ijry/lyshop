@@ -121,7 +121,7 @@ const pageDesc = computed(() => {
 
 const endpoint = computed(() => {
   if (props.activityType === 'seckill') return '/api/v1/seckill/products'
-  if (props.activityType === 'group-buy') return '/api/v1/marketing/group-buy/products'
+  if (props.activityType === 'group-buy') return '/api/v1/group-buy/products'
   return '/api/v1/marketing/bargain/products'
 })
 

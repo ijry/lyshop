@@ -47,7 +47,7 @@ const products = ref<any[]>([])
 const groupSize = ref(3)
 
 onMounted(async () => {
-  const data = await get<any>('/api/v1/marketing/group-buy/products')
+  const data = await get<any>('/api/v1/group-buy/products')
   products.value = Array.isArray(data?.list) ? data.list : (Array.isArray(data) ? data : [])
 })
 

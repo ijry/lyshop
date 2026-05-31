@@ -46,6 +46,9 @@ export default {
   'menu.seckill': '秒杀活动',
   'menu.seckillActivities': '活动管理',
   'menu.seckillProducts': '商品管理',
+  'menu.groupBuy': '拼团活动',
+  'menu.groupBuyActivities': '活动管理',
+  'menu.groupBuyProducts': '商品管理',
   'menu.decor': '店铺装修',
   'menu.decor.editor': '首页装修',
 

@@ -52,6 +52,9 @@ const router = createRouter({
         // Seckill
         { path: 'seckill/activities', name: 'nav.seckillActivities', component: () => import('@/views/seckill/ActivityList.vue'), meta: { titleKey: 'menu.seckillActivities' } },
         { path: 'seckill/products', name: 'nav.seckillProducts', component: () => import('@/views/seckill/ProductManage.vue'), meta: { titleKey: 'menu.seckillProducts' } },
+        // Group Buy
+        { path: 'group-buy/activities', name: 'nav.groupBuyActivities', component: () => import('@/views/group-buy/ActivityList.vue'), meta: { titleKey: 'menu.groupBuyActivities' } },
+        { path: 'group-buy/products', name: 'nav.groupBuyProducts', component: () => import('@/views/group-buy/ProductManage.vue'), meta: { titleKey: 'menu.groupBuyProducts' } },
         // System
         { path: 'system/site',   name: 'nav.siteSettings', component: () => import('@/views/system/SiteSettings.vue'), meta: { titleKey: 'nav.siteSettings' } },
         { path: 'system/config', name: 'nav.configCenter', component: () => import('@/views/system/PaymentConfig.vue'), meta: { titleKey: 'nav.configCenter' } },
