@@ -145,7 +145,9 @@ onReachBottom(() => h.loadMore())
     <PageHeader title="订单管理">
       <template #right>
         <view class="filter-btn" @click="openFilter">
-          <up-icon name="filter" size="36" :color="'var(--eapp-primary)'" />
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 4.5h18M7 12h10M10.5 19.5h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
         </view>
       </template>
     </PageHeader>
@@ -273,7 +275,7 @@ onReachBottom(() => h.loadMore())
 
 <style scoped>
 .page { min-height: 100vh; background: var(--eapp-bg); }
-.filter-btn { padding: 4rpx 8rpx; }
+.filter-btn { padding: 4rpx 8rpx; color: var(--eapp-primary); display: flex; align-items: center; }
 
 /* Tabs */
 .tab-wrap { background: var(--eapp-card); border-bottom: 1rpx solid var(--eapp-border); }
