@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+import { request } from '@/utils/request'
 
 // 分销商信息
 export const getDistributorInfo = () => request({ url: '/api/v1/distribution/info', method: 'GET' })
