@@ -68,7 +68,7 @@
 <script setup lang="ts">
 import { ref, nextTick, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { get } from '@/utils/request'
+import { get } from '@/api/request'
 
 const { t } = useI18n()
 

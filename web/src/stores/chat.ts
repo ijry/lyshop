@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { i18n } from '@/locales'
-import { get } from '@/utils/request'
+import { get } from '@/api/request'
 
 const t = (key: string) => i18n.global.t(key)
 
