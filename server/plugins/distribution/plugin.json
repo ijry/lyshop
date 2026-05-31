@@ -1,0 +1,38 @@
+{
+  "name": "distribution",
+  "version": "1.0.0",
+  "title": "分销系统",
+  "description": "多级分销营销插件，支持分销商管理、佣金计算、提现管理",
+  "author": "LYShop",
+  "depends": ["product", "order"],
+  "menus": [
+    {
+      "title": "分销系统",
+      "icon": "share",
+      "path": "/distribution",
+      "children": [
+        {
+          "title": "分销配置",
+          "path": "/distribution/config"
+        },
+        {
+          "title": "分销商管理",
+          "path": "/distribution/distributors"
+        },
+        {
+          "title": "佣金订单",
+          "path": "/distribution/orders"
+        },
+        {
+          "title": "提现管理",
+          "path": "/distribution/withdrawals"
+        }
+      ]
+    }
+  ],
+  "permissions": [
+    "distribution:view",
+    "distribution:edit",
+    "distribution:delete"
+  ]
+}

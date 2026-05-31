@@ -15,6 +15,7 @@ import (
 	_ "github.com/ijry/lyshop/plugins/delivery_express"
 	_ "github.com/ijry/lyshop/plugins/delivery_local"
 	_ "github.com/ijry/lyshop/plugins/delivery_router"
+	_ "github.com/ijry/lyshop/plugins/distribution"
 	_ "github.com/ijry/lyshop/plugins/group_buy"
 	_ "github.com/ijry/lyshop/plugins/im"
 	_ "github.com/ijry/lyshop/plugins/logistics_kdniao"
