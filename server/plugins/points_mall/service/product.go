@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ijry/lyshop/server/core/db"
-	pmmodel "github.com/ijry/lyshop/server/plugins/points_mall/model"
+	"github.com/ijry/lyshop/core/db"
+	pmmodel "github.com/ijry/lyshop/plugins/points_mall/model"
 )
 
 // ListProducts 获取积分商品列表

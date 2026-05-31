@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/ijry/lyshop/core/api"
-	"github.com/ijry/lyshop/server/plugins/group_buy/model"
-	"github.com/ijry/lyshop/server/plugins/group_buy/service"
+	"github.com/ijry/lyshop/plugins/group_buy/model"
+	"github.com/ijry/lyshop/plugins/group_buy/service"
 )
 
 // RegisterAdminRoutes 注册管理端路由

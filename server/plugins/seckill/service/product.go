@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ijry/lyshop/server/core/db"
-	seckillmodel "github.com/ijry/lyshop/server/plugins/seckill/model"
+	"github.com/ijry/lyshop/core/db"
+	seckillmodel "github.com/ijry/lyshop/plugins/seckill/model"
 	"gorm.io/gorm"
 )
 

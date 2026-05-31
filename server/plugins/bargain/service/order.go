@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/ijry/lyshop/core/db"
-	"github.com/ijry/lyshop/server/plugins/bargain/model"
+	"github.com/ijry/lyshop/plugins/bargain/model"
 )
 
 var (
@@ -51,7 +51,7 @@ func CreateBargainOrder(ctx context.Context, activityID, productID, skuID, userI
 func HelpBargain(ctx context.Context, bargainOrderID, helperUserID uint64) (float64, error) {
 	var cutAmount float64
 
-	err := db.DB.WithContext(ctx).Transaction(func(tx *db.DB) error {
+	err := db.DB.WithContext(ctx).Transaction(func(tx *db.Tx) error {
 		var bargainOrder model.BargainOrder
 		if err := tx.Where("id = ?", bargainOrderID).First(&bargainOrder).Error; err != nil {
 			return err

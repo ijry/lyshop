@@ -4,8 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ijry/lyshop/server/core/db"
-	pmservice "github.com/ijry/lyshop/server/plugins/points_mall/service"
+	"github.com/ijry/lyshop/core/db"
 )
 
 // GrantOrderPoints 订单完成后赠送积分
@@ -66,5 +65,5 @@ func GrantOrderPoints(ctx context.Context, orderID uint64) error {
 
 	// 赠送积分
 	remark := fmt.Sprintf("订单完成奖励（订单号：%d）", orderID)
-	return pmservice.AddPointsWithRelated(ctx, order.UserID, points, 4, orderID, remark)
+	return AddPointsWithRelated(ctx, order.UserID, points, 4, orderID, remark)
 }

@@ -5,9 +5,9 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/ijry/lyshop/server/core/middleware"
-	seckillmodel "github.com/ijry/lyshop/server/plugins/seckill/model"
-	seckillservice "github.com/ijry/lyshop/server/plugins/seckill/service"
+	"github.com/ijry/lyshop/core/middleware"
+	seckillmodel "github.com/ijry/lyshop/plugins/seckill/model"
+	seckillservice "github.com/ijry/lyshop/plugins/seckill/service"
 )
 
 // RegisterAdminRoutes 注册管理端路由

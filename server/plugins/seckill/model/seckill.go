@@ -3,7 +3,7 @@ package model
 import (
 	"time"
 
-	"github.com/ijry/lyshop/server/model"
+	"github.com/ijry/lyshop/model"
 )
 
 // SeckillActivity 秒杀活动

@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ijry/lyshop/server/core/db"
-	"github.com/ijry/lyshop/server/model"
-	pmmodel "github.com/ijry/lyshop/server/plugins/points_mall/model"
+	"github.com/ijry/lyshop/core/db"
+	"github.com/ijry/lyshop/model"
+	pmmodel "github.com/ijry/lyshop/plugins/points_mall/model"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )

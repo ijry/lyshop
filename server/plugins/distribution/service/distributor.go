@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/ijry/lyshop/core/db"
-	"github.com/ijry/lyshop/server/plugins/distribution/model"
+	"github.com/ijry/lyshop/plugins/distribution/model"
 )
 
 // GetConfig 获取分销配置

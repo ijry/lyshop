@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/ijry/lyshop/server/core/db"
-	seckillmodel "github.com/ijry/lyshop/server/plugins/seckill/model"
+	"github.com/ijry/lyshop/core/db"
+	seckillmodel "github.com/ijry/lyshop/plugins/seckill/model"
 )
 
 // ListActivities 获取秒杀活动列表
@@ -64,7 +64,7 @@ func UpdateActivity(ctx context.Context, id uint64, updates map[string]interface
 
 // DeleteActivity 删除秒杀活动
 func DeleteActivity(ctx context.Context, id uint64) error {
-	return db.DB.WithContext(ctx).Transaction(func(tx *db.DB) error {
+	return db.DB.WithContext(ctx).Transaction(func(tx *db.Tx) error {
 		// 删除活动商品
 		if err := tx.Where("activity_id = ?", id).Delete(&seckillmodel.SeckillProduct{}).Error; err != nil {
 			return err

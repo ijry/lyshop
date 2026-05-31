@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	pmmodel "github.com/ijry/lyshop/server/plugins/points_mall/model"
+	pmmodel "github.com/ijry/lyshop/plugins/points_mall/model"
 )
 
 func TestAddPoints(t *testing.T) {

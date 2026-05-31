@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 
 	"github.com/gin-gonic/gin"
-	"github.com/ijry/lyshop/server/core/plugin"
-	seckillapi "github.com/ijry/lyshop/server/plugins/seckill/api"
-	_ "github.com/ijry/lyshop/server/plugins/seckill/calculator"
-	seckillmodel "github.com/ijry/lyshop/server/plugins/seckill/model"
+	"github.com/ijry/lyshop/core/plugin"
+	seckillapi "github.com/ijry/lyshop/plugins/seckill/api"
+	_ "github.com/ijry/lyshop/plugins/seckill/calculator"
+	seckillmodel "github.com/ijry/lyshop/plugins/seckill/model"
 	"gorm.io/gorm"
 )
 

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/ijry/lyshop/core/marketing"
-	"github.com/ijry/lyshop/server/plugins/distribution/service"
+	"github.com/ijry/lyshop/plugins/distribution/service"
 )
 
 func init() {
@@ -31,8 +31,11 @@ func (c *DistributionCalculator) Calculate(ctx *marketing.PriceContext) (bool, e
 		return true, nil
 	}
 
-	// 标记订单可参与分销
-	ctx.Metadata["distribution_enabled"] = true
+	// 标记订单可参与分销（通过 AppliedRules 记录）
+	ctx.AppliedRules = append(ctx.AppliedRules, marketing.AppliedRule{
+		Type: "distribution",
+		Name: "分销",
+	})
 
 	return true, nil
 }

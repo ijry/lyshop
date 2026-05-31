@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	seckillservice "github.com/ijry/lyshop/server/plugins/seckill/service"
+	seckillservice "github.com/ijry/lyshop/plugins/seckill/service"
 )
 
 // RegisterFrontRoutes 注册前端路由

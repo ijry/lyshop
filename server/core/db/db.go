@@ -1,6 +1,7 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -14,6 +15,23 @@ import (
 
 // DB is the global GORM instance, available after Init().
 var DB *gorm.DB
+
+// Tx is a type alias for gorm.DB, allowing plugins to use *db.Tx as a transaction type.
+type Tx = gorm.DB
+
+// Expr wraps gorm.Expr for use in plugin service files.
+func Expr(expr string, args ...interface{}) interface{} {
+	return gorm.Expr(expr, args...)
+}
+
+// Common sentinel errors for plugin services.
+var (
+	ErrRecordNotFound    = gorm.ErrRecordNotFound
+	ErrConflict          = errors.New("conflict: record already exists")
+	ErrStockInsufficient = errors.New("insufficient stock")
+	ErrActivityInactive  = errors.New("activity is not active")
+	ErrLimitExceeded     = errors.New("purchase limit exceeded")
+)
 
 const defaultSQLiteDSN = "lyshop.db"
 

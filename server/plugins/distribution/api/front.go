@@ -6,8 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/ijry/lyshop/core/api"
 	"github.com/ijry/lyshop/core/middleware"
-	"github.com/ijry/lyshop/server/plugins/distribution/model"
-	"github.com/ijry/lyshop/server/plugins/distribution/service"
+	"github.com/ijry/lyshop/plugins/distribution/model"
+	"github.com/ijry/lyshop/plugins/distribution/service"
 )
 
 // RegisterFrontRoutes 注册前端路由

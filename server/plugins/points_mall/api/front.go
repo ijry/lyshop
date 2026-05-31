@@ -1,12 +1,13 @@
 package api
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/ijry/lyshop/server/core/middleware"
-	pmservice "github.com/ijry/lyshop/server/plugins/points_mall/service"
+	"github.com/ijry/lyshop/core/middleware"
+	pmservice "github.com/ijry/lyshop/plugins/points_mall/service"
 )
 
 // RegisterFrontRoutes 注册前端路由

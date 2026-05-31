@@ -2,9 +2,10 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/ijry/lyshop/core/db"
-	"github.com/ijry/lyshop/server/plugins/distribution/model"
+	"github.com/ijry/lyshop/plugins/distribution/model"
 )
 
 // CreateDistributionOrder 创建分销订单
@@ -14,14 +15,14 @@ func CreateDistributionOrder(ctx context.Context, order *model.DistributionOrder
 
 // SettleDistributionOrder 结算分销订单
 func SettleDistributionOrder(ctx context.Context, orderID uint64) error {
-	return db.DB.WithContext(ctx).Transaction(func(tx *db.DB) error {
+	return db.DB.WithContext(ctx).Transaction(func(tx *db.Tx) error {
 		// 获取所有待结算的分销订单
 		var orders []model.DistributionOrder
 		if err := tx.Where("order_id = ? AND status = ?", orderID, "pending").Find(&orders).Error; err != nil {
 			return err
 		}
 
-		now := model.Now()
+		now := time.Now()
 		for _, order := range orders {
 			// 更新订单状态
 			order.Status = "settled"

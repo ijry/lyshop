@@ -1,9 +1,9 @@
 package calculator
 
 import (
-	"github.com/ijry/lyshop/server/core/db"
-	"github.com/ijry/lyshop/server/core/marketing"
-	usermodel "github.com/ijry/lyshop/server/model"
+	"github.com/ijry/lyshop/core/db"
+	"github.com/ijry/lyshop/core/marketing"
+	usermodel "github.com/ijry/lyshop/model"
 )
 
 // PointsCalculator deducts points from the final price.

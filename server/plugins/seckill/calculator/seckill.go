@@ -1,12 +1,11 @@
 package calculator
 
 import (
-	"context"
 	"time"
 
-	"github.com/ijry/lyshop/server/core/db"
-	"github.com/ijry/lyshop/server/core/marketing"
-	seckillmodel "github.com/ijry/lyshop/server/plugins/seckill/model"
+	"github.com/ijry/lyshop/core/db"
+	"github.com/ijry/lyshop/core/marketing"
+	seckillmodel "github.com/ijry/lyshop/plugins/seckill/model"
 )
 
 // SeckillCalculator 秒杀价格计算器
@@ -68,10 +67,7 @@ func (c *SeckillCalculator) Calculate(ctx *marketing.PriceContext) (bool, error)
 			}
 
 			// 应用秒杀价格
-			item.Price = sp.SeckillPrice
-			item.ActivityProductID = sp.ID
-			item.ActivityID = sp.ActivityID
-			item.ActivityType = "seckill"
+			item.ActivityPrice = sp.SeckillPrice
 			hasApplied = true
 			continue
 		}
@@ -83,10 +79,7 @@ func (c *SeckillCalculator) Calculate(ctx *marketing.PriceContext) (bool, error)
 				continue
 			}
 
-			item.Price = sp.SeckillPrice
-			item.ActivityProductID = sp.ID
-			item.ActivityID = sp.ActivityID
-			item.ActivityType = "seckill"
+			item.ActivityPrice = sp.SeckillPrice
 			hasApplied = true
 		}
 	}

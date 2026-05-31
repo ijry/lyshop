@@ -7,9 +7,9 @@ import (
 	"sort"
 	"time"
 
-	"github.com/ijry/lyshop/server/core/db"
-	checkinmodel "github.com/ijry/lyshop/server/plugins/checkin/model"
-	pmservice "github.com/ijry/lyshop/server/plugins/points_mall/service"
+	"github.com/ijry/lyshop/core/db"
+	checkinmodel "github.com/ijry/lyshop/plugins/checkin/model"
+	pmservice "github.com/ijry/lyshop/plugins/points_mall/service"
 	"gorm.io/gorm"
 )
 

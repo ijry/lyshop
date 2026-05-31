@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/ijry/lyshop/core/marketing"
-	"github.com/ijry/lyshop/server/plugins/bargain/service"
+	"github.com/ijry/lyshop/plugins/bargain/service"
 )
 
 func init() {
@@ -49,13 +49,15 @@ func (c *BargainCalculator) Calculate(ctx *marketing.PriceContext) (bool, error)
 				productKey := makeKey(product.ProductID, product.SkuID)
 				if productKey == key {
 					// 应用砍价底价
-					item.FinalPrice = product.FloorPrice
-					item.DiscountAmount = item.OriginalPrice - product.FloorPrice
-					item.AppliedActivities = append(item.AppliedActivities, marketing.AppliedActivity{
-						Type:       "bargain",
-						Name:       activity.Name,
-						ActivityID: activity.ID,
-						Discount:   item.DiscountAmount,
+					discount := item.Price - product.FloorPrice
+					if discount < 0 {
+						discount = 0
+					}
+					item.ActivityPrice = product.FloorPrice
+					ctx.AppliedRules = append(ctx.AppliedRules, marketing.AppliedRule{
+						Type:     "bargain",
+						Name:     activity.Name,
+						Discount: discount,
 					})
 					// 砍价是排他性活动，停止后续计算器
 					return false, nil

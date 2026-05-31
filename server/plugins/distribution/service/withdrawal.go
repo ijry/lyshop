@@ -3,9 +3,10 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/ijry/lyshop/core/db"
-	"github.com/ijry/lyshop/server/plugins/distribution/model"
+	"github.com/ijry/lyshop/plugins/distribution/model"
 )
 
 var (
@@ -15,7 +16,7 @@ var (
 
 // CreateWithdrawal 创建提现申请
 func CreateWithdrawal(ctx context.Context, withdrawal *model.DistributionWithdrawal) error {
-	return db.DB.WithContext(ctx).Transaction(func(tx *db.DB) error {
+	return db.DB.WithContext(ctx).Transaction(func(tx *db.Tx) error {
 		// 获取分销商信息
 		var distributor model.Distributor
 		if err := tx.First(&distributor, withdrawal.DistributorID).Error; err != nil {
@@ -55,7 +56,7 @@ func CreateWithdrawal(ctx context.Context, withdrawal *model.DistributionWithdra
 
 // ApproveWithdrawal 审核通过提现
 func ApproveWithdrawal(ctx context.Context, id uint64) error {
-	return db.DB.WithContext(ctx).Transaction(func(tx *db.DB) error {
+	return db.DB.WithContext(ctx).Transaction(func(tx *db.Tx) error {
 		var withdrawal model.DistributionWithdrawal
 		if err := tx.First(&withdrawal, id).Error; err != nil {
 			return err
@@ -65,7 +66,7 @@ func ApproveWithdrawal(ctx context.Context, id uint64) error {
 			return errors.New("提现状态不正确")
 		}
 
-		now := model.Now()
+		now := time.Now()
 		withdrawal.Status = "approved"
 		withdrawal.ProcessedAt = &now
 
@@ -75,7 +76,7 @@ func ApproveWithdrawal(ctx context.Context, id uint64) error {
 
 // RejectWithdrawal 拒绝提现
 func RejectWithdrawal(ctx context.Context, id uint64, reason string) error {
-	return db.DB.WithContext(ctx).Transaction(func(tx *db.DB) error {
+	return db.DB.WithContext(ctx).Transaction(func(tx *db.Tx) error {
 		var withdrawal model.DistributionWithdrawal
 		if err := tx.First(&withdrawal, id).Error; err != nil {
 			return err
@@ -85,7 +86,7 @@ func RejectWithdrawal(ctx context.Context, id uint64, reason string) error {
 			return errors.New("提现状态不正确")
 		}
 
-		now := model.Now()
+		now := time.Now()
 		withdrawal.Status = "rejected"
 		withdrawal.RejectReason = reason
 		withdrawal.ProcessedAt = &now
@@ -101,7 +102,7 @@ func RejectWithdrawal(ctx context.Context, id uint64, reason string) error {
 
 // CompleteWithdrawal 完成提现
 func CompleteWithdrawal(ctx context.Context, id uint64) error {
-	return db.DB.WithContext(ctx).Transaction(func(tx *db.DB) error {
+	return db.DB.WithContext(ctx).Transaction(func(tx *db.Tx) error {
 		var withdrawal model.DistributionWithdrawal
 		if err := tx.First(&withdrawal, id).Error; err != nil {
 			return err
@@ -111,7 +112,7 @@ func CompleteWithdrawal(ctx context.Context, id uint64) error {
 			return errors.New("提现状态不正确")
 		}
 
-		now := model.Now()
+		now := time.Now()
 		withdrawal.Status = "completed"
 		withdrawal.CompletedAt = &now
 

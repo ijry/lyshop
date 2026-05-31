@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/ijry/lyshop/core/db"
-	"github.com/ijry/lyshop/server/plugins/group_buy/model"
+	"github.com/ijry/lyshop/plugins/group_buy/model"
 )
 
 var (
@@ -44,7 +44,7 @@ func CreateGroupBuyOrder(ctx context.Context, activityID, productID, skuID, lead
 
 // JoinGroupBuy 参加拼团
 func JoinGroupBuy(ctx context.Context, groupOrderID, userID, orderID uint64) error {
-	return db.DB.WithContext(ctx).Transaction(func(tx *db.DB) error {
+	return db.DB.WithContext(ctx).Transaction(func(tx *db.Tx) error {
 		var groupOrder model.GroupBuyOrder
 		if err := tx.Where("id = ?", groupOrderID).First(&groupOrder).Error; err != nil {
 			return err
@@ -103,7 +103,7 @@ func JoinGroupBuy(ctx context.Context, groupOrderID, userID, orderID uint64) err
 }
 
 // CompleteGroupBuy 完成拼团
-func CompleteGroupBuy(tx *db.DB, groupOrderID uint64) error {
+func CompleteGroupBuy(tx *db.Tx, groupOrderID uint64) error {
 	return tx.Model(&model.GroupBuyOrder{}).
 		Where("id = ?", groupOrderID).
 		Update("status", "success").Error

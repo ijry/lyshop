@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/ijry/lyshop/core/api"
-	"github.com/ijry/lyshop/server/plugins/bargain/service"
+	"github.com/ijry/lyshop/plugins/bargain/service"
 )
 
 // RegisterFrontRoutes 注册前端路由
@@ -13,21 +13,21 @@ func RegisterFrontRoutes(r *gin.RouterGroup) {
 	g := r.Group("/api/v1/bargain")
 	{
 		// 商品列表
-		g.GET("/products", listProducts)
-		g.GET("/products/:id", getProduct)
+		g.GET("/products", frontListProducts)
+		g.GET("/products/:id", frontGetProduct)
 
 		// 活动列表
-		g.GET("/activities", listActivities)
+		g.GET("/activities", frontListActivities)
 
 		// 砍价订单
 		g.POST("/orders", createBargainOrder)
 		g.POST("/orders/:id/help", helpBargain)
-		g.GET("/orders/:id", getBargainOrder)
+		g.GET("/orders/:id", frontGetBargainOrder)
 		g.GET("/orders/:id/helpers", listHelpers)
 	}
 }
 
-func listProducts(c *gin.Context) {
+func frontListProducts(c *gin.Context) {
 	activityID, _ := strconv.ParseUint(c.Query("activity_id"), 10, 64)
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	size, _ := strconv.Atoi(c.DefaultQuery("size", "20"))
@@ -46,7 +46,7 @@ func listProducts(c *gin.Context) {
 	})
 }
 
-func getProduct(c *gin.Context) {
+func frontGetProduct(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 
 	product, err := service.GetProduct(c.Request.Context(), id)
@@ -58,7 +58,7 @@ func getProduct(c *gin.Context) {
 	api.Success(c, product)
 }
 
-func listActivities(c *gin.Context) {
+func frontListActivities(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	size, _ := strconv.Atoi(c.DefaultQuery("size", "20"))
 	status := int8(1)
@@ -118,7 +118,7 @@ func helpBargain(c *gin.Context) {
 	})
 }
 
-func getBargainOrder(c *gin.Context) {
+func frontGetBargainOrder(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 
 	order, err := service.GetBargainOrder(c.Request.Context(), id)

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/ijry/lyshop/core/db"
-	"github.com/ijry/lyshop/server/plugins/bargain/model"
+	"github.com/ijry/lyshop/plugins/bargain/model"
 )
 
 // ListActivities 获取活动列表
@@ -67,7 +67,7 @@ func UpdateActivity(ctx context.Context, id uint64, updates map[string]interface
 
 // DeleteActivity 删除活动
 func DeleteActivity(ctx context.Context, id uint64) error {
-	return db.DB.WithContext(ctx).Transaction(func(tx *db.DB) error {
+	return db.DB.WithContext(ctx).Transaction(func(tx *db.Tx) error {
 		// 删除活动商品
 		if err := tx.Where("activity_id = ?", id).Delete(&model.BargainProduct{}).Error; err != nil {
 			return err

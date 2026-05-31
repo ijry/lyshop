@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ijry/lyshop/server/core/db"
-	"github.com/ijry/lyshop/server/model"
-	pmmodel "github.com/ijry/lyshop/server/plugins/points_mall/model"
+	"github.com/ijry/lyshop/core/db"
+	"github.com/ijry/lyshop/model"
+	pmmodel "github.com/ijry/lyshop/plugins/points_mall/model"
 )
 
 // AddPoints 添加或扣减积分
@@ -22,7 +22,7 @@ func AddPointsWithRelated(ctx context.Context, userID uint64, points int, logTyp
 		return nil
 	}
 
-	return db.DB.WithContext(ctx).Transaction(func(tx *db.DB) error {
+	return db.DB.WithContext(ctx).Transaction(func(tx *db.Tx) error {
 		// 更新用户积分
 		result := tx.Model(&model.User{}).
 			Where("id = ?", userID).

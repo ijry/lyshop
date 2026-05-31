@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/ijry/lyshop/core/api"
-	"github.com/ijry/lyshop/server/plugins/bargain/model"
-	"github.com/ijry/lyshop/server/plugins/bargain/service"
+	"github.com/ijry/lyshop/plugins/bargain/model"
+	"github.com/ijry/lyshop/plugins/bargain/service"
 )
 
 // RegisterAdminRoutes 注册管理端路由

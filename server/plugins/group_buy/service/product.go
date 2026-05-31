@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/ijry/lyshop/core/db"
-	"github.com/ijry/lyshop/server/plugins/group_buy/model"
+	"github.com/ijry/lyshop/plugins/group_buy/model"
 )
 
 // ListProducts 获取商品列表（管理端）
@@ -67,7 +67,7 @@ func GetProduct(ctx context.Context, id uint64) (*model.GroupBuyProduct, error) 
 
 // UpsertProducts 批量更新商品
 func UpsertProducts(ctx context.Context, activityID uint64, products []model.GroupBuyProduct) error {
-	return db.DB.WithContext(ctx).Transaction(func(tx *db.DB) error {
+	return db.DB.WithContext(ctx).Transaction(func(tx *db.Tx) error {
 		// 删除旧商品
 		if err := tx.Where("activity_id = ?", activityID).Delete(&model.GroupBuyProduct{}).Error; err != nil {
 			return err
@@ -86,7 +86,7 @@ func UpsertProducts(ctx context.Context, activityID uint64, products []model.Gro
 }
 
 // IncreaseSoldQtyTx 增加已售数量（事务中）
-func IncreaseSoldQtyTx(tx *db.DB, productID uint64, qty int) error {
+func IncreaseSoldQtyTx(tx *db.Tx, productID uint64, qty int) error {
 	return tx.Model(&model.GroupBuyProduct{}).
 		Where("id = ?", productID).
 		UpdateColumn("sold_qty", db.Expr("sold_qty + ?", qty)).Error

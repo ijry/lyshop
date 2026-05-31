@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 
 	"github.com/gin-gonic/gin"
-	"github.com/ijry/lyshop/server/core/plugin"
-	pmapi "github.com/ijry/lyshop/server/plugins/points_mall/api"
-	_ "github.com/ijry/lyshop/server/plugins/points_mall/calculator"
-	pmmodel "github.com/ijry/lyshop/server/plugins/points_mall/model"
+	"github.com/ijry/lyshop/core/plugin"
+	pmapi "github.com/ijry/lyshop/plugins/points_mall/api"
+	_ "github.com/ijry/lyshop/plugins/points_mall/calculator"
+	pmmodel "github.com/ijry/lyshop/plugins/points_mall/model"
 	"gorm.io/gorm"
 )
 

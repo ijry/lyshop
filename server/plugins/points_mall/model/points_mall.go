@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/ijry/lyshop/server/model"
+	"github.com/ijry/lyshop/model"
 )
 
 // PointsLog 积分日志

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/ijry/lyshop/core/marketing"
-	"github.com/ijry/lyshop/server/plugins/group_buy/service"
+	"github.com/ijry/lyshop/plugins/group_buy/service"
 )
 
 func init() {
@@ -49,13 +49,15 @@ func (c *GroupBuyCalculator) Calculate(ctx *marketing.PriceContext) (bool, error
 				productKey := makeKey(product.ProductID, product.SkuID)
 				if productKey == key {
 					// 应用拼团价格
-					item.FinalPrice = product.GroupPrice
-					item.DiscountAmount = item.OriginalPrice - product.GroupPrice
-					item.AppliedActivities = append(item.AppliedActivities, marketing.AppliedActivity{
-						Type:       "group_buy",
-						Name:       activity.Name,
-						ActivityID: activity.ID,
-						Discount:   item.DiscountAmount,
+					discount := item.Price - product.GroupPrice
+					if discount < 0 {
+						discount = 0
+					}
+					item.ActivityPrice = product.GroupPrice
+					ctx.AppliedRules = append(ctx.AppliedRules, marketing.AppliedRule{
+						Type:     "group_buy",
+						Name:     activity.Name,
+						Discount: discount,
 					})
 					// 拼团是排他性活动，停止后续计算器
 					return false, nil
