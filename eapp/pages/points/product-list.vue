@@ -17,6 +17,12 @@ const typeTabs = [
 
 const showPopup = ref(false)
 const editingID = ref(0)
+const showTypePicker = ref(false)
+const typePickerOptions = [
+  { label: '优惠券', value: 'coupon' },
+  { label: '实物', value: 'physical' },
+  { label: '虚拟', value: 'virtual' },
+]
 const form = reactive({ title: '', type: 'coupon', points_price: '', stock: '', cover: '', description: '', status: 1 })
 
 function resetForm() { form.title = ''; form.type = 'coupon'; form.points_price = ''; form.stock = ''; form.cover = ''; form.description = ''; form.status = 1 }
@@ -108,9 +114,8 @@ onShow(() => doSearch())
         <view class="mt" />
         <view class="row">
           <text class="label">类型</text>
-          <picker :value="['coupon','physical','virtual'].indexOf(form.type)" :range="['优惠券','实物','虚拟']" @change="(e: any) => form.type = ['coupon','physical','virtual'][e.detail.value]">
-            <text class="picker-text">{{ typeLabels[form.type] || form.type }}</text>
-          </picker>
+          <text class="picker-text" @click="showTypePicker = true">{{ typeLabels[form.type] || form.type }}</text>
+          <up-picker :show="showTypePicker" :columns="[typePickerOptions]" keyName="label" @confirm="(e: any) => { form.type = e.value[0].value; showTypePicker = false }" @cancel="showTypePicker = false" @close="showTypePicker = false" />
         </view>
         <view class="mt" />
         <up-input v-model="form.points_price" type="number" placeholder="积分价格" />

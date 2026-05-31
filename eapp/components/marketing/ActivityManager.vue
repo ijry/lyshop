@@ -16,6 +16,10 @@ const props = defineProps<{ kind: MarketingKind }>()
 
 const showStartPicker = ref(false)
 const showEndPicker = ref(false)
+const showActivityPicker = ref(false)
+const showStatusPicker = ref(false)
+const showProductPicker = ref(false)
+const showSkuPicker = ref(false)
 
 const loading = ref(false)
 const activities = ref<any[]>([])
@@ -283,14 +287,8 @@ onShow(loadRows)
         <up-button size="mini" type="primary" plain @click="openCreateActivity">新增活动</up-button>
       </view>
       <view class="controls">
-        <picker
-          mode="selector"
-          :range="activities"
-          range-key="name"
-          @change="(e) => { selectedActivityID = Number(activities[e.detail.value]?.id || 0); loadRows() }"
-        >
-          <view class="picker">{{ activities.find((x) => Number(x.id) === selectedActivityID)?.name || '请选择活动' }}</view>
-        </picker>
+        <view class="picker" @click="showActivityPicker = true">{{ activities.find((x) => Number(x.id) === selectedActivityID)?.name || '请选择活动' }}</view>
+        <up-picker :show="showActivityPicker" :columns="[activities]" keyName="name" @confirm="(e) => { selectedActivityID = Number(e.value[0]?.id || 0); showActivityPicker = false; loadRows() }" @cancel="showActivityPicker = false" @close="showActivityPicker = false" />
         <up-input v-model="keyword" placeholder="关键词搜索" clearable />
         <up-button size="mini" type="primary" @click="loadRows">搜索</up-button>
       </view>
@@ -345,9 +343,8 @@ onShow(loadRows)
         <view class="picker" @click="showEndPicker = true">{{ activityForm.end_at ? activityForm.end_at.slice(0, 16).replace('T', ' ') : '请选择结束时间' }}</view>
         <up-datetime-picker :show="showEndPicker" v-model="activityForm.end_at" mode="datetime" @confirm="(e) => { activityForm.end_at = new Date(e.value).toISOString(); showEndPicker = false }" @cancel="showEndPicker = false" @close="showEndPicker = false" />
         <view class="mt-12rpx" />
-        <picker mode="selector" :range="[{ label: '启用', value: 1 }, { label: '禁用', value: 0 }]" range-key="label" @change="(e) => { activityForm.status = Number(([1,0][e.detail.value]) || 0) }">
-          <view class="picker">{{ Number(activityForm.status || 0) === 1 ? '启用' : '禁用' }}</view>
-        </picker>
+        <view class="picker" @click="showStatusPicker = true">{{ Number(activityForm.status || 0) === 1 ? '启用' : '禁用' }}</view>
+        <up-picker :show="showStatusPicker" :columns="[[{ label: '启用', value: 1 }, { label: '禁用', value: 0 }]]" keyName="label" @confirm="(e) => { activityForm.status = e.value[0].value; showStatusPicker = false }" @cancel="showStatusPicker = false" @close="showStatusPicker = false" />
         <view class="mt-16rpx" />
         <up-button type="primary" @click="saveActivity">保存活动</up-button>
       </view>
@@ -356,13 +353,11 @@ onShow(loadRows)
     <up-popup :show="showRowPopup" mode="bottom" round="16" @close="showRowPopup = false">
       <view class="popup-body">
         <view class="popup-title">{{ editingRowID ? '编辑活动商品' : '新增活动商品' }}</view>
-        <picker mode="selector" :range="productOptions" range-key="title" @change="async (e) => { rowForm.product_id = Number(productOptions[e.detail.value]?.id || 0); await onSelectProduct() }">
-          <view class="picker">{{ productOptions.find((x) => Number(x.id) === Number(rowForm.product_id || 0))?.title || '请选择商品' }}</view>
-        </picker>
+        <view class="picker" @click="showProductPicker = true">{{ productOptions.find((x) => Number(x.id) === Number(rowForm.product_id || 0))?.title || '请选择商品' }}</view>
+        <up-picker :show="showProductPicker" :columns="[productOptions]" keyName="title" @confirm="async (e) => { rowForm.product_id = Number(e.value[0]?.id || 0); showProductPicker = false; await onSelectProduct() }" @cancel="showProductPicker = false" @close="showProductPicker = false" />
         <view class="mt-12rpx" />
-        <picker mode="selector" :range="skuOptions" range-key="label" @change="(e) => { rowForm.sku_id = Number(skuOptions[e.detail.value]?.id || 0) }">
-          <view class="picker">{{ skuOptions.find((x) => Number(x.id) === Number(rowForm.sku_id || 0))?.label || '请选择SKU' }}</view>
-        </picker>
+        <view class="picker" @click="showSkuPicker = true">{{ skuOptions.find((x) => Number(x.id) === Number(rowForm.sku_id || 0))?.label || '请选择SKU' }}</view>
+        <up-picker :show="showSkuPicker" :columns="[skuOptions]" keyName="label" @confirm="(e) => { rowForm.sku_id = Number(e.value[0]?.id || 0); showSkuPicker = false }" @cancel="showSkuPicker = false" @close="showSkuPicker = false" />
         <view class="mt-12rpx" />
         <up-input v-if="props.kind !== 'bargain'" v-model="rowForm.activity_price" type="digit" inputmode="decimal" placeholder="活动价" />
         <template v-else>

@@ -12,6 +12,9 @@ const shipTypeOptions = [{ label: '首次发货', value: 'initial' }, { label: '
 const deliveryTypeOptions = [{ label: '快递发货', value: 'express' }, { label: '同城配送', value: 'local' }]
 
 const form = reactive({ ship_type: 'initial', delivery_type: 'express', company: 'SF', tracking_no: '', rider_name: '', rider_phone: '', after_sale_case_id: '', remark: '' })
+const showShipTypePicker = ref(false)
+const showDeliveryTypePicker = ref(false)
+const showCompanyPicker = ref(false)
 
 watch(() => props.show, (v) => {
   if (v) {
@@ -45,16 +48,15 @@ function onSubmit() {
   <up-popup :show="show" mode="bottom" round="16" @close="$emit('close')">
     <view class="popup">
       <view class="title">订单发货</view>
-      <picker mode="selector" :range="shipTypeOptions" range-key="label" @change="(e) => onPick('ship_type', shipTypeOptions, 'value', e)">
-        <view class="picker">{{ shipTypeOptions.find((x) => x.value === form.ship_type)?.label }}</view>
-      </picker>
-      <picker v-if="deliveryMode === 'both'" mode="selector" :range="deliveryTypeOptions" range-key="label" @change="(e) => onPick('delivery_type', deliveryTypeOptions, 'value', e)">
-        <view class="picker mt">{{ deliveryTypeOptions.find((x) => x.value === form.delivery_type)?.label }}</view>
-      </picker>
+      <view class="picker" @click="showShipTypePicker = true">{{ shipTypeOptions.find((x) => x.value === form.ship_type)?.label }}</view>
+      <up-picker :show="showShipTypePicker" :columns="[shipTypeOptions]" keyName="label" @confirm="(e) => { form.ship_type = e.value[0].value; showShipTypePicker = false }" @cancel="showShipTypePicker = false" @close="showShipTypePicker = false" />
+      <template v-if="deliveryMode === 'both'">
+        <view class="picker mt" @click="showDeliveryTypePicker = true">{{ deliveryTypeOptions.find((x) => x.value === form.delivery_type)?.label }}</view>
+        <up-picker :show="showDeliveryTypePicker" :columns="[deliveryTypeOptions]" keyName="label" @confirm="(e) => { form.delivery_type = e.value[0].value; showDeliveryTypePicker = false }" @cancel="showDeliveryTypePicker = false" @close="showDeliveryTypePicker = false" />
+      </template>
       <template v-if="form.delivery_type === 'express'">
-        <picker mode="selector" :range="companyOptions" range-key="name" @change="(e) => onPick('company', companyOptions, 'code', e)">
-          <view class="picker mt">{{ companyOptions.find((x) => x.code === form.company)?.name }}</view>
-        </picker>
+        <view class="picker mt" @click="showCompanyPicker = true">{{ companyOptions.find((x) => x.code === form.company)?.name }}</view>
+        <up-picker :show="showCompanyPicker" :columns="[companyOptions]" keyName="name" @confirm="(e) => { form.company = e.value[0].code; showCompanyPicker = false }" @cancel="showCompanyPicker = false" @close="showCompanyPicker = false" />
         <up-input v-model="form.tracking_no" placeholder="运单号" class="mt" />
       </template>
       <template v-else>

@@ -9,6 +9,8 @@ const ids = ref<number[]>([])
 const rows = reactive<any[]>([])
 const company = ref('SF')
 const loading = ref(false)
+const showCompanyPicker = ref(false)
+const companyList = ['SF','ZTO','YTO','STO','YD','JD','EMS','DBL','JT'].map(c => ({ label: c }))
 const showResult = ref(false)
 const result = ref<{ success_ids: number[]; fail: Array<{ id: number; reason: string }> }>({ success_ids: [], fail: [] })
 
@@ -48,9 +50,8 @@ onLoad(() => {
       <view>选中订单：{{ ids.length }} 单</view>
       <view class="company">
         <text>统一快递：</text>
-        <picker mode="selector" :range="['SF','ZTO','YTO','STO','YD','JD','EMS','DBL','JT']" @change="(e) => applyCompany(['SF','ZTO','YTO','STO','YD','JD','EMS','DBL','JT'][Number(e.detail.value)])">
-          <view class="picker">{{ company }}</view>
-        </picker>
+        <view class="picker" @click="showCompanyPicker = true">{{ company }}</view>
+        <up-picker :show="showCompanyPicker" :columns="[companyList]" keyName="label" @confirm="(e) => { applyCompany(e.value[0].label); showCompanyPicker = false }" @cancel="showCompanyPicker = false" @close="showCompanyPicker = false" />
       </view>
     </view>
     <view v-for="row in rows" :key="row.order_id" class="row">

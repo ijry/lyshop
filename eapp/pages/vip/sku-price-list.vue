@@ -7,6 +7,11 @@ import { getProducts } from '@/api/product'
 const h = useVipList('sku-prices')
 const showPopup = ref(false)
 const editingID = ref(0)
+const showFilterProductPicker = ref(false)
+const showFilterLevelPicker = ref(false)
+const showProductPicker = ref(false)
+const showSkuPicker = ref(false)
+const showLevelPicker = ref(false)
 
 const filterProductID = ref(0)
 const filterLevelID = ref(0)
@@ -94,12 +99,10 @@ onShow(async () => {
       <up-button size="mini" type="primary" @click="openCreate">新增</up-button>
     </view>
     <view class="filter-row">
-      <picker mode="selector" :range="[{ id: 0, title: '全部商品' }, ...productOptions]" range-key="title" @change="(e: any) => { filterProductID = Number([{ id: 0 }, ...productOptions][e.detail.value]?.id || 0); loadFiltered() }">
-        <view class="picker-sm">{{ productOptions.find((p: any) => Number(p.id) === filterProductID)?.title || '全部商品' }}</view>
-      </picker>
-      <picker mode="selector" :range="[{ id: 0, name: '全部等级' }, ...levelOptions]" range-key="name" @change="(e: any) => { filterLevelID = Number([{ id: 0 }, ...levelOptions][e.detail.value]?.id || 0); loadFiltered() }">
-        <view class="picker-sm">{{ levelOptions.find((l: any) => Number(l.id) === filterLevelID)?.name || '全部等级' }}</view>
-      </picker>
+      <view class="picker-sm" @click="showFilterProductPicker = true">{{ productOptions.find((p: any) => Number(p.id) === filterProductID)?.title || '全部商品' }}</view>
+      <up-picker :show="showFilterProductPicker" :columns="[[{ id: 0, title: '全部商品' }, ...productOptions]]" keyName="title" @confirm="(e: any) => { filterProductID = Number(e.value[0]?.id || 0); showFilterProductPicker = false; loadFiltered() }" @cancel="showFilterProductPicker = false" @close="showFilterProductPicker = false" />
+      <view class="picker-sm" @click="showFilterLevelPicker = true">{{ levelOptions.find((l: any) => Number(l.id) === filterLevelID)?.name || '全部等级' }}</view>
+      <up-picker :show="showFilterLevelPicker" :columns="[[{ id: 0, name: '全部等级' }, ...levelOptions]]" keyName="name" @confirm="(e: any) => { filterLevelID = Number(e.value[0]?.id || 0); showFilterLevelPicker = false; loadFiltered() }" @cancel="showFilterLevelPicker = false" @close="showFilterLevelPicker = false" />
     </view>
     <view v-if="!h.loading.value && !h.list.value.length" class="empty">暂无数据</view>
     <view v-for="item in h.list.value" :key="item.id" class="card">
@@ -118,17 +121,14 @@ onShow(async () => {
     <up-popup :show="showPopup" mode="bottom" round="16" @close="showPopup = false">
       <view class="popup-body">
         <view class="popup-title">{{ editingID ? '编辑价格' : '新增价格' }}</view>
-        <picker mode="selector" :range="productOptions" range-key="title" @change="async (e: any) => { form.product_id = Number(productOptions[e.detail.value]?.id || 0); await onSelectProduct() }">
-          <view class="picker">{{ productOptions.find((p: any) => Number(p.id) === form.product_id)?.title || '请选择商品' }}</view>
-        </picker>
+        <view class="picker" @click="showProductPicker = true">{{ productOptions.find((p: any) => Number(p.id) === form.product_id)?.title || '请选择商品' }}</view>
+        <up-picker :show="showProductPicker" :columns="[productOptions]" keyName="title" @confirm="async (e: any) => { form.product_id = Number(e.value[0]?.id || 0); showProductPicker = false; await onSelectProduct() }" @cancel="showProductPicker = false" @close="showProductPicker = false" />
         <view class="mt" />
-        <picker mode="selector" :range="skuOptions" range-key="label" @change="(e: any) => { form.sku_id = Number(skuOptions[e.detail.value]?.id || 0) }">
-          <view class="picker">{{ skuOptions.find((s: any) => Number(s.id) === form.sku_id)?.label || '请选择SKU' }}</view>
-        </picker>
+        <view class="picker" @click="showSkuPicker = true">{{ skuOptions.find((s: any) => Number(s.id) === form.sku_id)?.label || '请选择SKU' }}</view>
+        <up-picker :show="showSkuPicker" :columns="[skuOptions]" keyName="label" @confirm="(e: any) => { form.sku_id = Number(e.value[0]?.id || 0); showSkuPicker = false }" @cancel="showSkuPicker = false" @close="showSkuPicker = false" />
         <view class="mt" />
-        <picker mode="selector" :range="levelOptions" range-key="name" @change="(e: any) => { form.level_id = Number(levelOptions[e.detail.value]?.id || 0) }">
-          <view class="picker">{{ levelOptions.find((l: any) => Number(l.id) === form.level_id)?.name || '请选择等级' }}</view>
-        </picker>
+        <view class="picker" @click="showLevelPicker = true">{{ levelOptions.find((l: any) => Number(l.id) === form.level_id)?.name || '请选择等级' }}</view>
+        <up-picker :show="showLevelPicker" :columns="[levelOptions]" keyName="name" @confirm="(e: any) => { form.level_id = Number(e.value[0]?.id || 0); showLevelPicker = false }" @cancel="showLevelPicker = false" @close="showLevelPicker = false" />
         <view class="mt" />
         <up-input v-model="form.vip_price" type="digit" placeholder="会员价" />
         <view class="mt-lg" />

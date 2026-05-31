@@ -20,6 +20,8 @@ const current = ref(0)
 const list = ref<any[]>([])
 const loading = ref(false)
 const filterType = ref('')
+const showTypePicker = ref(false)
+const typeOptions = typeNames.map((n, i) => ({ label: n, value: typeValues[i] }))
 
 async function load() {
   loading.value = true
@@ -50,9 +52,8 @@ onLoad(load); onShow(load)
       lineColor="transparent"
     />
     <view class="filter">
-      <picker mode="selector" :range="typeNames" @change="onType">
-        <view class="picker">类型：{{ typeNames[typeValues.indexOf(filterType)] }}</view>
-      </picker>
+      <view class="picker" @click="showTypePicker = true">类型：{{ typeNames[typeValues.indexOf(filterType)] }}</view>
+      <up-picker :show="showTypePicker" :columns="[typeOptions]" keyName="label" @confirm="(e: any) => { filterType = e.value[0].value; showTypePicker = false; load() }" @cancel="showTypePicker = false" @close="showTypePicker = false" />
     </view>
     <view class="list">
       <EmptyState v-if="!loading && !list.length" title="暂无售后" />

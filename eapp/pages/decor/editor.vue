@@ -7,6 +7,7 @@ import DecorPropEditor from '@/components/decor/DecorPropEditor.vue'
 const editor = useDecorEditor()
 const showCompLib = ref(false)
 const showPropEditor = ref(false)
+const showVariantPicker = ref(false)
 
 async function bootstrap() {
   await editor.loadVariants()
@@ -16,8 +17,7 @@ async function bootstrap() {
 }
 
 function onVariantChange(e: any) {
-  const idx = Number(e.detail.value || 0)
-  const v = editor.variants.value[idx]
+  const v = e.value?.[0]
   if (v) editor.selectVariant(String(v.variant_key || 'default'))
 }
 
@@ -93,9 +93,8 @@ onLoad(bootstrap)
 <template>
   <view class="page">
     <view class="toolbar">
-      <picker mode="selector" :range="editor.variants.value" range-key="variant_name" @change="onVariantChange">
-        <view class="picker">{{ editor.variants.value.find((v: any) => v.variant_key === editor.currentVariantKey.value)?.variant_name || '选择副本' }}</view>
-      </picker>
+      <view class="picker" @click="showVariantPicker = true">{{ editor.variants.value.find((v: any) => v.variant_key === editor.currentVariantKey.value)?.variant_name || '选择副本' }}</view>
+      <up-picker :show="showVariantPicker" :columns="[editor.variants.value]" keyName="variant_name" @confirm="(e) => { onVariantChange(e); showVariantPicker = false }" @cancel="showVariantPicker = false" @close="showVariantPicker = false" />
       <up-button size="mini" plain @click="showActionSheet">操作</up-button>
     </view>
 

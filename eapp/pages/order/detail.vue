@@ -11,6 +11,9 @@ const trackLoadingID = ref(0)
 const orderID = ref(0)
 const deliveryMode = ref<'express' | 'local' | 'both'>('express')
 const showShipPopup = ref(false)
+const showShipTypePicker = ref(false)
+const showDeliveryTypePicker = ref(false)
+const showCompanyPicker = ref(false)
 
 const timelineItems = ref<Array<{ key: string; title: string; time?: string; tone?: 'primary'|'success'|'warn'|'muted' }>>([])
 
@@ -200,18 +203,15 @@ function openShipPopup() {
 }
 
 function onPickShipType(e: any) {
-  const item = shipTypeOptions[Number(e?.detail?.value || 0)]
-  shipForm.ship_type = String(item?.value || 'initial')
+  shipForm.ship_type = String(e?.value?.[0]?.value || 'initial')
 }
 
 function onPickDeliveryType(e: any) {
-  const item = deliveryTypeOptions[Number(e?.detail?.value || 0)]
-  shipForm.delivery_type = String(item?.value || 'express')
+  shipForm.delivery_type = String(e?.value?.[0]?.value || 'express')
 }
 
 function onPickCompany(e: any) {
-  const item = companyOptions[Number(e?.detail?.value || 0)]
-  shipForm.company = String(item?.code || 'SF')
+  shipForm.company = String(e?.value?.[0]?.code || 'SF')
 }
 
 async function submitShip() {
@@ -328,21 +328,18 @@ onLoad(async (opts) => {
     <up-popup :show="showShipPopup" mode="bottom" round="16" @close="showShipPopup = false">
       <view class="popup-body">
         <view class="popup-title">订单发货</view>
-        <picker mode="selector" :range="shipTypeOptions" range-key="label" @change="onPickShipType">
-          <view class="picker">{{ shipTypeOptions.find((x) => x.value === shipForm.ship_type)?.label || '首次发货' }}</view>
-        </picker>
+        <view class="picker" @click="showShipTypePicker = true">{{ shipTypeOptions.find((x) => x.value === shipForm.ship_type)?.label || '首次发货' }}</view>
+        <up-picker :show="showShipTypePicker" :columns="[shipTypeOptions]" keyName="label" @confirm="(e) => { onPickShipType(e); showShipTypePicker = false }" @cancel="showShipTypePicker = false" @close="showShipTypePicker = false" />
         <view class="mt-12rpx" />
 
-        <picker v-if="canChooseDeliveryType" mode="selector" :range="deliveryTypeOptions" range-key="label" @change="onPickDeliveryType">
-          <view class="picker">{{ deliveryTypeOptions.find((x) => x.value === shipForm.delivery_type)?.label || '快递发货' }}</view>
-        </picker>
+        <view v-if="canChooseDeliveryType" class="picker" @click="showDeliveryTypePicker = true">{{ deliveryTypeOptions.find((x) => x.value === shipForm.delivery_type)?.label || '快递发货' }}</view>
+        <up-picker v-if="canChooseDeliveryType" :show="showDeliveryTypePicker" :columns="[deliveryTypeOptions]" keyName="label" @confirm="(e) => { onPickDeliveryType(e); showDeliveryTypePicker = false }" @cancel="showDeliveryTypePicker = false" @close="showDeliveryTypePicker = false" />
         <view v-else class="picker">{{ shipForm.delivery_type === 'local' ? '同城配送' : '快递发货' }}</view>
         <view class="mt-12rpx" />
 
         <template v-if="shipForm.delivery_type === 'express'">
-          <picker mode="selector" :range="companyOptions" range-key="name" @change="onPickCompany">
-            <view class="picker">{{ selectedCompanyName }}</view>
-          </picker>
+          <view class="picker" @click="showCompanyPicker = true">{{ selectedCompanyName }}</view>
+          <up-picker :show="showCompanyPicker" :columns="[companyOptions]" keyName="name" @confirm="(e) => { onPickCompany(e); showCompanyPicker = false }" @cancel="showCompanyPicker = false" @close="showCompanyPicker = false" />
           <view class="mt-12rpx" />
           <up-input v-model="shipForm.tracking_no" placeholder="请输入物流单号" clearable />
         </template>

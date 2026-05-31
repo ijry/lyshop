@@ -12,6 +12,13 @@ const saving = ref(false)
 const showCatPicker = ref(false)
 const showOnlinePicker = ref(false)
 const showOfflinePicker = ref(false)
+const showShippingPicker = ref(false)
+const shippingOptions = [
+  { label: '默认模板', value: 'default' },
+  { label: '包邮', value: 'free' },
+  { label: '到付', value: 'cod' },
+  { label: '同城', value: 'local' },
+]
 
 const form = reactive<any>({
   title: '', subtitle: '', sell_points: [] as string[],
@@ -263,9 +270,8 @@ onLoad((opts) => { id.value = Number(opts?.id || 0); loadData() })
 
     <view class="section">
       <view class="section-title">物流与营销</view>
-      <picker mode="selector" :range="['默认模板','包邮','到付','同城']" @change="(e) => form.shipping_template = ['default','free','cod','local'][Number(e.detail.value)]">
-        <view class="picker">物流模板：{{ { default: '默认模板', free: '包邮', cod: '到付', local: '同城' }[form.shipping_template] }}</view>
-      </picker>
+      <view class="picker" @click="showShippingPicker = true">物流模板：{{ { default: '默认模板', free: '包邮', cod: '到付', local: '同城' }[form.shipping_template] }}</view>
+      <up-picker :show="showShippingPicker" :columns="[shippingOptions]" keyName="label" @confirm="(e) => { form.shipping_template = e.value[0].value; showShippingPicker = false }" @cancel="showShippingPicker = false" @close="showShippingPicker = false" />
       <view class="row mt">
         <text>不参与营销活动</text>
         <switch :checked="form.exclude_marketing" @change="(e) => form.exclude_marketing = e.detail.value" />

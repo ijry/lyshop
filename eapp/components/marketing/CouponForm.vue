@@ -13,6 +13,9 @@ const form = reactive({
 
 const showStartPicker = ref(false)
 const showEndPicker = ref(false)
+const showTypePicker = ref(false)
+const showStackRulePicker = ref(false)
+const showTargetTypePicker = ref(false)
 
 const stackRuleOptions = [
   { label: '互斥', value: 'exclusive' },
@@ -75,9 +78,8 @@ function submit() {
       <view class="popup-title">{{ coupon ? '编辑优惠券' : '新建优惠券' }}</view>
       <up-input v-model="form.name" placeholder="优惠券名称" clearable />
       <view class="mt" />
-      <picker mode="selector" :range="[{ label: '满减', v: 1 }, { label: '折扣', v: 2 }, { label: '立减', v: 3 }]" range-key="label" @change="(e: any) => form.type = [1,2,3][e.detail.value]">
-        <view class="picker">类型：{{ { 1: '满减', 2: '折扣', 3: '立减' }[form.type] || '满减' }}</view>
-      </picker>
+      <view class="picker" @click="showTypePicker = true">类型：{{ { 1: '满减', 2: '折扣', 3: '立减' }[form.type] || '满减' }}</view>
+      <up-picker :show="showTypePicker" :columns="[[{ label: '满减', v: 1 }, { label: '折扣', v: 2 }, { label: '立减', v: 3 }]]" keyName="label" @confirm="(e: any) => { form.type = e.value[0].v; showTypePicker = false }" @cancel="showTypePicker = false" @close="showTypePicker = false" />
       <view class="mt" />
       <up-input v-model="form.min_amount" type="digit" placeholder="最低消费金额" />
       <view class="mt" />
@@ -95,13 +97,11 @@ function submit() {
       <view class="mt" />
       <up-input v-model="form.description" placeholder="说明" />
       <view class="mt" />
-      <picker mode="selector" :range="stackRuleOptions" range-key="label" @change="(e: any) => form.stack_rule = stackRuleOptions[e.detail.value].value">
-        <view class="picker">叠加规则：{{ stackRuleOptions.find(o => o.value === form.stack_rule)?.label || '-' }}</view>
-      </picker>
+      <view class="picker" @click="showStackRulePicker = true">叠加规则：{{ stackRuleOptions.find(o => o.value === form.stack_rule)?.label || '-' }}</view>
+      <up-picker :show="showStackRulePicker" :columns="[stackRuleOptions]" keyName="label" @confirm="(e: any) => { form.stack_rule = e.value[0].value; showStackRulePicker = false }" @cancel="showStackRulePicker = false" @close="showStackRulePicker = false" />
       <view class="mt" />
-      <picker mode="selector" :range="targetTypeOptions" range-key="label" @change="(e: any) => form.target_type = targetTypeOptions[e.detail.value].value">
-        <view class="picker">目标用户：{{ targetTypeOptions.find(o => o.value === form.target_type)?.label || '-' }}</view>
-      </picker>
+      <view class="picker" @click="showTargetTypePicker = true">目标用户：{{ targetTypeOptions.find(o => o.value === form.target_type)?.label || '-' }}</view>
+      <up-picker :show="showTargetTypePicker" :columns="[targetTypeOptions]" keyName="label" @confirm="(e: any) => { form.target_type = e.value[0].value; showTargetTypePicker = false }" @cancel="showTargetTypePicker = false" @close="showTargetTypePicker = false" />
       <view class="mt" />
       <up-input v-if="form.target_type === 'vip_level'" v-model="form.target_value" placeholder="会员等级值" />
       <view class="row mt">

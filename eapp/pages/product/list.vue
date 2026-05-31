@@ -20,6 +20,15 @@ const tabs = [
 ]
 const current = ref(0)
 const showFilter = ref(false); const showResult = ref(false)
+const showSortPicker = ref(false)
+const sortOptions = [
+  { label: '默认', value: '' },
+  { label: '销量', value: 'sales' },
+  { label: '库存', value: 'stock' },
+  { label: '价格升', value: 'price_asc' },
+  { label: '价格降', value: 'price_desc' },
+  { label: '最新', value: 'created' },
+]
 const filterDraft = ref<any>({ keyword: '', sort_by: '' })
 const result = ref<{ success_ids: number[]; fail: Array<{ id: number; reason: string }> }>({ success_ids: [], fail: [] })
 
@@ -127,9 +136,8 @@ onReachBottom(() => h.loadMore())
 
     <FilterDrawer :show="showFilter" title="商品筛选" @close="showFilter = false" @reset="resetFilter" @confirm="applyFilter">
       <up-input v-model="filterDraft.keyword" placeholder="商品名" />
-      <picker mode="selector" :range="['默认', '销量', '库存', '价格升', '价格降', '最新']" @change="(e) => { filterDraft.sort_by = ['', 'sales', 'stock', 'price_asc', 'price_desc', 'created'][Number(e.detail.value)] }">
-        <view class="picker mt">排序：{{ { '': '默认', sales: '销量', stock: '库存', price_asc: '价格升', price_desc: '价格降', created: '最新' }[filterDraft.sort_by || ''] }}</view>
-      </picker>
+      <view class="picker mt" @click="showSortPicker = true">排序：{{ { '': '默认', sales: '销量', stock: '库存', price_asc: '价格升', price_desc: '价格降', created: '最新' }[filterDraft.sort_by || ''] }}</view>
+      <up-picker :show="showSortPicker" :columns="[sortOptions]" keyName="label" @confirm="(e) => { filterDraft.sort_by = e.value[0].value; showSortPicker = false }" @cancel="showSortPicker = false" @close="showSortPicker = false" />
     </FilterDrawer>
 
     <BatchResultPopup :show="showResult" :success="result.success_ids" :fails="result.fail" @close="showResult = false" />
