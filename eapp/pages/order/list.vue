@@ -23,9 +23,8 @@ const tabs = [
   { name: '已完成', status: '4' },
   { name: '已取消', status: '6' },
   { name: '售后中', status: '', has_after_sale: true },
-  { name: '待评价', status: '4', extra: 'pending_review' },
-  { name: '待开票', status: '4', extra: 'pending_invoice' },
 ]
+const quickKeyword = ref('')
 const current = ref(0)
 const showFilter = ref(false); const showShip = ref(false); const showReprice = ref(false); const showNote = ref(false); const showResult = ref(false)
 const actionLoading = ref(false)
@@ -38,7 +37,18 @@ const filterDraft = ref<any>({ keyword: '', amount_min: '', amount_max: '', logi
 function onTabChange(idx: number) {
   current.value = idx
   const tab = tabs[idx]
-  h.applyFilter({ status: tab.status, has_after_sale: !!tab.has_after_sale })
+  h.applyFilter({ status: tab.status, has_after_sale: !!tab.has_after_sale, keyword: quickKeyword.value || undefined })
+  h.load()
+}
+
+function onQuickSearch() {
+  h.applyFilter({ keyword: quickKeyword.value || undefined })
+  h.load()
+}
+
+function clearQuickSearch() {
+  quickKeyword.value = ''
+  h.applyFilter({ keyword: undefined })
   h.load()
 }
 
@@ -132,24 +142,84 @@ onReachBottom(() => h.loadMore())
 
 <template>
   <view class="page">
-    <PageHeader title="订单">
+    <PageHeader title="订单管理">
       <template #right>
-        <text class="icon-btn" @click="openFilter">⚲</text>
+        <view class="filter-btn" @click="openFilter">
+          <up-icon name="filter" size="36" :color="'var(--eapp-primary)'" />
+        </view>
       </template>
     </PageHeader>
-    <up-tabs
-      :list="tabs"
-      :current="current"
-      :scrollable="true"
-      keyName="name"
-      @click="(item) => onTabChange(item.index)"
-      :activeStyle="{ color: '#fff', backgroundColor: 'var(--eapp-primary)', borderRadius: '999rpx', height: '56rpx', lineHeight: '56rpx', padding: '0 24rpx' }"
-      :inactiveStyle="{ color: 'var(--eapp-text-muted)', backgroundColor: 'var(--eapp-bg)', borderRadius: '999rpx', height: '56rpx', lineHeight: '56rpx', padding: '0 24rpx' }"
-      :itemStyle="{ padding: '0 4rpx', height: '80rpx' }"
-      lineColor="transparent"
-    />
+
+    <!-- Tab bar -->
+    <view class="tab-wrap">
+      <up-tabs
+        :list="tabs"
+        :current="current"
+        :scrollable="true"
+        keyName="name"
+        @click="(item: any) => onTabChange(item.index)"
+        :activeStyle="{ color: 'var(--eapp-primary)', fontWeight: '700', fontSize: '28rpx' }"
+        :inactiveStyle="{ color: 'var(--eapp-text-muted)', fontSize: '26rpx' }"
+        :itemStyle="{ height: '80rpx', padding: '0 8rpx' }"
+        lineColor="var(--eapp-primary)"
+        lineWidth="40rpx"
+        lineHeight="4rpx"
+        :lineStyle="{ borderRadius: '2rpx' }"
+      />
+    </view>
+
+    <!-- Quick search bar -->
+    <view class="search-bar">
+      <up-search
+        v-model="quickKeyword"
+        placeholder="搜索订单号 / 买家 / 商品"
+        :showAction="!!quickKeyword"
+        actionText="清空"
+        shape="round"
+        :inputStyle="{ fontSize: '26rpx' }"
+        @search="onQuickSearch"
+        @custom="clearQuickSearch"
+      />
+    </view>
+
+    <!-- Order count hint -->
+    <view v-if="h.total && h.total.value > 0" class="list-meta">
+      <text class="list-meta-text">共 {{ h.total.value }} 个订单</text>
+    </view>
+
+    <!-- List -->
     <view class="list">
-      <EmptyState v-if="!h.loading.value && !h.list.value.length" title="暂无订单" desc="切换状态或调整筛选条件" />
+      <!-- Skeleton loading -->
+      <template v-if="h.loading.value && !h.list.value.length">
+        <view v-for="i in 4" :key="i" class="skeleton-card">
+          <view class="sk-accent" />
+          <view class="sk-body">
+            <view class="sk-row">
+              <view class="sk-block" style="width: 160rpx; height: 28rpx;" />
+              <view class="sk-block" style="width: 80rpx; height: 28rpx;" />
+            </view>
+            <view class="sk-row" style="margin-top: 16rpx; gap: 8rpx;">
+              <view class="sk-block" style="width: 84rpx; height: 84rpx; border-radius: 10rpx;" />
+              <view class="sk-block" style="width: 84rpx; height: 84rpx; border-radius: 10rpx;" />
+              <view style="flex: 1; display: flex; flex-direction: column; gap: 8rpx; padding-top: 4rpx;">
+                <view class="sk-block" style="width: 80%; height: 24rpx;" />
+                <view class="sk-block" style="width: 50%; height: 24rpx;" />
+              </view>
+            </view>
+            <view class="sk-row" style="margin-top: 12rpx;">
+              <view class="sk-block" style="width: 120rpx; height: 22rpx;" />
+              <view class="sk-block" style="width: 100rpx; height: 36rpx;" />
+            </view>
+          </view>
+        </view>
+      </template>
+
+      <EmptyState
+        v-else-if="!h.loading.value && !h.list.value.length"
+        title="暂无订单"
+        desc="切换状态或调整筛选条件试试"
+      />
+
       <OrderCard
         v-for="o in h.list.value"
         :key="o.id"
@@ -158,11 +228,18 @@ onReachBottom(() => h.loadMore())
         :selected="h.isSelected(o.id)"
         @toggle="h.toggleSelect(o.id)"
         @click="onCardAction(o, 'detail')"
-        @action="(key) => onCardAction(o, key)"
+        @action="(key: string) => onCardAction(o, key)"
       />
-      <view v-if="h.loading.value" class="loading">加载中…</view>
+      <view v-if="h.loading.value && h.list.value.length" class="loading">
+        <up-loading-icon mode="circle" size="32" />
+        <text class="loading-text">加载中…</text>
+      </view>
+      <view v-if="!h.loading.value && h.list.value.length && h.list.value.length >= h.total.value && h.total.value > 0" class="no-more">
+        · 没有更多了 ·
+      </view>
     </view>
 
+    <!-- Batch action bar -->
     <BatchBar
       :count="h.selectCount.value"
       :actions="[
@@ -174,16 +251,17 @@ onReachBottom(() => h.loadMore())
       @cancel="h.clearSelect()"
     />
 
-    <FilterDrawer :show="showFilter" title="订单筛选" @close="showFilter = false" @reset="resetFilter" @confirm="applyFilter">
+    <!-- Filter drawer -->
+    <FilterDrawer :show="showFilter" title="高级筛选" @close="showFilter = false" @reset="resetFilter" @confirm="applyFilter">
       <up-input v-model="filterDraft.keyword" placeholder="订单号 / 买家昵称 / 商品名" />
       <view class="row mt">
         <up-input v-model="filterDraft.amount_min" type="digit" placeholder="最低金额" />
-        <text class="dash">~</text>
+        <text class="dash">—</text>
         <up-input v-model="filterDraft.amount_max" type="digit" placeholder="最高金额" />
       </view>
-      <up-input v-model="filterDraft.logistics_company" placeholder="物流公司代码（SF/ZTO/...）" class="mt" />
+      <up-input v-model="filterDraft.logistics_company" placeholder="物流公司（SF / ZTO / ...）" class="mt" />
       <up-input v-model="filterDraft.province" placeholder="收货省份" class="mt" />
-      <up-input v-model="filterDraft.pay_method" placeholder="支付方式（wechat/alipay/...）" class="mt" />
+      <up-input v-model="filterDraft.pay_method" placeholder="支付方式（wechat / alipay / ...）" class="mt" />
     </FilterDrawer>
 
     <ShipPopup :show="showShip" :delivery-mode="deliveryMode" :loading="actionLoading" @close="showShip = false" @submit="submitShip" />
@@ -195,10 +273,38 @@ onReachBottom(() => h.loadMore())
 
 <style scoped>
 .page { min-height: 100vh; background: var(--eapp-bg); }
-.icon-btn { font-size: 36rpx; padding: 0 12rpx; }
-.list { padding: 20rpx; display: grid; gap: 16rpx; padding-bottom: 200rpx; }
-.loading { text-align: center; color: var(--eapp-text-muted); padding: 20rpx 0; }
+.filter-btn { padding: 4rpx 8rpx; }
+
+/* Tabs */
+.tab-wrap { background: var(--eapp-card); border-bottom: 1rpx solid var(--eapp-border); }
+
+/* Search bar */
+.search-bar { background: var(--eapp-card); padding: 12rpx 24rpx 16rpx; border-bottom: 1rpx solid var(--eapp-border); }
+
+/* List meta */
+.list-meta { padding: 12rpx 24rpx 4rpx; }
+.list-meta-text { font-size: 22rpx; color: var(--eapp-text-faint); }
+
+/* List */
+.list { padding: 16rpx 20rpx; display: grid; gap: 16rpx; padding-bottom: 200rpx; }
+
+/* Loading inline */
+.loading { display: flex; align-items: center; justify-content: center; gap: 12rpx; padding: 24rpx 0; }
+.loading-text { font-size: 26rpx; color: var(--eapp-text-muted); }
+
+/* No more */
+.no-more { text-align: center; font-size: 24rpx; color: var(--eapp-text-faint); padding: 16rpx 0; letter-spacing: 2rpx; }
+
+/* Filter drawer helpers */
 .row { display: flex; align-items: center; gap: 12rpx; }
-.dash { color: var(--eapp-text-muted); }
-.mt { margin-top: 12rpx; }
+.dash { color: var(--eapp-text-muted); font-size: 28rpx; flex-shrink: 0; }
+.mt { margin-top: 16rpx; }
+
+/* Skeleton */
+.skeleton-card { display: flex; flex-direction: row; background: var(--eapp-card); border-radius: 20rpx; overflow: hidden; }
+.sk-accent { width: 8rpx; background: var(--eapp-border); }
+.sk-body { flex: 1; padding: 20rpx 22rpx; }
+.sk-row { display: flex; align-items: center; justify-content: space-between; }
+.sk-block { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; border-radius: 8rpx; animation: shimmer 1.5s infinite; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 </style>

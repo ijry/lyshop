@@ -52,6 +52,11 @@ export default {
   'menu.bargain': 'Bargain',
   'menu.bargainActivities': 'Activities',
   'menu.bargainProducts': 'Products',
+  'menu.distribution': 'Distribution',
+  'menu.distributionDistributors': 'Distributors',
+  'menu.distributionOrders': 'Distribution Orders',
+  'menu.distributionWithdrawals': 'Withdrawals',
+  'menu.distributionConfig': 'Distribution Config',
   'menu.decor': 'Page Designer',
   'menu.decor.editor': 'Homepage Designer',
 
@@ -139,6 +144,10 @@ export default {
   'nav.checkinLogs': 'Check-in Logs',
   'nav.messageList': 'Messages',
   'nav.messageSend': 'Send Message',
+  'nav.distributorManage': 'Distributors',
+  'nav.distributionOrders': 'Distribution Orders',
+  'nav.distributionWithdrawals': 'Withdrawals',
+  'nav.distributionConfig': 'Distribution Config',
 
   // Login
   'login.username': 'Username',
@@ -641,6 +650,16 @@ export default {
   'system.role.roleName': 'Role Name',
   'system.role.roleNameHint': 'e.g., Support, Operations',
   'system.role.permConfig': 'Permissions',
+
+  // Permission groups
+  'permGroup.system': 'System',
+  'permGroup.product': 'Products',
+  'permGroup.order': 'Orders',
+  'permGroup.wms': 'Warehouse',
+  'permGroup.marketing': 'Marketing',
+  'permGroup.im': 'Customer Service',
+  'permGroup.ai': 'AI',
+  'permGroup.decor': 'Decor',
 
   // IM
   'im.title': 'Customer Service',
