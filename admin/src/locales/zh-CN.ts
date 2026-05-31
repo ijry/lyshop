@@ -49,6 +49,9 @@ export default {
   'menu.groupBuy': '拼团活动',
   'menu.groupBuyActivities': '活动管理',
   'menu.groupBuyProducts': '商品管理',
+  'menu.bargain': '砍价活动',
+  'menu.bargainActivities': '活动管理',
+  'menu.bargainProducts': '商品管理',
   'menu.decor': '店铺装修',
   'menu.decor.editor': '首页装修',
 

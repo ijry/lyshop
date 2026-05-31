@@ -49,6 +49,9 @@ export default {
   'menu.groupBuy': 'Group Buy',
   'menu.groupBuyActivities': 'Activities',
   'menu.groupBuyProducts': 'Products',
+  'menu.bargain': 'Bargain',
+  'menu.bargainActivities': 'Activities',
+  'menu.bargainProducts': 'Products',
   'menu.decor': 'Page Designer',
   'menu.decor.editor': 'Homepage Designer',
 

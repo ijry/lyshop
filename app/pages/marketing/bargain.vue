@@ -56,7 +56,7 @@ import { get } from '@/utils/request'
 const products = ref<any[]>([])
 
 onMounted(async () => {
-  const data = await get<any>('/api/v1/marketing/bargain/products')
+  const data = await get<any>('/api/v1/bargain/products')
   products.value = Array.isArray(data?.list) ? data.list : (Array.isArray(data) ? data : [])
 })
 

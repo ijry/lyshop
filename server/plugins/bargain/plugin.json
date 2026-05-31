@@ -1,0 +1,34 @@
+{
+  "name": "bargain",
+  "version": "1.0.0",
+  "title": "砍价活动",
+  "description": "社交砍价营销插件，支持好友助力、砍价算法、过期处理",
+  "author": "LYShop",
+  "depends": ["product", "marketing"],
+  "menus": [
+    {
+      "title": "砍价活动",
+      "icon": "scissors",
+      "path": "/bargain",
+      "children": [
+        {
+          "title": "活动管理",
+          "path": "/bargain/activities"
+        },
+        {
+          "title": "商品管理",
+          "path": "/bargain/products"
+        },
+        {
+          "title": "砍价订单",
+          "path": "/bargain/orders"
+        }
+      ]
+    }
+  ],
+  "permissions": [
+    "bargain:view",
+    "bargain:edit",
+    "bargain:delete"
+  ]
+}

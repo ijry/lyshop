@@ -9,6 +9,7 @@ import (
 	// Blank-import enabled plugins so their init() registers them.
 	_ "github.com/ijry/lyshop/plugins/ai_image"
 	_ "github.com/ijry/lyshop/plugins/alipay"
+	_ "github.com/ijry/lyshop/plugins/bargain"
 	_ "github.com/ijry/lyshop/plugins/checkin"
 	_ "github.com/ijry/lyshop/plugins/decor"
 	_ "github.com/ijry/lyshop/plugins/delivery_express"

@@ -588,6 +588,7 @@ const routes: Record<string, any> = {
   'GET /api/v1/addresses': addresses,
   'GET /api/v1/seckill/products': { list: buildActivityRows('seckill'), total: buildActivityRows('seckill').length, page: 1, size: 20 },
   'GET /api/v1/group-buy/products': { list: buildActivityRows('group_buy'), total: buildActivityRows('group_buy').length, page: 1, size: 20 },
+  'GET /api/v1/bargain/products': { list: buildActivityRows('bargain'), total: buildActivityRows('bargain').length, page: 1, size: 20 },
   'GET /api/v1/marketing/seckill/products': { list: buildActivityRows('seckill'), total: buildActivityRows('seckill').length, page: 1, size: 20 },
   'GET /api/v1/marketing/group-buy/products': { list: buildActivityRows('group_buy'), total: buildActivityRows('group_buy').length, page: 1, size: 20 },
   'GET /api/v1/marketing/bargain/products': { list: buildActivityRows('bargain'), total: buildActivityRows('bargain').length, page: 1, size: 20 },
@@ -842,7 +843,7 @@ export function matchMock(method: string, url: string, params?: Record<string, a
 
   if (key in routes) {
     const data = routes[key]
-    if (upperMethod === 'GET' && (path === '/api/v1/seckill/products' || path === '/api/v1/group-buy/products' || path === '/api/v1/marketing/seckill/products' || path === '/api/v1/marketing/group-buy/products' || path === '/api/v1/marketing/bargain/products')) {
+    if (upperMethod === 'GET' && (path === '/api/v1/seckill/products' || path === '/api/v1/group-buy/products' || path === '/api/v1/bargain/products' || path === '/api/v1/marketing/seckill/products' || path === '/api/v1/marketing/group-buy/products' || path === '/api/v1/marketing/bargain/products')) {
       const sourceList = (path === '/api/v1/seckill/products' || path === '/api/v1/marketing/seckill/products')
         ? buildActivityRows('seckill')
         : (path === '/api/v1/group-buy/products' || path === '/api/v1/marketing/group-buy/products')

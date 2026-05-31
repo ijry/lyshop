@@ -55,6 +55,9 @@ const router = createRouter({
         // Group Buy
         { path: 'group-buy/activities', name: 'nav.groupBuyActivities', component: () => import('@/views/group-buy/ActivityList.vue'), meta: { titleKey: 'menu.groupBuyActivities' } },
         { path: 'group-buy/products', name: 'nav.groupBuyProducts', component: () => import('@/views/group-buy/ProductManage.vue'), meta: { titleKey: 'menu.groupBuyProducts' } },
+        // Bargain
+        { path: 'bargain/activities', name: 'nav.bargainActivities', component: () => import('@/views/bargain/ActivityList.vue'), meta: { titleKey: 'menu.bargainActivities' } },
+        { path: 'bargain/products', name: 'nav.bargainProducts', component: () => import('@/views/bargain/ProductManage.vue'), meta: { titleKey: 'menu.bargainProducts' } },
         // System
         { path: 'system/site',   name: 'nav.siteSettings', component: () => import('@/views/system/SiteSettings.vue'), meta: { titleKey: 'nav.siteSettings' } },
         { path: 'system/config', name: 'nav.configCenter', component: () => import('@/views/system/PaymentConfig.vue'), meta: { titleKey: 'nav.configCenter' } },

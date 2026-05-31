@@ -9,14 +9,14 @@ export const sendCoupon = (id: number | string, payload: any) => post<any>(`/mar
 
 export const getSeckillActivities = (params?: any) => get<any>('/seckill/activities', params)
 export const getGroupBuyActivities = (params?: any) => get<any>('/group-buy/activities', params)
-export const getBargainActivities = (params?: any) => get<any>('/marketing/bargain/activities', params)
+export const getBargainActivities = (params?: any) => get<any>('/bargain/activities', params)
 
 export type MarketingKind = 'seckill' | 'group-buy' | 'bargain'
 
 function activityPrefix(kind: MarketingKind) {
   if (kind === 'seckill') return '/seckill'
   if (kind === 'group-buy') return '/group-buy'
-  return '/marketing/bargain'
+  return '/bargain'
 }
 
 export const getActivities = (kind: MarketingKind, params?: any) =>
