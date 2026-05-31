@@ -87,7 +87,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { get, post, put, del } from '@/api/request'
+import request from '@/api/request'
 
 const router = useRouter()
 
@@ -113,9 +113,11 @@ function formatTime(time: string) {
 }
 
 async function loadActivities() {
-  const data = await get<any>('/admin/api/group-buy/activities', {
-    page: page.value,
-    size: size.value,
+  const data = await request.get<any>('/admin/api/group-buy/activities', {
+    params: {
+      page: page.value,
+      size: size.value,
+    }
   })
   activities.value = data.list || []
   total.value = data.total || 0
@@ -159,10 +161,10 @@ async function handleSave() {
 
   try {
     if (editingId.value) {
-      await put(`/admin/api/group-buy/activities/${editingId.value}`, form.value)
+      await request.put(`/admin/api/group-buy/activities/${editingId.value}`, form.value)
       ElMessage.success('更新成功')
     } else {
-      await post('/admin/api/group-buy/activities', form.value)
+      await request.post('/admin/api/group-buy/activities', form.value)
       ElMessage.success('创建成功')
     }
     dialogVisible.value = false
@@ -177,7 +179,7 @@ async function handleDelete(id: number) {
     await ElMessageBox.confirm('确定删除该活动吗？', '提示', {
       type: 'warning',
     })
-    await del(`/admin/api/group-buy/activities/${id}`)
+    await request.delete(`/admin/api/group-buy/activities/${id}`)
     ElMessage.success('删除成功')
     loadActivities()
   } catch (error) {

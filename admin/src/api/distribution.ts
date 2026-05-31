@@ -1,4 +1,4 @@
-import request from '@/utils/request'
+import request from './request'
 
 // 分销配置
 export const getDistributionConfig = () => request.get('/admin/api/distribution/config')

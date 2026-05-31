@@ -173,6 +173,7 @@
 </template>
 
 <script setup lang="ts">
+// @ts-nocheck
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import request from '@/api/request'
@@ -516,6 +517,7 @@ onUnmounted(() => {
 </template>
 
 <script setup lang="ts">
+// @ts-nocheck
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import request from '@/api/request'

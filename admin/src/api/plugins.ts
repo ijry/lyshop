@@ -4,7 +4,7 @@ import request from './request'
 export const getDashboard = (params?: any) => request.get('/dashboard', { params })
 
 // ---- Product ----
-export const getCategories = () => request.get<never, any[]>('/categories')
+export const getCategories = (params?: any) => request.get<any[]>('/categories', { params })
 export const createCategory = (data: any) => request.post('/categories', data)
 export const updateCategory = (id: number, data: any) => request.put(`/categories/${id}`, data)
 export const deleteCategory = (id: number) => request.delete(`/categories/${id}`)
@@ -21,7 +21,7 @@ export const uploadFile = (file: File) => {
     headers: { 'Content-Type': 'multipart/form-data' }
   })
 }
-export const getAiModels = () => request.get<never, any[]>('/ai/models')
+export const getAiModels = () => request.get<any[]>('/ai/models')
 export const generateAiImage = (data: any) => request.post('/ai/generate', data)
 export const getAiTask = (id: number) => request.get(`/ai/tasks/${id}`)
 export const getVipLevels = (params?: any) => request.get('/vip/levels', { params })
@@ -51,7 +51,7 @@ export const getReviewDetail = (id: number) => request.get(`/reviews/${id}`)
 export const replyReview = (id: number, content: string) => request.post(`/reviews/${id}/reply`, { content })
 
 // ---- Delivery ----
-export const getDeliveryMode = () => request.get<never, { mode: string }>('/delivery/mode')
+export const getDeliveryMode = () => request.get<{ mode: string }>('/delivery/mode')
 
 // ---- WMS ----
 export const getWarehouses = () => request.get('/wms/warehouses')

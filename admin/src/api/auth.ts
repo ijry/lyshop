@@ -30,7 +30,7 @@ export type AdminMenuLegacyResponse = AdminMenuItem[]
 export type AdminMenuResponse = AdminMenuGroupedResponse | AdminMenuLegacyResponse
 
 export const login = (username: string, password: string) =>
-  request.post<never, { token: string }>('/auth/login', { username, password })
+  request.post<{ token: string }>('/auth/login', { username, password })
 
 export const getMenus = () =>
-  request.get<never, AdminMenuResponse>('/menus')
+  request.get<AdminMenuResponse>('/menus')

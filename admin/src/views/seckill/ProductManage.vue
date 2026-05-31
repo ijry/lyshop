@@ -89,7 +89,7 @@ const form = ref<any>({
 })
 
 async function load() {
-  const data: any = await request.get('/seckill/products', { activity_id: activityId.value })
+  const data: any = await request.get('/seckill/products', { params: { activity_id: activityId.value } })
   list.value = data.list || []
 }
 

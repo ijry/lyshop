@@ -59,7 +59,7 @@
       </el-table-column>
       <el-table-column prop="sold_qty" label="已售" width="100" />
       <el-table-column label="操作" width="100" fixed="right">
-        <template #default="{ row, $index }">
+        <template #default="{ $index }">
           <el-button size="small" type="danger" @click="handleRemove($index)">删除</el-button>
         </template>
       </el-table-column>
@@ -110,7 +110,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { get, put } from '@/api/request'
+import request from '@/api/request'
 
 const route = useRoute()
 
@@ -132,7 +132,7 @@ const addForm = ref({
 })
 
 async function loadActivities() {
-  const data = await get<any>('/admin/api/bargain/activities', { page: 1, size: 100 })
+  const data = await request.get<any>('/admin/api/bargain/activities', { params: { page: 1, size: 100 } })
   activities.value = data.list || []
 
   const urlActivityId = Number(route.query.activity_id)
@@ -148,10 +148,12 @@ async function loadActivities() {
 async function loadProducts() {
   if (!activityId.value) return
 
-  const data = await get<any>('/admin/api/bargain/products', {
-    activity_id: activityId.value,
-    page: 1,
-    size: 1000,
+  const data = await request.get<any>('/admin/api/bargain/products', {
+    params: {
+      activity_id: activityId.value,
+      page: 1,
+      size: 1000,
+    }
   })
   products.value = data.list || []
 }
@@ -211,7 +213,7 @@ async function handleBatchSave() {
   }
 
   try {
-    await put(`/admin/api/bargain/activities/${activityId.value}/products`, products.value)
+    await request.put(`/admin/api/bargain/activities/${activityId.value}/products`, products.value)
     ElMessage.success('保存成功')
     loadProducts()
   } catch (error: any) {

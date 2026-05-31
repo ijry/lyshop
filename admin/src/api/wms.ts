@@ -186,16 +186,16 @@ function toDocSubmitPayload(payload: Partial<WmsDoc>): WmsDocSubmitPayload {
 }
 
 export const listWarehouses = (params?: { keyword?: string; status?: number }) =>
-  request.get<never, WmsPageResult<WmsWarehouse>>('/wms/warehouses', { params })
+  request.get<WmsPageResult<WmsWarehouse>>('/wms/warehouses', { params })
 
 export const createWarehouse = (payload: WmsWarehousePayload) =>
-  request.post<never, WmsWarehouse | null>('/wms/warehouses', payload)
+  request.post<WmsWarehouse | null>('/wms/warehouses', payload)
 
 export const updateWarehouse = (id: number, payload: WmsWarehousePayload) =>
-  request.put<never, null>(`/wms/warehouses/${id}`, payload)
+  request.put<null>(`/wms/warehouses/${id}`, payload)
 
 export const listDocs = async (params?: WmsDocQuery) => {
-  const data = await request.get<never, WmsPageResult<WmsDocServer>>('/wms/docs', { params })
+  const data = await request.get<WmsPageResult<WmsDocServer>>('/wms/docs', { params })
   return {
     ...data,
     list: Array.isArray(data?.list) ? data.list.map((item) => normalizeDoc(item)) : [],
@@ -203,14 +203,14 @@ export const listDocs = async (params?: WmsDocQuery) => {
 }
 
 export const getDocDetail = async (id: number) => {
-  const data = await request.get<never, { doc?: WmsDocServer; items?: WmsDocItem[] } | null>(`/wms/docs/${id}`)
+  const data = await request.get<{ doc?: WmsDocServer; items?: WmsDocItem[] } | null>(`/wms/docs/${id}`)
   if (!data?.doc) return null
   return normalizeDoc(data.doc, data.items)
 }
 
 export const createDoc = async (payload: Partial<WmsDoc>) => {
   const submitPayload = toDocSubmitPayload(payload)
-  const data = await request.post<never, WmsDocServer | null>('/wms/docs', {
+  const data = await request.post<WmsDocServer | null>('/wms/docs', {
     doc_type: submitPayload.type,
     warehouse_id: submitPayload.warehouse_id,
     remark: submitPayload.remark,
@@ -222,7 +222,7 @@ export const createDoc = async (payload: Partial<WmsDoc>) => {
 
 export const saveDoc = (id: number, payload: Partial<WmsDoc>) => {
   const submitPayload = toDocSubmitPayload(payload)
-  return request.put<never, null>(`/wms/docs/${id}`, {
+  return request.put<null>(`/wms/docs/${id}`, {
     doc_type: submitPayload.type,
     warehouse_id: submitPayload.warehouse_id,
     remark: submitPayload.remark,
@@ -231,16 +231,16 @@ export const saveDoc = (id: number, payload: Partial<WmsDoc>) => {
 }
 
 export const completeDoc = (id: number) =>
-  request.post<never, null>(`/wms/docs/${id}/complete`)
+  request.post<null>(`/wms/docs/${id}/complete`)
 
 export const cancelDoc = (id: number) =>
-  request.post<never, null>(`/wms/docs/${id}/cancel`)
+  request.post<null>(`/wms/docs/${id}/cancel`)
 
 export const listStockLedger = (params?: WmsStockLedgerQuery) =>
-  request.get<never, WmsPageResult<WmsStockLedgerRow>>('/wms/stocks', { params })
+  request.get<WmsPageResult<WmsStockLedgerRow>>('/wms/stocks', { params })
 
 export const updateSafetyStock = (id: number, safeQty: number) =>
-  request.put<never, null>(`/wms/stocks/${id}/safety`, { safe_qty: safeQty })
+  request.put<null>(`/wms/stocks/${id}/safety`, { safe_qty: safeQty })
 
 export const listMovements = (params?: WmsMovementQuery) =>
-  request.get<never, WmsPageResult<WmsMovementRow>>('/wms/movements', { params })
+  request.get<WmsPageResult<WmsMovementRow>>('/wms/movements', { params })
