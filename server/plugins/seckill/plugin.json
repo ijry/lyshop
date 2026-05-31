@@ -1,0 +1,32 @@
+{
+  "name": "seckill",
+  "title": "秒杀活动",
+  "version": "1.0.0",
+  "description": "秒杀活动插件，支持限时抢购、库存限制、价格优惠",
+  "author": "lyshop",
+  "depends": ["product", "marketing"],
+  "menus": [
+    {
+      "title": "秒杀活动",
+      "title_key": "menu.seckill",
+      "icon": "zap",
+      "path": "/seckill",
+      "sort": 35,
+      "children": [
+        {
+          "title": "活动管理",
+          "title_key": "menu.seckillActivities",
+          "path": "/seckill/activities",
+          "permission": "seckill:view"
+        },
+        {
+          "title": "商品管理",
+          "title_key": "menu.seckillProducts",
+          "path": "/seckill/products",
+          "permission": "seckill:view"
+        }
+      ]
+    }
+  ],
+  "permissions": ["seckill:view", "seckill:edit"]
+}

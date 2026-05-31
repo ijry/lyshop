@@ -43,6 +43,9 @@ export default {
   'menu.pointsLogs': '积分日志',
   'menu.pointsStats': '积分统计',
   'menu.pointsConfig': '积分配置',
+  'menu.seckill': '秒杀活动',
+  'menu.seckillActivities': '活动管理',
+  'menu.seckillProducts': '商品管理',
   'menu.decor': '店铺装修',
   'menu.decor.editor': '首页装修',
 

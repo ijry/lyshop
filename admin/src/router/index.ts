@@ -49,6 +49,9 @@ const router = createRouter({
         { path: 'points-mall/logs', name: 'nav.pointsLogs', component: () => import('@/views/points-mall/PointsLogs.vue'), meta: { titleKey: 'menu.pointsLogs' } },
         { path: 'points-mall/stats', name: 'nav.pointsStats', component: () => import('@/views/points-mall/PointsStats.vue'), meta: { titleKey: 'menu.pointsStats' } },
         { path: 'points-mall/config', name: 'nav.pointsConfig', component: () => import('@/views/points-mall/PointsConfig.vue'), meta: { titleKey: 'menu.pointsConfig' } },
+        // Seckill
+        { path: 'seckill/activities', name: 'nav.seckillActivities', component: () => import('@/views/seckill/ActivityList.vue'), meta: { titleKey: 'menu.seckillActivities' } },
+        { path: 'seckill/products', name: 'nav.seckillProducts', component: () => import('@/views/seckill/ProductManage.vue'), meta: { titleKey: 'menu.seckillProducts' } },
         // System
         { path: 'system/site',   name: 'nav.siteSettings', component: () => import('@/views/system/SiteSettings.vue'), meta: { titleKey: 'nav.siteSettings' } },
         { path: 'system/config', name: 'nav.configCenter', component: () => import('@/views/system/PaymentConfig.vue'), meta: { titleKey: 'nav.configCenter' } },

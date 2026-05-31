@@ -7,14 +7,14 @@ export const updateCoupon = (id: number | string, payload: any) => put<any>(`/ma
 export const deleteCoupon = (id: number | string) => del<any>(`/marketing/coupons/${id}`)
 export const sendCoupon = (id: number | string, payload: any) => post<any>(`/marketing/coupons/${id}/send`, payload)
 
-export const getSeckillActivities = (params?: any) => get<any>('/marketing/seckill/activities', params)
+export const getSeckillActivities = (params?: any) => get<any>('/seckill/activities', params)
 export const getGroupBuyActivities = (params?: any) => get<any>('/marketing/group-buy/activities', params)
 export const getBargainActivities = (params?: any) => get<any>('/marketing/bargain/activities', params)
 
 export type MarketingKind = 'seckill' | 'group-buy' | 'bargain'
 
 function activityPrefix(kind: MarketingKind) {
-  if (kind === 'seckill') return '/marketing/seckill'
+  if (kind === 'seckill') return '/seckill'
   if (kind === 'group-buy') return '/marketing/group-buy'
   return '/marketing/bargain'
 }

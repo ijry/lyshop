@@ -61,7 +61,7 @@ const countdownParts = ref(['00', '00', '00'])
 let timer: any = null
 
 onMounted(async () => {
-  const data = await get<any>('/api/v1/marketing/seckill/products')
+  const data = await get<any>('/api/v1/seckill/products')
   products.value = Array.isArray(data?.list) ? data.list : (Array.isArray(data) ? data : [])
 
   // Countdown

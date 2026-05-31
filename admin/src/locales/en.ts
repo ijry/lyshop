@@ -43,6 +43,9 @@ export default {
   'menu.pointsLogs': 'Points Logs',
   'menu.pointsStats': 'Points Statistics',
   'menu.pointsConfig': 'Points Config',
+  'menu.seckill': 'Flash Sale',
+  'menu.seckillActivities': 'Activities',
+  'menu.seckillProducts': 'Products',
   'menu.decor': 'Page Designer',
   'menu.decor.editor': 'Homepage Designer',
 
