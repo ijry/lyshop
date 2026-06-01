@@ -371,10 +371,23 @@ export const supermarket: MockPreset = {
         products: [
           { product_id: 101, title: '可口可乐24罐装', cover: supermarketCover(101), origin_price: 49.90, activity_price: 35.90, activity_stock: 200 },
           { product_id: 106, title: '康师傅方便面整箱', cover: supermarketCover(106), origin_price: 44.90, activity_price: 29.90, activity_stock: 150 },
+          { product_id: 103, title: '维达抽纸10包装', cover: supermarketCover(103), origin_price: 29.90, activity_price: 19.90, activity_stock: 500 },
+          { product_id: 107, title: '特仑苏纯牛奶12盒', cover: supermarketCover(107), origin_price: 59.90, activity_price: 42.90, activity_stock: 200 },
+          { product_id: 108, title: '立白洗洁精1.5kg', cover: supermarketCover(108), origin_price: 9.90, activity_price: 5.90, activity_stock: 800 },
+        ],
+      },
+      {
+        id: 102, type: 'seckill', name: '日用品闪购',
+        start_at: '2026-06-01T04:00:00Z', end_at: '2026-06-30T08:00:00Z', status: 1,
+        products: [
+          { product_id: 105, title: '舒肤佳沐浴露套装', cover: supermarketCover(105), origin_price: 55.00, activity_price: 35.00, activity_stock: 100 },
+          { product_id: 102, title: '农夫山泉矿泉水12瓶', cover: supermarketCover(102), origin_price: 19.90, activity_price: 12.90, activity_stock: 300 },
+          { product_id: 104, title: '乐事薯片大礼包', cover: supermarketCover(104), origin_price: 59.90, activity_price: 39.90, activity_stock: 150 },
+          { product_id: 101, title: '可口可乐24罐装', cover: supermarketCover(101), origin_price: 49.90, activity_price: 32.90, activity_stock: 100 },
         ],
       },
     ],
-    end_at: '2026-06-20T23:59:59Z',
+    end_at: '2026-06-30T23:59:59Z',
   },
 
   groupBuy: {
@@ -386,6 +399,19 @@ export const supermarket: MockPreset = {
         products: [
           { product_id: 107, title: '特仑苏纯牛奶12盒', cover: supermarketCover(107), origin_price: 59.90, group_price: 45.90, group_stock: 300 },
           { product_id: 104, title: '乐事薯片大礼包', cover: supermarketCover(104), origin_price: 59.90, group_price: 39.90, group_stock: 200 },
+          { product_id: 101, title: '可口可乐24罐装', cover: supermarketCover(101), origin_price: 49.90, group_price: 38.90, group_stock: 300 },
+          { product_id: 103, title: '维达抽纸10包装', cover: supermarketCover(103), origin_price: 29.90, group_price: 22.90, group_stock: 400 },
+          { product_id: 106, title: '康师傅方便面整箱', cover: supermarketCover(106), origin_price: 44.90, group_price: 34.90, group_stock: 200 },
+        ],
+      },
+      {
+        id: 102, type: 'group_buy', name: '2人囤货团',
+        group_size: 2, expire_hours: 48,
+        start_at: '2026-06-01T00:00:00Z', end_at: '2026-06-30T23:59:59Z', status: 1,
+        products: [
+          { product_id: 105, title: '舒肤佳沐浴露套装', cover: supermarketCover(105), origin_price: 55.00, group_price: 42.00, group_stock: 150 },
+          { product_id: 108, title: '立白洗洁精1.5kg', cover: supermarketCover(108), origin_price: 9.90, group_price: 7.50, group_stock: 500 },
+          { product_id: 102, title: '农夫山泉矿泉水12瓶', cover: supermarketCover(102), origin_price: 19.90, group_price: 15.90, group_stock: 300 },
         ],
       },
     ],
@@ -398,6 +424,9 @@ export const supermarket: MockPreset = {
         start_at: '2026-05-01T00:00:00Z', end_at: '2026-07-01T23:59:59Z', status: 1,
         products: [
           { product_id: 105, title: '舒肤佳沐浴露套装', cover: supermarketCover(105), origin_price: 55.00, floor_price: 0.01, max_helpers: 15, current_helpers: 6 },
+          { product_id: 103, title: '维达抽纸10包装', cover: supermarketCover(103), origin_price: 29.90, floor_price: 0.01, max_helpers: 8, current_helpers: 3 },
+          { product_id: 108, title: '立白洗洁精1.5kg', cover: supermarketCover(108), origin_price: 9.90, floor_price: 0.01, max_helpers: 5, current_helpers: 2 },
+          { product_id: 104, title: '乐事薯片大礼包', cover: supermarketCover(104), origin_price: 59.90, floor_price: 9.90, max_helpers: 12, current_helpers: 5 },
         ],
       },
     ],

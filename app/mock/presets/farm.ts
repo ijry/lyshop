@@ -412,10 +412,22 @@ export const farm: MockPreset = {
           { product_id: 401, title: '五常有机大米10斤', cover: farmCover(401), origin_price: 69.90, activity_price: 49.90, activity_stock: 200 },
           { product_id: 403, title: '秦岭土蜂蜜500g', cover: farmCover(403), origin_price: 58, activity_price: 38, activity_stock: 100 },
           { product_id: 405, title: '赣南脐橙10斤装', cover: farmCover(405), origin_price: 49.90, activity_price: 29.90, activity_stock: 300 },
+          { product_id: 408, title: '湖南烟熏腊肉500g', cover: farmCover(408), origin_price: 45.90, activity_price: 29.90, activity_stock: 120 },
+          { product_id: 406, title: '新疆和田大枣500g', cover: farmCover(406), origin_price: 35.90, activity_price: 22.90, activity_stock: 200 },
+        ],
+      },
+      {
+        id: 2, type: 'seckill', name: '应季鲜品秒杀',
+        start_at: '2026-06-01T04:00:00Z', end_at: '2026-06-30T08:00:00Z', status: 1,
+        products: [
+          { product_id: 404, title: '云南野生菌菇礼盒', cover: farmCover(404), origin_price: 188, activity_price: 128, activity_stock: 40 },
+          { product_id: 402, title: '西湖龙井明前茶250g', cover: farmCover(402), origin_price: 268, activity_price: 188, activity_stock: 50 },
+          { product_id: 407, title: '东北黑木耳250g', cover: farmCover(407), origin_price: 29.90, activity_price: 18.90, activity_stock: 300 },
+          { product_id: 401, title: '五常有机大米10斤', cover: farmCover(401), origin_price: 69.90, activity_price: 45.90, activity_stock: 100 },
         ],
       },
     ],
-    end_at: '2026-06-20T23:59:59Z',
+    end_at: '2026-06-30T23:59:59Z',
   },
   groupBuy: {
     list: [
@@ -427,6 +439,18 @@ export const farm: MockPreset = {
           { product_id: 402, title: '西湖龙井明前茶250g', cover: farmCover(402), origin_price: 268, group_price: 198, group_stock: 80 },
           { product_id: 404, title: '云南野生菌菇礼盒', cover: farmCover(404), origin_price: 188, group_price: 138, group_stock: 50 },
           { product_id: 408, title: '湖南烟熏腊肉500g', cover: farmCover(408), origin_price: 45.90, group_price: 35.90, group_stock: 100 },
+          { product_id: 401, title: '五常有机大米10斤', cover: farmCover(401), origin_price: 69.90, group_price: 55.90, group_stock: 200 },
+          { product_id: 405, title: '赣南脐橙10斤装', cover: farmCover(405), origin_price: 49.90, group_price: 38.90, group_stock: 150 },
+        ],
+      },
+      {
+        id: 2, type: 'group_buy', name: '2人团购',
+        group_size: 2, expire_hours: 48,
+        start_at: '2026-06-01T00:00:00Z', end_at: '2026-06-30T23:59:59Z', status: 1,
+        products: [
+          { product_id: 403, title: '秦岭土蜂蜜500g', cover: farmCover(403), origin_price: 58, group_price: 45, group_stock: 80 },
+          { product_id: 406, title: '新疆和田大枣500g', cover: farmCover(406), origin_price: 35.90, group_price: 28.90, group_stock: 200 },
+          { product_id: 407, title: '东北黑木耳250g', cover: farmCover(407), origin_price: 29.90, group_price: 22.90, group_stock: 150 },
         ],
       },
     ],
@@ -439,6 +463,8 @@ export const farm: MockPreset = {
         products: [
           { product_id: 406, title: '新疆和田大枣500g', cover: farmCover(406), origin_price: 35.90, floor_price: 0.01, max_helpers: 10, current_helpers: 3 },
           { product_id: 407, title: '东北黑木耳250g', cover: farmCover(407), origin_price: 29.90, floor_price: 5.90, max_helpers: 8, current_helpers: 5 },
+          { product_id: 403, title: '秦岭土蜂蜜500g', cover: farmCover(403), origin_price: 58, floor_price: 0.01, max_helpers: 12, current_helpers: 4 },
+          { product_id: 405, title: '赣南脐橙10斤装', cover: farmCover(405), origin_price: 49.90, floor_price: 9.90, max_helpers: 10, current_helpers: 6 },
         ],
       },
     ],

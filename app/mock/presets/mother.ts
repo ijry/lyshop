@@ -386,10 +386,22 @@ export const mother: MockPreset = {
           { product_id: 602, title: '花王妙而舒纸尿裤L码', cover: motherCover(602), origin_price: 129, activity_price: 89, activity_stock: 200 },
           { product_id: 605, title: '纯棉婴儿连体衣', cover: motherCover(605), origin_price: 49.90, activity_price: 29.90, activity_stock: 150 },
           { product_id: 603, title: '费雪益智积木80粒', cover: motherCover(603), origin_price: 89, activity_price: 59, activity_stock: 80 },
+          { product_id: 607, title: '小白熊辅食机', cover: motherCover(607), origin_price: 259, activity_price: 179, activity_stock: 40 },
+          { product_id: 604, title: '全棉时代婴儿湿巾80抽×6', cover: motherCover(604), origin_price: 59.90, activity_price: 39.90, activity_stock: 300 },
+        ],
+      },
+      {
+        id: 2, type: 'seckill', name: '宝妈囤货日',
+        start_at: '2026-06-01T02:00:00Z', end_at: '2026-06-30T06:00:00Z', status: 1,
+        products: [
+          { product_id: 601, title: '爱他美卓萃3段奶粉900g', cover: motherCover(601), origin_price: 298, activity_price: 228, activity_stock: 60 },
+          { product_id: 606, title: '基诺浦学步鞋', cover: motherCover(606), origin_price: 169, activity_price: 119, activity_stock: 80 },
+          { product_id: 608, title: '好孩子轻便婴儿推车', cover: motherCover(608), origin_price: 599, activity_price: 449, activity_stock: 20 },
+          { product_id: 602, title: '花王妙而舒纸尿裤L码', cover: motherCover(602), origin_price: 129, activity_price: 79, activity_stock: 100 },
         ],
       },
     ],
-    end_at: '2026-06-20T23:59:59Z',
+    end_at: '2026-06-30T23:59:59Z',
   },
 
   groupBuy: {
@@ -402,6 +414,18 @@ export const mother: MockPreset = {
           { product_id: 601, title: '爱他美卓萃3段奶粉900g', cover: motherCover(601), origin_price: 298, group_price: 248, group_stock: 100 },
           { product_id: 607, title: '小白熊辅食机', cover: motherCover(607), origin_price: 259, group_price: 199, group_stock: 50 },
           { product_id: 606, title: '基诺浦学步鞋', cover: motherCover(606), origin_price: 169, group_price: 139, group_stock: 60 },
+          { product_id: 602, title: '花王妙而舒纸尿裤L码', cover: motherCover(602), origin_price: 129, group_price: 99, group_stock: 200 },
+          { product_id: 604, title: '全棉时代婴儿湿巾80抽×6', cover: motherCover(604), origin_price: 59.90, group_price: 45.90, group_stock: 300 },
+        ],
+      },
+      {
+        id: 2, type: 'group_buy', name: '2人妈妈团',
+        group_size: 2, expire_hours: 48,
+        start_at: '2026-06-01T00:00:00Z', end_at: '2026-06-30T23:59:59Z', status: 1,
+        products: [
+          { product_id: 608, title: '好孩子轻便婴儿推车', cover: motherCover(608), origin_price: 599, group_price: 499, group_stock: 30 },
+          { product_id: 603, title: '费雪益智积木80粒', cover: motherCover(603), origin_price: 89, group_price: 69, group_stock: 100 },
+          { product_id: 605, title: '纯棉婴儿连体衣', cover: motherCover(605), origin_price: 49.90, group_price: 38.90, group_stock: 150 },
         ],
       },
     ],
@@ -415,6 +439,8 @@ export const mother: MockPreset = {
         products: [
           { product_id: 603, title: '费雪益智积木80粒', cover: motherCover(603), origin_price: 89, floor_price: 0.01, max_helpers: 15, current_helpers: 7 },
           { product_id: 605, title: '纯棉婴儿连体衣', cover: motherCover(605), origin_price: 49.90, floor_price: 5, max_helpers: 10, current_helpers: 3 },
+          { product_id: 604, title: '全棉时代婴儿湿巾80抽×6', cover: motherCover(604), origin_price: 59.90, floor_price: 0.01, max_helpers: 12, current_helpers: 5 },
+          { product_id: 606, title: '基诺浦学步鞋', cover: motherCover(606), origin_price: 169, floor_price: 19, max_helpers: 15, current_helpers: 6 },
         ],
       },
     ],

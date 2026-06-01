@@ -5,7 +5,10 @@
       "start_at": "2026-05-01T00:00:00Z", "end_at": "2026-07-01T23:59:59Z", "status": 1,
       "products": [
         { "product_id": 6, "title": "羊绒大衣女款", "cover": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80", "origin_price": 1980, "floor_price": 0.01, "max_helpers": 20, "current_helpers": 8 },
-        { "product_id": 2, "title": "轻薄笔记本 Air 15", "cover": "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=800&q=80", "origin_price": 6499, "floor_price": 999, "max_helpers": 30, "current_helpers": 15 }
+        { "product_id": 2, "title": "轻薄笔记本 Air 15", "cover": "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=800&q=80", "origin_price": 6499, "floor_price": 999, "max_helpers": 30, "current_helpers": 15 },
+        { "product_id": 7, "title": "精华水套装", "cover": "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=800&q=80", "origin_price": 299, "floor_price": 0.01, "max_helpers": 10, "current_helpers": 4 },
+        { "product_id": 8, "title": "机械键盘 RGB", "cover": "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?auto=format&fit=crop&w=800&q=80", "origin_price": 399, "floor_price": 29, "max_helpers": 12, "current_helpers": 5 },
+        { "product_id": 3, "title": "真无线降噪耳机", "cover": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80", "origin_price": 899, "floor_price": 99, "max_helpers": 15, "current_helpers": 7 }
       ]
     }
   ]

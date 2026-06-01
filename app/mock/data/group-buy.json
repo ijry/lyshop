@@ -7,7 +7,30 @@
       "products": [
         { "product_id": 4, "title": "智能手表 Ultra", "cover": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=800&q=80", "origin_price": 3299, "group_price": 2699, "group_stock": 100 },
         { "product_id": 7, "title": "精华水套装", "cover": "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=800&q=80", "origin_price": 299, "group_price": 199, "group_stock": 500 },
-        { "product_id": 5, "title": "4K超清投影仪", "cover": "https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=800&q=80", "origin_price": 3999, "group_price": 3199, "group_stock": 30 }
+        { "product_id": 5, "title": "4K超清投影仪", "cover": "https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=800&q=80", "origin_price": 3999, "group_price": 3199, "group_stock": 30 },
+        { "product_id": 3, "title": "真无线降噪耳机", "cover": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80", "origin_price": 899, "group_price": 649, "group_stock": 300 },
+        { "product_id": 8, "title": "机械键盘 RGB", "cover": "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?auto=format&fit=crop&w=800&q=80", "origin_price": 399, "group_price": 269, "group_stock": 200 }
+      ]
+    },
+    {
+      "id": 2, "type": "group_buy", "name": "2人拼团",
+      "group_size": 2, "expire_hours": 48,
+      "start_at": "2026-05-15T00:00:00Z", "end_at": "2026-07-15T23:59:59Z", "status": 1,
+      "products": [
+        { "product_id": 1, "title": "旗舰智能手机 Pro Max", "cover": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&q=80", "origin_price": 4999, "group_price": 4399, "group_stock": 50 },
+        { "product_id": 2, "title": "轻薄笔记本 Air 15", "cover": "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=800&q=80", "origin_price": 6499, "group_price": 5799, "group_stock": 40 },
+        { "product_id": 6, "title": "羊绒大衣女款", "cover": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80", "origin_price": 1980, "group_price": 1580, "group_stock": 80 },
+        { "product_id": 4, "title": "智能手表 Ultra", "cover": "https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=800&q=80", "origin_price": 3299, "group_price": 2899, "group_stock": 60 }
+      ]
+    },
+    {
+      "id": 3, "type": "group_buy", "name": "5人超值团",
+      "group_size": 5, "expire_hours": 12,
+      "start_at": "2026-06-01T00:00:00Z", "end_at": "2026-06-30T23:59:59Z", "status": 1,
+      "products": [
+        { "product_id": 7, "title": "精华水套装", "cover": "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=800&q=80", "origin_price": 299, "group_price": 149, "group_stock": 800 },
+        { "product_id": 3, "title": "真无线降噪耳机", "cover": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80", "origin_price": 899, "group_price": 549, "group_stock": 150 },
+        { "product_id": 8, "title": "机械键盘 RGB", "cover": "https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?auto=format&fit=crop&w=800&q=80", "origin_price": 399, "group_price": 199, "group_stock": 100 }
       ]
     }
   ]

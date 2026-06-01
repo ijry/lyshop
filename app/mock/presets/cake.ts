@@ -421,10 +421,22 @@ export const cake: MockPreset = {
           { product_id: 501, title: '草莓奶油生日蛋糕8寸', cover: cakeCover(501), origin_price: 168, activity_price: 128, activity_stock: 30 },
           { product_id: 502, title: '法式马卡龙12粒装', cover: cakeCover(502), origin_price: 98, activity_price: 68, activity_stock: 100 },
           { product_id: 506, title: '肉松小贝8个装', cover: cakeCover(506), origin_price: 38, activity_price: 25, activity_stock: 80 },
+          { product_id: 504, title: '提拉米苏6寸', cover: cakeCover(504), origin_price: 128, activity_price: 88, activity_stock: 50 },
+          { product_id: 508, title: '芒果班戟6个装', cover: cakeCover(508), origin_price: 48, activity_price: 32, activity_stock: 120 },
+        ],
+      },
+      {
+        id: 2, type: 'seckill', name: '下午茶特惠场',
+        start_at: '2026-06-01T06:00:00Z', end_at: '2026-06-30T10:00:00Z', status: 1,
+        products: [
+          { product_id: 507, title: '抹茶千层蛋糕6寸', cover: cakeCover(507), origin_price: 158, activity_price: 108, activity_stock: 40 },
+          { product_id: 503, title: '北海道吐司面包450g', cover: cakeCover(503), origin_price: 25.90, activity_price: 16.90, activity_stock: 200 },
+          { product_id: 505, title: '蛋黄酥礼盒12枚', cover: cakeCover(505), origin_price: 68, activity_price: 45, activity_stock: 100 },
+          { product_id: 501, title: '草莓奶油生日蛋糕8寸', cover: cakeCover(501), origin_price: 168, activity_price: 118, activity_stock: 20 },
         ],
       },
     ],
-    end_at: '2026-06-20T23:59:59Z',
+    end_at: '2026-06-30T23:59:59Z',
   },
 
   groupBuy: {
@@ -437,6 +449,18 @@ export const cake: MockPreset = {
           { product_id: 504, title: '提拉米苏6寸', cover: cakeCover(504), origin_price: 128, group_price: 98, group_stock: 60 },
           { product_id: 507, title: '抹茶千层蛋糕6寸', cover: cakeCover(507), origin_price: 158, group_price: 118, group_stock: 40 },
           { product_id: 508, title: '芒果班戟6个装', cover: cakeCover(508), origin_price: 48, group_price: 35, group_stock: 100 },
+          { product_id: 501, title: '草莓奶油生日蛋糕8寸', cover: cakeCover(501), origin_price: 168, group_price: 138, group_stock: 50 },
+          { product_id: 506, title: '肉松小贝8个装', cover: cakeCover(506), origin_price: 38, group_price: 28, group_stock: 150 },
+        ],
+      },
+      {
+        id: 2, type: 'group_buy', name: '2人甜蜜团',
+        group_size: 2, expire_hours: 48,
+        start_at: '2026-06-01T00:00:00Z', end_at: '2026-06-30T23:59:59Z', status: 1,
+        products: [
+          { product_id: 502, title: '法式马卡龙12粒装', cover: cakeCover(502), origin_price: 98, group_price: 78, group_stock: 80 },
+          { product_id: 505, title: '蛋黄酥礼盒12枚', cover: cakeCover(505), origin_price: 68, group_price: 52, group_stock: 120 },
+          { product_id: 503, title: '北海道吐司面包450g', cover: cakeCover(503), origin_price: 25.90, group_price: 19.90, group_stock: 200 },
         ],
       },
     ],
@@ -450,6 +474,8 @@ export const cake: MockPreset = {
         products: [
           { product_id: 505, title: '蛋黄酥礼盒12枚', cover: cakeCover(505), origin_price: 68, floor_price: 0.01, max_helpers: 15, current_helpers: 6 },
           { product_id: 503, title: '北海道吐司面包450g', cover: cakeCover(503), origin_price: 25.90, floor_price: 5, max_helpers: 10, current_helpers: 4 },
+          { product_id: 508, title: '芒果班戟6个装', cover: cakeCover(508), origin_price: 48, floor_price: 0.01, max_helpers: 12, current_helpers: 5 },
+          { product_id: 506, title: '肉松小贝8个装', cover: cakeCover(506), origin_price: 38, floor_price: 3, max_helpers: 8, current_helpers: 3 },
         ],
       },
     ],

@@ -359,10 +359,22 @@ export const jewelry: MockPreset = {
           { product_id: 301, title: '足金转运珠手链', cover: jewelryCover(301), origin_price: 1580, activity_price: 1280, activity_stock: 30 },
           { product_id: 305, title: '925纯银耳钉套装', cover: jewelryCover(305), origin_price: 99, activity_price: 59, activity_stock: 200 },
           { product_id: 304, title: '天然淡水珍珠项链', cover: jewelryCover(304), origin_price: 899, activity_price: 599, activity_stock: 80 },
+          { product_id: 307, title: '18K玫瑰金手镯', cover: jewelryCover(307), origin_price: 4280, activity_price: 3280, activity_stock: 20 },
+          { product_id: 306, title: '和田玉平安扣吊坠', cover: jewelryCover(306), origin_price: 2680, activity_price: 1880, activity_stock: 40 },
+        ],
+      },
+      {
+        id: 2, type: 'seckill', name: '轻奢饰品闪购',
+        start_at: '2026-06-01T04:00:00Z', end_at: '2026-06-30T10:00:00Z', status: 1,
+        products: [
+          { product_id: 308, title: '蓝宝石耳环', cover: jewelryCover(308), origin_price: 2580, activity_price: 1880, activity_stock: 30 },
+          { product_id: 302, title: '1克拉钻石戒指', cover: jewelryCover(302), origin_price: 29999, activity_price: 23999, activity_stock: 10 },
+          { product_id: 303, title: '冰种翡翠吊坠', cover: jewelryCover(303), origin_price: 6800, activity_price: 4999, activity_stock: 15 },
+          { product_id: 305, title: '925纯银耳钉套装', cover: jewelryCover(305), origin_price: 99, activity_price: 49, activity_stock: 150 },
         ],
       },
     ],
-    end_at: '2026-06-20T23:59:59Z',
+    end_at: '2026-06-30T23:59:59Z',
   },
   groupBuy: {
     list: [
@@ -374,6 +386,18 @@ export const jewelry: MockPreset = {
           { product_id: 303, title: '冰种翡翠吊坠', cover: jewelryCover(303), origin_price: 6800, group_price: 5200, group_stock: 30 },
           { product_id: 304, title: '天然淡水珍珠项链', cover: jewelryCover(304), origin_price: 899, group_price: 699, group_stock: 100 },
           { product_id: 308, title: '蓝宝石耳环', cover: jewelryCover(308), origin_price: 2580, group_price: 1980, group_stock: 50 },
+          { product_id: 301, title: '足金转运珠手链', cover: jewelryCover(301), origin_price: 1580, group_price: 1380, group_stock: 60 },
+          { product_id: 306, title: '和田玉平安扣吊坠', cover: jewelryCover(306), origin_price: 2680, group_price: 2180, group_stock: 40 },
+        ],
+      },
+      {
+        id: 2, type: 'group_buy', name: '2人闺蜜团',
+        group_size: 2, expire_hours: 48,
+        start_at: '2026-06-01T00:00:00Z', end_at: '2026-06-30T23:59:59Z', status: 1,
+        products: [
+          { product_id: 305, title: '925纯银耳钉套装', cover: jewelryCover(305), origin_price: 99, group_price: 75, group_stock: 200 },
+          { product_id: 307, title: '18K玫瑰金手镯', cover: jewelryCover(307), origin_price: 4280, group_price: 3580, group_stock: 30 },
+          { product_id: 304, title: '天然淡水珍珠项链', cover: jewelryCover(304), origin_price: 899, group_price: 749, group_stock: 80 },
         ],
       },
     ],
@@ -386,6 +410,8 @@ export const jewelry: MockPreset = {
         products: [
           { product_id: 305, title: '925纯银耳钉套装', cover: jewelryCover(305), origin_price: 99, floor_price: 0.01, max_helpers: 10, current_helpers: 4 },
           { product_id: 307, title: '18K玫瑰金手镯', cover: jewelryCover(307), origin_price: 4280, floor_price: 1280, max_helpers: 30, current_helpers: 12 },
+          { product_id: 304, title: '天然淡水珍珠项链', cover: jewelryCover(304), origin_price: 899, floor_price: 0.01, max_helpers: 15, current_helpers: 6 },
+          { product_id: 306, title: '和田玉平安扣吊坠', cover: jewelryCover(306), origin_price: 2680, floor_price: 268, max_helpers: 20, current_helpers: 8 },
         ],
       },
     ],

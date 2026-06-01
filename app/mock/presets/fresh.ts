@@ -364,10 +364,23 @@ export const fresh: MockPreset = {
         products: [
           { product_id: 201, title: '智利车厘子5斤装', cover: freshCover(201), origin_price: 168.00, activity_price: 128.00, activity_stock: 80 },
           { product_id: 207, title: '海南金煌芒果10斤', cover: freshCover(207), origin_price: 59.90, activity_price: 39.90, activity_stock: 150 },
+          { product_id: 206, title: '挪威三文鱼刺身200g', cover: freshCover(206), origin_price: 89.90, activity_price: 59.90, activity_stock: 100 },
+          { product_id: 204, title: '澳洲安格斯牛排200g×4', cover: freshCover(204), origin_price: 259.00, activity_price: 189.00, activity_stock: 60 },
+          { product_id: 202, title: '有机西蓝花2颗装', cover: freshCover(202), origin_price: 15.90, activity_price: 9.90, activity_stock: 300 },
+        ],
+      },
+      {
+        id: 202, type: 'seckill', name: '早市抢鲜价',
+        start_at: '2026-06-01T00:00:00Z', end_at: '2026-06-30T04:00:00Z', status: 1,
+        products: [
+          { product_id: 205, title: '土鸡蛋30枚', cover: freshCover(205), origin_price: 39.90, activity_price: 25.90, activity_stock: 200 },
+          { product_id: 203, title: '鲜活大闸蟹礼盒', cover: freshCover(203), origin_price: 399.00, activity_price: 299.00, activity_stock: 30 },
+          { product_id: 208, title: '有机菠菜500g', cover: freshCover(208), origin_price: 9.90, activity_price: 5.90, activity_stock: 500 },
+          { product_id: 201, title: '智利车厘子5斤装', cover: freshCover(201), origin_price: 168.00, activity_price: 118.00, activity_stock: 50 },
         ],
       },
     ],
-    end_at: '2026-06-20T23:59:59Z',
+    end_at: '2026-06-30T23:59:59Z',
   },
 
   groupBuy: {
@@ -379,6 +392,19 @@ export const fresh: MockPreset = {
         products: [
           { product_id: 204, title: '澳洲安格斯牛排200g×4', cover: freshCover(204), origin_price: 259.00, group_price: 199.00, group_stock: 100 },
           { product_id: 205, title: '土鸡蛋30枚', cover: freshCover(205), origin_price: 39.90, group_price: 29.90, group_stock: 300 },
+          { product_id: 201, title: '智利车厘子5斤装', cover: freshCover(201), origin_price: 168.00, group_price: 138.00, group_stock: 80 },
+          { product_id: 206, title: '挪威三文鱼刺身200g', cover: freshCover(206), origin_price: 89.90, group_price: 69.90, group_stock: 120 },
+          { product_id: 207, title: '海南金煌芒果10斤', cover: freshCover(207), origin_price: 59.90, group_price: 45.90, group_stock: 200 },
+        ],
+      },
+      {
+        id: 202, type: 'group_buy', name: '2人海鲜团',
+        group_size: 2, expire_hours: 12,
+        start_at: '2026-06-01T00:00:00Z', end_at: '2026-06-30T23:59:59Z', status: 1,
+        products: [
+          { product_id: 203, title: '鲜活大闸蟹礼盒', cover: freshCover(203), origin_price: 399.00, group_price: 328.00, group_stock: 40 },
+          { product_id: 206, title: '挪威三文鱼刺身200g', cover: freshCover(206), origin_price: 89.90, group_price: 65.90, group_stock: 80 },
+          { product_id: 208, title: '有机菠菜500g', cover: freshCover(208), origin_price: 9.90, group_price: 6.90, group_stock: 500 },
         ],
       },
     ],
@@ -391,6 +417,9 @@ export const fresh: MockPreset = {
         start_at: '2026-05-01T00:00:00Z', end_at: '2026-07-01T23:59:59Z', status: 1,
         products: [
           { product_id: 206, title: '挪威三文鱼刺身200g', cover: freshCover(206), origin_price: 128.00, floor_price: 0.01, max_helpers: 20, current_helpers: 9 },
+          { product_id: 207, title: '海南金煌芒果10斤', cover: freshCover(207), origin_price: 59.90, floor_price: 0.01, max_helpers: 12, current_helpers: 5 },
+          { product_id: 205, title: '土鸡蛋30枚', cover: freshCover(205), origin_price: 39.90, floor_price: 5.90, max_helpers: 8, current_helpers: 3 },
+          { product_id: 202, title: '有机西蓝花2颗装', cover: freshCover(202), origin_price: 15.90, floor_price: 0.01, max_helpers: 6, current_helpers: 2 },
         ],
       },
     ],
