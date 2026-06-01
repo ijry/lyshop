@@ -177,13 +177,11 @@ async function renderChart() {
     yAxis: [
       {
         type: 'value',
-        name: t('dashboard.salesAmount'),
         axisLabel: { color: '#64748b' },
         splitLine: { lineStyle: { color: '#f1f5f9' } },
       },
       {
         type: 'value',
-        name: t('dashboard.orderCount'),
         axisLabel: { color: '#64748b' },
         splitLine: { show: false },
       },
