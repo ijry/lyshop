@@ -341,9 +341,14 @@ function contentShellStyle(comp: any) {
 }
 
 function heroSectionStyle(comp: any) {
-  const base = sectionStyle(comp) as Record<string, string>
+  // Hero is always full-width; only the inner content shell is constrained
+  const style = comp?.style || {}
+  const page = normalizedPageStyle.value
+  const mt = Number(style.marginTop ?? page.content.sectionGap)
+  const mb = Number(style.marginBottom ?? 0)
   return {
-    ...base,
+    marginTop: `${mt}px`,
+    marginBottom: `${mb}px`,
     background: `linear-gradient(135deg, ${comp.props?.bg_from || 'var(--color-hero-from, #b91c1c)'}, ${comp.props?.bg_to || 'var(--color-hero-to, #991b1b)'})`,
   }
 }
