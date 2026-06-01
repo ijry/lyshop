@@ -111,9 +111,9 @@ const pageTitle = computed(() => {
 })
 
 const endpoint = computed(() => {
-  if (props.kind === 'seckill') return '/marketing/seckill/activities'
-  if (props.kind === 'group-buy') return '/marketing/group-buy/activities'
-  return '/marketing/bargain/activities'
+  if (props.kind === 'seckill') return '/seckill/activities'
+  if (props.kind === 'group-buy') return '/group-buy/activities'
+  return '/bargain/activities'
 })
 
 function toDateTimeInput(value?: string) {

@@ -10,7 +10,7 @@ import (
 
 // RegisterFrontRoutes 注册前端路由
 func RegisterFrontRoutes(r *gin.RouterGroup) {
-	g := r.Group("/api/v1/bargain")
+	g := r.Group("/bargain")
 	{
 		// 商品列表
 		g.GET("/products", frontListProducts)

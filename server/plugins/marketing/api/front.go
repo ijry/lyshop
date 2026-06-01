@@ -11,9 +11,6 @@ import (
 )
 
 func RegisterFrontRoutes(g *gin.RouterGroup) {
-	g.GET("/marketing/seckill/products", listSeckillProducts)
-	g.GET("/marketing/group-buy/products", listGroupBuyProducts)
-	g.GET("/marketing/bargain/products", listBargainProducts)
 	g.GET("/marketing/activity-products/:id", getFrontActivityProductDetail)
 
 	auth := g.Group("")

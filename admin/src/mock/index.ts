@@ -1086,12 +1086,12 @@ const routes: Record<string, any> = {
   },
 
   // Marketing
-  'GET /admin/api/marketing/seckill/activities': { list: seckillActivitiesSource, total: seckillActivitiesSource.length, page: 1, size: 20 },
-  'GET /admin/api/marketing/group-buy/activities': { list: groupBuyActivitiesSource, total: groupBuyActivitiesSource.length, page: 1, size: 20 },
-  'GET /admin/api/marketing/bargain/activities': { list: bargainActivitiesSource, total: bargainActivitiesSource.length, page: 1, size: 20 },
-  'GET /admin/api/marketing/seckill/products': { list: seckillProductsSource, total: seckillProductsSource.length, page: 1, size: 20 },
-  'GET /admin/api/marketing/group-buy/products': { list: groupBuyProductsSource, total: groupBuyProductsSource.length, page: 1, size: 20 },
-  'GET /admin/api/marketing/bargain/products': { list: bargainProductsSource, total: bargainProductsSource.length, page: 1, size: 20 },
+  'GET /admin/api/seckill/activities': { list: seckillActivitiesSource, total: seckillActivitiesSource.length, page: 1, size: 20 },
+  'GET /admin/api/group-buy/activities': { list: groupBuyActivitiesSource, total: groupBuyActivitiesSource.length, page: 1, size: 20 },
+  'GET /admin/api/bargain/activities': { list: bargainActivitiesSource, total: bargainActivitiesSource.length, page: 1, size: 20 },
+  'GET /admin/api/seckill/products': { list: seckillProductsSource, total: seckillProductsSource.length, page: 1, size: 20 },
+  'GET /admin/api/group-buy/products': { list: groupBuyProductsSource, total: groupBuyProductsSource.length, page: 1, size: 20 },
+  'GET /admin/api/bargain/products': { list: bargainProductsSource, total: bargainProductsSource.length, page: 1, size: 20 },
   'GET /admin/api/vip/plans': { list: vipPlansSource, total: vipPlansSource.length, page: 1, size: 20 },
   'GET /admin/api/vip/levels': { list: vipLevelsSource, total: vipLevelsSource.length, page: 1, size: 20 },
   'GET /admin/api/vip/coupon-rules': { list: vipCouponRulesSource, total: vipCouponRulesSource.length, page: 1, size: 20 },
@@ -1276,9 +1276,9 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     return bargainProductsSource
   }
   const parseTypeFromPath = (path: string): 'seckill' | 'group-buy' | 'bargain' | null => {
-    if (path.includes('/marketing/seckill/')) return 'seckill'
-    if (path.includes('/marketing/group-buy/')) return 'group-buy'
-    if (path.includes('/marketing/bargain/')) return 'bargain'
+    if (path.includes('/seckill/')) return 'seckill'
+    if (path.includes('/group-buy/')) return 'group-buy'
+    if (path.includes('/bargain/')) return 'bargain'
     return null
   }
   const hasTimeConflict = (store: any[], startAt: string, endAt: string, excludeID = 0) => {
@@ -1772,7 +1772,7 @@ export function matchMock(method: string, url: string, params?: Record<string, a
         return { matched: true, data: toPageData(list, page, size) }
       }
       if (method.toUpperCase() === 'PUT' && /\/activities\/\d+\/products$/.test(url)) {
-        const activityID = Number(url.split('/')[6] || 0)
+        const activityID = Number(url.match(/\/activities\/(\d+)\/products$/)?.[1] || 0)
         const rows = Array.isArray(params) ? params : []
         for (let i = productStore.length - 1; i >= 0; i -= 1) {
           if (Number(productStore[i].activity_id || 0) === activityID) {

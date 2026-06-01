@@ -21,6 +21,9 @@ plugins:
     - product
     - order
     - marketing
+    - seckill
+    - group_buy
+    - bargain
     - points_mall
     - vip
     - checkin

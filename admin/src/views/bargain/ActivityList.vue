@@ -98,7 +98,7 @@ function formatTime(time: string) {
 }
 
 async function loadActivities() {
-  const data = await request.get<any>('/admin/api/bargain/activities', {
+  const data = await request.get<any>('/bargain/activities', {
     params: {
       page: page.value,
       size: size.value,
@@ -142,10 +142,10 @@ async function handleSave() {
 
   try {
     if (editingId.value) {
-      await request.put(`/admin/api/bargain/activities/${editingId.value}`, form.value)
+      await request.put(`/bargain/activities/${editingId.value}`, form.value)
       ElMessage.success('更新成功')
     } else {
-      await request.post('/admin/api/bargain/activities', form.value)
+      await request.post('/bargain/activities', form.value)
       ElMessage.success('创建成功')
     }
     dialogVisible.value = false
@@ -160,7 +160,7 @@ async function handleDelete(id: number) {
     await ElMessageBox.confirm('确定删除该活动吗？', '提示', {
       type: 'warning',
     })
-    await request.delete(`/admin/api/bargain/activities/${id}`)
+    await request.delete(`/bargain/activities/${id}`)
     ElMessage.success('删除成功')
     loadActivities()
   } catch (error) {

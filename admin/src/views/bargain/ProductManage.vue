@@ -132,7 +132,7 @@ const addForm = ref({
 })
 
 async function loadActivities() {
-  const data = await request.get<any>('/admin/api/bargain/activities', { params: { page: 1, size: 100 } })
+  const data = await request.get<any>('/bargain/activities', { params: { page: 1, size: 100 } })
   activities.value = data.list || []
 
   const urlActivityId = Number(route.query.activity_id)
@@ -148,7 +148,7 @@ async function loadActivities() {
 async function loadProducts() {
   if (!activityId.value) return
 
-  const data = await request.get<any>('/admin/api/bargain/products', {
+  const data = await request.get<any>('/bargain/products', {
     params: {
       activity_id: activityId.value,
       page: 1,
@@ -213,7 +213,7 @@ async function handleBatchSave() {
   }
 
   try {
-    await request.put(`/admin/api/bargain/activities/${activityId.value}/products`, products.value)
+    await request.put(`/bargain/activities/${activityId.value}/products`, products.value)
     ElMessage.success('保存成功')
     loadProducts()
   } catch (error: any) {

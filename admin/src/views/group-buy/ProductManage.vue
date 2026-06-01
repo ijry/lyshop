@@ -97,7 +97,7 @@ const addForm = ref({
 })
 
 async function loadActivities() {
-  const data = await request.get<any>('/admin/api/group-buy/activities', { params: { page: 1, size: 100 } })
+  const data = await request.get<any>('/group-buy/activities', { params: { page: 1, size: 100 } })
   activities.value = data.list || []
 
   // 从URL获取activity_id
@@ -114,7 +114,7 @@ async function loadActivities() {
 async function loadProducts() {
   if (!activityId.value) return
 
-  const data = await request.get<any>('/admin/api/group-buy/products', {
+  const data = await request.get<any>('/group-buy/products', {
     params: {
       activity_id: activityId.value,
       page: 1,
@@ -171,7 +171,7 @@ async function handleBatchSave() {
   }
 
   try {
-    await request.put(`/admin/api/group-buy/activities/${activityId.value}/products`, products.value)
+    await request.put(`/group-buy/activities/${activityId.value}/products`, products.value)
     ElMessage.success('保存成功')
     loadProducts()
   } catch (error: any) {

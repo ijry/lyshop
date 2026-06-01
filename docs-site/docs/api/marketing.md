@@ -3,7 +3,7 @@
 ## 功能说明
 
 营销模块用于优惠券、秒杀、拼团、砍价与积分等能力。  
-本次调整新增了 PC 端三类活动商品列表（秒杀/拼团/砍价）、活动商品详情补充接口，以及后台六菜单管理能力（活动管理 + 商品管理）。
+当前接口采用“活动插件独立路由”规范：秒杀、拼团、砍价均使用各自命名空间；营销主插件保留优惠券与活动详情补充能力。
 
 ## 接口变化
 
@@ -11,9 +11,9 @@
 
 新增独立活动商品列表接口：
 
-- `GET /api/v1/marketing/seckill/products`
-- `GET /api/v1/marketing/group-buy/products`
-- `GET /api/v1/marketing/bargain/products`
+- `GET /api/v1/seckill/products`
+- `GET /api/v1/group-buy/products`
+- `GET /api/v1/bargain/products`
 - `GET /api/v1/marketing/activity-products/:id`
 
 其中 `GET /api/v1/marketing/activity-products/:id` 用于活动商品详情补充（`id=activity_product_id`），面向 H5/PC 商品详情页在标准商品详情外追加营销元素渲染（如秒杀倒计时、拼团入口、砍价入口）。
@@ -48,31 +48,37 @@
 
 其中 `GET /api/v1/user/coupons` 已在原接口上兼容升级：返回项新增 `coupon` 对象（优惠券快照），包含 `id/name/type/min_amount/discount/start_at/end_at/status` 等字段，前端可直接渲染券面信息，避免再次按 `coupon_id` 补查。旧字段 `coupon_id/status/used_at/order_id` 保持不变。
 
-### 管理端（需 `marketing:view` 或 `marketing:edit`）
+### 管理端
 
 #### 秒杀
 
-- `GET /admin/api/marketing/seckill/activities`
-- `POST /admin/api/marketing/seckill/activities`
-- `PUT /admin/api/marketing/seckill/activities/:id`
-- `GET /admin/api/marketing/seckill/products`
-- `PUT /admin/api/marketing/seckill/activities/:id/products`
+- `GET /admin/api/seckill/activities`
+- `POST /admin/api/seckill/activities`
+- `PUT /admin/api/seckill/activities/:id`
+- `GET /admin/api/seckill/products`
+- `PUT /admin/api/seckill/activities/:id/products`
+
+权限：`seckill:view`、`seckill:edit`
 
 #### 拼团
 
-- `GET /admin/api/marketing/group-buy/activities`
-- `POST /admin/api/marketing/group-buy/activities`
-- `PUT /admin/api/marketing/group-buy/activities/:id`
-- `GET /admin/api/marketing/group-buy/products`
-- `PUT /admin/api/marketing/group-buy/activities/:id/products`
+- `GET /admin/api/group-buy/activities`
+- `POST /admin/api/group-buy/activities`
+- `PUT /admin/api/group-buy/activities/:id`
+- `GET /admin/api/group-buy/products`
+- `PUT /admin/api/group-buy/activities/:id/products`
+
+权限：`group_buy:view`、`group_buy:edit`
 
 #### 砍价
 
-- `GET /admin/api/marketing/bargain/activities`
-- `POST /admin/api/marketing/bargain/activities`
-- `PUT /admin/api/marketing/bargain/activities/:id`
-- `GET /admin/api/marketing/bargain/products`
-- `PUT /admin/api/marketing/bargain/activities/:id/products`
+- `GET /admin/api/bargain/activities`
+- `POST /admin/api/bargain/activities`
+- `PUT /admin/api/bargain/activities/:id`
+- `GET /admin/api/bargain/products`
+- `PUT /admin/api/bargain/activities/:id/products`
+
+权限：`bargain:view`、`bargain:edit`
 
 商品管理请求体为 SKU 维度明细数组：
 
@@ -92,13 +98,15 @@
 ## 部署或配置影响
 
 - 无新增环境变量。
-- 无新增配置项。
-- 数据库 `activity_products` 增加字段：
-  - `start_price`
-  - `floor_price`
-  - `limit_per_order`
-  - `total_stock_limit`
-  - `sold_qty`
+- 需启用对应插件：
+  - `marketing`（优惠券与活动详情补充）
+  - `seckill`
+  - `group_buy`
+  - `bargain`
+- 活动数据按插件分表存储：
+  - 秒杀：`seckill_activities`、`seckill_products`
+  - 拼团：`group_buy_activities`、`group_buy_products`、`group_buy_orders`、`group_buy_members`
+  - 砍价：`bargain_activities`、`bargain_products`、`bargain_orders`、`bargain_helpers`
 - 后台菜单新增：
   - 秒杀活动管理、秒杀商品管理
   - 拼团活动管理、拼团商品管理

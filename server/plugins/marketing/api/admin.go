@@ -14,24 +14,6 @@ import (
 func RegisterAdminRoutes(g *gin.RouterGroup) {
 	g.GET("/marketing/coupons", middleware.RequirePermission("marketing:view"), adminListCoupons)
 	g.POST("/marketing/coupons", middleware.RequirePermission("marketing:edit"), adminCreateCoupon)
-
-	g.GET("/marketing/seckill/activities", middleware.RequirePermission("marketing:view"), adminListSeckillActivities)
-	g.POST("/marketing/seckill/activities", middleware.RequirePermission("marketing:edit"), adminCreateSeckillActivity)
-	g.PUT("/marketing/seckill/activities/:id", middleware.RequirePermission("marketing:edit"), adminUpdateSeckillActivity)
-	g.GET("/marketing/seckill/products", middleware.RequirePermission("marketing:view"), adminListSeckillProducts)
-	g.PUT("/marketing/seckill/activities/:id/products", middleware.RequirePermission("marketing:edit"), adminUpsertSeckillProducts)
-
-	g.GET("/marketing/group-buy/activities", middleware.RequirePermission("marketing:view"), adminListGroupBuyActivities)
-	g.POST("/marketing/group-buy/activities", middleware.RequirePermission("marketing:edit"), adminCreateGroupBuyActivity)
-	g.PUT("/marketing/group-buy/activities/:id", middleware.RequirePermission("marketing:edit"), adminUpdateGroupBuyActivity)
-	g.GET("/marketing/group-buy/products", middleware.RequirePermission("marketing:view"), adminListGroupBuyProducts)
-	g.PUT("/marketing/group-buy/activities/:id/products", middleware.RequirePermission("marketing:edit"), adminUpsertGroupBuyProducts)
-
-	g.GET("/marketing/bargain/activities", middleware.RequirePermission("marketing:view"), adminListBargainActivities)
-	g.POST("/marketing/bargain/activities", middleware.RequirePermission("marketing:edit"), adminCreateBargainActivity)
-	g.PUT("/marketing/bargain/activities/:id", middleware.RequirePermission("marketing:edit"), adminUpdateBargainActivity)
-	g.GET("/marketing/bargain/products", middleware.RequirePermission("marketing:view"), adminListBargainProducts)
-	g.PUT("/marketing/bargain/activities/:id/products", middleware.RequirePermission("marketing:edit"), adminUpsertBargainProducts)
 }
 
 func adminListCoupons(c *gin.Context) {

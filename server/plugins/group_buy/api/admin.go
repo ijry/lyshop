@@ -11,7 +11,7 @@ import (
 
 // RegisterAdminRoutes 注册管理端路由
 func RegisterAdminRoutes(r *gin.RouterGroup) {
-	g := r.Group("/admin/api/group-buy")
+	g := r.Group("/group-buy")
 	{
 		// 活动管理
 		g.GET("/activities", api.RequirePermission("group_buy:view"), listActivities)

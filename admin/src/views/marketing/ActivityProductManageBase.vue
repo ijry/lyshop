@@ -181,15 +181,15 @@ const priceHeader = computed(() => {
 })
 
 const activityEndpoint = computed(() => {
-  if (props.kind === 'seckill') return '/marketing/seckill/activities'
-  if (props.kind === 'group-buy') return '/marketing/group-buy/activities'
-  return '/marketing/bargain/activities'
+  if (props.kind === 'seckill') return '/seckill/activities'
+  if (props.kind === 'group-buy') return '/group-buy/activities'
+  return '/bargain/activities'
 })
 
 const productEndpoint = computed(() => {
-  if (props.kind === 'seckill') return '/marketing/seckill/products'
-  if (props.kind === 'group-buy') return '/marketing/group-buy/products'
-  return '/marketing/bargain/products'
+  if (props.kind === 'seckill') return '/seckill/products'
+  if (props.kind === 'group-buy') return '/group-buy/products'
+  return '/bargain/products'
 })
 
 function formatDate(value?: string) {
