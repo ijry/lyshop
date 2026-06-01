@@ -487,18 +487,45 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 | `ai_qdrant_api_key` | Qdrant API Key（自建无鉴权可留空） |
 | `ai_qdrant_collection` | Qdrant 集合名（默认 `im_knowledge`） |
 | `ai_score_threshold` | 相似度阈值（0-1），低于该分数的召回结果丢弃，默认 0 不过滤 |
+| `ai_hybrid` | 开启混合检索：向量召回 + 关键词召回经 RRF 融合（长尾召回更稳，推荐开启） |
+| `ai_recall_k` | 重排前每路候选数，默认 4×`ai_top_k` |
+| `ai_rerank_url` | 重排服务地址（Cohere/Jina/TEI 兼容 `/rerank`，留空则不重排） |
+| `ai_rerank_api_key` | 重排 API Key |
+| `ai_rerank_model` | 重排模型，如 `bge-reranker-v2-m3` |
 
-### 向量检索与回退
+### 召回 → 融合 → 重排 Pipeline
 
-知识库召回按以下优先级选择实现：
+知识库召回完整流程：
 
-1. **Qdrant + 向量模型** 均配置 → 查询向量化后在 Qdrant 做 ANN 检索（按 `status=1` 过滤、可选相似度阈值），再按命中 ID 回查 DB 并保持相关性排序。**可扩展到大规模知识库，为推荐生产用法。**
-2. **仅配置向量模型**（无 Qdrant）→ 全量加载知识行在内存做余弦相似度（适合小知识库）。
-3. **均未配置** → 关键词（token 重叠）召回兜底。
+```
+query
+  ├─ recallVector (Qdrant ANN / in-memory cosine)  ── RecallK 候选
+  └─ recallKeyword (token-overlap, Hybrid=true 时)  ── RecallK 候选
+       │
+       └─ RRF 融合 (Hybrid=true) ─→ 去重排序候选池
+              │
+              └─ cross-encoder Rerank (RerankURL 非空) ─→ TopK 精排结果
+```
+
+各阶段均可独立关闭（不配置即跳过），后向兼容现有关键词兜底：
+
+| 配置 | 召回 | 是否融合 | 是否重排 |
+|---|---|---|---|
+| 无 embed/无 Qdrant | 关键词 | - | - |
+| embed only | 内存余弦 | - | - |
+| Qdrant + embed | Qdrant ANN | - | - |
+| 上述任一 + `ai_hybrid=on` | 向量 + 关键词 | ✅ RRF | - |
+| 上述任一 + `ai_rerank_url` | 视配置 | 视配置 | ✅ cross-encoder |
 
 **数据同步**：知识条目的新增/编辑会异步向量化并 upsert 到 Qdrant；删除会同步删除向量点；状态停用通过 upsert 更新 `status` payload，使其不再被检索命中。`POST /im/knowledge/reindex` 会重建 Qdrant 集合并全量重灌。DB 的 `embedding` 列作为本地缓存与回退保留。
 
 > 部署：`docker-compose.yml` 已内置 `qdrant` 服务，容器内将地址配置为 `http://qdrant:6333` 即可。
+
+### 重排服务连通性测试
+
+**接口**: `POST /admin/api/im/ai/rerank-test`  
+**权限**: `im:knowledge`  
+**响应**: `{ "reply": "连接正常" }`
 
 ---
 
@@ -631,6 +658,8 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 - ✅ 商品信息分析：回答时检索在售商品价格/库存/销量
 - ✅ 知识库管理接口与 `im:knowledge` 权限、配置中心 `config_items`
 - ✅ Qdrant 向量库检索：CRUD/导入/重建双写同步，按 ID 回查并保序，未配置时回退内存余弦/关键词
+- ✅ 混合检索（RRF 融合）：向量召回 + 关键词召回按 Reciprocal Rank Fusion 融合（`ai_hybrid=on`）
+- ✅ 重排（Rerank）：cross-encoder 精排候选池至 TopK，兼容 Cohere/Jina/TEI `/rerank` 接口
 - ✅ 新增 WS 帧 `typing` / `to_human`，`sender_type` 扩展 AI=3
 
 ### v1.0.0 (2026-05-31)

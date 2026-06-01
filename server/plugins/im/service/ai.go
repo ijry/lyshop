@@ -39,6 +39,16 @@ type AIConfig struct {
 	QdrantAPIKey     string  // optional
 	QdrantCollection string  // default "im_knowledge"
 	ScoreThreshold   float64 // drop hits below this cosine score (0 disables)
+
+	// Retrieval pipeline tuning.
+	Hybrid  bool // fuse vector + keyword recall via RRF before rerank
+	RecallK int  // candidate pool size per recall channel (defaults to 4×TopK)
+
+	// Reranker (cross-encoder). When RerankURL is set, candidates are reordered
+	// by a /rerank service (Cohere / Jina / TEI compatible) and trimmed to TopK.
+	RerankURL    string
+	RerankAPIKey string
+	RerankModel  string
 }
 
 const aiConfigPlugin = "im"
@@ -105,6 +115,13 @@ func LoadAIConfig() AIConfig {
 		QdrantAPIKey:     loadCfg("ai_qdrant_api_key", ""),
 		QdrantCollection: loadCfg("ai_qdrant_collection", "im_knowledge"),
 		ScoreThreshold:   loadFloat("ai_score_threshold", 0),
+
+		Hybrid:  loadBool("ai_hybrid", false),
+		RecallK: loadInt("ai_recall_k", 0),
+
+		RerankURL:    strings.TrimRight(loadCfg("ai_rerank_url", ""), "/"),
+		RerankAPIKey: loadCfg("ai_rerank_api_key", ""),
+		RerankModel:  loadCfg("ai_rerank_model", ""),
 	}
 }
 
@@ -229,71 +246,149 @@ func cosine(a, b []float64) float64 {
 	return dot / (math.Sqrt(na) * math.Sqrt(nb))
 }
 
-// retrieveKnowledge returns the most relevant knowledge entries for a query.
+// retrieveKnowledge returns the most relevant knowledge entries for a query
+// using a recall → (fuse) → rerank pipeline:
 //
-// Retrieval strategy, in order of preference:
-//  1. Qdrant + embed model configured → ANN search in the vector store, then
-//     load the matching rows from the DB (scales to large knowledge bases).
-//  2. embed model only (no Qdrant) → in-memory cosine over all rows (legacy
-//     fallback, fine for small bases).
-//  3. neither → keyword (token-overlap) scoring.
+//  1. Recall a candidate pool (size RecallK, default 4×TopK):
+//     - vector recall: Qdrant ANN, else in-memory cosine over embedded rows;
+//     - keyword recall (always when Hybrid, or as the sole channel otherwise).
+//  2. When Hybrid and both channels produced results, fuse them with RRF.
+//  3. When a reranker is configured, cross-encode the pool against the query
+//     and reorder; finally trim to TopK.
+//
+// Every stage degrades gracefully: no embed model → keyword only; reranker
+// down → pre-rerank order; empty pool → nil.
 func retrieveKnowledge(ctx context.Context, cfg AIConfig, query string) []immodel.ImKnowledge {
 	topK := cfg.TopK
 	if topK <= 0 {
 		topK = 3
 	}
+	recallK := cfg.RecallK
+	if recallK <= 0 {
+		recallK = topK * 4
+	}
+	if recallK < topK {
+		recallK = topK
+	}
 
-	// 1. Vector store (Qdrant) path.
+	vecEntries := recallVector(ctx, cfg, query, recallK)
+
+	// Without hybrid and without a reranker, the vector order is already final.
+	if !cfg.Hybrid && cfg.RerankURL == "" {
+		if vecEntries != nil {
+			return trimEntries(vecEntries, topK)
+		}
+		// fall through to keyword-only path below
+	}
+
+	// Build the candidate pool.
+	var pool []immodel.ImKnowledge
+	if cfg.Hybrid {
+		kwEntries := recallKeyword(ctx, query, recallK)
+		switch {
+		case len(vecEntries) > 0 && len(kwEntries) > 0:
+			pool = fuseEntries(vecEntries, kwEntries)
+		case len(vecEntries) > 0:
+			pool = vecEntries
+		default:
+			pool = kwEntries
+		}
+	} else if vecEntries != nil {
+		pool = vecEntries
+	} else {
+		pool = recallKeyword(ctx, query, recallK)
+	}
+
+	if len(pool) == 0 {
+		return nil
+	}
+	return cfg.rerankEntries(ctx, query, pool, topK)
+}
+
+// recallVector returns up to `limit` entries by vector similarity, or nil when
+// no vector channel is available (so callers can fall back to keyword recall).
+func recallVector(ctx context.Context, cfg AIConfig, query string, limit int) []immodel.ImKnowledge {
+	// 1. Qdrant ANN.
 	if store := VectorStoreFor(cfg); store != nil && cfg.EmbedModel != "" {
-		if hits := qdrantRetrieve(ctx, cfg, store, query, topK); hits != nil {
-			// nil means the store errored → fall through; empty (len 0) is a
-			// valid "no relevant hits", returned as-is.
+		if hits := qdrantRetrieve(ctx, cfg, store, query, limit); hits != nil {
 			return hits
 		}
 	}
+	// 2. In-memory cosine over embedded rows.
+	if cfg.EmbedModel != "" {
+		qvec, err := cfg.Embed(ctx, query)
+		if err != nil {
+			return nil
+		}
+		var all []immodel.ImKnowledge
+		db.DB.WithContext(ctx).Where("status = 1").Order("sort asc, id asc").Find(&all)
+		type scored struct {
+			k     immodel.ImKnowledge
+			score float64
+		}
+		var ranked []scored
+		for _, k := range all {
+			if len(k.Embedding) == 0 {
+				continue
+			}
+			var vec []float64
+			if json.Unmarshal(k.Embedding, &vec) != nil {
+				continue
+			}
+			ranked = append(ranked, scored{k, cosine(qvec, vec)})
+		}
+		if len(ranked) == 0 {
+			return nil
+		}
+		sort.Slice(ranked, func(i, j int) bool { return ranked[i].score > ranked[j].score })
+		out := make([]immodel.ImKnowledge, 0, limit)
+		for i := 0; i < len(ranked) && i < limit; i++ {
+			if ranked[i].score <= 0 || ranked[i].score < cfg.ScoreThreshold {
+				break
+			}
+			out = append(out, ranked[i].k)
+		}
+		return out
+	}
+	return nil
+}
 
+// recallKeyword returns up to `limit` entries by keyword (token-overlap) score.
+func recallKeyword(ctx context.Context, query string, limit int) []immodel.ImKnowledge {
 	var all []immodel.ImKnowledge
 	db.DB.WithContext(ctx).Where("status = 1").Order("sort asc, id asc").Find(&all)
 	if len(all) == 0 {
 		return nil
 	}
+	return keywordRankKnowledge(all, query, limit)
+}
 
-	// 2. In-memory cosine fallback.
-	if cfg.EmbedModel != "" {
-		if qvec, err := cfg.Embed(ctx, query); err == nil {
-			type scored struct {
-				k     immodel.ImKnowledge
-				score float64
-			}
-			var ranked []scored
-			for _, k := range all {
-				if len(k.Embedding) == 0 {
-					continue
-				}
-				var vec []float64
-				if json.Unmarshal(k.Embedding, &vec) != nil {
-					continue
-				}
-				ranked = append(ranked, scored{k, cosine(qvec, vec)})
-			}
-			if len(ranked) > 0 {
-				sort.Slice(ranked, func(i, j int) bool { return ranked[i].score > ranked[j].score })
-				out := make([]immodel.ImKnowledge, 0, topK)
-				for i := 0; i < len(ranked) && i < topK; i++ {
-					if ranked[i].score <= 0 || ranked[i].score < cfg.ScoreThreshold {
-						break
-					}
-					out = append(out, ranked[i].k)
-				}
-				if len(out) > 0 {
-					return out
-				}
-			}
+// fuseEntries fuses two ranked entry lists with RRF and returns deduped entries
+// in fused order.
+func fuseEntries(a, b []immodel.ImKnowledge) []immodel.ImKnowledge {
+	byID := make(map[uint64]immodel.ImKnowledge, len(a)+len(b))
+	idsOf := func(list []immodel.ImKnowledge) []uint64 {
+		out := make([]uint64, len(list))
+		for i, e := range list {
+			out[i] = e.ID
+			byID[e.ID] = e
 		}
+		return out
 	}
+	fused := fuseRRF(idsOf(a), idsOf(b))
+	out := make([]immodel.ImKnowledge, 0, len(fused))
+	for _, id := range fused {
+		out = append(out, byID[id])
+	}
+	return out
+}
 
-	// 3. Keyword fallback: score by token overlap on title/content/tags.
-	return keywordRankKnowledge(all, query, topK)
+// trimEntries returns at most topK entries.
+func trimEntries(entries []immodel.ImKnowledge, topK int) []immodel.ImKnowledge {
+	if len(entries) > topK {
+		return entries[:topK]
+	}
+	return entries
 }
 
 // qdrantRetrieve embeds the query, searches Qdrant, and loads the matching

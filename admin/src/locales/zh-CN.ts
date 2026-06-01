@@ -741,6 +741,8 @@ export default {
   'imkb.overlap': '重叠字数',
   'imkb.importing': '导入中…',
   'imkb.importDone': '导入完成，共生成 {count} 条知识',
+  'imkb.testRerank': '测试重排服务',
+  'imkb.rerankReplyPrefix': '重排服务返回：',
 
   // AI
   'ai.imageGen.title': 'AI 生图',

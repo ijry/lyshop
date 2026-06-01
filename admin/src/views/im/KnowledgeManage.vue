@@ -6,6 +6,9 @@
         <button @click="testAI" class="text-sm text-slate-600 hover:text-slate-800 border border-slate-200 rounded-lg px-3 py-1.5">
           {{ $t('imkb.testAI') }}
         </button>
+        <button @click="testRerank" class="text-sm text-slate-600 hover:text-slate-800 border border-slate-200 rounded-lg px-3 py-1.5">
+          {{ $t('imkb.testRerank') }}
+        </button>
         <button @click="reindex" class="text-sm text-indigo-600 hover:text-indigo-700 border border-indigo-200 rounded-lg px-3 py-1.5">
           {{ $t('imkb.reindex') }}
         </button>
@@ -241,6 +244,15 @@ async function testAI() {
   try {
     const data: any = await request.post('/im/ai/test')
     alert(t('imkb.aiReplyPrefix') + (data?.reply || ''))
+  } catch (err: any) {
+    alert(err.message || 'error')
+  }
+}
+
+async function testRerank() {
+  try {
+    const data: any = await request.post('/im/ai/rerank-test')
+    alert(t('imkb.rerankReplyPrefix') + (data?.reply || ''))
   } catch (err: any) {
     alert(err.message || 'error')
   }

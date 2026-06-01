@@ -35,6 +35,11 @@
     { "key": "ai_qdrant_url", "label": "Qdrant地址", "type": "text", "placeholder": "如 http://localhost:6333；留空则用内存余弦/关键词召回" },
     { "key": "ai_qdrant_api_key", "label": "Qdrant API Key", "type": "password", "placeholder": "自建无鉴权可留空" },
     { "key": "ai_qdrant_collection", "label": "Qdrant集合名", "type": "text", "placeholder": "默认 im_knowledge" },
-    { "key": "ai_score_threshold", "label": "相似度阈值", "type": "number", "placeholder": "0-1，低于该分数的召回结果丢弃，默认 0 不过滤" }
+    { "key": "ai_score_threshold", "label": "相似度阈值", "type": "number", "placeholder": "0-1，低于该分数的召回结果丢弃，默认 0 不过滤" },
+    { "key": "ai_hybrid", "label": "启用混合检索", "type": "switch", "placeholder": "向量召回 + 关键词召回按 RRF 融合，长尾召回更稳" },
+    { "key": "ai_recall_k", "label": "候选召回数", "type": "number", "placeholder": "重排前每路候选条数，默认 4×召回条数" },
+    { "key": "ai_rerank_url", "label": "重排服务地址", "type": "text", "placeholder": "Cohere/Jina/TEI 兼容 /rerank，留空则不重排" },
+    { "key": "ai_rerank_api_key", "label": "重排 API Key", "type": "password", "placeholder": "自建无鉴权可留空" },
+    { "key": "ai_rerank_model", "label": "重排模型", "type": "text", "placeholder": "如 bge-reranker-v2-m3" }
   ]
 }

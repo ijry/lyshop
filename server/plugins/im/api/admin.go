@@ -36,6 +36,8 @@ func RegisterAdminRoutes(g *gin.RouterGroup) {
 	g.POST("/im/knowledge/import", middleware.RequirePermission("im:knowledge"), adminImportKnowledge)
 	// 本地大模型连通性测试
 	g.POST("/im/ai/test", middleware.RequirePermission("im:knowledge"), adminTestAI)
+	// 重排服务连通性测试
+	g.POST("/im/ai/rerank-test", middleware.RequirePermission("im:knowledge"), adminTestRerank)
 }
 
 func adminListKnowledge(c *gin.Context) {
@@ -168,6 +170,15 @@ func adminImportKnowledge(c *gin.Context) {
 
 func adminTestAI(c *gin.Context) {
 	reply, err := imsvc.TestAIConnection(c.Request.Context())
+	if err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	response.OK(c, gin.H{"reply": reply})
+}
+
+func adminTestRerank(c *gin.Context) {
+	reply, err := imsvc.TestRerankConnection(c.Request.Context())
 	if err != nil {
 		response.Fail(c, 400, err.Error())
 		return

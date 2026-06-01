@@ -69,8 +69,10 @@
   - 知识库召回（按优先级）：① Qdrant 向量库 ANN 检索（配置 `ai_qdrant_url` + 向量模型，`status=1` 过滤、可选相似度阈值，按命中 ID 回查 DB 并保序，可扩展到大规模知识库）；② 仅向量模型时全量内存余弦（适合小库）；③ 均未配置时标题/内容/标签关键词召回（含 CJK 二元切分）兜底。
   - 向量数据同步：知识 CRUD / 文档导入异步 upsert 到 Qdrant，删除同步删点，停用经 payload `status` 失效；`reindex` 重建集合并全量重灌；DB `embedding` 列作本地缓存/回退。
   - 商品信息分析：按用户问题检索在售商品（标题/副标题 LIKE），注入价格、库存、销量供模型参考。
+- **混合检索（Hybrid + RRF）**：`ai_hybrid=on` 时向量召回与关键词召回并行，结果经 Reciprocal Rank Fusion（k=60）融合，召回长尾更稳。
+- **重排（Rerank）**：配置 `ai_rerank_url` 后，召回候选池（RecallK）送 cross-encoder 精排，支持 Cohere / Jina / TEI 兼容 `/rerank` 接口；不配置则保持召回顺序直接取 TopK。
 - **向量库部署**: `docker-compose.yml` 内置 `qdrant` 服务（`qdrant/qdrant`），容器内地址 `http://qdrant:6333`。
-- **配置项**（配置中心 → IM客服）：`ai_enabled`、`ai_base_url`、`ai_api_key`、`ai_chat_model`、`ai_embed_model`、`ai_system_prompt`、`ai_human_keywords`、`ai_top_k`、`ai_temperature`、`ai_product_search`、`ai_timeout_sec`、`ai_qdrant_url`、`ai_qdrant_api_key`、`ai_qdrant_collection`、`ai_score_threshold`。
+- **配置项**（配置中心 → IM客服）：`ai_enabled`、`ai_base_url`、`ai_api_key`、`ai_chat_model`、`ai_embed_model`、`ai_system_prompt`、`ai_human_keywords`、`ai_top_k`、`ai_temperature`、`ai_product_search`、`ai_timeout_sec`、`ai_qdrant_url`、`ai_qdrant_api_key`、`ai_qdrant_collection`、`ai_score_threshold`、`ai_hybrid`、`ai_recall_k`、`ai_rerank_url`、`ai_rerank_api_key`、`ai_rerank_model`。
 
 ### 前端
 - **Admin**: Vue 3 + TypeScript
@@ -135,6 +137,7 @@
 - `server/plugins/im/service/session.go` - 业务逻辑（会话/排队/转接/转人工/WS）
 - `server/plugins/im/service/ai.go` - 本地大模型调用、RAG 召回、商品信息分析
 - `server/plugins/im/service/vectorstore.go` - Qdrant 向量库客户端（REST）
+- `server/plugins/im/service/rerank.go` - 混合检索 RRF 融合 + cross-encoder 重排客户端
 - `server/plugins/im/service/knowledge.go` - 知识库 CRUD、文档导入切片
 - `server/plugins/im/service/document.go` - 多格式文本提取与切片
 - `server/plugins/im/service/hub.go` - WebSocket Hub
@@ -164,6 +167,8 @@
 - ✅ Admin 新增「AI知识库」页面（CRUD + 重建索引 + 连通性测试）与 `im:knowledge` 权限
 - ✅ 插件 `config_items`：在配置中心维护大模型服务地址/模型/提示词等
 - ✅ Qdrant 向量库检索：docker-compose 内置 qdrant，CRUD/导入/重建双写同步、按 ID 回查保序、未配置时回退内存余弦/关键词
+- ✅ 混合检索（RRF）：向量 + 关键词双路召回经 Reciprocal Rank Fusion 融合（`ai_hybrid`）
+- ✅ 重排（Rerank）：cross-encoder 精排候选池，兼容 Cohere/Jina/TEI（`ai_rerank_url`）
 - ✅ 新增 WS 帧：`typing`（AI 输入指示）、`to_human`（转人工请求）
 
 ### 2026-05-31

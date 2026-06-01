@@ -728,6 +728,8 @@ export default {
   'imkb.overlap': 'Overlap',
   'imkb.importing': 'Importing…',
   'imkb.importDone': 'Imported, created {count} knowledge entries',
+  'imkb.testRerank': 'Test Reranker',
+  'imkb.rerankReplyPrefix': 'Reranker replied: ',
 
   // AI
   'ai.imageGen.title': 'AI Image Gen',
