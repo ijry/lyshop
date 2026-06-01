@@ -9,7 +9,9 @@
 - 商品列表、商品详情均返回收藏态与收藏数。
 - 后台商品列表可直接读取收藏数字段展示。
 - 活动来源场景下，商品详情页采用“双请求”模式：先请求标准商品详情，再按 `activity_product_id` 追加请求营销活动商品详情接口。
-- 后台商品编辑支持维护 SKU 列表，并在启用 `vip` 插件时在 SKU 区直接配置会员价。
+- 商品编辑统一采用后端规格引擎：前端提交 `sku_generation_mode=auto + spec_schema + sku_overrides`，后端生成并维护 SKU 集合并返回 `sku_diff`。
+- 规格模板为正式后台资源：`admin` 与 `eapp` 共用 `/admin/api/spec-templates*` 接口。
+- 后台商品编辑支持在 SKU 区直接配置会员价（需启用 `vip` 插件）。
 
 ## 接口变化
 
@@ -30,11 +32,10 @@
   - 列表项新增：
     - `favorite_count: number`
 - `PUT /admin/api/products/:id`
-  - 请求体兼容升级：支持可选字段 `skus: ProductSku[]`
-  - 语义：提交时按商品维度替换 SKU 集合（用于商品管理页统一维护 SKU）
-  - 当前推荐模式：`sku_generation_mode=auto`
+  - 推荐请求模式：`sku_generation_mode=auto`
     - `spec_schema`: 规格组定义（属性名 + 值集合）
     - `sku_overrides`: 覆盖项（按 `sku_key` 指定价格/库存/编码）
+  - `sku_key` 唯一约束为 `(product_id, sku_key)`，确保“同商品内唯一”。
   - 返回 `sku_diff`：`{ added, kept, inactivated }`
   - 旧 SKU 采用软删除（`status=inactive`），历史订单可继续读取。
 
@@ -55,6 +56,18 @@
     - `is_favorited: true`
     - `favorited_at: string`
 
+- `GET /admin/api/spec-templates?page=1&size=20&keyword=&category_id=`
+  - 说明：规格模板分页列表（支持关键词与分类筛选）
+- `GET /admin/api/spec-templates/:id`
+  - 说明：规格模板详情
+- `POST /admin/api/spec-templates`
+  - 请求：`{ name, category_ids, attrs, status, sort? }`
+  - `attrs` 结构：`[{ name, values[] }]`
+- `PUT /admin/api/spec-templates/:id`
+  - 请求：同上字段，按需传递
+- `DELETE /admin/api/spec-templates/:id`
+  - 说明：删除规格模板
+
 ## 典型接口清单
 
 - `GET /api/v1/categories`
@@ -70,6 +83,10 @@
 - `PUT /admin/api/categories/:id`
 - `DELETE /admin/api/categories/:id`
 - `GET /admin/api/products`
+- `GET /admin/api/spec-templates`
+- `POST /admin/api/spec-templates`
+- `PUT /admin/api/spec-templates/:id`
+- `DELETE /admin/api/spec-templates/:id`
 
 ## 部署与配置影响
 
@@ -78,6 +95,8 @@
 - SKU 模型新增字段（自动迁移）：
   - `product_skus.sku_key`
   - `product_skus.status`（`active|inactive`）
+- SKU 唯一索引为 `(product_id, sku_key)`（自动迁移会重建 `uk_product_sku_key`）。
+- 新增表：`spec_templates`（规格模板）。
 - 活动来源详情双请求仅涉及前端调用链路与营销接口协同，无新增配置项。
 - 数据库新增迁移：
   - 新表 `product_favorites`

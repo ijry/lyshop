@@ -84,15 +84,52 @@ function buildSpecSchema(rows: any[]) {
 }
 
 function buildSkuOverrides(rows: any[]) {
-  return rows.map((row: any) => {
+  const dedup = new Map<string, { sku_key: string; sku_code: string; price: number; stock: number }>()
+  for (const row of rows) {
     const attrs = normalizeSkuAttrs(row?.attrs)
-    return {
-      sku_key: buildSkuKey(attrs),
+    const skuKey = buildSkuKey(attrs)
+    dedup.set(skuKey, {
+      sku_key: skuKey,
       sku_code: String(row?.sku_code || '').trim(),
       price: Number(row?.price || 0),
       stock: Number(row?.stock || 0),
-    }
-  })
+    })
+  }
+  return Array.from(dedup.values())
+}
+
+function buildDetailPayload() {
+  const html = String(form.detail_html || '').trim()
+  if (!html) return { version: 1, blocks: [] as Array<Record<string, any>> }
+  return {
+    version: 1,
+    blocks: [{ id: `detail-${Date.now()}`, type: 'rich_text', props: { content: html } }],
+  }
+}
+
+function parseDetailHTML(detail: any): string {
+  if (!detail) return ''
+  const payload = typeof detail === 'string'
+    ? (() => { try { return JSON.parse(detail) } catch { return null } })()
+    : detail
+  if (!payload || !Array.isArray(payload.blocks)) return ''
+  const richText = payload.blocks.find((block: any) => String(block?.type || '') === 'rich_text')
+  if (richText?.props?.content) return String(richText.props.content)
+  const textBlock = payload.blocks.find((block: any) => String(block?.type || '') === 'text')
+  if (textBlock?.props?.text) return String(textBlock.props.text)
+  return ''
+}
+
+function mapImagesToCovers(data: any): string[] {
+  const images = Array.isArray(data?.images)
+    ? data.images.map((item: any) => String(item?.url || '').trim()).filter((url: string) => !!url)
+    : []
+  if (images.length) return images
+  if (Array.isArray(data?.covers)) {
+    return data.covers.map((item: any) => String(item || '').trim()).filter((url: string) => !!url)
+  }
+  if (String(data?.cover || '').trim()) return [String(data.cover).trim()]
+  return []
 }
 
 async function loadSpecTemplates() {
@@ -123,8 +160,8 @@ async function loadData() {
   Object.assign(form, {
     title: data?.title || '', subtitle: data?.subtitle || '',
     sell_points: Array.isArray(data?.sell_points) ? data.sell_points : [],
-    covers: Array.isArray(data?.covers) ? data.covers : (data?.cover ? [data.cover] : []),
-    detail_html: String(data?.detail_html || ''),
+    covers: mapImagesToCovers(data),
+    detail_html: parseDetailHTML(data?.detail),
     price: Number(data?.price || 0), stock: Number(data?.stock || 0),
     unit: String(data?.unit || '件'), weight: Number(data?.weight || 0),
     category_id: Number(data?.category_id || 0),
@@ -171,22 +208,18 @@ async function save() {
     const skuOverrides = buildSkuOverrides(form.skus)
     const payload: any = {
       product: {
-        title: form.title.trim(), subtitle: form.subtitle.trim(),
-        sell_points: form.sell_points,
+        title: form.title.trim(),
+        subtitle: form.subtitle.trim(),
         cover: form.covers[0] || '',
-        covers: form.covers,
-        detail_html: form.detail_html,
-        price: Number(form.price), stock: Number(form.stock),
-        unit: form.unit, weight: Number(form.weight),
-        category_id: Number(form.category_id), category_path_name: form.category_path_name,
-        tags: form.tags,
-        low_stock_threshold: Number(form.low_stock_threshold),
-        shipping_template: form.shipping_template,
-        limit_per_order: Number(form.limit_per_order),
-        exclude_marketing: !!form.exclude_marketing,
-        status: form.status,
-        online_at: form.online_at, offline_at: form.offline_at,
+        price: Number(form.price),
+        stock: Number(form.stock),
+        category_id: Number(form.category_id),
+        status: Number(form.status || 0) === 1 ? 1 : 0,
+        detail: buildDetailPayload(),
       },
+      images: form.covers
+        .map((url: string, idx: number) => ({ url: String(url || '').trim(), sort: idx }))
+        .filter((item: any) => !!item.url),
       sku_generation_mode: 'auto',
       spec_schema: specSchema,
       sku_overrides: skuOverrides,
