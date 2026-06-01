@@ -1,5 +1,5 @@
 <template>
-  <view class="bg-gray-50 flex flex-col" style="height: 100vh; overflow: hidden;">
+  <view class="bg-gray-50 flex flex-col w-full" style="height: 100vh; overflow: hidden;">
     <u-navbar :title="$t('chat.title')" :placeholder="true" />
 
     <!-- Queue notice -->
