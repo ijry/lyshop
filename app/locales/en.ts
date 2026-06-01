@@ -501,6 +501,14 @@ export default {
     assignedNotice: 'Agent connected',
     transferNotice: 'Session transferred, agent will continue to assist you',
     closedNotice: 'Session closed',
+    aiAvatar: 'AI',
+    aiName: 'AI Assistant',
+    aiThinking: 'AI is typing...',
+    aiHint: 'Answered by AI assistant',
+    transferToHuman: 'Talk to a human',
+    transferNote: 'Requesting a human agent…',
+    ratePrompt: 'Was this helpful?',
+    rated: 'Thanks for your feedback!',
   },
 
   // ---------- pages/login/index.vue ----------

@@ -34,22 +34,54 @@
           <view v-else :class="m.sender_type === 1 ? 'flex-row-reverse' : ''"
             class="flex items-end gap-12rpx">
             <!-- Avatar -->
-            <view :class="m.sender_type === 2 ? 'bg-blue-700' : 'bg-gray-300'"
+            <view :class="m.sender_type === 2 ? 'bg-blue-700' : m.sender_type === 3 ? 'bg-indigo-500' : 'bg-gray-300'"
               class="w-64rpx h-64rpx rounded-full flex-shrink-0 flex items-center justify-center">
-              <text class="text-white text-22rpx">{{ m.sender_type === 2 ? $t('chat.serviceAvatar') : $t('chat.userAvatar') }}</text>
+              <text class="text-white text-22rpx">{{ m.sender_type === 2 ? $t('chat.serviceAvatar') : m.sender_type === 3 ? $t('chat.aiAvatar') : $t('chat.userAvatar') }}</text>
             </view>
             <!-- Bubble -->
-            <view :class="m.sender_type === 1
-              ? 'bg-blue-700 text-white rounded-tl-24rpx rounded-tr-8rpx rounded-bl-24rpx rounded-br-24rpx'
-              : 'bg-white text-gray-800 rounded-tl-8rpx rounded-tr-24rpx rounded-bl-24rpx rounded-br-24rpx'"
-              class="max-w-450rpx px-28rpx py-18rpx text-28rpx leading-40rpx"
-              style="box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.06); word-break: break-all;">
-              {{ m.content }}
+            <view class="flex flex-col" :class="m.sender_type === 1 ? 'items-end' : 'items-start'">
+              <text v-if="m.sender_type === 3" class="text-indigo-400 text-20rpx mb-4rpx ml-8rpx">{{ $t('chat.aiName') }}</text>
+              <view :class="m.sender_type === 1
+                ? 'bg-blue-700 text-white rounded-tl-24rpx rounded-tr-8rpx rounded-bl-24rpx rounded-br-24rpx'
+                : 'bg-white text-gray-800 rounded-tl-8rpx rounded-tr-24rpx rounded-bl-24rpx rounded-br-24rpx'"
+                class="max-w-450rpx px-28rpx py-18rpx text-28rpx leading-40rpx"
+                style="box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.06); word-break: break-all;">
+                {{ m.content }}
+              </view>
+              <!-- Thumbs feedback — only on AI replies -->
+              <view v-if="m.sender_type === 3 && !m.rated" class="flex items-center gap-16rpx mt-8rpx ml-8rpx">
+                <text class="text-gray-300 text-20rpx">{{ $t('chat.ratePrompt') }}</text>
+                <text class="text-24rpx" @click="rate(m, 1)">👍</text>
+                <text class="text-24rpx" @click="rate(m, -1)">👎</text>
+              </view>
+              <view v-if="m.sender_type === 3 && m.rated" class="mt-8rpx ml-8rpx">
+                <text class="text-gray-300 text-20rpx">{{ $t('chat.rated') }}</text>
+              </view>
             </view>
           </view>
         </view>
+
+        <!-- AI typing indicator -->
+        <view v-if="aiTyping" class="flex items-end gap-12rpx mb-20rpx">
+          <view class="w-64rpx h-64rpx rounded-full flex-shrink-0 flex items-center justify-center bg-indigo-500">
+            <text class="text-white text-22rpx">{{ $t('chat.aiAvatar') }}</text>
+          </view>
+          <view class="bg-white text-gray-400 rounded-tl-8rpx rounded-tr-24rpx rounded-bl-24rpx rounded-br-24rpx px-28rpx py-18rpx text-28rpx"
+            style="box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.06);">{{ $t('chat.aiThinking') }}</view>
+        </view>
       </view>
     </scroll-view>
+
+    <!-- Transfer-to-human quick action (only while AI is serving) -->
+    <view v-if="mode === 'ai'"
+      class="bg-white border-t-1 border-gray-100 px-20rpx py-12rpx flex items-center gap-12rpx"
+      style="position: fixed; left: 0; right: 0; z-index: 29;"
+      :style="{ bottom: 'calc(96rpx + env(safe-area-inset-bottom))' }">
+      <u-icon name="kefu-ermai" size="18" color="#6366f1" />
+      <text class="text-gray-400 text-24rpx flex-1">{{ $t('chat.aiHint') }}</text>
+      <u-button :text="$t('chat.transferToHuman')" size="mini" shape="circle" type="info" plain
+        @click="requestHuman" :custom-style="{ height: '52rpx' }" />
+    </view>
 
     <!-- Input bar -->
     <view
@@ -75,7 +107,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { get } from '@/utils/request'
+import { get, post } from '@/utils/request'
 
 const { t } = useI18n()
 
@@ -85,6 +117,8 @@ const scrollTop = ref(0)
 const sessionID = ref(0)
 const connected = ref(false)
 const queuePosition = ref(0)
+const mode = ref<'ai' | 'human'>('human') // 'ai' = 大模型应答中
+const aiTyping = ref(false)
 
 let ws: any = null
 let heartbeat: any = null
@@ -96,6 +130,7 @@ onMounted(async () => {
   if (session) {
     sessionID.value = session.id
     queuePosition.value = session.queue_position || 0
+    mode.value = session.mode === 'ai' ? 'ai' : 'human'
     const data = await get<any>('/api/v1/im/messages', { session_id: session.id, size: 50 })
     messages.value = (data?.list || []).reverse()
     scrollToBottom()
@@ -120,16 +155,23 @@ function connectWS(token: string) {
     try {
       const frame = JSON.parse(res.data)
       if (frame.type === 'msg') {
+        aiTyping.value = false
         messages.value.push({
           id: Date.now(),
           sender_type: frame.payload.sender_type ?? 2,
           content: frame.payload.content,
         })
         scrollToBottom()
+      } else if (frame.type === 'typing') {
+        aiTyping.value = true
+        scrollToBottom()
       } else if (frame.type === 'queue') {
+        mode.value = 'human'
+        aiTyping.value = false
         queuePosition.value = frame.payload?.position || 0
       } else if (frame.type === 'assign') {
         if (frame.payload?.action === 'accepted') {
+          mode.value = 'human'
           queuePosition.value = 0
           messages.value.push({
             id: Date.now(),
@@ -202,6 +244,33 @@ function sendMsg() {
     return
   }
   scheduleLocalReply(text)
+}
+
+// requestHuman asks the backend to hand off from AI to a human agent via a
+// dedicated frame (locale-independent; the server runs SwitchToHuman and emits
+// the system notice + queue/assign frames).
+function requestHuman() {
+  if (mode.value !== 'ai') return
+  aiTyping.value = false
+  mode.value = 'human'
+  if (ws && connected.value) {
+    ws.send({
+      data: JSON.stringify({ type: 'to_human', session_id: sessionID.value })
+    })
+  }
+}
+
+// Submit a 👍/👎 rating for an AI message.
+async function rate(msg: any, rating: 1 | -1) {
+  msg.rated = true
+  try {
+    await post('/api/v1/im/feedback', {
+      session_id: sessionID.value,
+      rating,
+      query: messages.value.find(m => m.sender_type === 1 && m.id < msg.id)?.content ?? '',
+      answer: msg.content,
+    })
+  } catch { /* best-effort, ignore errors */ }
 }
 
 function scheduleLocalReply(content: string) {

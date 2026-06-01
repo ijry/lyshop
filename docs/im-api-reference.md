@@ -2,10 +2,10 @@
 
 ## 概述
 
-IM 客服插件提供实时客服聊天功能，支持 WebSocket 实时通信、多坐席管理、排队机制、会话转接等企业级客服功能。
+IM 客服插件提供实时客服聊天功能，支持 WebSocket 实时通信、多坐席管理、排队机制、会话转接等企业级客服功能，并内置基于本地大模型的 AI 智能客服（RAG 知识库 + 商品信息分析）。新会话默认由 AI 接待，用户可随时转人工排队。
 
 **插件标识**: `im`  
-**版本**: `1.0.0`  
+**版本**: `1.1.0`  
 **依赖**: 无
 
 ---
@@ -35,6 +35,7 @@ IM 客服插件提供实时客服聊天功能，支持 WebSocket 实时通信、
 
 **字段说明**:
 - `status`: 1=等待接入, 2=服务中, 3=已关闭
+- `mode`: `ai`=AI 接待中, `human`=人工接待/排队
 - `queue_position`: 排队位置，0表示未排队或已接入
 
 ---
@@ -78,7 +79,7 @@ IM 客服插件提供实时客服聊天功能，支持 WebSocket 实时通信、
 ```
 
 **字段说明**:
-- `sender_type`: 0=系统, 1=用户, 2=客服
+- `sender_type`: 0=系统, 1=用户, 2=人工客服, 3=AI 客服
 - `type`: text=文本, image=图片, product_card=商品卡片, order_card=订单卡片, system=系统消息
 
 ---
@@ -107,7 +108,9 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 
 | 类型 | 方向 | Payload | 说明 |
 |---|---|---|---|
-| `msg` | 双向 | `{msg_type, content, sender_type}` | 消息内容 |
+| `msg` | 双向 | `{msg_type, content, sender_type}` | 消息内容（`sender_type`：0系统/1用户/2人工/3AI） |
+| `typing` | 服务端→客户端 | `{sender_type}` | AI 正在生成回复的输入指示 |
+| `to_human` | 客户端→服务端 | `{}` | 用户请求转人工（等价于发送转人工关键词） |
 | `queue` | 服务端→客户端 | `{position}` | 排队位置更新 |
 | `assign` | 服务端→客户端 | `{action}` | 接入/转接通知 |
 | `close` | 服务端→客户端 | `{}` | 会话结束通知 |
@@ -385,6 +388,188 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 
 ---
 
+### 15. AI 知识库列表
+
+**接口**: `GET /admin/api/im/knowledge`  
+**权限**: `im:knowledge`  
+**参数**: `keyword`（可选，按标题/内容/标签检索）、`page`、`size`  
+**说明**: 分页返回知识库条目（`{list,total,page,size}`）
+
+---
+
+### 16. 新增知识条目
+
+**接口**: `POST /admin/api/im/knowledge`  
+**权限**: `im:knowledge`  
+**请求体**: `{ "title": "退货政策", "content": "7天无理由退货...", "tags": "退货,售后", "sort": 0, "status": 1 }`  
+**说明**: 创建后异步进行向量化（配置了向量模型时）
+
+---
+
+### 17. 更新知识条目
+
+**接口**: `PUT /admin/api/im/knowledge/:id`  
+**权限**: `im:knowledge`  
+**请求体**: 任意可选字段 `{title, content, tags, sort, status}`  
+**说明**: 内容变更后会重新向量化
+
+---
+
+### 18. 删除知识条目
+
+**接口**: `DELETE /admin/api/im/knowledge/:id`  
+**权限**: `im:knowledge`
+
+---
+
+### 19. 重建向量索引
+
+**接口**: `POST /admin/api/im/knowledge/reindex`  
+**权限**: `im:knowledge`  
+**响应**: `{ "indexed": 12 }`  
+**说明**: 对全部知识条目重新向量化；未配置向量模型时返回错误提示并退化为关键词召回
+
+---
+
+### 20. 导入文档（多格式切片）
+
+**接口**: `POST /admin/api/im/knowledge/import`  
+**权限**: `im:knowledge`  
+**请求**: `multipart/form-data`  
+**表单字段**:
+- `file` (必填): 上传的文档，单文件 ≤ 20MB
+- `title` (可选): 标题前缀，留空使用文件名
+- `tags` (可选): 共享标签，逗号分隔
+- `chunk_size` (可选): 每片字数（按 rune 计，默认 500）
+- `overlap` (可选): 相邻片重叠字数（默认 50）
+
+**支持格式**: `.txt` `.md` `.markdown` `.text` `.log` `.csv` `.tsv` `.json` `.xml` `.html` `.htm` `.docx` `.pdf` `.xlsx`
+
+**响应**: `{ "filename": "faq.docx", "chunks": 8 }`  
+**说明**: 提取文本 → 按段落/句子边界切片（超长段落硬切）→ 每片生成一条 `ImKnowledge`（标题形如 `标题 (1/8)`）→ 后台逐条向量化
+
+---
+
+### 21. 测试大模型连通性
+
+**接口**: `POST /admin/api/im/ai/test`  
+**权限**: `im:knowledge`  
+**响应**: `{ "reply": "连接正常" }`  
+**说明**: 使用当前配置发起一次最小对话以校验服务地址与对话模型
+
+---
+
+## AI 智能客服
+
+### 接待流程
+
+1. 用户进入会话，`GetOrCreateSession` 创建 `mode=ai`、`status=2` 的会话，由本地大模型接待（无需排队）。
+2. 用户每条消息先落库，命中转人工关键词（或收到 `to_human` 帧）则调用 `SwitchToHuman` 进入人工流程；否则推送 `typing` 帧并异步生成回复。
+3. 回复生成：检索知识库（RAG）与在售商品信息，连同最近若干轮对话与系统提示词一并请求大模型，回复以 `sender_type=3` 推送给用户。
+4. 关闭 AI（`ai_enabled=false`）时，新会话回退到传统人工分配/排队流程。
+
+### 配置项（配置中心 → IM客服）
+
+| Key | 说明 |
+|---|---|
+| `ai_enabled` | 是否启用 AI 客服 |
+| `ai_base_url` | OpenAI 兼容服务地址，如 `http://localhost:11434/v1` |
+| `ai_api_key` | API Key（本地服务可留空） |
+| `ai_chat_model` | 对话模型，如 `qwen2.5:7b` |
+| `ai_embed_model` | 向量模型，如 `bge-m3`；留空则关键词召回 |
+| `ai_system_prompt` | 系统提示词（人设与回答约束） |
+| `ai_human_keywords` | 转人工关键词，逗号分隔 |
+| `ai_top_k` | 知识库召回条数（默认 3） |
+| `ai_temperature` | 采样温度（默认 0.3） |
+| `ai_product_search` | 是否启用商品信息分析 |
+| `ai_timeout_sec` | 大模型请求超时秒数（默认 30） |
+| `ai_qdrant_url` | Qdrant 向量库地址，如 `http://localhost:6333`；留空则用内存余弦/关键词召回 |
+| `ai_qdrant_api_key` | Qdrant API Key（自建无鉴权可留空） |
+| `ai_qdrant_collection` | Qdrant 集合名（默认 `im_knowledge`） |
+| `ai_score_threshold` | 相似度阈值（0-1），低于该分数的召回结果丢弃，默认 0 不过滤 |
+| `ai_hybrid` | 开启混合检索：向量召回 + 关键词召回经 RRF 融合（长尾召回更稳，推荐开启） |
+| `ai_recall_k` | 重排前每路候选数，默认 4×`ai_top_k` |
+| `ai_rerank_url` | 重排服务地址（Cohere/Jina/TEI 兼容 `/rerank`，留空则不重排） |
+| `ai_rerank_api_key` | 重排 API Key |
+| `ai_rerank_model` | 重排模型，如 `bge-reranker-v2-m3` |
+| `ai_query_rewrite` | 查询改写模式：`""` 关闭 / `rewrite` LLM改写 / `hyde` 生成假设回答 / `multi` 多路变体+RRF |
+| `ai_query_rewrite_n` | `multi` 模式生成的查询变体数（默认 3） |
+| `ai_auto_eval` | 开启 LLM-as-Judge 自动评估（忠实度 + 相关性，异步存入 `ImFeedback`） |
+
+### 召回 → 融合 → 重排 Pipeline
+
+知识库召回完整流程：
+
+```
+用户问题 (userText)
+  │
+  ├─ QueryRewrite ─→ retrievalQuery
+  │   rewrite: LLM 扩写     hyde: 生成假设回答     multi: N 变体各自检索→RRF
+  │
+  ├─ recallVector(retrievalQuery, RecallK)  ← Qdrant ANN / 内存余弦 / nil
+  └─ recallKeyword(retrievalQuery, RecallK) ← token-overlap (Hybrid=true)
+       │
+       └─ RRF 融合 (Hybrid=true) ─→ 去重候选池
+              │
+              └─ cross-encoder Rerank (RerankURL 非空) ─→ TopK 精排
+                     │
+                     └─ 注入 Prompt → LLM 生成 → reply
+                                              │
+                                              └─ AutoEval (异步) → ImFeedback
+```
+
+各阶段均可独立关闭（不配置即跳过），后向兼容现有关键词兜底：
+
+| 配置 | 召回 | 是否融合 | 是否重排 |
+|---|---|---|---|
+| 无 embed/无 Qdrant | 关键词 | - | - |
+| embed only | 内存余弦 | - | - |
+| Qdrant + embed | Qdrant ANN | - | - |
+| 上述任一 + `ai_hybrid=on` | 向量 + 关键词 | ✅ RRF | - |
+| 上述任一 + `ai_rerank_url` | 视配置 | 视配置 | ✅ cross-encoder |
+
+**数据同步**：知识条目的新增/编辑会异步向量化并 upsert 到 Qdrant；删除会同步删除向量点；状态停用通过 upsert 更新 `status` payload，使其不再被检索命中。`POST /im/knowledge/reindex` 会重建 Qdrant 集合并全量重灌。DB 的 `embedding` 列作为本地缓存与回退保留。
+
+> 部署：`docker-compose.yml` 已内置 `qdrant` 服务，容器内将地址配置为 `http://qdrant:6333` 即可。
+
+### 重排服务连通性测试
+
+**接口**: `POST /admin/api/im/ai/rerank-test`  
+**权限**: `im:knowledge`  
+**响应**: `{ "reply": "连接正常" }`
+
+---
+
+### 用户提交反馈
+
+**接口**: `POST /api/v1/im/feedback`  
+**权限**: 需用户登录  
+**请求体**: `{ "session_id": 1, "rating": 1, "comment": "很有帮助", "query": "...", "answer": "..." }`  
+**说明**: `rating` 1=👍 -1=👎；`query`/`answer` 可选，存入用于后续分析
+
+---
+
+### 管理端反馈列表
+
+**接口**: `GET /admin/api/im/feedback`  
+**权限**: `im:view`  
+**参数**: `session_id`（可选）、`page`、`size`  
+**响应**: `{ list: [...], total, page, size }`  
+**字段**:
+- `source`: `user`（用户提交）/ `auto`（LLM-as-Judge 自动评估）
+- `rating`: 用户评分 1=👍 -1=👎 0=未评
+- `faithfulness` / `relevance`: 自动评估分数（0-5），`source=user` 时为 0
+
+---
+
+### 管理端反馈统计
+
+**接口**: `GET /admin/api/im/feedback/stats`  
+**权限**: `im:view`  
+**响应**: `{ "auto": { count, avg_faith, avg_relevance, avg_rating }, "user": { ... } }`
+
+---
+
 ## 数据模型
 
 ### ImSession (会话表)
@@ -394,6 +579,7 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 | id | uint64 | 主键 |
 | user_id | uint64 | 用户ID (索引) |
 | staff_id | uint64 | 客服ID (索引，0表示未分配) |
+| mode | string | 接待模式 (`ai`=AI接待, `human`=人工) |
 | status | int8 | 状态 (1=等待, 2=服务中, 3=已关闭) |
 | queue_position | int | 排队位置 (0=未排队) |
 | last_msg | string | 最后一条消息 (255字符) |
@@ -409,7 +595,7 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 |---|---|---|
 | id | uint64 | 主键 |
 | session_id | uint64 | 会话ID (索引) |
-| sender_type | int8 | 发送者类型 (0=系统, 1=用户, 2=客服) |
+| sender_type | int8 | 发送者类型 (0=系统, 1=用户, 2=人工客服, 3=AI客服) |
 | sender_id | uint64 | 发送者ID |
 | type | string | 消息类型 (text/image/product_card/order_card/system) |
 | content | text | 消息内容 |
@@ -463,6 +649,40 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 
 ---
 
+### ImKnowledge (AI 知识库表)
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| id | uint64 | 主键 |
+| title | string | 标题 (255字符) |
+| content | text | 内容 |
+| tags | string | 标签，逗号分隔 (255字符) |
+| embedding | json | 内容向量（[]float64），未配置向量模型时为空 |
+| indexed | int8 | 是否已向量化 (0/1) |
+| sort | int | 排序 |
+| status | int8 | 状态 (0=停用, 1=启用) |
+| created_at | time | 创建时间 |
+| updated_at | time | 更新时间 |
+
+---
+
+### ImFeedback (AI 答案评估反馈表)
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| id | uint64 | 主键 |
+| session_id | uint64 | 会话ID (索引) |
+| source | string | `user`=用户提交，`auto`=LLM-as-Judge |
+| rating | int8 | 用户评分 1=👍 -1=👎 0=未评 |
+| comment | string | 用户评语 (512字符) |
+| faithfulness | float64 | 忠实度（0-5，auto 填写） |
+| relevance | float64 | 相关性（0-5，auto 填写） |
+| query | text | 用户问题 |
+| answer | text | AI 回答 |
+| created_at | time | 创建时间 |
+
+---
+
 ## 权限说明
 
 | 权限 | 说明 |
@@ -470,6 +690,7 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 | `im:view` | 查看客服会话和消息 |
 | `im:reply` | 回复消息、接入/结束/转接会话、设置在线状态 |
 | `im:staff:manage` | 管理客服坐席（增删改查） |
+| `im:knowledge` | 管理 AI 知识库、重建索引、测试大模型连通 |
 
 ---
 
@@ -487,6 +708,19 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 ---
 
 ## 更新日志
+
+### v1.1.0 (2026-06-01)
+- ✅ 本地大模型 AI 智能客服：新会话默认 AI 接待，输入“人工”或点击转人工进入排队
+- ✅ RAG 知识库：`im_knowledge` 表 + 向量召回（无向量模型时关键词召回兜底）
+- ✅ 文档切片入库：上传 TXT/MD/CSV/TSV/JSON/XML/HTML/DOCX/PDF/XLSX，自动提取并切片为多条知识
+- ✅ 商品信息分析：回答时检索在售商品价格/库存/销量
+- ✅ 知识库管理接口与 `im:knowledge` 权限、配置中心 `config_items`
+- ✅ Qdrant 向量库检索：CRUD/导入/重建双写同步，按 ID 回查并保序，未配置时回退内存余弦/关键词
+- ✅ 混合检索（RRF 融合）：向量召回 + 关键词召回按 Reciprocal Rank Fusion 融合（`ai_hybrid=on`）
+- ✅ 重排（Rerank）：cross-encoder 精排候选池至 TopK，兼容 Cohere/Jina/TEI `/rerank` 接口
+- ✅ 查询改写：rewrite（LLM 扩写）/ hyde（假设文档嵌入）/ multi（N 变体+RRF）
+- ✅ 评估闭环：用户👍👎反馈（`POST /im/feedback`）+ LLM-as-Judge 自动评估忠实度/相关性（`ai_auto_eval`）
+- ✅ 新增 WS 帧 `typing` / `to_human`，`sender_type` 扩展 AI=3
 
 ### v1.0.0 (2026-05-31)
 - ✅ 基础消息收发功能

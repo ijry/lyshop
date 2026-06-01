@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/ijry/lyshop/core/middleware"
 	"github.com/ijry/lyshop/core/response"
+	immodel "github.com/ijry/lyshop/plugins/im/model"
 	imsvc "github.com/ijry/lyshop/plugins/im/service"
 )
 
@@ -23,6 +24,7 @@ func RegisterFrontRoutes(g *gin.RouterGroup) {
 	auth.Use(middleware.RequireAuth)
 	auth.GET("/im/session", getOrCreateSession)
 	auth.GET("/im/messages", getMessages)
+	auth.POST("/im/feedback", submitFeedback)
 }
 
 // RegisterWSRoute registers the WebSocket endpoint on the root engine.
@@ -52,6 +54,33 @@ func getMessages(c *gin.Context) {
 		return
 	}
 	response.OK(c, response.PageData{List: list, Total: total, Page: page, Size: size})
+}
+
+func submitFeedback(c *gin.Context) {
+	var req struct {
+		SessionID uint64 `json:"session_id" binding:"required"`
+		Rating    int8   `json:"rating"` // 1=👍 -1=👎
+		Comment   string `json:"comment"`
+		Query     string `json:"query"`
+		Answer    string `json:"answer"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	fb := &immodel.ImFeedback{
+		SessionID: req.SessionID,
+		Source:    immodel.FeedbackSourceUser,
+		Rating:    req.Rating,
+		Comment:   req.Comment,
+		Query:     req.Query,
+		Answer:    req.Answer,
+	}
+	if err := imsvc.SaveFeedback(c.Request.Context(), fb); err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, nil)
 }
 
 func wsHandler(c *gin.Context) {

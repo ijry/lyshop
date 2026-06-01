@@ -25,6 +25,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      qdrant:
+        condition: service_started
     restart: unless-stopped
 
   admin:
@@ -59,4 +61,12 @@ services:
       interval: 10s
       timeout: 3s
       retries: 5
+    restart: unless-stopped
+
+  # 向量数据库：IM AI 客服知识库的 RAG 召回后端。
+  # 在「配置中心 → IM客服」将 Qdrant地址 设为 http://qdrant:6333 即启用。
+  qdrant:
+    image: qdrant/qdrant:v1.12.4
+    volumes:
+      - ./data/qdrant:/qdrant/storage
     restart: unless-stopped
