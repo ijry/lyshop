@@ -419,22 +419,49 @@ function parseSkus(list: any[]) {
 function normalizeSkuAttrs(attrs: SkuAttr[]) {
   return attrs
     .map((item) => ({ name: String(item.name || '').trim(), value: String(item.value || '').trim() }))
-    .filter((item) => item.name || item.value)
+    .filter((item) => item.name && item.value)
+    .sort((left, right) => {
+      if (left.name === right.name) return left.value.localeCompare(right.value)
+      return left.name.localeCompare(right.name)
+    })
 }
 
-function buildSkusPayload() {
-  return skus.value
-    .map((sku) => {
-      const row: any = {
-        sku_code: String(sku.sku_code || '').trim(),
-        price: Number(sku.price || 0),
-        stock: Number(sku.stock || 0),
-        attrs: normalizeSkuAttrs(sku.attrs),
-      }
-      if (sku.id > 0) row.id = sku.id
-      return row
+function buildSkuKey(attrs: Array<{ name: string; value: string }>) {
+  const normalized = normalizeSkuAttrs(attrs as SkuAttr[])
+  if (!normalized.length) return '__default__'
+  return normalized.map((item) => `${item.name}:${item.value}`).join('|')
+}
+
+function buildSpecSchema() {
+  const groupMap = new Map<string, Set<string>>()
+  for (const row of skus.value) {
+    const attrs = normalizeSkuAttrs(row.attrs)
+    for (const attr of attrs) {
+      if (!groupMap.has(attr.name)) groupMap.set(attr.name, new Set<string>())
+      groupMap.get(attr.name)?.add(attr.value)
+    }
+  }
+  return Array.from(groupMap.entries())
+    .map(([name, values]) => ({
+      name,
+      values: Array.from(values).sort((a, b) => a.localeCompare(b)),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name))
+}
+
+function buildSkuOverrides() {
+  const dedup = new Map<string, { sku_key: string; sku_code: string; price: number; stock: number }>()
+  for (const row of skus.value) {
+    const attrs = normalizeSkuAttrs(row.attrs)
+    const skuKey = buildSkuKey(attrs)
+    dedup.set(skuKey, {
+      sku_key: skuKey,
+      sku_code: String(row.sku_code || '').trim(),
+      price: Number(row.price || 0),
+      stock: Number(row.stock || 0),
     })
-    .filter((row: any) => row.sku_code || row.price > 0 || row.stock > 0 || row.attrs.length > 0)
+  }
+  return Array.from(dedup.values())
 }
 
 function addSku() {
@@ -761,7 +788,8 @@ async function save() {
     ...form.value,
     detail: makeDetailPayload(),
   }
-  const skusPayload = buildSkusPayload()
+  const specSchema = buildSpecSchema()
+  const skuOverrides = buildSkuOverrides()
   const imagesPayload = galleryImages.value
     .filter((item) => item.url.trim())
     .map((item, idx) => ({ url: item.url.trim(), sort: idx }))
@@ -769,13 +797,25 @@ async function save() {
   try {
     if (isEdit.value) {
       const productID = Number(route.params.id)
-      await updateProduct(productID, { product: payload, skus: skusPayload, images: imagesPayload })
+      await updateProduct(productID, {
+        product: payload,
+        images: imagesPayload,
+        sku_generation_mode: 'auto',
+        spec_schema: specSchema,
+        sku_overrides: skuOverrides,
+      })
       if (vipEnabled.value && canEditVip.value) {
         await loadVipMetaAndPrices(productID)
         await syncVipPrices(productID)
       }
     } else {
-      await createProduct({ product: payload, skus: skusPayload, images: imagesPayload })
+      await createProduct({
+        product: payload,
+        images: imagesPayload,
+        sku_generation_mode: 'auto',
+        spec_schema: specSchema,
+        sku_overrides: skuOverrides,
+      })
     }
     router.push('/product/list')
   } catch (e: any) {

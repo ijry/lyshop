@@ -16,6 +16,7 @@ const router = createRouter({
         // Product
         { path: 'product/list',    name: 'nav.productList', component: () => import('@/views/product/ProductList.vue'), meta: { titleKey: 'nav.productList' } },
         { path: 'product/category',name: 'nav.productCategory', component: () => import('@/views/product/CategoryList.vue'), meta: { titleKey: 'nav.productCategory' } },
+        { path: 'product/spec-templates',name: 'nav.productSpecTemplates', component: () => import('@/views/product/SpecTemplateList.vue'), meta: { titleKey: 'nav.productSpecTemplates' } },
         { path: 'product/form',    name: 'nav.productAdd', component: () => import('@/views/product/ProductForm.vue'), meta: { titleKey: 'nav.productAdd' } },
         { path: 'product/form/:id',name: 'nav.productEdit', component: () => import('@/views/product/ProductForm.vue'), meta: { titleKey: 'nav.productEdit' } },
         // Order
