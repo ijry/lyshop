@@ -732,6 +732,15 @@ export default {
   'imkb.deleted': '已删除',
   'imkb.reindexDone': '已重建 {count} 条向量索引',
   'imkb.aiReplyPrefix': '大模型返回：',
+  'imkb.import': '导入文档',
+  'imkb.importHint': '上传企业文档自动切片为多条知识，并按配置进行向量化',
+  'imkb.importFile': '选择文件',
+  'imkb.importFormats': '支持 TXT / Markdown / CSV / TSV / JSON / XML / HTML / DOCX / PDF / XLSX，单文件 ≤ 20MB',
+  'imkb.importTitlePlaceholder': '留空则使用文件名作为标题前缀',
+  'imkb.chunkSize': '切片字数',
+  'imkb.overlap': '重叠字数',
+  'imkb.importing': '导入中…',
+  'imkb.importDone': '导入完成，共生成 {count} 条知识',
 
   // AI
   'ai.imageGen.title': 'AI 生图',

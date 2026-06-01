@@ -1,6 +1,7 @@
 package api
 
 import (
+	"io"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -32,6 +33,7 @@ func RegisterAdminRoutes(g *gin.RouterGroup) {
 	g.PUT("/im/knowledge/:id", middleware.RequirePermission("im:knowledge"), adminUpdateKnowledge)
 	g.DELETE("/im/knowledge/:id", middleware.RequirePermission("im:knowledge"), adminDeleteKnowledge)
 	g.POST("/im/knowledge/reindex", middleware.RequirePermission("im:knowledge"), adminReindexKnowledge)
+	g.POST("/im/knowledge/import", middleware.RequirePermission("im:knowledge"), adminImportKnowledge)
 	// 本地大模型连通性测试
 	g.POST("/im/ai/test", middleware.RequirePermission("im:knowledge"), adminTestAI)
 }
@@ -125,6 +127,43 @@ func adminReindexKnowledge(c *gin.Context) {
 		return
 	}
 	response.OK(c, gin.H{"indexed": done})
+}
+
+// adminImportKnowledge accepts a multipart "file" upload (txt/md/csv/html/docx/
+// pdf/xlsx/…), extracts and slices its text, and creates one knowledge entry
+// per chunk. Optional form fields: title, tags, chunk_size, overlap.
+func adminImportKnowledge(c *gin.Context) {
+	fh, err := c.FormFile("file")
+	if err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	const maxSize = 20 << 20 // 20MB
+	if fh.Size > maxSize {
+		response.Fail(c, 400, "文件过大，最大支持 20MB")
+		return
+	}
+	f, err := fh.Open()
+	if err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	defer f.Close()
+	data, err := io.ReadAll(f)
+	if err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+
+	chunkSize, _ := strconv.Atoi(c.PostForm("chunk_size"))
+	overlap, _ := strconv.Atoi(c.PostForm("overlap"))
+	res, err := imsvc.ImportDocument(c.Request.Context(), fh.Filename, data,
+		c.PostForm("title"), c.PostForm("tags"), chunkSize, overlap)
+	if err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	response.OK(c, res)
 }
 
 func adminTestAI(c *gin.Context) {

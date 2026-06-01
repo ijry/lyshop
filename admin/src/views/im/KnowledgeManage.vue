@@ -9,6 +9,9 @@
         <button @click="reindex" class="text-sm text-indigo-600 hover:text-indigo-700 border border-indigo-200 rounded-lg px-3 py-1.5">
           {{ $t('imkb.reindex') }}
         </button>
+        <button @click="openImport" class="text-sm text-emerald-600 hover:text-emerald-700 border border-emerald-200 rounded-lg px-3 py-1.5">
+          {{ $t('imkb.import') }}
+        </button>
         <button @click="openCreate" class="btn-primary">+ {{ $t('imkb.add') }}</button>
       </div>
     </div>
@@ -106,6 +109,54 @@
         </div>
       </div>
     </div>
+
+    <!-- Import Document Modal -->
+    <div v-if="showImport" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click.self="showImport = false">
+      <div class="bg-white rounded-2xl p-6 w-[34rem] shadow-xl">
+        <h3 class="text-lg font-semibold mb-1">{{ $t('imkb.import') }}</h3>
+        <p class="text-sm text-slate-400 mb-4">{{ $t('imkb.importHint') }}</p>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">{{ $t('imkb.importFile') }} *</label>
+            <input ref="fileInput" type="file" :accept="acceptExts"
+              class="w-full text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-emerald-50 file:text-emerald-700 file:text-sm file:font-medium hover:file:bg-emerald-100" />
+            <p class="text-xs text-slate-400 mt-1">{{ $t('imkb.importFormats') }}</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">{{ $t('imkb.formTitle') }}</label>
+            <input v-model="importForm.title" :placeholder="$t('imkb.importTitlePlaceholder')"
+              class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/20" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">{{ $t('imkb.formTags') }}</label>
+            <input v-model="importForm.tags"
+              class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400/20" />
+          </div>
+          <div class="flex items-center gap-6">
+            <div class="flex items-center gap-2">
+              <label class="text-sm font-medium text-slate-700">{{ $t('imkb.chunkSize') }}</label>
+              <input v-model.number="importForm.chunk_size" type="number"
+                class="w-24 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400" />
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm font-medium text-slate-700">{{ $t('imkb.overlap') }}</label>
+              <input v-model.number="importForm.overlap" type="number"
+                class="w-24 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400" />
+            </div>
+          </div>
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button @click="showImport = false" :disabled="importing"
+            class="flex-1 px-4 py-2 border border-slate-200 text-slate-600 rounded-lg text-sm font-medium hover:bg-slate-50 transition disabled:opacity-50">
+            {{ $t('imkb.cancel') }}
+          </button>
+          <button @click="submitImport" :disabled="importing"
+            class="flex-1 px-4 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600 transition disabled:opacity-50">
+            {{ importing ? $t('imkb.importing') : $t('imkb.import') }}
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -121,6 +172,13 @@ const keyword = ref('')
 const showModal = ref(false)
 const editing = ref<any>(null)
 const form = ref({ title: '', content: '', tags: '', sort: 0, status: 1 })
+
+// Document import
+const showImport = ref(false)
+const importing = ref(false)
+const fileInput = ref<HTMLInputElement | null>(null)
+const importForm = ref({ title: '', tags: '', chunk_size: 500, overlap: 50 })
+const acceptExts = '.txt,.md,.markdown,.text,.log,.csv,.tsv,.json,.xml,.html,.htm,.docx,.pdf,.xlsx'
 
 async function reload() {
   const data: any = await request.get('/im/knowledge', { params: { keyword: keyword.value, size: 100 } })
@@ -185,6 +243,38 @@ async function testAI() {
     alert(t('imkb.aiReplyPrefix') + (data?.reply || ''))
   } catch (err: any) {
     alert(err.message || 'error')
+  }
+}
+
+function openImport() {
+  importForm.value = { title: '', tags: '', chunk_size: 500, overlap: 50 }
+  showImport.value = true
+}
+
+async function submitImport() {
+  const file = fileInput.value?.files?.[0]
+  if (!file) {
+    alert(t('imkb.importFile'))
+    return
+  }
+  const fd = new FormData()
+  fd.append('file', file)
+  fd.append('title', importForm.value.title)
+  fd.append('tags', importForm.value.tags)
+  fd.append('chunk_size', String(importForm.value.chunk_size || 0))
+  fd.append('overlap', String(importForm.value.overlap || 0))
+  importing.value = true
+  try {
+    const data: any = await request.post('/im/knowledge/import', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    showImport.value = false
+    await reload()
+    alert(t('imkb.importDone', { count: data?.chunks ?? 0 }))
+  } catch (err: any) {
+    alert(err.message || 'error')
+  } finally {
+    importing.value = false
   }
 }
 

@@ -33,6 +33,7 @@
 | 商品信息分析 | ✅ | - | ✅ | ✅ | 回答时检索在售商品价格/库存/销量 |
 | 转人工 | ✅ | - | ✅ | ✅ | 输入“人工”关键词或点击转人工按钮进入排队 |
 | 知识库管理 | ✅ | - | - | - | 知识条目 CRUD + 重建向量索引 + 连通性测试 |
+| 文档切片入库 | ✅ | - | - | - | 上传 TXT/MD/CSV/JSON/XML/HTML/DOCX/PDF/XLSX 自动切片为多条知识 |
 | 大模型配置 | ✅ | - | - | - | 配置中心维护服务地址/模型/提示词等 |
 
 > AI 智能客服为可选能力，由插件配置 `ai_enabled` 控制。关闭时新会话回退到传统“分配/排队”人工流程。
@@ -131,7 +132,8 @@
 - `server/plugins/im/model/im.go` - 数据模型
 - `server/plugins/im/service/session.go` - 业务逻辑（会话/排队/转接/转人工/WS）
 - `server/plugins/im/service/ai.go` - 本地大模型调用、RAG 召回、商品信息分析
-- `server/plugins/im/service/knowledge.go` - 知识库 CRUD
+- `server/plugins/im/service/knowledge.go` - 知识库 CRUD、文档导入切片
+- `server/plugins/im/service/document.go` - 多格式文本提取与切片
 - `server/plugins/im/service/hub.go` - WebSocket Hub
 - `server/plugins/im/api/admin.go` - Admin API（含知识库/AI 测试）
 - `server/plugins/im/api/front.go` - 用户端 API
@@ -154,6 +156,7 @@
 ### 2026-06-01
 - ✅ 接入本地大模型 AI 客服：新会话默认 AI 接待（`mode=ai`），可一键/关键词转人工
 - ✅ RAG 知识库：`im_knowledge` 表 + 向量召回（无向量模型时关键词召回兜底）
+- ✅ 文档切片入库：上传企业多格式文档（TXT/MD/CSV/TSV/JSON/XML/HTML/DOCX/PDF/XLSX）自动提取并切片为多条知识
 - ✅ 商品信息分析：回答时检索在售商品价格/库存/销量并注入提示
 - ✅ Admin 新增「AI知识库」页面（CRUD + 重建索引 + 连通性测试）与 `im:knowledge` 权限
 - ✅ 插件 `config_items`：在配置中心维护大模型服务地址/模型/提示词等

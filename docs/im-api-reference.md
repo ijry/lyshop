@@ -431,7 +431,26 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 
 ---
 
-### 20. 测试大模型连通性
+### 20. 导入文档（多格式切片）
+
+**接口**: `POST /admin/api/im/knowledge/import`  
+**权限**: `im:knowledge`  
+**请求**: `multipart/form-data`  
+**表单字段**:
+- `file` (必填): 上传的文档，单文件 ≤ 20MB
+- `title` (可选): 标题前缀，留空使用文件名
+- `tags` (可选): 共享标签，逗号分隔
+- `chunk_size` (可选): 每片字数（按 rune 计，默认 500）
+- `overlap` (可选): 相邻片重叠字数（默认 50）
+
+**支持格式**: `.txt` `.md` `.markdown` `.text` `.log` `.csv` `.tsv` `.json` `.xml` `.html` `.htm` `.docx` `.pdf` `.xlsx`
+
+**响应**: `{ "filename": "faq.docx", "chunks": 8 }`  
+**说明**: 提取文本 → 按段落/句子边界切片（超长段落硬切）→ 每片生成一条 `ImKnowledge`（标题形如 `标题 (1/8)`）→ 后台逐条向量化
+
+---
+
+### 21. 测试大模型连通性
 
 **接口**: `POST /admin/api/im/ai/test`  
 **权限**: `im:knowledge`  
@@ -592,6 +611,7 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 ### v1.1.0 (2026-06-01)
 - ✅ 本地大模型 AI 智能客服：新会话默认 AI 接待，输入“人工”或点击转人工进入排队
 - ✅ RAG 知识库：`im_knowledge` 表 + 向量召回（无向量模型时关键词召回兜底）
+- ✅ 文档切片入库：上传 TXT/MD/CSV/TSV/JSON/XML/HTML/DOCX/PDF/XLSX，自动提取并切片为多条知识
 - ✅ 商品信息分析：回答时检索在售商品价格/库存/销量
 - ✅ 知识库管理接口与 `im:knowledge` 权限、配置中心 `config_items`
 - ✅ 新增 WS 帧 `typing` / `to_human`，`sender_type` 扩展 AI=3

@@ -719,6 +719,15 @@ export default {
   'imkb.deleted': 'Deleted',
   'imkb.reindexDone': 'Rebuilt {count} vector entries',
   'imkb.aiReplyPrefix': 'LLM replied: ',
+  'imkb.import': 'Import Document',
+  'imkb.importHint': 'Upload an enterprise document; it is sliced into multiple knowledge entries and embedded per config',
+  'imkb.importFile': 'Choose file',
+  'imkb.importFormats': 'Supports TXT / Markdown / CSV / TSV / JSON / XML / HTML / DOCX / PDF / XLSX, ≤ 20MB',
+  'imkb.importTitlePlaceholder': 'Leave blank to use the file name as title prefix',
+  'imkb.chunkSize': 'Chunk size',
+  'imkb.overlap': 'Overlap',
+  'imkb.importing': 'Importing…',
+  'imkb.importDone': 'Imported, created {count} knowledge entries',
 
   // AI
   'ai.imageGen.title': 'AI Image Gen',
