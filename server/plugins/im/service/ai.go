@@ -32,6 +32,13 @@ type AIConfig struct {
 	Temperature   float64
 	ProductSearch bool
 	Timeout       time.Duration
+
+	// Vector store (Qdrant). When QdrantURL is empty the plugin falls back to
+	// in-DB retrieval (and to keyword retrieval when no embed model is set).
+	QdrantURL        string  // e.g. http://localhost:6333
+	QdrantAPIKey     string  // optional
+	QdrantCollection string  // default "im_knowledge"
+	ScoreThreshold   float64 // drop hits below this cosine score (0 disables)
 }
 
 const aiConfigPlugin = "im"
@@ -93,6 +100,11 @@ func LoadAIConfig() AIConfig {
 		Temperature:   loadFloat("ai_temperature", 0.3),
 		ProductSearch: loadBool("ai_product_search", true),
 		Timeout:       time.Duration(loadInt("ai_timeout_sec", 30)) * time.Second,
+
+		QdrantURL:        strings.TrimRight(loadCfg("ai_qdrant_url", ""), "/"),
+		QdrantAPIKey:     loadCfg("ai_qdrant_api_key", ""),
+		QdrantCollection: loadCfg("ai_qdrant_collection", "im_knowledge"),
+		ScoreThreshold:   loadFloat("ai_score_threshold", 0),
 	}
 }
 
@@ -218,20 +230,35 @@ func cosine(a, b []float64) float64 {
 }
 
 // retrieveKnowledge returns the most relevant knowledge entries for a query.
-// Uses vector similarity when an embed model is configured and entries are
-// indexed; otherwise falls back to keyword (LIKE-style) scoring.
+//
+// Retrieval strategy, in order of preference:
+//  1. Qdrant + embed model configured → ANN search in the vector store, then
+//     load the matching rows from the DB (scales to large knowledge bases).
+//  2. embed model only (no Qdrant) → in-memory cosine over all rows (legacy
+//     fallback, fine for small bases).
+//  3. neither → keyword (token-overlap) scoring.
 func retrieveKnowledge(ctx context.Context, cfg AIConfig, query string) []immodel.ImKnowledge {
-	var all []immodel.ImKnowledge
-	db.DB.WithContext(ctx).Where("status = 1").Order("sort asc, id asc").Find(&all)
-	if len(all) == 0 {
-		return nil
-	}
 	topK := cfg.TopK
 	if topK <= 0 {
 		topK = 3
 	}
 
-	// Try vector retrieval first.
+	// 1. Vector store (Qdrant) path.
+	if store := VectorStoreFor(cfg); store != nil && cfg.EmbedModel != "" {
+		if hits := qdrantRetrieve(ctx, cfg, store, query, topK); hits != nil {
+			// nil means the store errored → fall through; empty (len 0) is a
+			// valid "no relevant hits", returned as-is.
+			return hits
+		}
+	}
+
+	var all []immodel.ImKnowledge
+	db.DB.WithContext(ctx).Where("status = 1").Order("sort asc, id asc").Find(&all)
+	if len(all) == 0 {
+		return nil
+	}
+
+	// 2. In-memory cosine fallback.
 	if cfg.EmbedModel != "" {
 		if qvec, err := cfg.Embed(ctx, query); err == nil {
 			type scored struct {
@@ -253,7 +280,7 @@ func retrieveKnowledge(ctx context.Context, cfg AIConfig, query string) []immode
 				sort.Slice(ranked, func(i, j int) bool { return ranked[i].score > ranked[j].score })
 				out := make([]immodel.ImKnowledge, 0, topK)
 				for i := 0; i < len(ranked) && i < topK; i++ {
-					if ranked[i].score <= 0 {
+					if ranked[i].score <= 0 || ranked[i].score < cfg.ScoreThreshold {
 						break
 					}
 					out = append(out, ranked[i].k)
@@ -265,8 +292,47 @@ func retrieveKnowledge(ctx context.Context, cfg AIConfig, query string) []immode
 		}
 	}
 
-	// Keyword fallback: score by token overlap on title/content/tags.
+	// 3. Keyword fallback: score by token overlap on title/content/tags.
 	return keywordRankKnowledge(all, query, topK)
+}
+
+// qdrantRetrieve embeds the query, searches Qdrant, and loads the matching
+// rows from the DB preserving Qdrant's relevance order. Returns nil on any
+// error (so the caller can fall back); returns a possibly-empty slice when the
+// search succeeds.
+func qdrantRetrieve(ctx context.Context, cfg AIConfig, store VectorStore, query string, topK int) []immodel.ImKnowledge {
+	qvec, err := cfg.Embed(ctx, query)
+	if err != nil {
+		return nil
+	}
+	hits, err := store.Search(ctx, qvec, topK)
+	if err != nil {
+		return nil
+	}
+	ids := make([]uint64, 0, len(hits))
+	for _, h := range hits {
+		if cfg.ScoreThreshold > 0 && h.Score < cfg.ScoreThreshold {
+			continue
+		}
+		ids = append(ids, h.ID)
+	}
+	if len(ids) == 0 {
+		return []immodel.ImKnowledge{}
+	}
+	var rows []immodel.ImKnowledge
+	db.DB.WithContext(ctx).Where("id IN ? AND status = 1", ids).Find(&rows)
+	// Reorder rows to match Qdrant's ranking.
+	byID := make(map[uint64]immodel.ImKnowledge, len(rows))
+	for _, r := range rows {
+		byID[r.ID] = r
+	}
+	out := make([]immodel.ImKnowledge, 0, len(ids))
+	for _, id := range ids {
+		if r, ok := byID[id]; ok {
+			out = append(out, r)
+		}
+	}
+	return out
 }
 
 func keywordRankKnowledge(all []immodel.ImKnowledge, query string, topK int) []immodel.ImKnowledge {
@@ -436,6 +502,10 @@ func recentHistory(ctx context.Context, sessionID uint64, limit int) []chatMessa
 
 // ReindexKnowledge re-embeds all enabled knowledge entries. Safe to call when
 // no embed model is configured (it just marks entries un-indexed).
+// ReindexKnowledge re-embeds all knowledge entries and rebuilds the vector
+// store. When Qdrant is configured the collection is reset and every enabled
+// entry is upserted; the DB embedding column is kept in sync as a local cache /
+// fallback. Returns the number of entries successfully (re)indexed.
 func ReindexKnowledge(ctx context.Context) (int, error) {
 	cfg := LoadAIConfig()
 	var all []immodel.ImKnowledge
@@ -445,21 +515,45 @@ func ReindexKnowledge(ctx context.Context) (int, error) {
 			Updates(map[string]any{"embedding": nil, "indexed": 0})
 		return 0, fmt.Errorf("未配置向量模型，已退化为关键词召回")
 	}
+
+	store := VectorStoreFor(cfg)
+	dimReady := false // collection ensured once we know the vector dimension
+
 	done := 0
 	for _, k := range all {
-		vec, err := cfg.Embed(ctx, k.Title+"\n"+k.Content+"\n"+k.Tags)
+		vec, err := cfg.Embed(ctx, embedInput(k))
 		if err != nil {
 			continue
 		}
 		raw, _ := json.Marshal(vec)
 		db.DB.WithContext(ctx).Model(&immodel.ImKnowledge{}).Where("id = ?", k.ID).
 			Updates(map[string]any{"embedding": raw, "indexed": 1})
+
+		if store != nil {
+			if !dimReady {
+				if err := store.Reset(ctx, len(vec)); err != nil {
+					return done, fmt.Errorf("重建向量库失败：%w", err)
+				}
+				dimReady = true
+			}
+			// Only enabled entries are searchable; still upsert disabled ones
+			// with status payload so toggling status later just needs an update.
+			if err := store.Upsert(ctx, k.ID, vec, k.Status); err != nil {
+				return done, fmt.Errorf("写入向量库失败：%w", err)
+			}
+		}
 		done++
 	}
 	return done, nil
 }
 
-// EmbedKnowledgeEntry embeds a single entry (best-effort, called on create/update).
+// embedInput builds the text fed to the embedding model for one entry.
+func embedInput(k immodel.ImKnowledge) string {
+	return k.Title + "\n" + k.Content + "\n" + k.Tags
+}
+
+// EmbedKnowledgeEntry embeds a single entry (best-effort, called on create/
+// update) and, when Qdrant is configured, upserts it into the vector store.
 func EmbedKnowledgeEntry(ctx context.Context, id uint64) {
 	cfg := LoadAIConfig()
 	if cfg.EmbedModel == "" {
@@ -469,13 +563,29 @@ func EmbedKnowledgeEntry(ctx context.Context, id uint64) {
 	if err := db.DB.WithContext(ctx).First(&k, id).Error; err != nil {
 		return
 	}
-	vec, err := cfg.Embed(ctx, k.Title+"\n"+k.Content+"\n"+k.Tags)
+	vec, err := cfg.Embed(ctx, embedInput(k))
 	if err != nil {
 		return
 	}
 	raw, _ := json.Marshal(vec)
 	db.DB.WithContext(ctx).Model(&immodel.ImKnowledge{}).Where("id = ?", id).
 		Updates(map[string]any{"embedding": raw, "indexed": 1})
+
+	if store := VectorStoreFor(cfg); store != nil {
+		// Ensure collection exists (idempotent) sized to this vector, then upsert.
+		if err := store.EnsureCollection(ctx, len(vec)); err == nil {
+			store.Upsert(ctx, id, vec, k.Status)
+		}
+	}
+}
+
+// RemoveKnowledgeVector deletes one entry's point from the vector store
+// (best-effort; no-op when Qdrant is not configured).
+func RemoveKnowledgeVector(ctx context.Context, id uint64) {
+	cfg := LoadAIConfig()
+	if store := VectorStoreFor(cfg); store != nil {
+		store.Delete(ctx, id)
+	}
 }
 
 // TestAIConnection performs a minimal chat round-trip to validate config.

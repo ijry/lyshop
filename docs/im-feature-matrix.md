@@ -66,9 +66,11 @@
 ### AI 客服（本地大模型 + RAG）
 - **接口协议**: OpenAI 兼容 `/chat/completions` 与 `/embeddings`，可对接本地推理服务（如 Ollama / vLLM）。
 - **检索增强**:
-  - 知识库召回：配置向量模型时按余弦相似度取 TopK；未配置时退化为标题/内容/标签的关键词召回（含 CJK 二元切分）。
+  - 知识库召回（按优先级）：① Qdrant 向量库 ANN 检索（配置 `ai_qdrant_url` + 向量模型，`status=1` 过滤、可选相似度阈值，按命中 ID 回查 DB 并保序，可扩展到大规模知识库）；② 仅向量模型时全量内存余弦（适合小库）；③ 均未配置时标题/内容/标签关键词召回（含 CJK 二元切分）兜底。
+  - 向量数据同步：知识 CRUD / 文档导入异步 upsert 到 Qdrant，删除同步删点，停用经 payload `status` 失效；`reindex` 重建集合并全量重灌；DB `embedding` 列作本地缓存/回退。
   - 商品信息分析：按用户问题检索在售商品（标题/副标题 LIKE），注入价格、库存、销量供模型参考。
-- **配置项**（配置中心 → IM客服）：`ai_enabled`、`ai_base_url`、`ai_api_key`、`ai_chat_model`、`ai_embed_model`、`ai_system_prompt`、`ai_human_keywords`、`ai_top_k`、`ai_temperature`、`ai_product_search`、`ai_timeout_sec`。
+- **向量库部署**: `docker-compose.yml` 内置 `qdrant` 服务（`qdrant/qdrant`），容器内地址 `http://qdrant:6333`。
+- **配置项**（配置中心 → IM客服）：`ai_enabled`、`ai_base_url`、`ai_api_key`、`ai_chat_model`、`ai_embed_model`、`ai_system_prompt`、`ai_human_keywords`、`ai_top_k`、`ai_temperature`、`ai_product_search`、`ai_timeout_sec`、`ai_qdrant_url`、`ai_qdrant_api_key`、`ai_qdrant_collection`、`ai_score_threshold`。
 
 ### 前端
 - **Admin**: Vue 3 + TypeScript
@@ -132,6 +134,7 @@
 - `server/plugins/im/model/im.go` - 数据模型
 - `server/plugins/im/service/session.go` - 业务逻辑（会话/排队/转接/转人工/WS）
 - `server/plugins/im/service/ai.go` - 本地大模型调用、RAG 召回、商品信息分析
+- `server/plugins/im/service/vectorstore.go` - Qdrant 向量库客户端（REST）
 - `server/plugins/im/service/knowledge.go` - 知识库 CRUD、文档导入切片
 - `server/plugins/im/service/document.go` - 多格式文本提取与切片
 - `server/plugins/im/service/hub.go` - WebSocket Hub
@@ -160,6 +163,7 @@
 - ✅ 商品信息分析：回答时检索在售商品价格/库存/销量并注入提示
 - ✅ Admin 新增「AI知识库」页面（CRUD + 重建索引 + 连通性测试）与 `im:knowledge` 权限
 - ✅ 插件 `config_items`：在配置中心维护大模型服务地址/模型/提示词等
+- ✅ Qdrant 向量库检索：docker-compose 内置 qdrant，CRUD/导入/重建双写同步、按 ID 回查保序、未配置时回退内存余弦/关键词
 - ✅ 新增 WS 帧：`typing`（AI 输入指示）、`to_human`（转人工请求）
 
 ### 2026-05-31

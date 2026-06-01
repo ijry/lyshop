@@ -31,6 +31,10 @@
     { "key": "ai_top_k", "label": "知识库召回条数", "type": "number", "placeholder": "默认 3" },
     { "key": "ai_temperature", "label": "温度", "type": "number", "placeholder": "0-1，默认 0.3" },
     { "key": "ai_product_search", "label": "启用商品信息分析", "type": "switch", "placeholder": "回答时检索在售商品的价格/库存/销量等" },
-    { "key": "ai_timeout_sec", "label": "请求超时(秒)", "type": "number", "placeholder": "默认 30" }
+    { "key": "ai_timeout_sec", "label": "请求超时(秒)", "type": "number", "placeholder": "默认 30" },
+    { "key": "ai_qdrant_url", "label": "Qdrant地址", "type": "text", "placeholder": "如 http://localhost:6333；留空则用内存余弦/关键词召回" },
+    { "key": "ai_qdrant_api_key", "label": "Qdrant API Key", "type": "password", "placeholder": "自建无鉴权可留空" },
+    { "key": "ai_qdrant_collection", "label": "Qdrant集合名", "type": "text", "placeholder": "默认 im_knowledge" },
+    { "key": "ai_score_threshold", "label": "相似度阈值", "type": "number", "placeholder": "0-1，低于该分数的召回结果丢弃，默认 0 不过滤" }
   ]
 }

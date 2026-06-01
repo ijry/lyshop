@@ -53,9 +53,13 @@ func UpdateKnowledge(ctx context.Context, id uint64, fields map[string]any) erro
 	return nil
 }
 
-// DeleteKnowledge removes an entry.
+// DeleteKnowledge removes an entry and its vector-store point.
 func DeleteKnowledge(ctx context.Context, id uint64) error {
-	return db.DB.WithContext(ctx).Delete(&immodel.ImKnowledge{}, id).Error
+	if err := db.DB.WithContext(ctx).Delete(&immodel.ImKnowledge{}, id).Error; err != nil {
+		return err
+	}
+	go RemoveKnowledgeVector(context.Background(), id)
+	return nil
 }
 
 // ImportResult summarises a document import.

@@ -483,6 +483,22 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 | `ai_temperature` | 采样温度（默认 0.3） |
 | `ai_product_search` | 是否启用商品信息分析 |
 | `ai_timeout_sec` | 大模型请求超时秒数（默认 30） |
+| `ai_qdrant_url` | Qdrant 向量库地址，如 `http://localhost:6333`；留空则用内存余弦/关键词召回 |
+| `ai_qdrant_api_key` | Qdrant API Key（自建无鉴权可留空） |
+| `ai_qdrant_collection` | Qdrant 集合名（默认 `im_knowledge`） |
+| `ai_score_threshold` | 相似度阈值（0-1），低于该分数的召回结果丢弃，默认 0 不过滤 |
+
+### 向量检索与回退
+
+知识库召回按以下优先级选择实现：
+
+1. **Qdrant + 向量模型** 均配置 → 查询向量化后在 Qdrant 做 ANN 检索（按 `status=1` 过滤、可选相似度阈值），再按命中 ID 回查 DB 并保持相关性排序。**可扩展到大规模知识库，为推荐生产用法。**
+2. **仅配置向量模型**（无 Qdrant）→ 全量加载知识行在内存做余弦相似度（适合小知识库）。
+3. **均未配置** → 关键词（token 重叠）召回兜底。
+
+**数据同步**：知识条目的新增/编辑会异步向量化并 upsert 到 Qdrant；删除会同步删除向量点；状态停用通过 upsert 更新 `status` payload，使其不再被检索命中。`POST /im/knowledge/reindex` 会重建 Qdrant 集合并全量重灌。DB 的 `embedding` 列作为本地缓存与回退保留。
+
+> 部署：`docker-compose.yml` 已内置 `qdrant` 服务，容器内将地址配置为 `http://qdrant:6333` 即可。
 
 ---
 
@@ -614,6 +630,7 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 - ✅ 文档切片入库：上传 TXT/MD/CSV/TSV/JSON/XML/HTML/DOCX/PDF/XLSX，自动提取并切片为多条知识
 - ✅ 商品信息分析：回答时检索在售商品价格/库存/销量
 - ✅ 知识库管理接口与 `im:knowledge` 权限、配置中心 `config_items`
+- ✅ Qdrant 向量库检索：CRUD/导入/重建双写同步，按 ID 回查并保序，未配置时回退内存余弦/关键词
 - ✅ 新增 WS 帧 `typing` / `to_human`，`sender_type` 扩展 AI=3
 
 ### v1.0.0 (2026-05-31)
