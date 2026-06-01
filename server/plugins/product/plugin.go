@@ -34,13 +34,21 @@ func (p *productPlugin) RegisterRoutes(front, admin *gin.RouterGroup) {
 }
 
 func (p *productPlugin) Migrate(db *gorm.DB) error {
-	return db.AutoMigrate(
+	if err := db.AutoMigrate(
 		&productmodel.ProductCategory{},
 		&productmodel.Product{},
 		&productmodel.ProductSku{},
 		&productmodel.ProductImage{},
 		&productmodel.ProductFavorite{},
-	)
+		&productmodel.SpecTemplate{},
+	); err != nil {
+		return err
+	}
+	migrator := db.Migrator()
+	if migrator.HasIndex(&productmodel.ProductSku{}, "uk_product_sku_key") {
+		_ = migrator.DropIndex(&productmodel.ProductSku{}, "uk_product_sku_key")
+	}
+	return migrator.CreateIndex(&productmodel.ProductSku{}, "uk_product_sku_key")
 }
 
 func (p *productPlugin) Install() error   { return nil }

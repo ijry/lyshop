@@ -22,6 +22,12 @@ func RegisterAdminRoutes(g *gin.RouterGroup) {
 	g.POST("/products", middleware.RequirePermission("product:create"), adminCreateProduct)
 	g.PUT("/products/:id", middleware.RequirePermission("product:edit"), adminUpdateProduct)
 	g.DELETE("/products/:id", middleware.RequirePermission("product:delete"), adminDeleteProduct)
+
+	g.GET("/spec-templates", middleware.RequirePermission("product:view"), adminListSpecTemplates)
+	g.GET("/spec-templates/:id", middleware.RequirePermission("product:view"), adminGetSpecTemplate)
+	g.POST("/spec-templates", middleware.RequirePermission("product:edit"), adminCreateSpecTemplate)
+	g.PUT("/spec-templates/:id", middleware.RequirePermission("product:edit"), adminUpdateSpecTemplate)
+	g.DELETE("/spec-templates/:id", middleware.RequirePermission("product:delete"), adminDeleteSpecTemplate)
 }
 
 func adminListCategories(c *gin.Context) {
@@ -194,11 +200,138 @@ func adminDeleteProduct(c *gin.Context) {
 	response.OK(c, nil)
 }
 
-func parseString(v any) string {
-	if s, ok := v.(string); ok {
-		return s
+func adminListSpecTemplates(c *gin.Context) {
+	var q productsvc.SpecTemplateListQuery
+	if err := c.ShouldBindQuery(&q); err != nil {
+		response.Fail(c, 400, err.Error())
+		return
 	}
-	return ""
+	if q.Page <= 0 {
+		q.Page = 1
+	}
+	if q.Size <= 0 || q.Size > 200 {
+		q.Size = 20
+	}
+	list, total, err := productsvc.ListSpecTemplates(c.Request.Context(), q)
+	if err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, response.PageData{
+		List:  list,
+		Total: total,
+		Page:  q.Page,
+		Size:  q.Size,
+	})
+}
+
+func adminGetSpecTemplate(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	row, err := productsvc.GetSpecTemplate(c.Request.Context(), id)
+	if err != nil {
+		response.Fail(c, 404, err.Error())
+		return
+	}
+	response.OK(c, row)
+}
+
+func adminCreateSpecTemplate(c *gin.Context) {
+	var req struct {
+		Name        string                       `json:"name"`
+		CategoryIDs []uint64                     `json:"category_ids"`
+		Attrs       []productsvc.SpecSchemaGroup `json:"attrs"`
+		Status      int8                         `json:"status"`
+		Sort        int                          `json:"sort"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	name := parseString(req.Name)
+	if name == "" {
+		response.Fail(c, 400, "模板名称不能为空")
+		return
+	}
+	categoryIDs, err := productsvc.BuildSpecTemplateCategoryIDs(req.CategoryIDs)
+	if err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	attrs, err := productsvc.BuildSpecTemplateAttrs(req.Attrs)
+	if err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	status := int8(1)
+	if req.Status == 0 {
+		status = 0
+	}
+	row := &productmodel.SpecTemplate{
+		Name:        name,
+		CategoryIDs: categoryIDs,
+		Attrs:       attrs,
+		Status:      status,
+		Sort:        req.Sort,
+	}
+	if err := productsvc.CreateSpecTemplate(c.Request.Context(), row); err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, row)
+}
+
+func adminUpdateSpecTemplate(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	var req struct {
+		Name        *string                       `json:"name"`
+		CategoryIDs *[]uint64                     `json:"category_ids"`
+		Attrs       *[]productsvc.SpecSchemaGroup `json:"attrs"`
+		Status      *int8                         `json:"status"`
+		Sort        *int                          `json:"sort"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	updates := map[string]any{}
+	if req.Name != nil {
+		updates["name"] = parseString(*req.Name)
+	}
+	if req.CategoryIDs != nil {
+		updates["category_ids"] = *req.CategoryIDs
+	}
+	if req.Attrs != nil {
+		updates["attrs"] = *req.Attrs
+	}
+	if req.Status != nil {
+		updates["status"] = *req.Status
+	}
+	if req.Sort != nil {
+		updates["sort"] = *req.Sort
+	}
+	if err := productsvc.UpdateSpecTemplate(c.Request.Context(), id, updates); err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, nil)
+}
+
+func adminDeleteSpecTemplate(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err := productsvc.DeleteSpecTemplate(c.Request.Context(), id); err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, nil)
+}
+
+func parseString(v any) string {
+	switch value := v.(type) {
+	case string:
+		return value
+	default:
+		return ""
+	}
 }
 
 func parseFloat64(v any) (float64, bool) {

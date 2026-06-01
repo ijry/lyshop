@@ -88,6 +88,54 @@ func TestReplaceProductSkusInactivateMissing(t *testing.T) {
 	require.Equal(t, int64(1), inactiveCount)
 }
 
+func TestProductSkuKeyUniquePerProduct(t *testing.T) {
+	testDB := setupProductTestDB(t)
+	first := &productmodel.Product{
+		Title:  "商品1",
+		Price:  10,
+		Status: 1,
+		Detail: json.RawMessage(`{"version":1,"blocks":[]}`),
+	}
+	second := &productmodel.Product{
+		Title:  "商品2",
+		Price:  20,
+		Status: 1,
+		Detail: json.RawMessage(`{"version":1,"blocks":[]}`),
+	}
+	require.NoError(t, testDB.Create(first).Error)
+	require.NoError(t, testDB.Create(second).Error)
+
+	redAttrs, err := EncodeSkuAttrs([]productmodel.SkuAttr{{Name: "颜色", Value: "红"}})
+	require.NoError(t, err)
+	key := CanonicalSkuKey([]productmodel.SkuAttr{{Name: "颜色", Value: "红"}})
+
+	require.NoError(t, testDB.Create(&productmodel.ProductSku{
+		ProductID: first.ID,
+		Attrs:     redAttrs,
+		Price:     10,
+		Stock:     5,
+		SkuKey:    key,
+		Status:    productmodel.ProductSkuStatusActive,
+	}).Error)
+	require.NoError(t, testDB.Create(&productmodel.ProductSku{
+		ProductID: second.ID,
+		Attrs:     redAttrs,
+		Price:     20,
+		Stock:     8,
+		SkuKey:    key,
+		Status:    productmodel.ProductSkuStatusActive,
+	}).Error)
+
+	require.Error(t, testDB.Create(&productmodel.ProductSku{
+		ProductID: first.ID,
+		Attrs:     redAttrs,
+		Price:     10,
+		Stock:     1,
+		SkuKey:    key,
+		Status:    productmodel.ProductSkuStatusActive,
+	}).Error)
+}
+
 func mustSKU(t *testing.T, attrs []productmodel.SkuAttr, price float64, stock int) productmodel.ProductSku {
 	t.Helper()
 	raw, err := json.Marshal(attrs)

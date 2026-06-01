@@ -13,7 +13,8 @@
       "sort": 10,
       "children": [
         { "title": "商品列表", "title_key": "menu.product.list", "path": "/product/list", "permission": "product:view" },
-        { "title": "商品分类", "title_key": "menu.product.category", "path": "/product/category", "permission": "product:view" }
+        { "title": "商品分类", "title_key": "menu.product.category", "path": "/product/category", "permission": "product:view" },
+        { "title": "规格模板", "title_key": "menu.product.specTemplates", "path": "/product/spec-templates", "permission": "product:view" }
       ]
     }
   ],
