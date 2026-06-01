@@ -1260,6 +1260,17 @@ const routes: Record<string, any> = {
       { key: 'ai_auto_eval', label: '自动评估（LLM-as-Judge）', type: 'switch', placeholder: 'AI 回答后自动评估忠实度与相关性' },
     ]},
   ],
+  'GET /admin/api/config/im': {
+    ai_enabled: '0', ai_base_url: 'http://localhost:11434/v1', ai_api_key: '',
+    ai_chat_model: 'qwen2.5:7b', ai_embed_model: 'bge-m3',
+    ai_system_prompt: '', ai_human_keywords: '人工,转人工,人工客服,真人,客服人工',
+    ai_top_k: '3', ai_temperature: '0.3', ai_product_search: '1', ai_timeout_sec: '30',
+    ai_qdrant_url: 'http://localhost:6333', ai_qdrant_api_key: '', ai_qdrant_collection: 'im_knowledge',
+    ai_score_threshold: '0', ai_hybrid: '0', ai_recall_k: '0',
+    ai_rerank_url: '', ai_rerank_api_key: '', ai_rerank_model: '',
+    ai_query_rewrite: '', ai_query_rewrite_n: '3', ai_auto_eval: '0',
+  },
+  'PUT /admin/api/config/im': { success: true },
   'GET /admin/api/config/': { app_id: '', mch_id: '', api_key: '' },
 
   // Site Settings
@@ -1318,7 +1329,7 @@ const routes: Record<string, any> = {
     'order:view', 'order:ship', 'order:refund', 'order:review-reply',
     'wms:view', 'wms:edit',
     'marketing:view', 'marketing:edit',
-    'im:view', 'im:reply',
+    'im:view', 'im:reply', 'im:knowledge',
     'ai:view', 'ai:generate', 'ai:config',
     'decor:view', 'decor:edit',
   ],

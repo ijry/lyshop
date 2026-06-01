@@ -960,8 +960,15 @@ const routes: Record<string, any> = {
   'GET /api/v1/checkin/status': { checked_today: false, consecutive_days: 3, month_dates: ['2026-05-17', '2026-05-20', '2026-05-21'], month_count: 3, month_points: 40 },
   'GET /api/v1/checkin/rules': [{ day: 0, points: 10 }, { day: 3, points: 20 }, { day: 7, points: 50 }],
   'POST /api/v1/checkin': { points: 20, consecutive_days: 4 },
-  'GET /api/v1/im/session': { id: 1, user_id: 1, status: 2 },
-  'GET /api/v1/im/messages': { list: [], total: 0 },
+  'GET /api/v1/im/session': { id: 1, user_id: 1, staff_id: 0, mode: 'ai', status: 2, queue_position: 0, last_msg: '', unread_count: 0 },
+  'GET /api/v1/im/messages': { list: [
+    { id: 1, session_id: 1, sender_type: 0, sender_id: 0, type: 'system', content: 'AI 智能助手已为您服务，如需人工客服请输入「人工」或点击转人工按钮', is_read: 1, created_at: '2026-05-28T10:00:00Z' },
+    { id: 2, session_id: 1, sender_type: 1, sender_id: 1, type: 'text', content: '你们退货政策是什么？', is_read: 1, created_at: '2026-05-28T10:01:00Z' },
+    { id: 3, session_id: 1, sender_type: 3, sender_id: 0, type: 'text', content: '您好！根据知识库资料，本商城支持7天无理由退货，商品须保持完好原状。退货运费由买家承担，商品质量问题由商家承担，退款1-3个工作日到账。', is_read: 1, created_at: '2026-05-28T10:01:00Z' },
+    { id: 4, session_id: 1, sender_type: 1, sender_id: 1, type: 'text', content: '一般几天发货？', is_read: 1, created_at: '2026-05-28T10:03:00Z' },
+    { id: 5, session_id: 1, sender_type: 3, sender_id: 0, type: 'text', content: '付款成功后通常1-2个工作日内发货，节假日会顺延。发货后会推送物流信息，可在订单详情页实时查看物流状态。', is_read: 1, created_at: '2026-05-28T10:03:00Z' },
+  ], total: 5 },
+  'POST /api/v1/im/feedback': { success: true },
   'GET /api/v1/messages/unread': { system: 2, order: 1, marketing: 3, im: 0 },
   'GET /api/v1/messages': {
     list: [
