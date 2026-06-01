@@ -41,6 +41,7 @@ func (p *imPlugin) Migrate(db *gorm.DB) error {
 		&immodel.ImAutoReply{},
 		&immodel.ImTransferLog{},
 		&immodel.ImKnowledge{},
+		&immodel.ImFeedback{},
 	)
 }
 

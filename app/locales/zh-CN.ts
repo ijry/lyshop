@@ -507,6 +507,8 @@ export default {
     aiHint: '当前由 AI 智能助手为您服务',
     transferToHuman: '转人工',
     transferNote: '正在为您转接人工客服…',
+    ratePrompt: '这个回答有帮助吗？',
+    rated: '已评价，感谢反馈',
   },
 
   // ---------- pages/login/index.vue ----------

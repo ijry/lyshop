@@ -71,6 +71,8 @@
   - 商品信息分析：按用户问题检索在售商品（标题/副标题 LIKE），注入价格、库存、销量供模型参考。
 - **混合检索（Hybrid + RRF）**：`ai_hybrid=on` 时向量召回与关键词召回并行，结果经 Reciprocal Rank Fusion（k=60）融合，召回长尾更稳。
 - **重排（Rerank）**：配置 `ai_rerank_url` 后，召回候选池（RecallK）送 cross-encoder 精排，支持 Cohere / Jina / TEI 兼容 `/rerank` 接口；不配置则保持召回顺序直接取 TopK。
+- **查询改写**：`ai_query_rewrite` 可选 `rewrite`（LLM 扩写口语化问题）、`hyde`（生成假设回答作为检索向量）、`multi`（生成 N 个变体各自检索再 RRF 融合）；改写仅作用于检索，不影响发给 LLM 的原始问题。
+- **评估闭环**：用户可在聊天页对 AI 回答👍/👎，结果存入 `ImFeedback`（source=user）；开启 `ai_auto_eval` 后 AI 回答完成后自动用 LLM-as-Judge 评估忠实度和相关性（0-5，source=auto）；管理后台可查看列表和聚合统计（`/admin/api/im/feedback`）。
 - **向量库部署**: `docker-compose.yml` 内置 `qdrant` 服务（`qdrant/qdrant`），容器内地址 `http://qdrant:6333`。
 - **配置项**（配置中心 → IM客服）：`ai_enabled`、`ai_base_url`、`ai_api_key`、`ai_chat_model`、`ai_embed_model`、`ai_system_prompt`、`ai_human_keywords`、`ai_top_k`、`ai_temperature`、`ai_product_search`、`ai_timeout_sec`、`ai_qdrant_url`、`ai_qdrant_api_key`、`ai_qdrant_collection`、`ai_score_threshold`、`ai_hybrid`、`ai_recall_k`、`ai_rerank_url`、`ai_rerank_api_key`、`ai_rerank_model`。
 
@@ -138,6 +140,8 @@
 - `server/plugins/im/service/ai.go` - 本地大模型调用、RAG 召回、商品信息分析
 - `server/plugins/im/service/vectorstore.go` - Qdrant 向量库客户端（REST）
 - `server/plugins/im/service/rerank.go` - 混合检索 RRF 融合 + cross-encoder 重排客户端
+- `server/plugins/im/service/query_rewrite.go` - 查询改写（rewrite/HyDE/multi）
+- `server/plugins/im/service/eval.go` - LLM-as-Judge 评估 + 用户反馈 CRUD
 - `server/plugins/im/service/knowledge.go` - 知识库 CRUD、文档导入切片
 - `server/plugins/im/service/document.go` - 多格式文本提取与切片
 - `server/plugins/im/service/hub.go` - WebSocket Hub
@@ -169,6 +173,8 @@
 - ✅ Qdrant 向量库检索：docker-compose 内置 qdrant，CRUD/导入/重建双写同步、按 ID 回查保序、未配置时回退内存余弦/关键词
 - ✅ 混合检索（RRF）：向量 + 关键词双路召回经 Reciprocal Rank Fusion 融合（`ai_hybrid`）
 - ✅ 重排（Rerank）：cross-encoder 精排候选池，兼容 Cohere/Jina/TEI（`ai_rerank_url`）
+- ✅ 查询改写：rewrite / HyDE / multi（N 变体+RRF），仅作用于检索侧
+- ✅ 评估闭环：用户👍👎反馈 + LLM-as-Judge 自动评估（忠实度+相关性），管理后台聚合统计
 - ✅ 新增 WS 帧：`typing`（AI 输入指示）、`to_human`（转人工请求）
 
 ### 2026-05-31

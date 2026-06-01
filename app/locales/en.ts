@@ -507,6 +507,8 @@ export default {
     aiHint: 'Answered by AI assistant',
     transferToHuman: 'Talk to a human',
     transferNote: 'Requesting a human agent…',
+    ratePrompt: 'Was this helpful?',
+    rated: 'Thanks for your feedback!',
   },
 
   // ---------- pages/login/index.vue ----------

@@ -78,6 +78,27 @@ type ImAutoReply struct {
 	Status    int8   `gorm:"not null;default:1" json:"status"`
 }
 
+// ImFeedback records user or auto-eval ratings for an AI answer.
+//
+// source = "user"  → submitted by the end user (thumbs up/down + optional comment).
+// source = "auto"  → LLM-as-judge scores stored by AutoScore.
+type ImFeedback struct {
+	model.Base
+	SessionID    uint64  `gorm:"not null;index"   json:"session_id"`
+	Source       string  `gorm:"size:16;not null" json:"source"` // user|auto
+	Rating       int8    `gorm:"not null;default:0" json:"rating"` // user: 1=👍 -1=👎 0=unset
+	Comment      string  `gorm:"size:512"          json:"comment"`
+	Faithfulness float64 `gorm:"not null;default:0" json:"faithfulness"` // auto 0-5
+	Relevance    float64 `gorm:"not null;default:0" json:"relevance"`    // auto 0-5
+	Query        string  `gorm:"type:text"          json:"query"`
+	Answer       string  `gorm:"type:text"          json:"answer"`
+}
+
+const (
+	FeedbackSourceUser = "user"
+	FeedbackSourceAuto = "auto"
+)
+
 // ImKnowledge is one entry in the AI customer-service RAG knowledge base.
 // Content is embedded into a vector (Embedding) when the local LLM exposes an
 // embeddings endpoint; otherwise retrieval falls back to keyword matching.

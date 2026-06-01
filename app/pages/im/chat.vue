@@ -48,6 +48,15 @@
                 style="box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.06); word-break: break-all;">
                 {{ m.content }}
               </view>
+              <!-- Thumbs feedback — only on AI replies -->
+              <view v-if="m.sender_type === 3 && !m.rated" class="flex items-center gap-16rpx mt-8rpx ml-8rpx">
+                <text class="text-gray-300 text-20rpx">{{ $t('chat.ratePrompt') }}</text>
+                <text class="text-24rpx" @click="rate(m, 1)">👍</text>
+                <text class="text-24rpx" @click="rate(m, -1)">👎</text>
+              </view>
+              <view v-if="m.sender_type === 3 && m.rated" class="mt-8rpx ml-8rpx">
+                <text class="text-gray-300 text-20rpx">{{ $t('chat.rated') }}</text>
+              </view>
             </view>
           </view>
         </view>
@@ -98,7 +107,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { get } from '@/utils/request'
+import { get, post } from '@/utils/request'
 
 const { t } = useI18n()
 
@@ -249,6 +258,19 @@ function requestHuman() {
       data: JSON.stringify({ type: 'to_human', session_id: sessionID.value })
     })
   }
+}
+
+// Submit a 👍/👎 rating for an AI message.
+async function rate(msg: any, rating: 1 | -1) {
+  msg.rated = true
+  try {
+    await post('/api/v1/im/feedback', {
+      session_id: sessionID.value,
+      rating,
+      query: messages.value.find(m => m.sender_type === 1 && m.id < msg.id)?.content ?? '',
+      answer: msg.content,
+    })
+  } catch { /* best-effort, ignore errors */ }
 }
 
 function scheduleLocalReply(content: string) {

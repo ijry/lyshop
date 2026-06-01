@@ -744,6 +744,21 @@ export default {
   'imkb.testRerank': '测试重排服务',
   'imkb.rerankReplyPrefix': '重排服务返回：',
 
+  // 评估反馈
+  'feedback.title': 'AI 回答评估',
+  'feedback.source.auto': '自动评估',
+  'feedback.source.user': '用户反馈',
+  'feedback.faithfulness': '忠实度',
+  'feedback.relevance': '相关性',
+  'feedback.rating': '评分',
+  'feedback.comment': '评语',
+  'feedback.query': '用户问题',
+  'feedback.answer': 'AI 回答',
+  'feedback.avgFaith': '平均忠实度',
+  'feedback.avgRelevance': '平均相关性',
+  'feedback.avgRating': '平均评分',
+  'feedback.count': '记录数',
+
   // AI
   'ai.imageGen.title': 'AI 生图',
   'ai.imageGen.subtitle': '生成商品图片',

@@ -38,6 +38,10 @@ func RegisterAdminRoutes(g *gin.RouterGroup) {
 	g.POST("/im/ai/test", middleware.RequirePermission("im:knowledge"), adminTestAI)
 	// 重排服务连通性测试
 	g.POST("/im/ai/rerank-test", middleware.RequirePermission("im:knowledge"), adminTestRerank)
+
+	// 评估反馈
+	g.GET("/im/feedback", middleware.RequirePermission("im:view"), adminListFeedback)
+	g.GET("/im/feedback/stats", middleware.RequirePermission("im:view"), adminFeedbackStats)
 }
 
 func adminListKnowledge(c *gin.Context) {
@@ -184,6 +188,27 @@ func adminTestRerank(c *gin.Context) {
 		return
 	}
 	response.OK(c, gin.H{"reply": reply})
+}
+
+func adminListFeedback(c *gin.Context) {
+	sessionID, _ := strconv.ParseUint(c.Query("session_id"), 10, 64)
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	size, _ := strconv.Atoi(c.DefaultQuery("size", "20"))
+	list, total, err := imsvc.ListFeedback(c.Request.Context(), sessionID, page, size)
+	if err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, response.PageData{List: list, Total: total, Page: page, Size: size})
+}
+
+func adminFeedbackStats(c *gin.Context) {
+	stats, err := imsvc.FeedbackStats(c.Request.Context())
+	if err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, stats)
 }
 
 func adminListSessions(c *gin.Context) {

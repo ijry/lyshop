@@ -40,6 +40,14 @@
     { "key": "ai_recall_k", "label": "候选召回数", "type": "number", "placeholder": "重排前每路候选条数，默认 4×召回条数" },
     { "key": "ai_rerank_url", "label": "重排服务地址", "type": "text", "placeholder": "Cohere/Jina/TEI 兼容 /rerank，留空则不重排" },
     { "key": "ai_rerank_api_key", "label": "重排 API Key", "type": "password", "placeholder": "自建无鉴权可留空" },
-    { "key": "ai_rerank_model", "label": "重排模型", "type": "text", "placeholder": "如 bge-reranker-v2-m3" }
+    { "key": "ai_rerank_model", "label": "重排模型", "type": "text", "placeholder": "如 bge-reranker-v2-m3" },
+    { "key": "ai_query_rewrite", "label": "查询改写模式", "type": "select", "options": [
+        {"label": "关闭", "value": ""},
+        {"label": "rewrite（LLM 改写）", "value": "rewrite"},
+        {"label": "hyde（生成假设回答）", "value": "hyde"},
+        {"label": "multi（多路变体+RRF）", "value": "multi"}
+      ], "placeholder": "默认关闭" },
+    { "key": "ai_query_rewrite_n", "label": "多路变体数", "type": "number", "placeholder": "multi 模式生成的查询变体数，默认 3" },
+    { "key": "ai_auto_eval", "label": "自动评估（LLM-as-Judge）", "type": "switch", "placeholder": "AI 回答后自动用大模型评估忠实度与相关性并记录" }
   ]
 }

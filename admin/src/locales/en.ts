@@ -731,6 +731,21 @@ export default {
   'imkb.testRerank': 'Test Reranker',
   'imkb.rerankReplyPrefix': 'Reranker replied: ',
 
+  // Evaluation feedback
+  'feedback.title': 'AI Answer Evaluation',
+  'feedback.source.auto': 'Auto Eval',
+  'feedback.source.user': 'User Feedback',
+  'feedback.faithfulness': 'Faithfulness',
+  'feedback.relevance': 'Relevance',
+  'feedback.rating': 'Rating',
+  'feedback.comment': 'Comment',
+  'feedback.query': 'User Query',
+  'feedback.answer': 'AI Answer',
+  'feedback.avgFaith': 'Avg Faithfulness',
+  'feedback.avgRelevance': 'Avg Relevance',
+  'feedback.avgRating': 'Avg Rating',
+  'feedback.count': 'Count',
+
   // AI
   'ai.imageGen.title': 'AI Image Gen',
   'ai.imageGen.subtitle': 'Generate Product Images',

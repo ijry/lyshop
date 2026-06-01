@@ -49,6 +49,15 @@ type AIConfig struct {
 	RerankURL    string
 	RerankAPIKey string
 	RerankModel  string
+
+	// Query rewriting. Mode: "" (off) | "rewrite" (simple LLM rewrite) |
+	// "hyde" (Hypothetical Document Embeddings) | "multi" (N variants + RRF).
+	QueryRewrite  string
+	QueryRewriteN int // number of variants for "multi" mode (default 3)
+
+	// Evaluation. When AutoEval is true, AIAnswer scores its own output using
+	// the LLM-as-judge pattern and stores the result in ImFeedback.
+	AutoEval bool
 }
 
 const aiConfigPlugin = "im"
@@ -122,6 +131,11 @@ func LoadAIConfig() AIConfig {
 		RerankURL:    strings.TrimRight(loadCfg("ai_rerank_url", ""), "/"),
 		RerankAPIKey: loadCfg("ai_rerank_api_key", ""),
 		RerankModel:  loadCfg("ai_rerank_model", ""),
+
+		QueryRewrite:  loadCfg("ai_query_rewrite", ""),
+		QueryRewriteN: loadInt("ai_query_rewrite_n", 3),
+
+		AutoEval: loadBool("ai_auto_eval", false),
 	}
 }
 
@@ -259,6 +273,15 @@ func cosine(a, b []float64) float64 {
 // Every stage degrades gracefully: no embed model → keyword only; reranker
 // down → pre-rerank order; empty pool → nil.
 func retrieveKnowledge(ctx context.Context, cfg AIConfig, query string) []immodel.ImKnowledge {
+	// Multi-query rewrites fan out retrieval across N variants; this mode takes
+	// full ownership of the pipeline and returns here.
+	if strings.ToLower(strings.TrimSpace(cfg.QueryRewrite)) == "multi" {
+		if hits := retrieveKnowledgeMulti(ctx, cfg, query); hits != nil {
+			return hits
+		}
+		// fall through to single-query path if multi produced nothing
+	}
+
 	topK := cfg.TopK
 	if topK <= 0 {
 		topK = 3
@@ -530,8 +553,11 @@ func AIAnswer(ctx context.Context, session *immodel.ImSession, userText string) 
 		return "", fmt.Errorf("AI 客服未启用")
 	}
 
+	// Rewrite the retrieval query (not the generation query) if configured.
+	retrievalQuery := applyQueryRewrite(ctx, cfg, userText)
+
 	var ctxParts []string
-	if kb := retrieveKnowledge(ctx, cfg, userText); len(kb) > 0 {
+	if kb := retrieveKnowledge(ctx, cfg, retrievalQuery); len(kb) > 0 {
 		var b strings.Builder
 		b.WriteString("【知识库】\n")
 		for i, k := range kb {
@@ -539,7 +565,7 @@ func AIAnswer(ctx context.Context, session *immodel.ImSession, userText string) 
 		}
 		ctxParts = append(ctxParts, b.String())
 	}
-	if ps := retrieveProducts(ctx, cfg, userText); len(ps) > 0 {
+	if ps := retrieveProducts(ctx, cfg, retrievalQuery); len(ps) > 0 {
 		var b strings.Builder
 		b.WriteString("【商品信息】\n")
 		for i, p := range ps {
@@ -571,7 +597,18 @@ func AIAnswer(ctx context.Context, session *immodel.ImSession, userText string) 
 	}
 	msgs = append(msgs, hist...)
 
-	return cfg.ChatComplete(ctx, msgs)
+	reply, err := cfg.ChatComplete(ctx, msgs)
+	if err != nil {
+		return "", err
+	}
+
+	// Async LLM-as-judge auto-eval: score faithfulness + relevance and store.
+	if cfg.AutoEval {
+		context := strings.Join(ctxParts, "\n")
+		go AutoScore(context, userText, reply, session.ID)
+	}
+
+	return reply, nil
 }
 
 // recentHistory returns up to `limit` most recent messages of a session as

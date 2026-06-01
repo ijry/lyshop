@@ -492,19 +492,30 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 | `ai_rerank_url` | 重排服务地址（Cohere/Jina/TEI 兼容 `/rerank`，留空则不重排） |
 | `ai_rerank_api_key` | 重排 API Key |
 | `ai_rerank_model` | 重排模型，如 `bge-reranker-v2-m3` |
+| `ai_query_rewrite` | 查询改写模式：`""` 关闭 / `rewrite` LLM改写 / `hyde` 生成假设回答 / `multi` 多路变体+RRF |
+| `ai_query_rewrite_n` | `multi` 模式生成的查询变体数（默认 3） |
+| `ai_auto_eval` | 开启 LLM-as-Judge 自动评估（忠实度 + 相关性，异步存入 `ImFeedback`） |
 
 ### 召回 → 融合 → 重排 Pipeline
 
 知识库召回完整流程：
 
 ```
-query
-  ├─ recallVector (Qdrant ANN / in-memory cosine)  ── RecallK 候选
-  └─ recallKeyword (token-overlap, Hybrid=true 时)  ── RecallK 候选
+用户问题 (userText)
+  │
+  ├─ QueryRewrite ─→ retrievalQuery
+  │   rewrite: LLM 扩写     hyde: 生成假设回答     multi: N 变体各自检索→RRF
+  │
+  ├─ recallVector(retrievalQuery, RecallK)  ← Qdrant ANN / 内存余弦 / nil
+  └─ recallKeyword(retrievalQuery, RecallK) ← token-overlap (Hybrid=true)
        │
-       └─ RRF 融合 (Hybrid=true) ─→ 去重排序候选池
+       └─ RRF 融合 (Hybrid=true) ─→ 去重候选池
               │
-              └─ cross-encoder Rerank (RerankURL 非空) ─→ TopK 精排结果
+              └─ cross-encoder Rerank (RerankURL 非空) ─→ TopK 精排
+                     │
+                     └─ 注入 Prompt → LLM 生成 → reply
+                                              │
+                                              └─ AutoEval (异步) → ImFeedback
 ```
 
 各阶段均可独立关闭（不配置即跳过），后向兼容现有关键词兜底：
@@ -526,6 +537,36 @@ query
 **接口**: `POST /admin/api/im/ai/rerank-test`  
 **权限**: `im:knowledge`  
 **响应**: `{ "reply": "连接正常" }`
+
+---
+
+### 用户提交反馈
+
+**接口**: `POST /api/v1/im/feedback`  
+**权限**: 需用户登录  
+**请求体**: `{ "session_id": 1, "rating": 1, "comment": "很有帮助", "query": "...", "answer": "..." }`  
+**说明**: `rating` 1=👍 -1=👎；`query`/`answer` 可选，存入用于后续分析
+
+---
+
+### 管理端反馈列表
+
+**接口**: `GET /admin/api/im/feedback`  
+**权限**: `im:view`  
+**参数**: `session_id`（可选）、`page`、`size`  
+**响应**: `{ list: [...], total, page, size }`  
+**字段**:
+- `source`: `user`（用户提交）/ `auto`（LLM-as-Judge 自动评估）
+- `rating`: 用户评分 1=👍 -1=👎 0=未评
+- `faithfulness` / `relevance`: 自动评估分数（0-5），`source=user` 时为 0
+
+---
+
+### 管理端反馈统计
+
+**接口**: `GET /admin/api/im/feedback/stats`  
+**权限**: `im:view`  
+**响应**: `{ "auto": { count, avg_faith, avg_relevance, avg_rating }, "user": { ... } }`
 
 ---
 
@@ -625,6 +666,23 @@ query
 
 ---
 
+### ImFeedback (AI 答案评估反馈表)
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| id | uint64 | 主键 |
+| session_id | uint64 | 会话ID (索引) |
+| source | string | `user`=用户提交，`auto`=LLM-as-Judge |
+| rating | int8 | 用户评分 1=👍 -1=👎 0=未评 |
+| comment | string | 用户评语 (512字符) |
+| faithfulness | float64 | 忠实度（0-5，auto 填写） |
+| relevance | float64 | 相关性（0-5，auto 填写） |
+| query | text | 用户问题 |
+| answer | text | AI 回答 |
+| created_at | time | 创建时间 |
+
+---
+
 ## 权限说明
 
 | 权限 | 说明 |
@@ -660,6 +718,8 @@ query
 - ✅ Qdrant 向量库检索：CRUD/导入/重建双写同步，按 ID 回查并保序，未配置时回退内存余弦/关键词
 - ✅ 混合检索（RRF 融合）：向量召回 + 关键词召回按 Reciprocal Rank Fusion 融合（`ai_hybrid=on`）
 - ✅ 重排（Rerank）：cross-encoder 精排候选池至 TopK，兼容 Cohere/Jina/TEI `/rerank` 接口
+- ✅ 查询改写：rewrite（LLM 扩写）/ hyde（假设文档嵌入）/ multi（N 变体+RRF）
+- ✅ 评估闭环：用户👍👎反馈（`POST /im/feedback`）+ LLM-as-Judge 自动评估忠实度/相关性（`ai_auto_eval`）
 - ✅ 新增 WS 帧 `typing` / `to_human`，`sender_type` 扩展 AI=3
 
 ### v1.0.0 (2026-05-31)
