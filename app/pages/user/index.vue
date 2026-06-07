@@ -164,6 +164,8 @@ const menuCells = computed(() => [
     action: () => uni.navigateTo({ url: '/pages/user/favorites' }) },
   { label: t('user.vipCenter'), icon: 'level', value: '',
     action: () => uni.navigateTo({ url: '/pages/user/vip' }) },
+  { label: t('user.distributionCenter'), icon: 'share', value: '',
+    action: () => uni.navigateTo({ url: '/pages/distribution/index' }) },
   { label: t('user.accountSecurity'), icon: 'lock', value: '',
     action: () => uni.navigateTo({ url: '/pages/user/security' }) },
 ])

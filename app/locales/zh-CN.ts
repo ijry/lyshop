@@ -298,6 +298,7 @@ export default {
     myFavorites: '我的收藏',
     myPointsMenu: '我的积分',
     vipCenter: '会员中心',
+    distributionCenter: '分销中心',
     accountSecurity: '账号与安全',
     contactService: '联系客服',
     switchPreset: '切换演示行业',

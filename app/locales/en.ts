@@ -298,6 +298,7 @@ export default {
     myFavorites: 'My Favorites',
     myPointsMenu: 'My Points',
     vipCenter: 'VIP Center',
+    distributionCenter: 'Distribution Center',
     accountSecurity: 'Account & Security',
     contactService: 'Contact Support',
     switchPreset: 'Switch Demo Preset',

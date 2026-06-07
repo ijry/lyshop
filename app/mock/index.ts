@@ -980,6 +980,43 @@ const routes: Record<string, any> = {
     ],
     total: 5,
   },
+  // 分销
+  'GET /api/v1/distribution/info': {
+    id: 1, user_id: 1001, real_name: '张三', phone: '138****8888',
+    level: 1, status: 'active',
+    total_earnings: 3268.50, available_amount: 1580.00,
+    frozen_amount: 320.00, withdrawn_amount: 1368.50,
+    total_customers: 47, total_orders: 132,
+    created_at: '2026-03-15T08:00:00Z',
+  },
+  'GET /api/v1/distribution/team': {
+    list: [
+      { id: 2, user_id: 1002, real_name: '李四', level: 2, status: 'active', total_earnings: 560.00, total_customers: 8, total_orders: 23, created_at: '2026-04-01T10:00:00Z' },
+      { id: 3, user_id: 1003, real_name: '王五', level: 2, status: 'active', total_earnings: 210.00, total_customers: 3, total_orders: 9, created_at: '2026-04-18T14:30:00Z' },
+      { id: 4, user_id: 1004, real_name: '赵六', level: 2, status: 'pending', total_earnings: 0, total_customers: 0, total_orders: 0, created_at: '2026-05-20T09:00:00Z' },
+    ],
+    total: 3,
+  },
+  'GET /api/v1/distribution/orders': {
+    list: [
+      { id: 101, order_id: 10001, order_no: 'ORD2026050001', level: 1, order_amount: 398.00, commission_rate: 0.08, commission_amount: 31.84, status: 'settled', settled_at: '2026-05-10T12:00:00Z', created_at: '2026-05-03T09:20:00Z' },
+      { id: 102, order_id: 10002, order_no: 'ORD2026050012', level: 1, order_amount: 199.00, commission_rate: 0.08, commission_amount: 15.92, status: 'pending', settled_at: null, created_at: '2026-05-08T16:45:00Z' },
+      { id: 103, order_id: 10003, order_no: 'ORD2026050028', level: 2, order_amount: 598.00, commission_rate: 0.03, commission_amount: 17.94, status: 'settled', settled_at: '2026-05-15T10:00:00Z', created_at: '2026-05-08T20:10:00Z' },
+      { id: 104, order_id: 10004, order_no: 'ORD2026050041', level: 1, order_amount: 888.00, commission_rate: 0.08, commission_amount: 71.04, status: 'pending', settled_at: null, created_at: '2026-05-22T11:30:00Z' },
+      { id: 105, order_id: 10005, order_no: 'ORD2026050059', level: 1, order_amount: 299.00, commission_rate: 0.08, commission_amount: 23.92, status: 'cancelled', settled_at: null, created_at: '2026-05-24T08:00:00Z' },
+    ],
+    total: 5,
+  },
+  'GET /api/v1/distribution/withdrawals': {
+    list: [
+      { id: 1, amount: 500.00, fee: 5.00, actual_amount: 495.00, status: 'completed', bank_name: '招商银行', account_number: '****8888', account_holder: '张三', reject_reason: '', created_at: '2026-04-20T10:00:00Z' },
+      { id: 2, amount: 868.50, fee: 8.69, actual_amount: 859.81, status: 'completed', bank_name: '工商银行', account_number: '****8888', account_holder: '张三', reject_reason: '', created_at: '2026-05-01T09:00:00Z' },
+      { id: 3, amount: 300.00, fee: 3.00, actual_amount: 297.00, status: 'pending', bank_name: '招商银行', account_number: '****8888', account_holder: '张三', reject_reason: '', created_at: '2026-05-25T14:00:00Z' },
+    ],
+    total: 3,
+  },
+  'POST /api/v1/distribution/apply': { id: 5, status: 'pending' },
+  'POST /api/v1/distribution/withdrawals': { id: 4, status: 'pending' },
 }
 
 /**
