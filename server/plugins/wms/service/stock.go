@@ -53,6 +53,19 @@ func ListStocks(ctx context.Context, q StockListQuery) ([]StockView, int64, erro
 	return list, total, nil
 }
 
+func ListStocksBySkuIDs(ctx context.Context, skuIDs []uint64) ([]wmsmodel.InventoryStock, error) {
+	if len(skuIDs) == 0 {
+		return []wmsmodel.InventoryStock{}, nil
+	}
+	var rows []wmsmodel.InventoryStock
+	if err := db.DB.WithContext(ctx).
+		Where("sku_id IN ?", skuIDs).
+		Find(&rows).Error; err != nil {
+		return nil, WrapDBError("查询库存失败", err)
+	}
+	return rows, nil
+}
+
 func UpdateStockSafety(ctx context.Context, id uint64, safeQty int) error {
 	if id == 0 {
 		return InvalidError("库存ID不能为空")

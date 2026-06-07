@@ -233,6 +233,13 @@ export default {
   'product.form.addImage': '+ Image block',
   'product.form.addRichText': '+ Rich text block',
   'product.form.nameRequired': 'Product name is required',
+  'product.form.specTemplate': 'Spec Template',
+  'product.form.noTemplate': 'No template (manual input)',
+  'product.form.templateSwitchConfirm': 'Switching template will clear current SKU data. Continue?',
+  'product.form.generatedSkuTable': 'Generated SKU List',
+  'product.form.skuAttrCombo': 'Variant',
+  'product.form.wmsSellable': 'WMS Sellable',
+  'product.form.wmsStockNew': 'Initialized on save',
 
   // AI Image
   'product.ai.title': 'AI Image Assistant',

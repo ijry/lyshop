@@ -55,9 +55,105 @@
           <div>
             <div class="flex items-center justify-between mb-2">
               <label class="block text-sm font-medium text-slate-700">{{ $t('product.form.skuSection') }}</label>
-              <button class="text-xs text-blue-600 hover:underline" @click="addSku">{{ $t('product.form.addSku') }}</button>
+              <button v-if="selectedTemplateId === 0" class="text-xs text-blue-600 hover:underline" @click="addSku">{{ $t('product.form.addSku') }}</button>
             </div>
-            <div class="space-y-3">
+
+            <!-- 规格模板选择器 -->
+            <div class="mb-3">
+              <label class="block text-xs text-slate-500 mb-1">{{ $t('product.form.specTemplate') }}</label>
+              <select
+                v-model.number="selectedTemplateId"
+                class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                @change="onTemplateChange"
+              >
+                <option :value="0">{{ $t('product.form.noTemplate') }}</option>
+                <option v-for="tpl in specTemplates" :key="tpl.id" :value="tpl.id">{{ tpl.name }}</option>
+              </select>
+            </div>
+
+            <!-- 模板模式 -->
+            <div v-if="selectedTemplateId > 0" class="space-y-4">
+              <div v-for="group in currentTemplateAttrs" :key="group.name" class="border border-slate-100 rounded-xl p-3">
+                <p class="text-xs font-medium text-slate-600 mb-2">{{ group.name }}</p>
+                <div class="flex flex-wrap gap-2">
+                  <button
+                    v-for="val in group.values"
+                    :key="val"
+                    type="button"
+                    :class="isValueSelected(group.name, val)
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white text-slate-600 border-slate-200 hover:border-blue-400'"
+                    class="px-3 py-1 text-xs rounded-lg border transition"
+                    @click="toggleAttrValue(group.name, val)"
+                  >{{ val }}</button>
+                </div>
+              </div>
+
+              <div v-if="skus.length > 0 && skus[0].attrs.some(a => a.name)">
+                <p class="text-xs font-medium text-slate-600 mb-2">{{ $t('product.form.generatedSkuTable') }}</p>
+                <div class="overflow-x-auto">
+                  <table class="w-full text-sm border border-slate-100 rounded-xl overflow-hidden">
+                    <thead class="bg-slate-50">
+                      <tr>
+                        <th class="px-3 py-2 text-left text-xs text-slate-500 font-medium">{{ $t('product.form.skuAttrCombo') }}</th>
+                        <th class="px-3 py-2 text-left text-xs text-slate-500 font-medium">{{ $t('product.form.price') }}</th>
+                        <th class="px-3 py-2 text-left text-xs text-slate-500 font-medium">{{ $t('product.form.stock') }}</th>
+                        <th class="px-3 py-2 text-left text-xs text-slate-500 font-medium">{{ $t('product.form.wmsSellable') }}</th>
+                        <th class="px-3 py-2 text-left text-xs text-slate-500 font-medium">{{ $t('product.form.skuCodePlaceholder') }}</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50">
+                      <tr v-for="sku in skus" :key="sku.local_key">
+                        <td class="px-3 py-2 text-slate-700 text-xs whitespace-nowrap">{{ formatSkuAttrs(sku.attrs) }}</td>
+                        <td class="px-3 py-2">
+                          <input v-model.number="sku.price" type="number" step="0.01"
+                            class="w-24 border border-slate-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:border-blue-400" placeholder="0.00" />
+                        </td>
+                        <td class="px-3 py-2">
+                          <input v-model.number="sku.stock" type="number"
+                            class="w-20 border border-slate-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:border-blue-400" placeholder="0" />
+                          <span v-if="sku.id > 0" class="block text-[10px] text-slate-400 mt-0.5">{{ $t('product.form.wmsSellable') }}: {{ getWmsSellable(sku.id) }}</span>
+                        </td>
+                        <td class="px-3 py-2 text-xs">
+                          <span :class="sku.id > 0 ? 'text-slate-700 font-medium' : 'text-slate-400 italic'">
+                            {{ getWmsSellable(sku.id) }}
+                          </span>
+                        </td>
+                        <td class="px-3 py-2">
+                          <input v-model="sku.sku_code"
+                            class="w-32 border border-slate-200 rounded-lg px-2 py-1 text-sm focus:outline-none focus:border-blue-400" placeholder="SKU编码" />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div v-for="sku in skus" :key="`vip-${sku.local_key}`">
+                  <div v-if="vipEnabled && vipLevels.length" class="mt-3 rounded-lg border border-amber-200 bg-amber-50/40 p-3">
+                    <div class="text-xs font-medium text-amber-700 mb-1">{{ formatSkuAttrs(sku.attrs) }} · {{ $t('product.form.vipPriceHook') }}</div>
+                    <p v-if="!canEditVip" class="text-[11px] text-slate-500 mb-2">{{ $t('product.form.vipPriceReadonly') }}</p>
+                    <p v-if="sku.id <= 0" class="text-[11px] text-slate-500 mb-2">{{ $t('product.form.vipPriceSaveHint') }}</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div v-for="level in vipLevels" :key="`lvl-${level.id}`">
+                        <label class="block text-xs text-slate-500 mb-1">{{ level.name }}</label>
+                        <input
+                          :value="getVipPriceValue(sku.id, Number(level.id))"
+                          type="number" step="0.01"
+                          class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                          :placeholder="$t('product.form.vipPricePlaceholder')"
+                          :disabled="sku.id <= 0 || !canEditVip"
+                          @input="setVipPriceValue(sku.id, Number(level.id), ($event.target as HTMLInputElement).value)"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p v-if="vipEnabled && !vipLevels.length" class="text-xs text-slate-400">{{ $t('product.form.vipPriceNoLevel') }}</p>
+            </div>
+
+            <!-- 自由模式 -->
+            <div v-else class="space-y-3">
               <div v-for="(sku, skuIdx) in skus" :key="sku.local_key" class="border border-slate-200 rounded-xl p-3">
                 <div class="flex items-center justify-between mb-3">
                   <span class="text-xs text-slate-500">{{ $t('product.form.skuLabel', { idx: skuIdx + 1, id: sku.id || '-' }) }}</span>
@@ -76,12 +172,17 @@
                     class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
                     :placeholder="$t('product.form.price')"
                   />
-                  <input
-                    v-model.number="sku.stock"
-                    type="number"
-                    class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
-                    :placeholder="$t('product.form.stock')"
-                  />
+                  <div>
+                    <input
+                      v-model.number="sku.stock"
+                      type="number"
+                      class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400"
+                      :placeholder="$t('product.form.stock')"
+                    />
+                    <span class="text-[11px] text-slate-400 mt-0.5 block">
+                      {{ $t('product.form.wmsSellable') }}: {{ getWmsSellable(sku.id) }}
+                    </span>
+                  </div>
                 </div>
 
                 <div class="mt-3">
@@ -271,7 +372,7 @@
 import { computed, ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { createProduct, createVipSkuPrice, deleteVipSkuPrice, generateAiImage, getAiModels, getAiTask, getCategories, getProduct, getVipLevels, getVipSkuPrices, updateProduct, updateVipSkuPrice, uploadFile } from '@/api/plugins'
+import { createProduct, createVipSkuPrice, deleteVipSkuPrice, generateAiImage, getAiModels, getAiTask, getCategories, getProduct, getSpecTemplates, getStocksBySkuIds, getVipLevels, getVipSkuPrices, updateProduct, updateVipSkuPrice, uploadFile } from '@/api/plugins'
 import { getMenus, type AdminMenuGroupedResponse, type AdminMenuItem, type AdminMenuResponse } from '@/api/auth'
 import { useAuthStore } from '@/stores/auth'
 import RichTextEditor from '@/views/decor/editors/RichTextEditor.vue'
@@ -311,11 +412,134 @@ type VipSkuPrice = {
   status: number
 }
 
+type SpecTemplateAttr = { name: string; values: string[] }
+type SpecTemplate = { id: number; name: string; attrs: SpecTemplateAttr[]; status: number }
+
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const isEdit = computed(() => !!route.params.id)
+
+const specTemplates = ref<SpecTemplate[]>([])
+const selectedTemplateId = ref<number>(0)
+const selectedAttrValues = ref<Record<string, Set<string>>>({})
+
+const currentTemplate = computed(() =>
+  specTemplates.value.find((tpl) => tpl.id === selectedTemplateId.value) ?? null
+)
+
+const currentTemplateAttrs = computed(() =>
+  currentTemplate.value?.attrs ?? []
+)
+
+function isValueSelected(attrName: string, value: string) {
+  return selectedAttrValues.value[attrName]?.has(value) ?? false
+}
+
+function toggleAttrValue(attrName: string, value: string) {
+  const map = selectedAttrValues.value
+  if (!map[attrName]) map[attrName] = new Set()
+  if (map[attrName].has(value)) {
+    map[attrName].delete(value)
+  } else {
+    map[attrName].add(value)
+  }
+  rebuildSkusFromTemplate()
+}
+
+function cartesian(groups: string[][]): string[][] {
+  return groups.reduce<string[][]>((acc, values) => {
+    if (!acc.length) return values.map((v) => [v])
+    return acc.flatMap((combo) => values.map((v) => [...combo, v]))
+  }, [])
+}
+
+function rebuildSkusFromTemplate() {
+  const tpl = currentTemplate.value
+  if (!tpl) return
+  const activeGroups: { name: string; values: string[] }[] = []
+  for (const group of tpl.attrs) {
+    const chosen = Array.from(selectedAttrValues.value[group.name] ?? [])
+    if (chosen.length) activeGroups.push({ name: group.name, values: chosen })
+  }
+  if (!activeGroups.length) {
+    skus.value = [createEmptySku()]
+    return
+  }
+  const combos = cartesian(activeGroups.map((g) => g.values))
+  const existing = new Map(skus.value.map((s) => [buildSkuKey(s.attrs), s]))
+  skus.value = combos.map((combo) => {
+    const attrs: SkuAttr[] = combo.map((val, i) => ({
+      local_key: makeLocalKey('sku-attr'),
+      name: activeGroups[i].name,
+      value: val,
+    }))
+    const key = buildSkuKey(attrs)
+    const prev = existing.get(key)
+    return {
+      local_key: prev?.local_key ?? makeLocalKey('sku'),
+      id: prev?.id ?? 0,
+      sku_code: prev?.sku_code ?? '',
+      price: prev?.price ?? Number(form.value.price || 0),
+      stock: prev?.stock ?? Number(form.value.stock || 0),
+      attrs,
+    }
+  })
+}
+
+function onTemplateChange() {
+  const hasData = skus.value.some((s) =>
+    s.attrs.some((a) => a.name.trim() || a.value.trim()) || s.sku_code || s.price > 0
+  )
+  if (hasData && selectedTemplateId.value > 0) {
+    if (!window.confirm(t('product.form.templateSwitchConfirm'))) {
+      selectedTemplateId.value = 0
+      return
+    }
+  }
+  if (selectedTemplateId.value === 0) {
+    skus.value = [createEmptySku()]
+    selectedAttrValues.value = {}
+    return
+  }
+  const tpl = currentTemplate.value
+  if (!tpl) return
+  selectedAttrValues.value = {}
+  for (const group of tpl.attrs) {
+    selectedAttrValues.value[group.name] = new Set()
+  }
+  skus.value = [createEmptySku()]
+}
+
+function tryAutoMatchTemplate() {
+  if (!skus.value.length || !specTemplates.value.length) return
+  const attrNamesInSkus = new Set(
+    skus.value.flatMap((s) => s.attrs.map((a) => a.name.trim())).filter(Boolean)
+  )
+  if (!attrNamesInSkus.size) return
+  const match = specTemplates.value.find((tpl) =>
+    tpl.attrs.every((g) => attrNamesInSkus.has(g.name))
+  )
+  if (!match) return
+  selectedTemplateId.value = match.id
+  const attrMap: Record<string, Set<string>> = {}
+  for (const group of match.attrs) {
+    attrMap[group.name] = new Set()
+  }
+  for (const sku of skus.value) {
+    for (const attr of sku.attrs) {
+      if (attr.name.trim() && attrMap[attr.name] !== undefined) {
+        attrMap[attr.name].add(attr.value.trim())
+      }
+    }
+  }
+  selectedAttrValues.value = attrMap
+}
+
+function formatSkuAttrs(attrs: SkuAttr[]) {
+  return attrs.filter((a) => a.name && a.value).map((a) => `${a.name}: ${a.value}`).join(' / ')
+}
 const canEditVip = computed(() => {
   if (!Array.isArray(auth.perms) || auth.perms.length === 0) return true
   return auth.hasPermission('vip:edit')
@@ -329,6 +553,30 @@ const vipEnabled = ref(false)
 const vipLevels = ref<VipLevel[]>([])
 const vipPriceRows = ref<VipSkuPrice[]>([])
 const vipPriceMap = ref<Record<number, Record<number, string>>>({})
+const wmsStockMap = ref<Record<number, { qty: number; reserved_qty: number }>>({})
+
+function getWmsSellable(skuId: number): string {
+  if (skuId <= 0) return t('product.form.wmsStockNew')
+  const s = wmsStockMap.value[skuId]
+  if (!s) return '—'
+  return String(s.qty - s.reserved_qty)
+}
+
+async function loadWmsStocks(savedSkuIds: number[]) {
+  const ids = savedSkuIds.filter((id) => id > 0)
+  if (!ids.length) return
+  try {
+    const rows: any[] = ((await getStocksBySkuIds(ids)) as any) || []
+    const next: Record<number, { qty: number; reserved_qty: number }> = {}
+    for (const row of rows) {
+      const skuId = Number(row.sku_id || 0)
+      if (skuId > 0) next[skuId] = { qty: Number(row.qty || 0), reserved_qty: Number(row.reserved_qty || 0) }
+    }
+    wmsStockMap.value = next
+  } catch {
+    // WMS 查询失败不阻断页面
+  }
+}
 
 const form = ref({
   title: '', price: 0, origin_price: 0, stock: 0,
@@ -831,6 +1079,9 @@ onMounted(async () => {
   if (aiModels.value.length) aiForm.value.model_id = Number(aiModels.value[0].id)
   await detectVipFeatureEnabled()
 
+  const tplData: any = await getSpecTemplates({ page: 1, size: 200, status: 1 }).catch(() => null)
+  specTemplates.value = Array.isArray(tplData?.list) ? tplData.list : []
+
   if (isEdit.value) {
     const productID = Number(route.params.id)
     const data: any = await getProduct(productID)
@@ -845,11 +1096,13 @@ onMounted(async () => {
     })
     parseDetail(data.detail)
     parseSkus(data.skus)
+    await loadWmsStocks(skus.value.map((s) => s.id))
     galleryImages.value = Array.isArray(data.images) ? data.images.map((item: any, idx: number) => ({
       url: item.url || '',
       sort: item.sort ?? idx,
     })) : []
     aiForm.value.target_product_id = productID
+    tryAutoMatchTemplate()
     if (vipEnabled.value) {
       await loadVipMetaAndPrices(productID)
     }

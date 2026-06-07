@@ -233,6 +233,13 @@ export default {
   'product.form.addImage': '+ 图片块',
   'product.form.addRichText': '+ 富文本块',
   'product.form.nameRequired': '商品名称不能为空',
+  'product.form.specTemplate': '规格模板',
+  'product.form.noTemplate': '不使用模板（手动录入）',
+  'product.form.templateSwitchConfirm': '切换模板将清空当前 SKU 数据，是否继续？',
+  'product.form.generatedSkuTable': '生成的 SKU 列表',
+  'product.form.skuAttrCombo': '规格组合',
+  'product.form.wmsSellable': 'WMS 可售',
+  'product.form.wmsStockNew': '保存后初始化',
 
   // AI Image
   'product.ai.title': 'AI 图片助手',

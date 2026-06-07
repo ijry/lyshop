@@ -6,6 +6,7 @@ import CategoryTreePicker from '@/components/biz/CategoryTreePicker.vue'
 import RichTextEditor from '@/components/biz/RichTextEditor.vue'
 import { createProduct, getProductDetail, updateProduct } from '@/api/product'
 import { getSpecTemplates } from '@/api/spec-template'
+import { getStocksBySkuIds } from '@/api/wms'
 
 const id = ref(0)
 const saving = ref(false)
@@ -43,6 +44,20 @@ const newTag = ref('')
 
 const specTemplates = ref<any[]>([])
 const showSpecPicker = ref(false)
+const activeTemplate = ref<any>(null)
+const wmsStockMap = ref<Record<number, { qty: number; reserved_qty: number }>>({})
+
+async function loadWmsStocks(skuIds: number[]) {
+  const ids = skuIds.filter((id) => id > 0)
+  if (!ids.length) return
+  const rows: any[] = (await getStocksBySkuIds(ids).catch(() => [])) as any[]
+  const next: Record<number, { qty: number; reserved_qty: number }> = {}
+  for (const row of rows) {
+    const skuId = Number(row.sku_id || 0)
+    if (skuId > 0) next[skuId] = { qty: Number(row.qty || 0), reserved_qty: Number(row.reserved_qty || 0) }
+  }
+  wmsStockMap.value = next
+}
 
 type SkuAttr = { name: string; value: string }
 
@@ -133,25 +148,44 @@ function mapImagesToCovers(data: any): string[] {
 }
 
 async function loadSpecTemplates() {
-  const data: any = await getSpecTemplates({ page: 1, size: 200 })
+  const data: any = await getSpecTemplates({ page: 1, size: 200, status: 1 }).catch(() => null)
   specTemplates.value = Array.isArray(data?.list) ? data.list : []
 }
 
-function applySpecTemplate(tpl: any) {
-  if (!tpl?.attrs || !Array.isArray(tpl.attrs)) return
-  const skus: Array<{ attrs: Array<{ name: string; value: string }>; price: number; stock: number }> = []
-  function cross(idx: number): Array<Array<{ name: string; value: string }>> {
-    if (idx >= tpl.attrs.length) return [[]]
-    const sub = cross(idx + 1)
-    return (tpl.attrs[idx].values || []).flatMap((v: string) => sub.map((row: any) => [{ name: tpl.attrs[idx].name, value: v }, ...row]))
+function selectTemplate(tpl: any) {
+  if (activeTemplate.value?.id === tpl?.id) return
+  if (form.skus.length && form.skus.some((s: any) => s.attrs?.length)) {
+    uni.showModal({
+      title: '切换模板',
+      content: '切换模板将清空当前 SKU 数据，是否继续？',
+      success: (res) => {
+        if (!res.confirm) return
+        activeTemplate.value = tpl
+        form.skus = []
+        showSpecPicker.value = false
+      },
+    })
+    return
   }
-  const combos = cross(0)
-  for (const attrs of combos) {
-    skus.push({ attrs, price: Number(form.price || 0), stock: 0 })
-  }
-  form.skus = skus
+  activeTemplate.value = tpl
+  form.skus = []
   showSpecPicker.value = false
-  uni.showToast({ title: '已应用模板', icon: 'success' })
+}
+
+function clearTemplate() {
+  activeTemplate.value = null
+}
+
+function tryAutoMatchTemplate() {
+  if (!form.skus.length || !specTemplates.value.length) return
+  const attrNames = new Set(
+    form.skus.flatMap((s: any) => (s.attrs || []).map((a: any) => String(a.name || '').trim())).filter(Boolean)
+  )
+  if (!attrNames.size) return
+  const match = specTemplates.value.find((tpl: any) =>
+    Array.isArray(tpl.attrs) && tpl.attrs.every((g: any) => attrNames.has(g.name))
+  )
+  if (match) activeTemplate.value = match
 }
 
 async function loadData() {
@@ -183,6 +217,8 @@ async function loadData() {
     online_at: String(data?.online_at || ''),
     offline_at: String(data?.offline_at || ''),
   })
+  tryAutoMatchTemplate()
+  await loadWmsStocks(form.skus.map((s: any) => Number(s.id || 0)))
 }
 
 function addSellPoint() { if (newSellPoint.value.trim()) { form.sell_points.push(newSellPoint.value.trim()); newSellPoint.value = '' } }
@@ -239,7 +275,11 @@ async function save() {
   } finally { saving.value = false }
 }
 
-onLoad((opts) => { id.value = Number(opts?.id || 0); loadData() })
+onLoad(async (opts) => {
+  id.value = Number(opts?.id || 0)
+  await loadSpecTemplates()
+  await loadData()
+})
 </script>
 
 <template>
@@ -286,10 +326,21 @@ onLoad((opts) => { id.value = Number(opts?.id || 0); loadData() })
     </view>
 
     <view class="section">
-      <view class="section-title">规格 SKU
-        <up-button size="mini" plain @click="loadSpecTemplates().then(() => showSpecPicker = true)">应用规格模板</up-button>
+      <view class="section-title">规格 SKU</view>
+      <view class="tpl-bar">
+        <view class="tpl-label">规格模板</view>
+        <view class="tpl-actions">
+          <view
+            v-if="activeTemplate"
+            class="tpl-tag"
+          >
+            <text class="tpl-tag-name">{{ activeTemplate.name }}</text>
+            <text class="tpl-tag-x" @click="clearTemplate">✕</text>
+          </view>
+          <up-button v-else size="mini" plain @click="showSpecPicker = true">选择模板</up-button>
+        </view>
       </view>
-      <SkuMatrixEditor :skus="form.skus" :base-price="form.price" @update="onSkusChange" />
+      <SkuMatrixEditor :skus="form.skus" :base-price="form.price" :spec-template="activeTemplate" :wms-stock-map="wmsStockMap" @update="onSkusChange" />
     </view>
 
     <view class="section">
@@ -331,7 +382,7 @@ onLoad((opts) => { id.value = Number(opts?.id || 0); loadData() })
       <view class="popup-body">
         <view class="popup-title">选择规格模板</view>
         <view v-if="!specTemplates.length" class="empty-tpl">暂无模板</view>
-        <view v-for="tpl in specTemplates" :key="tpl.id" class="tpl-item" @click="applySpecTemplate(tpl)">
+        <view v-for="tpl in specTemplates" :key="tpl.id" class="tpl-item" @click="selectTemplate(tpl)">
           <text class="tpl-name">{{ tpl.name }}</text>
           <text class="tpl-desc">{{ (tpl.attrs || []).map((a: any) => a.name).join(' / ') }}</text>
         </view>
@@ -360,6 +411,12 @@ onLoad((opts) => { id.value = Number(opts?.id || 0); loadData() })
 .picker { padding: 14rpx; background: var(--eapp-bg); border-radius: 14rpx; font-size: 26rpx; }
 .row { display: flex; align-items: center; justify-content: space-between; padding: 8rpx 0; font-size: 26rpx; }
 .save { margin-top: 14rpx; }
+.tpl-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14rpx; }
+.tpl-label { font-size: 24rpx; color: var(--eapp-text-muted); }
+.tpl-actions { display: flex; align-items: center; gap: 8rpx; }
+.tpl-tag { display: flex; align-items: center; gap: 8rpx; background: color-mix(in srgb, var(--eapp-primary, #3b82f6) 12%, transparent); border: 2rpx solid var(--eapp-primary, #3b82f6); border-radius: 999rpx; padding: 4rpx 16rpx; }
+.tpl-tag-name { font-size: 24rpx; color: var(--eapp-primary, #3b82f6); font-weight: 600; }
+.tpl-tag-x { font-size: 22rpx; color: var(--eapp-text-muted); padding-left: 4rpx; }
 .popup-body { padding: 24rpx; box-sizing: border-box; }
 .popup-title { font-size: 30rpx; font-weight: 700; margin-bottom: 14rpx; }
 .empty-tpl { text-align: center; color: var(--eapp-text-muted); padding: 40rpx 0; }

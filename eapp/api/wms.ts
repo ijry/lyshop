@@ -5,6 +5,7 @@ export const createWarehouse = (payload: any) => post<any>('/wms/warehouses', pa
 export const updateWarehouse = (id: number, payload: any) => put<any>(`/wms/warehouses/${id}`, payload)
 // Stocks
 export const getStocks = (params?: any) => get<any>('/wms/stocks', params)
+export const getStocksBySkuIds = (skuIds: number[]) => get<any>('/wms/stocks/by-skus', { sku_ids: skuIds.join(',') })
 export const updateSafeQty = (id: number, safe_qty: number) => put<any>(`/wms/stocks/${id}/safe-qty`, { safe_qty })
 // Docs
 export const getDocs = (params?: any) => get<any>('/wms/docs', params)

@@ -20,6 +20,7 @@ func RegisterAdminRoutes(g *gin.RouterGroup) {
 	g.PUT("/wms/warehouses/:id/status", middleware.RequirePermission("wms:edit"), updateWarehouseStatus)
 
 	g.GET("/wms/stocks", middleware.RequirePermission("wms:view"), listStocks)
+	g.GET("/wms/stocks/by-skus", middleware.RequirePermission("wms:view"), listStocksBySkuIDs)
 	g.PUT("/wms/stocks/:id/safety", middleware.RequirePermission("wms:edit"), updateStockSafety)
 
 	g.GET("/wms/docs", middleware.RequirePermission("wms:view"), listDocs)
@@ -144,6 +145,33 @@ func listStocks(c *gin.Context) {
 		return
 	}
 	response.OK(c, response.PageData{List: list, Total: total, Page: page, Size: size})
+}
+
+func listStocksBySkuIDs(c *gin.Context) {
+	rawIDs := strings.TrimSpace(c.Query("sku_ids"))
+	if rawIDs == "" {
+		response.OK(c, []wmsmodel.InventoryStock{})
+		return
+	}
+	parts := strings.Split(rawIDs, ",")
+	skuIDs := make([]uint64, 0, len(parts))
+	for _, p := range parts {
+		id, err := strconv.ParseUint(strings.TrimSpace(p), 10, 64)
+		if err != nil || id == 0 {
+			continue
+		}
+		skuIDs = append(skuIDs, id)
+	}
+	if len(skuIDs) == 0 {
+		response.OK(c, []wmsmodel.InventoryStock{})
+		return
+	}
+	list, err := wmssvc.ListStocksBySkuIDs(c.Request.Context(), skuIDs)
+	if err != nil {
+		writeServiceError(c, err)
+		return
+	}
+	response.OK(c, list)
 }
 
 func updateStockSafety(c *gin.Context) {

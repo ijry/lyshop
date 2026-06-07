@@ -8,6 +8,8 @@ import (
 
 	"github.com/ijry/lyshop/core/db"
 	productmodel "github.com/ijry/lyshop/plugins/product/model"
+	wmsmodel "github.com/ijry/lyshop/plugins/wms/model"
+	wmssvc "github.com/ijry/lyshop/plugins/wms/service"
 	"gorm.io/gorm"
 )
 
@@ -151,6 +153,9 @@ func CreateProduct(ctx context.Context, p *productmodel.Product, skus []productm
 			if err := tx.Create(&normalizedSkus).Error; err != nil {
 				return err
 			}
+			if err := syncWmsStockForNewSkus(tx, normalizedSkus); err != nil {
+				return err
+			}
 		}
 		for i := range images {
 			images[i].ProductID = p.ID
@@ -222,6 +227,7 @@ func ReplaceProductSkus(ctx context.Context, productID uint64, skus []productmod
 			existingByKey[key] = row
 		}
 
+		var newSkus []productmodel.ProductSku
 		incomingKeys := make(map[string]struct{}, len(normalizedSkus))
 		for _, row := range normalizedSkus {
 			key := row.SkuKey
@@ -248,7 +254,12 @@ func ReplaceProductSkus(ctx context.Context, productID uint64, skus []productmod
 			if err := tx.Create(&createRow).Error; err != nil {
 				return err
 			}
+			newSkus = append(newSkus, createRow)
 			diff.Added++
+		}
+
+		if err := syncWmsStockForNewSkus(tx, newSkus); err != nil {
+			return err
 		}
 
 		for _, row := range existing {
@@ -282,4 +293,35 @@ func ReplaceProductSkus(ctx context.Context, productID uint64, skus []productmod
 func hasProductID(set map[uint64]struct{}, productID uint64) bool {
 	_, ok := set[productID]
 	return ok
+}
+
+// syncWmsStockForNewSkus 在同一事务内为新建的 SKU 初始化 WMS 库存行。
+// 若没有可用仓库则静默跳过，不阻断商品保存。
+// 已存在库存行（qty > 0）时不覆盖，保证幂等。
+func syncWmsStockForNewSkus(tx *gorm.DB, skus []productmodel.ProductSku) error {
+	if len(skus) == 0 {
+		return nil
+	}
+	warehouseID, err := wmssvc.PickDefaultWarehouseIDTx(tx)
+	if err != nil || warehouseID == 0 {
+		return nil
+	}
+	for _, sku := range skus {
+		if sku.ID == 0 {
+			continue
+		}
+		var stock wmsmodel.InventoryStock
+		result := tx.Where("warehouse_id = ? AND sku_id = ?", warehouseID, sku.ID).First(&stock)
+		if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return result.Error
+		}
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			newStock := wmsmodel.InventoryStock{WarehouseID: warehouseID, SkuID: sku.ID, Qty: sku.Stock}
+			if err2 := tx.Create(&newStock).Error; err2 != nil {
+				return err2
+			}
+		}
+		// 已存在的行不修改（WMS 是权威）
+	}
+	return nil
 }
