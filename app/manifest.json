@@ -2,8 +2,8 @@
     "name" : "lyshop",
     "appid" : "__UNI__LYSHOP",
     "description" : "lyshop 商城",
-    "versionName" : "2.0.0",
-    "versionCode" : "100",
+    "versionName" : "2.1.0",
+    "versionCode" : 210,
     "transformPx" : false,
     "mp-weixin" : {
         "appid" : "",
