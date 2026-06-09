@@ -7,11 +7,14 @@ import (
 	"time"
 
 	"github.com/ijry/lyshop/core/db"
+	inventorycore "github.com/ijry/lyshop/core/inventory"
 	"github.com/ijry/lyshop/model"
 	pmmodel "github.com/ijry/lyshop/plugins/points_mall/model"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
+
+var getInventoryProviderForPointsMallFn = inventorycore.CurrentProvider
 
 // ExchangeProduct 兑换积分商品
 func ExchangeProduct(ctx context.Context, userID, productID uint64, qty int, addressSnapshot json.RawMessage) (*pmmodel.PointsExchange, error) {
@@ -50,16 +53,30 @@ func ExchangeProduct(ctx context.Context, userID, productID uint64, qty int, add
 			return err
 		}
 
+		provider, err := getInventoryProviderForPointsMallFn()
+		if err != nil {
+			return err
+		}
+
 		// 5. 扣减库存
-		if product.Stock > 0 {
-			if err := tx.Model(&product).
-				Update("stock", gorm.Expr("stock - ?", qty)).
-				Update("sold_count", gorm.Expr("sold_count + ?", qty)).
-				Error; err != nil {
-				return err
+		if provider.Name() == "local" {
+			if product.Stock > 0 {
+				if err := tx.Model(&product).
+					Update("stock", gorm.Expr("stock - ?", qty)).
+					Update("sold_count", gorm.Expr("sold_count + ?", qty)).
+					Error; err != nil {
+					return err
+				}
+			} else {
+				tx.Model(&product).Update("sold_count", gorm.Expr("sold_count + ?", qty))
 			}
 		} else {
-			tx.Model(&product).Update("sold_count", gorm.Expr("sold_count + ?", qty))
+			if err := deductPointsMallInventory(tx, product.ID, qty); err != nil {
+				return err
+			}
+			if err := tx.Model(&product).Update("sold_count", gorm.Expr("sold_count + ?", qty)).Error; err != nil {
+				return err
+			}
 		}
 
 		// 6. 扣减积分
@@ -70,10 +87,10 @@ func ExchangeProduct(ctx context.Context, userID, productID uint64, qty int, add
 
 		// 7. 记录积分日志
 		pointsLog := &pmmodel.PointsLog{
-			UserID:    userID,
-			Type:      3, // 兑换消耗
-			Points:    -totalPoints,
-			Remark:    fmt.Sprintf("兑换商品：%s", product.Title),
+			UserID: userID,
+			Type:   3, // 兑换消耗
+			Points: -totalPoints,
+			Remark: fmt.Sprintf("兑换商品：%s", product.Title),
 		}
 		if err := tx.Create(pointsLog).Error; err != nil {
 			return err
@@ -298,11 +315,22 @@ func CancelExchange(ctx context.Context, id uint64, reason string) error {
 			return err
 		}
 
-		// 恢复库存
-		if err := tx.Model(&pmmodel.PointsProduct{}).
-			Where("id = ? AND stock > 0", exchange.ProductID).
-			Update("stock", gorm.Expr("stock + ?", exchange.Qty)).Error; err != nil {
+		provider, err := getInventoryProviderForPointsMallFn()
+		if err != nil {
 			return err
+		}
+
+		// 恢复库存
+		if provider.Name() == "local" {
+			if err := tx.Model(&pmmodel.PointsProduct{}).
+				Where("id = ? AND stock > 0", exchange.ProductID).
+				Update("stock", gorm.Expr("stock + ?", exchange.Qty)).Error; err != nil {
+				return err
+			}
+		} else {
+			if err := restorePointsMallInventory(tx, exchange.ProductID, exchange.Qty, reason); err != nil {
+				return err
+			}
 		}
 
 		// 更新兑换状态
@@ -310,5 +338,34 @@ func CancelExchange(ctx context.Context, id uint64, reason string) error {
 			"status": "canceled",
 			"remark": reason,
 		}).Error
+	})
+}
+
+func deductPointsMallInventory(tx *gorm.DB, productID uint64, qty int) error {
+	provider, err := getInventoryProviderForPointsMallFn()
+	if err != nil {
+		return err
+	}
+	return provider.DeductTx(tx, inventorycore.DeductInput{
+		BizType: "points_mall",
+		BizNo:   fmt.Sprintf("points-product:%d", productID),
+		Items: []inventorycore.ReserveItem{
+			{SkuID: productID, Qty: qty},
+		},
+	})
+}
+
+func restorePointsMallInventory(tx *gorm.DB, productID uint64, qty int, reason string) error {
+	provider, err := getInventoryProviderForPointsMallFn()
+	if err != nil {
+		return err
+	}
+	return provider.RestoreTx(tx, inventorycore.RestoreInput{
+		BizType: "points_mall",
+		BizNo:   fmt.Sprintf("points-product:%d", productID),
+		Items: []inventorycore.ReserveItem{
+			{SkuID: productID, Qty: qty},
+		},
+		Reason: reason,
 	})
 }

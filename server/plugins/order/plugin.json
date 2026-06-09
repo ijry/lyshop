@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "购物车、订单、支付、售后",
   "author": "lyshop",
-  "depends": ["product", "wms"],
+  "depends": ["product"],
   "menus": [
     {
       "title": "订单管理", "title_key": "menu.order",

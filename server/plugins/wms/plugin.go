@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/gin-gonic/gin"
+	inventorycore "github.com/ijry/lyshop/core/inventory"
 	"github.com/ijry/lyshop/core/plugin"
 	wmsapi "github.com/ijry/lyshop/plugins/wms/api"
 	wmsmodel "github.com/ijry/lyshop/plugins/wms/model"
@@ -21,6 +22,7 @@ func init() {
 	if err := json.Unmarshal(metaJSON, &m); err != nil {
 		panic("wms plugin: invalid plugin.json: " + err.Error())
 	}
+	inventorycore.Register(&builtinProvider{})
 	plugin.Register(&wmsPlugin{meta: m})
 }
 

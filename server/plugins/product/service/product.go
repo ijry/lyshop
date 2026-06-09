@@ -7,9 +7,8 @@ import (
 	"strings"
 
 	"github.com/ijry/lyshop/core/db"
+	inventorycore "github.com/ijry/lyshop/core/inventory"
 	productmodel "github.com/ijry/lyshop/plugins/product/model"
-	wmsmodel "github.com/ijry/lyshop/plugins/wms/model"
-	wmssvc "github.com/ijry/lyshop/plugins/wms/service"
 	"gorm.io/gorm"
 )
 
@@ -33,6 +32,7 @@ type ProductDetail struct {
 }
 
 var defaultDetailJSON = json.RawMessage(`{"version":1,"blocks":[]}`)
+var getInventoryProviderForProductFn = inventorycore.CurrentProvider
 
 func normalizeDetail(raw json.RawMessage) json.RawMessage {
 	if len(raw) == 0 || string(raw) == "null" {
@@ -127,6 +127,7 @@ func GetProduct(ctx context.Context, id uint64, userID uint64) (*ProductDetail, 
 	db.DB.WithContext(ctx).
 		Where("product_id = ? AND (status = ? OR status = '')", id, productmodel.ProductSkuStatusActive).
 		Find(&detail.SKUs)
+	applyExternalSellableStock(ctx, detail.SKUs)
 	db.DB.WithContext(ctx).Where("product_id = ?", id).Order("sort asc").Find(&detail.Images)
 	favoritedSet, err := getFavoritedProductIDSet(ctx, userID, []uint64{id})
 	if err != nil {
@@ -153,7 +154,7 @@ func CreateProduct(ctx context.Context, p *productmodel.Product, skus []productm
 			if err := tx.Create(&normalizedSkus).Error; err != nil {
 				return err
 			}
-			if err := syncWmsStockForNewSkus(tx, normalizedSkus); err != nil {
+			if err := syncInventoryForNewSkus(tx, normalizedSkus); err != nil {
 				return err
 			}
 		}
@@ -258,7 +259,7 @@ func ReplaceProductSkus(ctx context.Context, productID uint64, skus []productmod
 			diff.Added++
 		}
 
-		if err := syncWmsStockForNewSkus(tx, newSkus); err != nil {
+		if err := syncInventoryForNewSkus(tx, newSkus); err != nil {
 			return err
 		}
 
@@ -295,33 +296,52 @@ func hasProductID(set map[uint64]struct{}, productID uint64) bool {
 	return ok
 }
 
-// syncWmsStockForNewSkus 在同一事务内为新建的 SKU 初始化 WMS 库存行。
-// 若没有可用仓库则静默跳过，不阻断商品保存。
-// 已存在库存行（qty > 0）时不覆盖，保证幂等。
-func syncWmsStockForNewSkus(tx *gorm.DB, skus []productmodel.ProductSku) error {
+func syncInventoryForNewSkus(tx *gorm.DB, skus []productmodel.ProductSku) error {
 	if len(skus) == 0 {
 		return nil
 	}
-	warehouseID, err := wmssvc.PickDefaultWarehouseIDTx(tx)
-	if err != nil || warehouseID == 0 {
-		return nil
+	provider, err := getInventoryProviderForProductFn()
+	if err != nil {
+		return err
 	}
 	for _, sku := range skus {
 		if sku.ID == 0 {
 			continue
 		}
-		var stock wmsmodel.InventoryStock
-		result := tx.Where("warehouse_id = ? AND sku_id = ?", warehouseID, sku.ID).First(&stock)
-		if result.Error != nil && !errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return result.Error
+		if err := provider.SyncSkuTx(tx, inventorycore.SyncSkuInput{
+			SkuID:  sku.ID,
+			Stock:  sku.Stock,
+			Source: "product",
+		}); err != nil {
+			return err
 		}
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			newStock := wmsmodel.InventoryStock{WarehouseID: warehouseID, SkuID: sku.ID, Qty: sku.Stock}
-			if err2 := tx.Create(&newStock).Error; err2 != nil {
-				return err2
-			}
-		}
-		// 已存在的行不修改（WMS 是权威）
 	}
 	return nil
+}
+
+func applyExternalSellableStock(ctx context.Context, skus []productmodel.ProductSku) {
+	if len(skus) == 0 {
+		return
+	}
+	provider, err := getInventoryProviderForProductFn()
+	if err != nil || provider == nil || provider.Name() != "external_wms" {
+		return
+	}
+	skuIDs := make([]uint64, 0, len(skus))
+	for _, sku := range skus {
+		skuIDs = append(skuIDs, sku.ID)
+	}
+	stocks, err := provider.GetSellableStock(ctx, skuIDs)
+	if err != nil {
+		return
+	}
+	stockMap := make(map[uint64]int, len(stocks))
+	for _, item := range stocks {
+		stockMap[item.SkuID] = item.SellableStock
+	}
+	for i := range skus {
+		if stock, ok := stockMap[skus[i].ID]; ok {
+			skus[i].Stock = stock
+		}
+	}
 }

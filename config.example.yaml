@@ -22,12 +22,27 @@ jwt:
   secret: "change-this-to-a-random-string"
   expire_hours: 168   # 7 days
 
+inventory:
+  provider: local           # 默认本地库存模式；可选 local | builtin_wms | external_wms
+  external_mode: sync       # 仅 provider=external_wms 时生效；可选 sync | async
+
+external_wms:
+  endpoint: ""              # 企业外部WMS根地址；provider=external_wms 时必填
+  app_key: ""               # 企业外部WMS应用标识
+  app_secret: ""            # 请求签名与回调验签密钥
+  timeout_ms: 3000          # 外部WMS同步请求超时
+  callback_enabled: true    # 是否启用异步回调
+  signature_ttl: 300        # 回调签名有效期（秒）
+  worker_interval_sec: 5    # async 模式下库存任务轮询频率（秒）
+  retry:
+    max_attempts: 8         # async 模式最大重试次数
+    backoff_seconds: 30     # async 模式重试退避秒数
+
 plugins:
   enabled:
     # Core commerce
     - product
     - order
-    - wms
     - marketing
     # Communication
     - im
@@ -46,6 +61,7 @@ plugins:
     # Content
     - decor
     - ai_image
+    # 内置WMS不是默认依赖；仅 inventory.provider=builtin_wms 时再手动启用 wms
     # Payment drivers (enable the ones you need)
     - wechat_pay
     - alipay

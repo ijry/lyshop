@@ -23,6 +23,7 @@ type Order struct {
 	UserID          uint64          `gorm:"not null;index"               json:"user_id"`
 	MerchantID      uint64          `gorm:"not null;default:0"           json:"merchant_id"`
 	Status          int8            `gorm:"not null;index"               json:"status"`
+	InventoryStatus string          `gorm:"size:16;not null;default:'none';index" json:"inventory_status"`
 	PaymentMethod   string          `gorm:"size:32"                      json:"payment_method"`
 	GoodsAmount     float64         `gorm:"type:decimal(10,2);not null"  json:"goods_amount"`
 	DiscountAmount  float64         `gorm:"type:decimal(10,2);default:0" json:"discount_amount"`

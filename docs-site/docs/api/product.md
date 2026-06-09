@@ -12,6 +12,24 @@
 - 商品编辑统一采用后端规格引擎：前端提交 `sku_generation_mode=auto + spec_schema + sku_overrides`，后端生成并维护 SKU 集合并返回 `sku_diff`。
 - 规格模板为正式后台资源：`admin` 与 `eapp` 共用 `/admin/api/spec-templates*` 接口。
 - 后台商品编辑支持在 SKU 区直接配置会员价（需启用 `vip` 插件）。
+- 当前最新架构下，SKU 是商品销售、库存占用、库存扣减、库存回补、库存查询的统一粒度。
+
+## SKU 与库存关系
+
+- `product` 负责商品、SPU、SKU、详情、规格生成与展示能力。
+- `inventory` 负责统一库存交易与库存来源选择，不再默认由 `wms` 承担全部库存语义。
+- `product_skus.stock` 在 `local` 模式下直接作为库存交易值使用。
+- 当 `inventory.provider=builtin_wms` 时：
+  - SKU 仍然是订单明细和库存交易的统一粒度
+  - 实际库存真源切换为内置 `wms` 插件库存表
+- 当 `inventory.provider=external_wms` 时：
+  - SKU 仍然是商城与企业 WMS 交互的统一库存粒度
+  - 商品详情页返回的 SKU 库存可以由外部可售库存查询结果覆盖
+
+说明：
+
+- `products.stock` 适合作为商品聚合展示值，不作为统一库存交易接口。
+- 统一库存动作始终围绕 `sku_id` 进行，而不是围绕 SPU 或商品总库存直接操作。
 
 ## 接口变化
 
@@ -25,6 +43,10 @@
   - 详情新增：
     - `favorite_count: number`
     - `is_favorited: boolean`（未登录时为 `false`）
+  - SKU 库存口径说明：
+    - `inventory.provider=local`：直接返回 `product_skus.stock`
+    - `inventory.provider=builtin_wms`：SKU 详情仍按商城模型返回，库存交易由内置 WMS 处理
+    - `inventory.provider=external_wms`：当外部库存查询成功时，SKU 库存可由外部可售库存覆盖
   - 标准商品详情接口保持不变；当页面带有活动来源（`activity_product_id`）时，前端应追加请求：
     - `GET /api/v1/marketing/activity-products/:id`
   - 用途：补充渲染活动扩展元素（秒杀倒计时、拼团/砍价入口、活动库存与限购等）
@@ -96,6 +118,13 @@
   - `product_skus.sku_key`
   - `product_skus.status`（`active|inactive`）
 - SKU 唯一索引为 `(product_id, sku_key)`（自动迁移会重建 `uk_product_sku_key`）。
+- 统一库存默认模式为 `inventory.provider=local`，此时 `product_skus.stock` 直接参与库存交易。
+- 当切换到 `inventory.provider=builtin_wms` 或 `external_wms` 时：
+  - 商品模块仍负责维护 SKU 主数据
+  - 库存交易与可售库存来源由统一 `inventory` provider 决定
+- 新增库存相关配置说明见：
+  - [库存预占交易规则](./stock-reservation)
+  - [仓储接口](./wms)
 - 新增表：`spec_templates`（规格模板）。
 - 活动来源详情双请求仅涉及前端调用链路与营销接口协同，无新增配置项。
 - 数据库新增迁移：
