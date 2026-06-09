@@ -13,6 +13,11 @@ const (
 	InventoryStatusConfirmed = "confirmed"
 	InventoryStatusReleased  = "released"
 	InventoryStatusFailed    = "failed"
+
+	TaskStatusPending    = "pending"
+	TaskStatusProcessing = "processing"
+	TaskStatusSuccess    = "success"
+	TaskStatusFailed     = "failed"
 )
 
 type InventoryReservation struct {
@@ -37,13 +42,20 @@ type OrderInventoryState struct {
 
 type InventoryIntegrationTask struct {
 	model.Base
-	Provider     string     `gorm:"size:32;not null;index" json:"provider"`
-	BizType      string     `gorm:"size:32;not null;index" json:"biz_type"`
-	BizNo        string     `gorm:"size:64;not null;index" json:"biz_no"`
-	Action       string     `gorm:"size:16;not null;index" json:"action"`
-	Payload      string     `gorm:"type:json" json:"payload"`
-	Status       string     `gorm:"size:16;not null;default:'pending';index" json:"status"`
-	AttemptCount int        `gorm:"not null;default:0" json:"attempt_count"`
-	NextRetryAt  *time.Time `json:"next_retry_at"`
-	LastError    string     `gorm:"size:255" json:"last_error"`
+	Provider       string     `gorm:"size:32;not null;index" json:"provider"`
+	BizType        string     `gorm:"size:32;not null;index" json:"biz_type"`
+	BizNo          string     `gorm:"size:64;not null;index" json:"biz_no"`
+	Action         string     `gorm:"size:16;not null;index" json:"action"`
+	RequestID      string     `gorm:"size:64;index" json:"request_id"`
+	Payload        string     `gorm:"type:json" json:"payload"`
+	Status         string     `gorm:"size:16;not null;default:'pending';index" json:"status"`
+	AttemptCount   int        `gorm:"not null;default:0" json:"attempt_count"`
+	MaxAttempts    int        `gorm:"not null;default:0" json:"max_attempts"`
+	BackoffSeconds int        `gorm:"not null;default:0" json:"backoff_seconds"`
+	NextRetryAt    *time.Time `gorm:"index" json:"next_retry_at"`
+	LastError      string     `gorm:"size:255" json:"last_error"`
+	LockOwner      string     `gorm:"size:64;index" json:"lock_owner"`
+	LockExpiresAt  *time.Time `gorm:"index" json:"lock_expires_at"`
+	CompletedAt    *time.Time `json:"completed_at"`
+	LastCallbackID string     `gorm:"size:64;index" json:"last_callback_id"`
 }

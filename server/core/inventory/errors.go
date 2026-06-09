@@ -1,6 +1,9 @@
 package inventory
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 type ErrorKind string
 
@@ -42,3 +45,5 @@ func Internal(msg string, err error) error {
 	}
 	return newError(ErrorKindInternal, fmt.Sprintf("%s: %v", msg, err))
 }
+
+var ErrInventoryBusy = errors.New("inventory busy")
