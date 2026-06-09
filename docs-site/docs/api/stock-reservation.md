@@ -40,6 +40,30 @@
     - 商城先落订单与库存意图，再异步投递外部 WMS。
     - 异步任务记录在 `inventory_integration_tasks`，支持 claim、重试、回调补偿与最终失败落库。
 
+### 通用企业协议 `generic adapter`
+
+当前 `external_wms` 默认内置一个通用企业协议适配层，用于统一真实企业 WMS 的基础对接方式：
+
+- 请求头：
+  - `X-App-Key`
+  - `X-Timestamp`
+  - `X-Nonce`
+  - `X-Sign`
+  - `X-Request-Mode=generic`
+- 签名串：
+  - `app_key + "\n" + timestamp + "\n" + nonce + "\n" + body + "\n" + app_secret`
+  - 使用 `sha256` 计算十六进制摘要
+- 通用响应体：
+  - `code`
+  - `message | msg`
+  - `request_id`
+  - `data`
+- 通用回调体：
+  - 外层支持签名字段 `app_key/timestamp/nonce/sign/body`
+  - `body` 内层使用 JSON，至少包含 `request_id/callback_id/status/message`
+
+这层协议的目标是先统一商城与企业 WMS 的集成边界；如果未来接入特定厂商协议，应在此基础上新增独立 adapter，而不是继续把差异直接写进业务服务层。
+
 ## 异步外部库存任务
 
 当 `inventory.provider=external_wms` 且 `inventory.external_mode=async` 时，统一库存会把库存动作写入异步任务表，再由后台任务执行。

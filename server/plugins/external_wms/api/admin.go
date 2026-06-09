@@ -2,6 +2,7 @@ package api
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -70,6 +71,17 @@ func callback(c *gin.Context) {
 			response.Fail(c, 400, "签名校验失败")
 			return
 		}
+	}
+	if strings.TrimSpace(req.Body) != "" {
+		payload, err := inventorycore.NewExternalAdapter().ParseCallbackBody(req.Body)
+		if err != nil {
+			response.Fail(c, 400, "回调体错误")
+			return
+		}
+		req.RequestID = payload.RequestID
+		req.CallbackID = payload.CallbackID
+		req.Status = payload.Status
+		req.Message = payload.Message
 	}
 
 	err := db.DB.WithContext(c.Request.Context()).Transaction(func(tx *gorm.DB) error {

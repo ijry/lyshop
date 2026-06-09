@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/ijry/lyshop/core/plugin"
 	externalapi "github.com/ijry/lyshop/plugins/external_wms/api"
+	externalservice "github.com/ijry/lyshop/plugins/external_wms/service"
 	"gorm.io/gorm"
 )
 
@@ -30,5 +31,8 @@ func (p *externalPlugin) RegisterRoutes(_ *gin.RouterGroup, admin *gin.RouterGro
 }
 
 func (p *externalPlugin) Migrate(_ *gorm.DB) error { return nil }
-func (p *externalPlugin) Install() error           { return nil }
+func (p *externalPlugin) Install() error {
+	externalservice.StartWorker()
+	return nil
+}
 func (p *externalPlugin) Uninstall() error         { return nil }

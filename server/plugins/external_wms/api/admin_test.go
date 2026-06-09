@@ -139,6 +139,34 @@ func TestExternalWMSCallbackRejectsInvalidSignature(t *testing.T) {
 	require.NotEqual(t, 0, resp.Code)
 }
 
+func TestExternalWMSCallbackParsesGenericBodyPayload(t *testing.T) {
+	original := config.Global
+	t.Cleanup(func() { config.Global = original })
+
+	router, gdb := setupExternalAdminRouter(t)
+	now := time.Now()
+	task := inventorycore.InventoryIntegrationTask{
+		Provider:  "external_wms",
+		Action:    "release",
+		BizType:   "order",
+		BizNo:     "O1004",
+		Status:    inventorycore.TaskStatusProcessing,
+		RequestID: "REQ-4",
+		NextRetryAt: &now,
+	}
+	require.NoError(t, gdb.Create(&task).Error)
+	require.NoError(t, gdb.Create(&ordermodel.Order{
+		OrderNo:         "O1004",
+		UserID:          1,
+		Status:          ordermodel.OrderStatusCanceled,
+		InventoryStatus: inventorycore.InventoryStatusPending,
+	}).Error)
+
+	resp := doExternalAdminReq(t, router, http.MethodPost, "/admin/external-wms/callback", `{"body":"{\"request_id\":\"REQ-4\",\"callback_id\":\"CALLBACK-4\",\"status\":\"success\",\"message\":\"ok\"}"}`, "*")
+	require.Equal(t, 0, resp.Code)
+	requireOrderInventoryStatus(t, gdb, "O1004", inventorycore.InventoryStatusReleased)
+}
+
 func setupExternalAdminRouter(t *testing.T) (*gin.Engine, *gorm.DB) {
 	t.Helper()
 	gin.SetMode(gin.TestMode)

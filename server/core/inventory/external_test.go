@@ -3,6 +3,7 @@ package inventory
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"testing"
@@ -59,6 +60,24 @@ func TestBuildExternalSignature(t *testing.T) {
 	require.Equal(t, "e7593e961fe2c512caee1919359e5eee2c85003beded98875e35dd203fc8b625", sign)
 }
 
+func TestGenericAdapterBuildSignedRequestAddsHeaders(t *testing.T) {
+	original := config.Global
+	t.Cleanup(func() { config.Global = original })
+	config.Global.ExternalWMS.Endpoint = "https://wms.example.com"
+	config.Global.ExternalWMS.AppKey = "demo-key"
+	config.Global.ExternalWMS.AppSecret = "demo-secret"
+
+	req, err := NewExternalAdapter().BuildSignedRequest(context.Background(), http.MethodPost, "/reserve", map[string]any{
+		"biz_no": "ORD-10",
+	})
+	require.NoError(t, err)
+	require.Equal(t, "demo-key", req.Header.Get("X-App-Key"))
+	require.NotEmpty(t, req.Header.Get("X-Timestamp"))
+	require.NotEmpty(t, req.Header.Get("X-Nonce"))
+	require.NotEmpty(t, req.Header.Get("X-Sign"))
+	require.Equal(t, "generic", req.Header.Get("X-Request-Mode"))
+}
+
 func TestVerifyCallbackSignatureRejectsInvalidSign(t *testing.T) {
 	err := VerifyCallbackSignature(callbackEnvelope{
 		AppKey:    "demo-key",
@@ -100,7 +119,7 @@ func TestExternalProviderGetSellableStockMapsRemoteError(t *testing.T) {
 	externalHTTPClient = &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
 		return &http.Response{
 			StatusCode: 200,
-			Body: io.NopCloser(bytes.NewBufferString(`{"code":5001,"msg":"remote error"}`)),
+			Body: io.NopCloser(bytes.NewBufferString(`{"code":4004,"msg":"remote error"}`)),
 			Header: make(http.Header),
 		}, nil
 	})}
@@ -113,4 +132,36 @@ func TestExternalProviderGetSellableStockMapsRemoteError(t *testing.T) {
 	provider := &externalProvider{}
 	_, err := provider.GetSellableStock(context.Background(), []uint64{11})
 	require.ErrorContains(t, err, "remote error")
+}
+
+func TestExternalProviderProcessTaskWritesRemoteRequestID(t *testing.T) {
+	originalClient := externalHTTPClient
+	externalHTTPClient = &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: 200,
+			Body: io.NopCloser(bytes.NewBufferString(`{"code":0,"request_id":"REMOTE-1","data":{}}`)),
+			Header: make(http.Header),
+		}, nil
+	})}
+	t.Cleanup(func() { externalHTTPClient = originalClient })
+
+	original := config.Global
+	t.Cleanup(func() { config.Global = original })
+	config.Global.ExternalWMS.Endpoint = "https://wms.example.com"
+	config.Global.ExternalWMS.AppKey = "demo-key"
+	config.Global.ExternalWMS.AppSecret = "demo-secret"
+
+	p := &externalProvider{adapter: NewExternalAdapter()}
+	payload, err := json.Marshal(TaskPayload{Items: []ReserveItem{{SkuID: 1, Qty: 2}}})
+	require.NoError(t, err)
+	task := &InventoryIntegrationTask{
+		Action:  "reserve",
+		BizType: "order",
+		BizNo:   "ORD-11",
+		Payload: string(payload),
+	}
+
+	err = p.ProcessTask(&gorm.DB{}, task, time.Now())
+	require.NoError(t, err)
+	require.Equal(t, "REMOTE-1", task.RequestID)
 }
