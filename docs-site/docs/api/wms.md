@@ -7,6 +7,15 @@
 
 `wms` 是商城的内置库存 provider 之一，而不是唯一库存模式。只有在 `inventory.provider=builtin_wms` 时，订单库存交易才以 WMS 为真源；当商城运行于 `local` 或 `external_wms` 模式时，WMS 后台能力不是必选依赖。
 
+LYShop 当前库存模式支持：
+
+- `local`
+  - 不启用 WMS，直接使用商城本地库存。
+- `builtin_wms`
+  - 启用内置 `wms` 插件，使用系统内仓储能力。
+- `external_wms`
+  - 对接企业已有 WMS，支持 `sync` 与 `async` 两种集成方式。
+
 ## 功能说明
 
 - 仓库管理：支持仓库分页查询、新建、编辑和启停用。
@@ -106,6 +115,12 @@
 - 统一库存配置使用：
   - `inventory.provider`
   - `inventory.external_mode`
+- 外部 WMS 生产模式还需配置：
+  - `external_wms.endpoint`
+  - `external_wms.app_key`
+  - `external_wms.app_secret`
+  - `external_wms.signature_ttl`
+  - `external_wms.worker_interval_sec`
 - `wms` 插件在服务启动时自动迁移仓储相关表结构（仓库、库存、单据、单据明细、流水）。
 - 新增库存预占结构（自动迁移）：
   - `inventory_stock.reserved_qty`

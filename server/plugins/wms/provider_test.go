@@ -55,5 +55,5 @@ func TestBuiltinWMSProviderGetSellableStock(t *testing.T) {
 	list, err := p.GetSellableStock(context.Background(), []uint64{7})
 	require.NoError(t, err)
 	require.Len(t, list, 1)
-	require.Equal(t, 7, list[0].Sellable)
+	require.Equal(t, 7, list[0].SellableStock)
 }

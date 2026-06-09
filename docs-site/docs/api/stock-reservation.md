@@ -38,7 +38,39 @@
     - 下单时实时调用企业 WMS；外部预占失败则订单创建失败。
   - `inventory.external_mode=async`
     - 商城先落订单与库存意图，再异步投递外部 WMS。
-    - 异步任务记录在 `inventory_integration_tasks`，支持重试与回调补偿。
+    - 异步任务记录在 `inventory_integration_tasks`，支持 claim、重试、回调补偿与最终失败落库。
+
+## 异步外部库存任务
+
+当 `inventory.provider=external_wms` 且 `inventory.external_mode=async` 时，统一库存会把库存动作写入异步任务表，再由后台任务执行。
+
+任务状态：
+
+- `pending`
+  - 待执行或待重试。
+- `processing`
+  - 已被 worker 领取，正在执行或等待外部 WMS 回调确认。
+- `success`
+  - 外部库存动作已完成，订单库存状态会同步收口为 `reserved / confirmed / released`。
+- `failed`
+  - 外部 WMS 明确返回失败，或任务超过最大重试次数后最终失败。
+
+异步任务关键字段：
+
+- `attempt_count`
+- `max_attempts`
+- `backoff_seconds`
+- `next_retry_at`
+- `lock_owner`
+- `lock_expires_at`
+- `completed_at`
+- `last_callback_id`
+
+回调规则：
+
+- 同一 `callback_id` 重复回调会被幂等忽略。
+- 已进入最终态（`success / failed`）的任务不会被后续回调回滚。
+- 订单侧 `inventory_status` 会根据异步任务最终结果同步更新。
 
 ## 单仓优先策略
 
@@ -55,7 +87,9 @@
 - `order_inventory_state`
   - `order_no`、`provider`、`status`、`last_error`
 - `inventory_integration_tasks`
-  - `provider`、`biz_type`、`biz_no`、`action`、`payload`、`status`、`attempt_count`
+  - `provider`、`biz_type`、`biz_no`、`action`、`payload`、`status`
+  - `attempt_count`、`max_attempts`、`backoff_seconds`、`next_retry_at`
+  - `lock_owner`、`lock_expires_at`、`completed_at`、`last_callback_id`
 - `inventory_stock`
   - 仅 `builtin_wms` 模式使用
   - `qty`：在手库存
@@ -74,3 +108,5 @@
   - `inventory.provider`
   - `inventory.external_mode`
   - `external_wms.endpoint/app_key/app_secret`
+  - `external_wms.signature_ttl`
+  - `external_wms.worker_interval_sec`
