@@ -64,6 +64,8 @@
 
 这层协议的目标是先统一商城与企业 WMS 的集成边界；如果未来接入特定厂商协议，应在此基础上新增独立 adapter，而不是继续把差异直接写进业务服务层。
 
+详细协议说明见：[外部 WMS 通用协议说明](./external-wms-generic)。
+
 ## 异步外部库存任务
 
 当 `inventory.provider=external_wms` 且 `inventory.external_mode=async` 时，统一库存会把库存动作写入异步任务表，再由后台任务执行。

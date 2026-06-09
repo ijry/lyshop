@@ -16,6 +16,8 @@ LYShop 当前库存模式支持：
 - `external_wms`
   - 对接企业已有 WMS，支持 `sync` 与 `async` 两种集成方式。
 
+外部 WMS 对接的默认企业协议见：[外部 WMS 通用协议说明](./external-wms-generic)。
+
 ## 功能说明
 
 - 仓库管理：支持仓库分页查询、新建、编辑和启停用。
