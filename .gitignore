@@ -27,6 +27,7 @@ web/dist/
 *.swp
 .claude/
 .agents/
+.worktrees/
 docs-site/docs/public/demo/
 docs-site/docs/public/web-demo/
 docs-site/docs/public/admin-demo/
