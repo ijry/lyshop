@@ -10,11 +10,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/ijry/lyshop/core/db"
+	inventorycore "github.com/ijry/lyshop/core/inventory"
 	"github.com/ijry/lyshop/core/marketing"
 	marketingsvc "github.com/ijry/lyshop/plugins/marketing/service"
 	ordermodel "github.com/ijry/lyshop/plugins/order/model"
 	vipsvc "github.com/ijry/lyshop/plugins/vip/service"
-	wmssvc "github.com/ijry/lyshop/plugins/wms/service"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -67,10 +67,7 @@ type OrderShipmentView struct {
 
 var validateActivityProductSourceFn = marketingsvc.ValidateActivityProductSource
 var increaseSoldQtyByActivityProductTxFn = marketingsvc.IncreaseSoldQtyByActivityProductTx
-var reserveStockTxFn = wmssvc.ReserveStockTx
-var confirmReservationTxFn = wmssvc.ConfirmReservationTx
-var releaseReservationTxFn = wmssvc.ReleaseReservationTx
-var pickDefaultWarehouseIDTxFn = wmssvc.PickDefaultWarehouseIDTx
+var getInventoryProviderFn = inventorycore.CurrentProvider
 
 const (
 	orderReservationBizType = "order"
@@ -167,6 +164,43 @@ func generateOrderNo() string {
 	return fmt.Sprintf("%d%06d", time.Now().UnixMilli(), time.Now().Nanosecond()%1000000)
 }
 
+func reserveOrderInventory(tx *gorm.DB, orderNo string, items []ordermodel.OrderItem) error {
+	provider, err := getInventoryProviderFn()
+	if err != nil {
+		return err
+	}
+	reserveItems := make([]inventorycore.ReserveItem, 0, len(items))
+	for _, item := range items {
+		reserveItems = append(reserveItems, inventorycore.ReserveItem{
+			SkuID: item.SkuID,
+			Qty:   item.Qty,
+		})
+	}
+	expireAt := time.Now().Add(orderReserveExpire)
+	return provider.ReserveTx(tx, inventorycore.ReserveInput{
+		BizType:   orderReservationBizType,
+		BizNo:     orderNo,
+		Items:     reserveItems,
+		ExpiredAt: &expireAt,
+	})
+}
+
+func confirmOrderInventory(tx *gorm.DB, orderNo string) error {
+	provider, err := getInventoryProviderFn()
+	if err != nil {
+		return err
+	}
+	return provider.ConfirmTx(tx, orderReservationBizType, orderNo)
+}
+
+func releaseOrderInventory(tx *gorm.DB, orderNo, reason string) error {
+	provider, err := getInventoryProviderFn()
+	if err != nil {
+		return err
+	}
+	return provider.ReleaseTx(tx, orderReservationBizType, orderNo, reason)
+}
+
 // CreateOrder validates cart items, deducts stock, and persists the order.
 func CreateOrder(ctx context.Context, req CreateOrderReq) (*ordermodel.Order, error) {
 	// 1. Load address
@@ -215,6 +249,7 @@ func CreateOrder(ctx context.Context, req CreateOrderReq) (*ordermodel.Order, er
 		OrderNo:         generateOrderNo(),
 		UserID:          req.UserID,
 		Status:          ordermodel.OrderStatusPending,
+		InventoryStatus: inventorycore.InventoryStatusNone,
 		PaymentMethod:   req.PaymentMethod,
 		GoodsAmount:     pCtx.GoodsAmount,
 		DiscountAmount:  pCtx.ActivityDiscount + pCtx.VipDiscount + pCtx.FullReduceDiscount + pCtx.CouponDiscount + pCtx.PointsDiscount,
@@ -227,30 +262,14 @@ func CreateOrder(ctx context.Context, req CreateOrderReq) (*ordermodel.Order, er
 		if err := tx.Create(order).Error; err != nil {
 			return err
 		}
-		warehouseID, err := pickDefaultWarehouseIDTxFn(tx)
-		if err != nil {
+		if err := reserveOrderInventory(tx, order.OrderNo, items); err != nil {
 			return err
 		}
-		reservationItems := make([]wmssvc.ReservationItemInput, 0, len(items))
-		for _, item := range items {
-			reservationItems = append(reservationItems, wmssvc.ReservationItemInput{
-				SkuID: item.SkuID,
-				Qty:   item.Qty,
-			})
-		}
-		expireAt := time.Now().Add(orderReserveExpire)
-		if err := reserveStockTxFn(tx, wmssvc.ReserveStockInput{
-			BizType:     orderReservationBizType,
-			BizNo:       order.OrderNo,
-			WarehouseID: warehouseID,
-			Items:       reservationItems,
-			ExpiredAt:   &expireAt,
-		}); err != nil {
+		if err := tx.Model(&ordermodel.Order{}).Where("id = ?", order.ID).Update("inventory_status", inventorycore.InventoryStatusReserved).Error; err != nil {
 			return err
 		}
 		for i := range items {
 			items[i].OrderID = order.ID
-			items[i].WarehouseID = warehouseID
 			if items[i].ActivityProductID > 0 {
 				if err := increaseSoldQtyByActivityProductTxFn(tx, items[i].ActivityProductID, items[i].Qty); err != nil {
 					return err
@@ -599,14 +618,15 @@ func PayOrder(ctx context.Context, userID, orderID uint64) error {
 		if order.Status != ordermodel.OrderStatusPending {
 			return errors.New("order.err.cannotPay")
 		}
-		if err := confirmReservationTxFn(tx, orderReservationBizType, order.OrderNo); err != nil {
+		if err := confirmOrderInventory(tx, order.OrderNo); err != nil {
 			return err
 		}
 
 		now := time.Now()
 		if err := tx.Model(&ordermodel.Order{}).Where("id = ?", order.ID).Updates(map[string]any{
-			"status":  ordermodel.OrderStatusPaid,
-			"paid_at": &now,
+			"status":           ordermodel.OrderStatusPaid,
+			"inventory_status": inventorycore.InventoryStatusConfirmed,
+			"paid_at":          &now,
 		}).Error; err != nil {
 			return err
 		}
@@ -629,10 +649,13 @@ func CancelOrder(ctx context.Context, userID, orderID uint64) error {
 		if order.Status != ordermodel.OrderStatusPending {
 			return errors.New("order.err.cannotCancel")
 		}
-		if err := releaseReservationTxFn(tx, orderReservationBizType, order.OrderNo, "user_cancel"); err != nil {
+		if err := releaseOrderInventory(tx, order.OrderNo, "user_cancel"); err != nil {
 			return err
 		}
-		return tx.Model(&ordermodel.Order{}).Where("id = ?", order.ID).Update("status", ordermodel.OrderStatusCanceled).Error
+		return tx.Model(&ordermodel.Order{}).Where("id = ?", order.ID).Updates(map[string]any{
+			"status":           ordermodel.OrderStatusCanceled,
+			"inventory_status": inventorycore.InventoryStatusReleased,
+		}).Error
 	})
 }
 

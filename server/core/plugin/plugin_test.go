@@ -15,11 +15,11 @@ type stub struct {
 	deps []string
 }
 
-func (s *stub) Meta() Meta                             { return Meta{Name: s.name, Depends: s.deps} }
-func (s *stub) RegisterRoutes(_, _ *gin.RouterGroup)   {}
-func (s *stub) Migrate(_ *gorm.DB) error               { return nil }
-func (s *stub) Install() error                         { return nil }
-func (s *stub) Uninstall() error                       { return nil }
+func (s *stub) Meta() Meta                           { return Meta{Name: s.name, Depends: s.deps} }
+func (s *stub) RegisterRoutes(_, _ *gin.RouterGroup) {}
+func (s *stub) Migrate(_ *gorm.DB) error             { return nil }
+func (s *stub) Install() error                       { return nil }
+func (s *stub) Uninstall() error                     { return nil }
 
 func resetRegistry() {
 	mu.Lock()
@@ -49,6 +49,17 @@ func TestLoad_MissingDependency(t *testing.T) {
 }
 
 func TestLoad_OK(t *testing.T) {
+	resetRegistry()
+	Register(&stub{name: "product"})
+	Register(&stub{name: "order", deps: []string{"product"}})
+
+	gin.SetMode(gin.TestMode)
+	r := gin.New()
+	err := Load([]string{"product", "order"}, &gorm.DB{}, r.Group("/api/v1"), r.Group("/admin/api"))
+	require.NoError(t, err)
+}
+
+func TestLoad_OrderDoesNotRequireWMS(t *testing.T) {
 	resetRegistry()
 	Register(&stub{name: "product"})
 	Register(&stub{name: "order", deps: []string{"product"}})
