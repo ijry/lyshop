@@ -30,6 +30,8 @@ export default {
   'menu.vip.skuPrices': 'VIP Pricing',
   'menu.im': 'Customer Service',
   'menu.im.sessions': 'Chat Sessions',
+  'menu.im.analytics': 'Analytics',
+  'menu.im.logs': 'Event Logs',
   'menu.im.staffManage': 'Staff Management',
   'menu.im.knowledge': 'AI Knowledge',
   'menu.im.autoReply': 'Auto Reply',
@@ -140,6 +142,8 @@ export default {
   'nav.adminManage': 'Admins',
   'nav.roleManage': 'Roles',
   'nav.imSession': 'Customer Service',
+  'nav.imAnalytics': 'Customer Service Analytics',
+  'nav.imLogs': 'Event Logs',
   'nav.imKnowledge': 'AI Knowledge',
   'nav.aiImageGen': 'AI Image Gen',
   'nav.aiModelConfig': 'AI Models',
@@ -694,6 +698,14 @@ export default {
   'im.close': 'Close',
   'im.transfer': 'Transfer',
   'im.queuePosition': 'Queue #{position}',
+  'im.attachment': 'Attachment',
+
+  // IM analytics / logs
+  'imAnalytics.title': 'Customer Service Analytics',
+  'imAnalytics.subtitle': 'Track sessions, AI replies, RAG hits, and attachment messages',
+  'imAnalytics.trend': 'Trend Details',
+  'imAnalytics.date': 'Date',
+  'imLogs.title': 'Event Logs',
 
   // IM AI knowledge base
   'imkb.title': 'AI Customer-Service Knowledge Base',

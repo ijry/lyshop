@@ -13,6 +13,8 @@
       "sort": 50,
       "children": [
         { "title": "客服会话", "title_key": "menu.im.sessions", "path": "/im/sessions", "permission": "im:view" },
+        { "title": "客服报表", "title_key": "menu.im.analytics", "path": "/im/analytics", "permission": "im:view" },
+        { "title": "事件日志", "title_key": "menu.im.logs", "path": "/im/logs", "permission": "im:view" },
         { "title": "坐席管理", "title_key": "menu.im.staffManage", "path": "/im/staff-manage", "permission": "im:staff:manage" },
         { "title": "AI知识库", "title_key": "menu.im.knowledge", "path": "/im/knowledge", "permission": "im:knowledge" },
         { "title": "自动回复", "title_key": "menu.im.autoReply", "path": "/im/auto-reply", "permission": "im:view" }

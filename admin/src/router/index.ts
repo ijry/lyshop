@@ -71,6 +71,8 @@ const router = createRouter({
         { path: 'system/roles',  name: 'nav.roleManage', component: () => import('@/views/system/RoleList.vue'), meta: { titleKey: 'nav.roleManage' } },
         // IM
         { path: 'im/sessions',  name: 'nav.imSession', component: () => import('@/views/im/SessionList.vue'), meta: { titleKey: 'nav.imSession' } },
+        { path: 'im/analytics', name: 'nav.imAnalytics', component: () => import('@/views/im/Analytics.vue'), meta: { titleKey: 'nav.imAnalytics' } },
+        { path: 'im/logs',      name: 'nav.imLogs', component: () => import('@/views/im/EventLogs.vue'), meta: { titleKey: 'nav.imLogs' } },
         { path: 'im/knowledge', name: 'nav.imKnowledge', component: () => import('@/views/im/KnowledgeManage.vue'), meta: { titleKey: 'nav.imKnowledge' } },
         // AI
         { path: 'ai/tasks',     name: 'nav.aiImageGen',   component: () => import('@/views/ai/ImageGen.vue'), meta: { titleKey: 'nav.aiImageGen' } },

@@ -30,6 +30,8 @@ export default {
   'menu.vip.skuPrices': '会员价',
   'menu.im': '客服中心',
   'menu.im.sessions': '客服会话',
+  'menu.im.analytics': '客服报表',
+  'menu.im.logs': '事件日志',
   'menu.im.staffManage': '坐席管理',
   'menu.im.knowledge': 'AI知识库',
   'menu.im.autoReply': '自动回复',
@@ -140,6 +142,8 @@ export default {
   'nav.adminManage': '管理员管理',
   'nav.roleManage': '角色管理',
   'nav.imSession': '客服会话',
+  'nav.imAnalytics': '客服报表',
+  'nav.imLogs': '事件日志',
   'nav.imKnowledge': 'AI知识库',
   'nav.aiImageGen': 'AI生图',
   'nav.aiModelConfig': 'AI模型配置',
@@ -707,6 +711,14 @@ export default {
   'im.close': '结束',
   'im.transfer': '转接',
   'im.queuePosition': '排队第{position}位',
+  'im.attachment': '附件',
+
+  // IM 报表 / 日志
+  'imAnalytics.title': '客服报表',
+  'imAnalytics.subtitle': '统计客服会话、AI、RAG 与附件消息',
+  'imAnalytics.trend': '趋势明细',
+  'imAnalytics.date': '日期',
+  'imLogs.title': '事件日志',
 
   // IM AI 知识库
   'imkb.title': 'AI 客服知识库',

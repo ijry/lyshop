@@ -120,7 +120,12 @@
                 ? 'bg-red-600 text-white rounded-tl-2xl rounded-tr-sm rounded-bl-2xl rounded-br-2xl'
                 : 'bg-slate-100 text-slate-800 rounded-tl-sm rounded-tr-2xl rounded-bl-2xl rounded-br-2xl'"
                 class="max-w-md px-4 py-2.5 text-sm leading-relaxed">
-                {{ m.content }}
+                <img v-if="m.type === 'image'" :src="fileUrl(m)" :alt="fileName(m)" class="max-w-64 max-h-64 rounded-lg object-contain bg-white cursor-pointer" @click="openAttachment(m)" />
+                <button v-else-if="m.type === 'file'" type="button" class="flex items-center gap-2 text-left cursor-pointer" @click="openAttachment(m)">
+                  <span class="inline-flex w-8 h-8 rounded-lg items-center justify-center" :class="m.sender_type === 2 ? 'bg-white/15 text-white' : 'bg-white text-slate-500'">F</span>
+                  <span class="break-all">{{ fileName(m) }}</span>
+                </button>
+                <template v-else>{{ m.content }}</template>
               </div>
               <span class="text-xs text-slate-300 shrink-0">{{ m.created_at?.slice(11,16) }}</span>
             </div>
@@ -129,6 +134,11 @@
 
         <!-- Input -->
         <div class="px-5 py-3 border-t border-slate-100 flex gap-3 shrink-0">
+          <input ref="fileInput" type="file" class="hidden" @change="onFileChange" />
+          <button type="button" @click="chooseFile" :disabled="activeSession.status !== 2 || uploading"
+            class="px-4 py-2.5 border border-slate-200 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-50 transition disabled:opacity-40 cursor-pointer">
+            {{ uploading ? $t('common.uploading') : $t('im.attachment') }}
+          </button>
           <input v-model="replyText" @keyup.enter="sendReply"
             :placeholder="$t('im.inputPlaceholder')"
             :disabled="activeSession.status !== 2"
@@ -185,11 +195,13 @@ const messages = ref<any[]>([])
 const activeSession = ref<any>(null)
 const replyText = ref('')
 const msgContainer = ref<HTMLElement>()
+const fileInput = ref<HTMLInputElement>()
 const wsConnected = ref(false)
 const staffOnline = ref(false)
 const staffStatus = ref({ current_load: 0, max_load: 5 })
 const showTransferModal = ref(false)
 const transferForm = ref({ toStaffId: null as number | null, remark: '' })
+const uploading = ref(false)
 
 // Sound notification
 const notifySound = new Audio('data:audio/wav;base64,UklGRl9vT19teleVmH0AAAAQAAABAAAQ//8CABAAD//')
@@ -221,6 +233,8 @@ function connectWS() {
             id: Date.now(),
             sender_type: frame.payload.sender_type ?? 1,
             content: frame.payload.content,
+            type: frame.payload.msg_type,
+            extra: frame.payload.extra,
             created_at: new Date().toISOString(),
           })
           scrollToBottom()
@@ -362,14 +376,84 @@ async function sendReply() {
   if (!replyText.value.trim() || !activeSession.value) return
   const text = replyText.value
   replyText.value = ''
-  await request.post(`/im/sessions/${activeSession.value.id}/reply`, { content: text })
+  await request.post(`/im/sessions/${activeSession.value.id}/reply`, { content: text, type: 'text' })
   messages.value.push({
-    id: Date.now(), sender_type: 2, content: text,
+    id: Date.now(), sender_type: 2, content: text, type: 'text',
     created_at: new Date().toISOString()
   })
   const sess = sessions.value.find(s => s.id === activeSession.value.id)
   if (sess) sess.last_msg = text
   await scrollToBottom()
+}
+
+function parseExtra(message: any) {
+  if (!message?.extra) return {}
+  if (typeof message.extra === 'object') return message.extra
+  try {
+    return JSON.parse(message.extra)
+  } catch {
+    return {}
+  }
+}
+
+function fileUrl(message: any) {
+  const extra = parseExtra(message)
+  return extra.file_url || extra.url || message.content || ''
+}
+
+function fileName(message: any) {
+  const extra = parseExtra(message)
+  return extra.file_name || extra.name || message.content || '附件'
+}
+
+function openAttachment(message: any) {
+  const url = fileUrl(message)
+  if (url) window.open(url, '_blank', 'noopener,noreferrer')
+}
+
+function chooseFile() {
+  fileInput.value?.click()
+}
+
+async function onFileChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  const file = target.files?.[0]
+  target.value = ''
+  if (!file || !activeSession.value) return
+  uploading.value = true
+  try {
+    const form = new FormData()
+    form.append('session_id', String(activeSession.value.id))
+    form.append('file', file)
+    const info: any = await request.post('/im/upload', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    const extra = {
+      file_url: info.url,
+      file_path: info.path,
+      file_name: info.name,
+      file_size: info.size,
+      mime: info.mime,
+    }
+    await request.post(`/im/sessions/${activeSession.value.id}/reply`, {
+      type: info.message_type,
+      content: info.name,
+      extra: JSON.stringify(extra),
+    })
+    messages.value.push({
+      id: Date.now(),
+      sender_type: 2,
+      content: info.name,
+      type: info.message_type,
+      extra,
+      created_at: new Date().toISOString(),
+    })
+    const sess = sessions.value.find(s => s.id === activeSession.value.id)
+    if (sess) sess.last_msg = info.name
+    await scrollToBottom()
+  } finally {
+    uploading.value = false
+  }
 }
 
 async function scrollToBottom() {
