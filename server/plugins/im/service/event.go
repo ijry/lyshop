@@ -8,6 +8,7 @@ import (
 
 	"github.com/ijry/lyshop/core/db"
 	immodel "github.com/ijry/lyshop/plugins/im/model"
+	"gorm.io/gorm"
 )
 
 type EventInput struct {
@@ -103,4 +104,104 @@ type AnalyticsQuery struct {
 	From    time.Time
 	To      time.Time
 	StaffID uint64
+}
+
+type AnalyticsResult struct {
+	Summary map[string]int64 `json:"summary"`
+	Trend   []map[string]any `json:"trend"`
+}
+
+func emptyAnalyticsCounters() map[string]int64 {
+	return map[string]int64{
+		"sessions":   0,
+		"messages":   0,
+		"ai_replies": 0,
+		"ai_failed":  0,
+		"rag_hits":   0,
+		"to_human":   0,
+		"accepts":    0,
+		"closes":     0,
+		"transfers":  0,
+		"files":      0,
+	}
+}
+
+func incrementAnalyticsCounter(counters map[string]int64, event string, count int64) {
+	switch event {
+	case immodel.ImEventSessionCreated:
+		counters["sessions"] += count
+	case immodel.ImEventMessageSent:
+		counters["messages"] += count
+	case immodel.ImEventAIReply:
+		counters["ai_replies"] += count
+	case immodel.ImEventAIFailed:
+		counters["ai_failed"] += count
+	case immodel.ImEventRAGHit:
+		counters["rag_hits"] += count
+	case immodel.ImEventToHuman:
+		counters["to_human"] += count
+	case immodel.ImEventStaffAccept:
+		counters["accepts"] += count
+	case immodel.ImEventSessionClose:
+		counters["closes"] += count
+	case immodel.ImEventSessionTransfer:
+		counters["transfers"] += count
+	case immodel.ImEventFileUploaded:
+		counters["files"] += count
+	}
+}
+
+func analyticsBaseQuery(ctx context.Context, q AnalyticsQuery) *gorm.DB {
+	tx := db.DB.WithContext(ctx).Model(&immodel.ImEventLog{})
+	if !q.From.IsZero() {
+		tx = tx.Where("created_at >= ?", q.From)
+	}
+	if !q.To.IsZero() {
+		tx = tx.Where("created_at < ?", q.To)
+	}
+	if q.StaffID > 0 {
+		tx = tx.Where("staff_id = ?", q.StaffID)
+	}
+	return tx
+}
+
+func Analytics(ctx context.Context, q AnalyticsQuery) (*AnalyticsResult, error) {
+	var rows []struct {
+		Event string
+		Count int64
+	}
+	if err := analyticsBaseQuery(ctx, q).
+		Select("event, COUNT(*) AS count").
+		Group("event").
+		Scan(&rows).Error; err != nil {
+		return nil, err
+	}
+	summary := emptyAnalyticsCounters()
+	for _, r := range rows {
+		incrementAnalyticsCounter(summary, r.Event, r.Count)
+	}
+
+	var events []immodel.ImEventLog
+	if err := analyticsBaseQuery(ctx, q).Order("created_at asc").Find(&events).Error; err != nil {
+		return nil, err
+	}
+	byDay := map[string]map[string]int64{}
+	var days []string
+	for _, event := range events {
+		day := event.CreatedAt.Format("2006-01-02")
+		if _, ok := byDay[day]; !ok {
+			byDay[day] = emptyAnalyticsCounters()
+			days = append(days, day)
+		}
+		incrementAnalyticsCounter(byDay[day], event.Event, 1)
+	}
+	trend := make([]map[string]any, 0, len(days))
+	for _, day := range days {
+		row := map[string]any{"date": day}
+		for key, value := range byDay[day] {
+			row[key] = value
+		}
+		trend = append(trend, row)
+	}
+	return &AnalyticsResult{Summary: summary, Trend: trend}, nil
 }

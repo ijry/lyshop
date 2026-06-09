@@ -3,6 +3,7 @@ package api
 import (
 	"io"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/ijry/lyshop/core/middleware"
@@ -18,6 +19,8 @@ func RegisterAdminRoutes(g *gin.RouterGroup) {
 	g.POST("/im/sessions/:id/accept", middleware.RequirePermission("im:reply"), adminAcceptSession)
 	g.POST("/im/sessions/:id/close", middleware.RequirePermission("im:reply"), adminCloseSession)
 	g.POST("/im/sessions/:id/transfer", middleware.RequirePermission("im:reply"), adminTransferSession)
+	g.GET("/im/analytics", middleware.RequirePermission("im:view"), adminAnalytics)
+	g.GET("/im/logs", middleware.RequirePermission("im:view"), adminListEventLogs)
 	g.GET("/im/staff/status", middleware.RequirePermission("im:view"), adminGetStaffStatus)
 	g.POST("/im/staff/online", middleware.RequirePermission("im:reply"), adminSetOnline)
 	g.GET("/im/staff", middleware.RequirePermission("im:staff:manage"), adminListStaff)
@@ -42,6 +45,54 @@ func RegisterAdminRoutes(g *gin.RouterGroup) {
 	// 评估反馈
 	g.GET("/im/feedback", middleware.RequirePermission("im:view"), adminListFeedback)
 	g.GET("/im/feedback/stats", middleware.RequirePermission("im:view"), adminFeedbackStats)
+}
+
+func adminAnalytics(c *gin.Context) {
+	from, _ := time.ParseInLocation("2006-01-02", c.Query("from"), time.Local)
+	to, _ := time.ParseInLocation("2006-01-02", c.Query("to"), time.Local)
+	if !to.IsZero() {
+		to = to.Add(24 * time.Hour)
+	}
+	staffID, _ := strconv.ParseUint(c.Query("staff_id"), 10, 64)
+	result, err := imsvc.Analytics(c.Request.Context(), imsvc.AnalyticsQuery{
+		From:    from,
+		To:      to,
+		StaffID: staffID,
+	})
+	if err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, result)
+}
+
+func adminListEventLogs(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	size, _ := strconv.Atoi(c.DefaultQuery("size", "20"))
+	sessionID, _ := strconv.ParseUint(c.Query("session_id"), 10, 64)
+	userID, _ := strconv.ParseUint(c.Query("user_id"), 10, 64)
+	staffID, _ := strconv.ParseUint(c.Query("staff_id"), 10, 64)
+	var success *int8
+	if raw := c.Query("success"); raw != "" {
+		v, _ := strconv.ParseInt(raw, 10, 8)
+		vv := int8(v)
+		success = &vv
+	}
+	list, total, err := imsvc.ListEventLogs(c.Request.Context(), imsvc.EventLogQuery{
+		Event:     c.Query("event"),
+		SessionID: sessionID,
+		UserID:    userID,
+		StaffID:   staffID,
+		Source:    c.Query("source"),
+		Success:   success,
+		Page:      page,
+		Size:      size,
+	})
+	if err != nil {
+		response.Fail(c, 500, err.Error())
+		return
+	}
+	response.OK(c, response.PageData{List: list, Total: total, Page: page, Size: size})
 }
 
 func adminListKnowledge(c *gin.Context) {
