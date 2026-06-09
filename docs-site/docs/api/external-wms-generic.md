@@ -14,6 +14,10 @@ LYShop 在 `inventory.provider=external_wms` 模式下，默认内置一个 `gen
 
 如果后续要接入某个特定厂商 WMS，建议在此基础上新增独立 adapter，而不是继续把厂商差异直接写进业务逻辑。
 
+如果要直接交付给企业 WMS 对接方，请使用精简版：
+
+- [外部 WMS 对接交付说明](./external-wms-handover)
+
 ## 适用范围
 
 - 同步模式：`inventory.external_mode=sync`
