@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/ijry/lyshop/config"
 	inventorycore "github.com/ijry/lyshop/core/inventory"
 	ordermodel "github.com/ijry/lyshop/plugins/order/model"
 	"github.com/stretchr/testify/require"
@@ -64,4 +65,60 @@ func TestReserveOrderInventoryUsesInventoryProvider(t *testing.T) {
 	require.Equal(t, "ORD-TEST", spy.lastReserve.BizNo)
 	require.Len(t, spy.lastReserve.Items, 1)
 	require.Equal(t, 2, spy.lastReserve.Items[0].Qty)
+}
+
+func TestOrderInventoryStatusTransitionsByProviderMode(t *testing.T) {
+	original := config.Global
+	t.Cleanup(func() { config.Global = original })
+
+	cases := []struct {
+		name              string
+		provider          string
+		externalMode      string
+		wantAfterReserve  string
+		wantAfterConfirm  string
+		wantAfterRelease  string
+	}{
+		{
+			name:             "local",
+			provider:         "local",
+			wantAfterReserve: inventorycore.InventoryStatusReserved,
+			wantAfterConfirm: inventorycore.InventoryStatusConfirmed,
+			wantAfterRelease: inventorycore.InventoryStatusReleased,
+		},
+		{
+			name:             "builtin_wms",
+			provider:         "builtin_wms",
+			wantAfterReserve: inventorycore.InventoryStatusReserved,
+			wantAfterConfirm: inventorycore.InventoryStatusConfirmed,
+			wantAfterRelease: inventorycore.InventoryStatusReleased,
+		},
+		{
+			name:             "external_sync",
+			provider:         "external_wms",
+			externalMode:     "sync",
+			wantAfterReserve: inventorycore.InventoryStatusReserved,
+			wantAfterConfirm: inventorycore.InventoryStatusConfirmed,
+			wantAfterRelease: inventorycore.InventoryStatusReleased,
+		},
+		{
+			name:             "external_async",
+			provider:         "external_wms",
+			externalMode:     "async",
+			wantAfterReserve: inventorycore.InventoryStatusPending,
+			wantAfterConfirm: inventorycore.InventoryStatusPending,
+			wantAfterRelease: inventorycore.InventoryStatusPending,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			config.Global.Inventory.Provider = tc.provider
+			config.Global.Inventory.ExternalMode = tc.externalMode
+
+			require.Equal(t, tc.wantAfterReserve, inventorycore.OrderInventoryStatusAfterReserve())
+			require.Equal(t, tc.wantAfterConfirm, inventorycore.OrderInventoryStatusAfterConfirm())
+			require.Equal(t, tc.wantAfterRelease, inventorycore.OrderInventoryStatusAfterRelease())
+		})
+	}
 }

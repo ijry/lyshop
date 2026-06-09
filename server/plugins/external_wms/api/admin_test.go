@@ -99,6 +99,35 @@ func TestExternalWMSCallbackMarksOrderInventoryFailed(t *testing.T) {
 	requireOrderInventoryStatus(t, gdb, "O1002", inventorycore.InventoryStatusFailed)
 }
 
+func TestExternalWMSCallbackMarksOrderInventoryConfirmedOnSuccess(t *testing.T) {
+	router, gdb := setupExternalAdminRouter(t)
+	now := time.Now()
+	task := inventorycore.InventoryIntegrationTask{
+		Provider:    "external_wms",
+		Action:      "deduct",
+		BizType:     "order",
+		BizNo:       "O1003",
+		Status:      inventorycore.TaskStatusProcessing,
+		RequestID:   "REQ-3",
+		NextRetryAt: &now,
+	}
+	require.NoError(t, gdb.Create(&task).Error)
+	require.NoError(t, gdb.Create(&ordermodel.Order{
+		OrderNo:         "O1003",
+		UserID:          1,
+		Status:          ordermodel.OrderStatusPaid,
+		InventoryStatus: inventorycore.InventoryStatusPending,
+	}).Error)
+
+	resp := doExternalAdminReq(t, router, http.MethodPost, "/admin/external-wms/callback", `{"request_id":"REQ-3","callback_id":"CALLBACK-3","status":"success"}`, "*")
+	require.Equal(t, 0, resp.Code)
+
+	var latest inventorycore.InventoryIntegrationTask
+	require.NoError(t, gdb.First(&latest, task.ID).Error)
+	require.Equal(t, inventorycore.TaskStatusSuccess, latest.Status)
+	requireOrderInventoryStatus(t, gdb, "O1003", inventorycore.InventoryStatusConfirmed)
+}
+
 func TestExternalWMSCallbackRejectsInvalidSignature(t *testing.T) {
 	original := config.Global
 	t.Cleanup(func() { config.Global = original })
