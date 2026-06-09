@@ -39,8 +39,31 @@
 | 知识库管理 | ✅ | - | - | - | 知识条目 CRUD + 重建向量索引 + 连通性测试 |
 | 文档切片入库 | ✅ | - | - | - | 上传 TXT/MD/CSV/JSON/XML/HTML/DOCX/PDF/XLSX 自动切片为多条知识 |
 | 大模型配置 | ✅ | - | - | - | 配置中心维护服务地址/模型/提示词等 |
+| AI 反馈统计 | ✅ | - | ✅ | ✅ | 用户端提交反馈，后台查看列表和统计 |
 
 > AI 智能客服为可选能力，由插件配置 `ai_enabled` 控制。关闭时新会话回退到传统“分配/排队”人工流程。
+
+## 端侧能力边界
+
+| 端 | 主要角色 | 已覆盖能力 | 边界说明 |
+|---|---|---|---|
+| Admin | 平台/商家后台客服与管理员 | 会话处理、坐席管理、知识库、报表、日志、反馈统计、附件发送 | 需要按角色授予 `im:*` 权限；报表和日志只在 Admin 提供 |
+| Eapp | 商家移动端客服 | 会话列表、接入/回复/转接/结束、附件发送、连接状态 | 面向移动客服处理，不承载知识库和报表管理 |
+| App | 用户移动端 | 创建会话、AI 接待、转人工、附件消息、反馈 | 附件上传仅允许当前用户自己的会话 |
+| Web | PC/H5 用户端 | 站内聊天弹窗、AI 接待、转人工、附件消息、反馈 | 推荐使用弹窗保持购物链路，不建议跳转独立客服页 |
+
+## 消息类型与展示
+
+| 消息类型 | 说明 | 端侧展示 |
+|---|---|---|
+| `text` | 普通文本消息 | 四端文本气泡 |
+| `image` | 图片附件 | 四端预览图片，点击查看或打开原图 |
+| `file` | 普通文件附件 | 文件卡片，展示文件名、大小和下载入口 |
+| `product_card` | 商品卡片 | 预留业务卡片类型，可携带商品扩展信息 |
+| `order_card` | 订单卡片 | 预留业务卡片类型，可携带订单扩展信息 |
+| `system` | 系统通知 | 接入、转接、关闭、排队等状态提示 |
+
+附件消息的 `extra` 使用 `{file_url,file_path,file_name,file_size,mime}`。前端展示应优先使用 `file_url`，缺失时再按业务配置拼接 `file_path`。
 
 ## 权限说明
 
@@ -61,14 +84,16 @@
 - **消息总线**: Hub 模式（单播/广播）
 - **跨实例投递**: Redis Pub/Sub（频道 `lyshop:im:ws`，节点 ID 防回环）
 - **附件存储**: 复用系统 storage driver，本地 Docker 使用 `./data/uploads:/app/uploads`
+- **事件统计**: `im_event_logs` 统一记录会话、消息、AI、转人工、转接、上传事件，报表按事件聚合生成
 - **数据库表**:
-  - `im_session` - 会话表（用户、客服、**接待模式 mode(ai/human)**、状态、排队位置）
-  - `im_message` - 消息表（会话ID、发送者类型含 **AI=3**、内容）
-  - `im_event_log` - 事件日志表（会话、消息、AI、转人工、上传等审计和报表来源）
-  - `im_staff` - 客服表（管理员ID、在线状态、负载）
-  - `im_transfer_log` - 转接记录表
-  - `im_auto_reply` - 自动回复规则表
-  - `im_knowledge` - AI 知识库表（标题、内容、标签、向量 embedding、是否已索引、状态）
+  - `im_sessions` - 会话表（用户、客服、**接待模式 mode(ai/human)**、状态、排队位置）
+  - `im_messages` - 消息表（会话ID、发送者类型含 **AI=3**、内容）
+  - `im_event_logs` - 事件日志表（会话、消息、AI、转人工、上传等审计和报表来源）
+  - `im_staffs` - 客服表（管理员ID、在线状态、负载）
+  - `im_transfer_logs` - 转接记录表
+  - `im_auto_replies` - 自动回复规则表
+  - `im_knowledges` - AI 知识库表（标题、内容、标签、向量 embedding、是否已索引、状态）
+  - `im_feedbacks` - 用户反馈与 LLM-as-Judge 自动评估结果
 
 ### AI 客服（本地大模型 + RAG）
 - **接口协议**: OpenAI 兼容 `/chat/completions` 与 `/embeddings`，可对接本地推理服务（如 Ollama / vLLM）。
@@ -80,8 +105,25 @@
 - **重排（Rerank）**：配置 `ai_rerank_url` 后，召回候选池（RecallK）送 cross-encoder 精排，支持 Cohere / Jina / TEI 兼容 `/rerank` 接口；不配置则保持召回顺序直接取 TopK。
 - **查询改写**：`ai_query_rewrite` 可选 `rewrite`（LLM 扩写口语化问题）、`hyde`（生成假设回答作为检索向量）、`multi`（生成 N 个变体各自检索再 RRF 融合）；改写仅作用于检索，不影响发给 LLM 的原始问题。
 - **评估闭环**：用户可在聊天页对 AI 回答👍/👎，结果存入 `ImFeedback`（source=user）；开启 `ai_auto_eval` 后 AI 回答完成后自动用 LLM-as-Judge 评估忠实度和相关性（0-5，source=auto）；管理后台可查看列表和聚合统计（`/admin/api/im/feedback`）。
-- **向量库部署**: `docker-compose.yml` 内置 `qdrant` 服务（`qdrant/qdrant`），容器内地址 `http://qdrant:6333`。
+- **向量库部署**: `docker-compose.yml` 内置 `qdrant` 服务（`qdrant/qdrant`），容器内地址 `http://qdrant:6333`，默认 Qdrant collection 为 `im_knowledge`。
 - **配置项**（配置中心 → IM客服）：`ai_enabled`、`ai_base_url`、`ai_api_key`、`ai_chat_model`、`ai_embed_model`、`ai_system_prompt`、`ai_human_keywords`、`ai_top_k`、`ai_temperature`、`ai_product_search`、`ai_timeout_sec`、`ai_qdrant_url`、`ai_qdrant_api_key`、`ai_qdrant_collection`、`ai_score_threshold`、`ai_hybrid`、`ai_recall_k`、`ai_rerank_url`、`ai_rerank_api_key`、`ai_rerank_model`。
+
+### 事件与报表口径
+
+| 指标 | 事件 | 说明 |
+|---|---|---|
+| `sessions` | `session_created` | 新建会话 |
+| `messages` | `message_sent` | 保存消息 |
+| `ai_replies` | `ai_reply` | AI 回复成功 |
+| `ai_failed` | `ai_failed` | AI 回复失败 |
+| `rag_hits` | `rag_hit` | 知识库或商品上下文命中 |
+| `to_human` | `to_human` | 用户请求转人工 |
+| `accepts` | `staff_accept` | 客服接入 |
+| `closes` | `session_close` | 关闭会话 |
+| `transfers` | `session_transfer` | 转接会话 |
+| `files` | `file_uploaded` | 上传附件 |
+
+报表查询支持 `from`、`to`、`staff_id`。日期按本地时区解析，`to` 包含当天；事件日志支持按 `event`、`session_id`、`user_id`、`staff_id`、`source`、`success` 过滤。
 
 ### 前端
 - **Admin**: Vue 3 + TypeScript
@@ -139,6 +181,21 @@
 4. 推送结束通知给用户
 5. 从队列分配下一个等待会话
 
+### 5. 附件消息
+1. 用户或客服选择图片/文件
+2. 调用对应上传接口，后端校验文件大小、扩展名、MIME 和会话权限
+3. 上传服务复用系统 storage driver，返回 `url/path/name/size/mime/message_type`
+4. 前端发送 `msg` 帧或调用回复接口，消息类型使用 `image` 或 `file`
+5. 服务端保存消息并推送给会话双方，同时记录 `file_uploaded` 事件
+
+### 6. 多副本实时投递
+1. 当前副本优先向本机连接投递 WebSocket 消息
+2. 同一消息发布到 Redis Pub/Sub 频道 `lyshop:im:ws`
+3. 其他副本收到广播后按会话和客户端 ID 投递给本机连接
+4. 节点 ID 用于忽略自身广播，避免回环重复投递
+
+如果未连接外部 Redis，系统仍可单实例工作；多副本场景会出现用户和客服连接到不同副本时无法实时互通的问题。
+
 ## 文件位置
 
 ### 后端
@@ -177,3 +234,14 @@
 - 多副本后端必须连接同一个外部 Redis，才能保证用户和客服 WebSocket 分布在不同副本时仍可互通。
 - 嵌入式 Redis 只适合单实例运行。
 - 附件消息使用当前启用的 storage driver；本地存储部署需确保 uploads 目录持久化。
+
+## 上线检查清单
+
+- 数据库迁移已执行，IM 相关表存在且插件已启用。
+- 后台角色已配置 `im:view`、`im:reply`；管理员额外配置 `im:staff:manage`、`im:knowledge`。
+- 至少创建一个客服坐席，并设置合理 `max_load`。
+- 用户端、Web 端和客服端都能访问同一后端域名或网关下的 `/ws/im`。
+- 上传目录或对象存储已持久化，返回 URL 可被四端访问。
+- 多副本部署使用外部 Redis，并确认所有副本连接同一个 Redis。
+- AI 客服启用前已验证 `ai_base_url` 与 `ai_chat_model`；需要 RAG 时验证 embedding/Qdrant；需要精排时验证 rerank 服务。
+- 前端重连后会补拉历史消息，避免 WebSocket 断线期间漏展示。

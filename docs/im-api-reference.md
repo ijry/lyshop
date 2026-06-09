@@ -8,6 +8,15 @@ IM 客服插件提供实时客服聊天功能，支持 WebSocket 实时通信、
 **版本**: `1.1.0`  
 **依赖**: 无
 
+### 通用约定
+
+- 用户端接口前缀：`/api/v1`
+- 管理端接口前缀：`/admin/api`
+- WebSocket 地址：`/ws/im?token={jwt_token}`
+- HTTP 接口使用系统统一响应结构，示例中的 JSON 为 `data` 内容。
+- 分页接口返回 `{list,total,page,size}`，`page` 从 1 开始。
+- 时间字段使用 ISO 8601 字符串，日期筛选参数使用 `YYYY-MM-DD`。
+
 ---
 
 ## 用户端 API
@@ -24,6 +33,7 @@ IM 客服插件提供实时客服聊天功能，支持 WebSocket 实时通信、
   "id": 1,
   "user_id": 1001,
   "staff_id": 2,
+  "mode": "ai",
   "status": 2,
   "queue_position": 0,
   "last_msg": "您好，有什么可以帮您？",
@@ -109,6 +119,14 @@ IM 客服插件提供实时客服聊天功能，支持 WebSocket 实时通信、
 
 **说明**: 单文件最大 10MB；图片类型为 `.jpg/.jpeg/.png/.gif/.webp`，文件类型为 `.pdf/.doc/.docx/.xls/.xlsx/.txt/.csv/.md/.zip`。上传结果通过 WebSocket `msg` 帧发送，`msg_type` 为 `image` 或 `file`。
 
+**会话校验**: 用户端只能上传到自己的会话，否则返回 403。
+
+**发送流程**:
+1. 调用 `POST /api/v1/im/upload` 上传文件。
+2. 将响应中的 `message_type` 作为 WebSocket `payload.msg_type`。
+3. 将 `name` 作为 `content`，并把 `url/path/name/size/mime` 写入 `payload.extra`。
+4. 服务端落库后推送 `msg` 帧给会话双方。
+
 ---
 
 ### 4. WebSocket 连接
@@ -125,7 +143,7 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 **消息帧格式**:
 ```json
 {
-  "type": "msg|queue|assign|close|ping|pong",
+  "type": "msg|typing|to_human|queue|assign|close|ping|pong",
   "session_id": 1,
   "payload": {}
 }
@@ -143,6 +161,15 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 | `close` | 服务端→客户端 | `{}` | 会话结束通知 |
 | `ping` | 客户端→服务端 | `{}` | 心跳请求 |
 | `pong` | 服务端→客户端 | `{}` | 心跳响应 |
+
+**连接身份**:
+- 用户 token：服务端自动获取或创建当前用户会话，并绑定 `user_{user_id}` 客户端。
+- 管理员 token：服务端绑定 `staff_{admin_id}` 客户端，用于接收接入、转接和会话消息。
+
+**可靠性边界**:
+- WebSocket 用于实时投递，消息最终以数据库 `im_messages` 为准。
+- 客户端重连后应调用消息历史接口补拉，避免网络中断期间丢失展示。
+- `ping/pong` 用于连接保活，不替代消息确认机制。
 
 **发送消息示例**:
 ```json
@@ -510,6 +537,8 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 
 **响应**: 同用户端上传附件接口。
 
+**说明**: 管理端校验会话存在并记录 `file_uploaded` 事件，事件来源为 `staff`。业务端发送附件消息仍需调用 `POST /admin/api/im/sessions/:id/reply` 或通过 WebSocket 发送消息，将上传结果写入消息 `extra`。
+
 ---
 
 ### 23. 客服报表
@@ -521,6 +550,8 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 - `from` (可选): 起始日期，格式 `YYYY-MM-DD`
 - `to` (可选): 结束日期，格式 `YYYY-MM-DD`
 - `staff_id` (可选): 客服 ID
+
+**时间范围**: `from` 按当天 00:00:00 起算；`to` 包含当天，后端实际转换为次日 00:00:00 开区间。
 
 **响应示例**:
 ```json
@@ -548,6 +579,21 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 }
 ```
 
+**统计口径**:
+
+| 字段 | 来源事件 | 说明 |
+|---|---|---|
+| `sessions` | `session_created` | 新会话数 |
+| `messages` | `message_sent` | 消息落库数，包含用户、客服、AI 和系统消息 |
+| `ai_replies` | `ai_reply` | AI 成功回复数 |
+| `ai_failed` | `ai_failed` | AI 调用或生成失败数 |
+| `rag_hits` | `rag_hit` | 知识库或商品上下文命中次数 |
+| `to_human` | `to_human` | 转人工次数 |
+| `accepts` | `staff_accept` | 客服接入次数 |
+| `closes` | `session_close` | 会话关闭次数 |
+| `transfers` | `session_transfer` | 会话转接次数 |
+| `files` | `file_uploaded` | 附件上传次数 |
+
 ---
 
 ### 24. 事件日志
@@ -559,7 +605,50 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 - `event`、`session_id`、`user_id`、`staff_id`、`source`、`success`
 - `page`、`size`
 
-**响应**: `{ list, total, page, size }`
+**参数说明**:
+- `event`: 事件类型，如 `message_sent`
+- `source`: `user`、`staff`、`ai`、`system`
+- `success`: `1` 成功，`0` 失败
+- `size`: 默认 20，最大 100
+
+**响应示例**:
+```json
+{
+  "list": [
+    {
+      "id": 101,
+      "event": "file_uploaded",
+      "session_id": 1,
+      "user_id": 1001,
+      "staff_id": 0,
+      "message_id": 0,
+      "source": "user",
+      "success": 1,
+      "latency_ms": 0,
+      "extra": "{\"name\":\"photo.png\",\"size\":1024,\"type\":\"image\"}",
+      "created_at": "2026-06-09T10:00:00Z"
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "size": 20
+}
+```
+
+**事件类型**:
+
+| event | 触发场景 |
+|---|---|
+| `session_created` | 创建用户会话 |
+| `message_sent` | 消息保存成功 |
+| `ai_reply` | AI 回复保存成功 |
+| `ai_failed` | AI 回复生成失败 |
+| `rag_hit` | RAG 或商品上下文召回命中 |
+| `to_human` | 用户请求转人工 |
+| `staff_accept` | 客服接入会话 |
+| `session_close` | 会话关闭 |
+| `session_transfer` | 会话转接 |
+| `file_uploaded` | 用户或客服上传附件 |
 
 ---
 
@@ -641,6 +730,8 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 **接口**: `POST /admin/api/im/ai/rerank-test`  
 **权限**: `im:knowledge`  
 **响应**: `{ "reply": "连接正常" }`
+
+**说明**: 仅测试当前配置的 `ai_rerank_url`、`ai_rerank_api_key`、`ai_rerank_model` 是否可用；未配置重排服务时应保持为空，不影响基础 RAG。
 
 ---
 
@@ -827,6 +918,18 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 | 404 | 资源不存在 |
 | 500 | 服务器内部错误 |
 
+### 常见错误
+
+| 场景 | 返回 | 处理建议 |
+|---|---|---|
+| 上传缺少 `session_id` | 400 | 表单补充会话 ID |
+| 用户上传到非本人会话 | 403 | 重新获取当前用户会话 |
+| 上传文件超过 10MB | 400 | 压缩文件或改用外部文件系统 |
+| 上传扩展名不支持 | 400 | 使用允许的图片或文件类型 |
+| 管理端缺少 `im:reply` | 403 | 为客服角色授予回复权限 |
+| AI 服务不可用 | 400/500 | 检查 `ai_base_url`、模型名、超时和本地推理服务 |
+| Qdrant 未配置或不可用 | 不影响基础问答 | 系统回退内存向量或关键词召回 |
+
 ---
 
 ## 部署与存储
@@ -834,3 +937,6 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 - 附件上传复用系统当前启用的 storage driver；Docker 本地存储沿用 `./data/uploads:/app/uploads`。
 - 多个后端副本必须共享同一个外部 Redis，WebSocket Hub 通过 `lyshop:im:ws` Pub/Sub 频道跨实例扇出消息，并通过节点 ID 避免回环。
 - 嵌入式 Redis 适合单实例运行，不提供跨副本投递能力。
+- 对象存储或本地上传目录必须对 Web、App、Eapp 和 Admin 可访问；返回的 `url` 是前端预览和下载的唯一入口。
+- 多副本部署时不要把上传目录放在单个 Pod/容器临时目录，除非所有副本共享同一挂载或使用对象存储。
+- 使用本地大模型时，后端服务需要能访问 `ai_base_url`、`ai_qdrant_url` 和 `ai_rerank_url` 对应网络地址；容器内地址应使用 compose/service 名称。
