@@ -106,6 +106,18 @@ func uploadAttachment(c *gin.Context) {
 		response.Fail(c, 400, err.Error())
 		return
 	}
+	_ = imsvc.RecordEvent(c.Request.Context(), imsvc.EventInput{
+		Event:     immodel.ImEventFileUploaded,
+		SessionID: sessionID,
+		UserID:    userID.(uint64),
+		Source:    immodel.ImEventSourceUser,
+		Success:   true,
+		Extra: map[string]any{
+			"name": info.Name,
+			"size": info.Size,
+			"type": info.MessageType,
+		},
+	})
 	response.OK(c, info)
 }
 

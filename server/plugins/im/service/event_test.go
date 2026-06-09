@@ -40,6 +40,21 @@ func TestRecordEventAndListLogs(t *testing.T) {
 	require.Equal(t, int64(1), count)
 }
 
+func TestSaveMessageRecordsMessageEvent(t *testing.T) {
+	testDB := setupImEventTestDB(t)
+	require.NoError(t, testDB.AutoMigrate(&immodel.ImSession{}, &immodel.ImMessage{}))
+	ctx := context.Background()
+	session := immodel.ImSession{UserID: 7, Mode: immodel.SessionModeHuman, Status: immodel.SessionStatusOngoing}
+	require.NoError(t, testDB.Create(&session).Error)
+
+	msg := &immodel.ImMessage{SessionID: session.ID, SenderType: immodel.SenderUser, SenderID: 7, Type: immodel.MsgTypeText, Content: "hello"}
+	require.NoError(t, SaveMessage(ctx, msg))
+
+	var count int64
+	require.NoError(t, testDB.Model(&immodel.ImEventLog{}).Where("event = ?", immodel.ImEventMessageSent).Count(&count).Error)
+	require.Equal(t, int64(1), count)
+}
+
 func setupImEventTestDB(t *testing.T) *gorm.DB {
 	t.Helper()
 	gdb, err := gorm.Open(sqlite.Open(fmt.Sprintf("file:im_event_%d?mode=memory&cache=shared", time.Now().UnixNano())), &gorm.Config{})

@@ -581,6 +581,16 @@ func AIAnswer(ctx context.Context, session *immodel.ImSession, userText string) 
 		}
 		ctxParts = append(ctxParts, b.String())
 	}
+	if len(ctxParts) > 0 {
+		recordEventBestEffort(ctx, EventInput{
+			Event:     immodel.ImEventRAGHit,
+			SessionID: session.ID,
+			UserID:    session.UserID,
+			Source:    immodel.ImEventSourceAI,
+			Success:   true,
+			Extra:     map[string]any{"query": retrievalQuery, "parts": len(ctxParts)},
+		})
+	}
 
 	msgs := []chatMessage{{Role: "system", Content: cfg.SystemPrompt}}
 	if len(ctxParts) > 0 {

@@ -97,12 +97,14 @@ func adminListEventLogs(c *gin.Context) {
 }
 
 func adminUploadAttachment(c *gin.Context) {
+	staffID, _ := c.Get("user_id")
 	sessionID, _ := strconv.ParseUint(c.PostForm("session_id"), 10, 64)
 	if sessionID == 0 {
 		response.Fail(c, 400, "session_id required")
 		return
 	}
-	if _, err := imsvc.GetSession(c.Request.Context(), sessionID); err != nil {
+	session, err := imsvc.GetSession(c.Request.Context(), sessionID)
+	if err != nil {
 		response.Fail(c, 404, "会话不存在")
 		return
 	}
@@ -116,6 +118,19 @@ func adminUploadAttachment(c *gin.Context) {
 		response.Fail(c, 400, err.Error())
 		return
 	}
+	_ = imsvc.RecordEvent(c.Request.Context(), imsvc.EventInput{
+		Event:     immodel.ImEventFileUploaded,
+		SessionID: sessionID,
+		UserID:    session.UserID,
+		StaffID:   staffID.(uint64),
+		Source:    immodel.ImEventSourceStaff,
+		Success:   true,
+		Extra: map[string]any{
+			"name": info.Name,
+			"size": info.Size,
+			"type": info.MessageType,
+		},
+	})
 	response.OK(c, info)
 }
 
@@ -315,6 +330,7 @@ func adminReply(c *gin.Context) {
 	var req struct {
 		Content string `json:"content" binding:"required"`
 		Type    string `json:"type"`
+		Extra   string `json:"extra"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Fail(c, 400, err.Error())
@@ -329,6 +345,7 @@ func adminReply(c *gin.Context) {
 		SenderID:   staffID.(uint64),
 		Type:       req.Type,
 		Content:    req.Content,
+		Extra:      req.Extra,
 	}
 	if err := imsvc.SaveMessage(c.Request.Context(), msg); err != nil {
 		response.Fail(c, 500, err.Error())

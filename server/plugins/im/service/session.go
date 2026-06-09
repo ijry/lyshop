@@ -25,6 +25,49 @@ func GetSession(ctx context.Context, sessionID uint64) (*immodel.ImSession, erro
 	return &session, err
 }
 
+func recordEventBestEffort(ctx context.Context, input EventInput) {
+	_ = RecordEvent(ctx, input)
+}
+
+func eventSourceFromSender(senderType int8) string {
+	switch senderType {
+	case immodel.SenderUser:
+		return immodel.ImEventSourceUser
+	case immodel.SenderStaff:
+		return immodel.ImEventSourceStaff
+	case immodel.SenderAI:
+		return immodel.ImEventSourceAI
+	default:
+		return immodel.ImEventSourceSystem
+	}
+}
+
+func messageExtraPayload(extra string) any {
+	if strings.TrimSpace(extra) == "" {
+		return nil
+	}
+	var parsed any
+	if json.Unmarshal([]byte(extra), &parsed) == nil {
+		return parsed
+	}
+	return extra
+}
+
+func normalizeMessageExtra(value any) string {
+	switch v := value.(type) {
+	case nil:
+		return ""
+	case string:
+		return strings.TrimSpace(v)
+	default:
+		raw, err := json.Marshal(v)
+		if err != nil {
+			return ""
+		}
+		return string(raw)
+	}
+}
+
 // CreateStaff creates a new staff record.
 func CreateStaff(ctx context.Context, staff *immodel.ImStaff) error {
 	return db.DB.WithContext(ctx).Create(staff).Error
@@ -67,6 +110,14 @@ func GetOrCreateSession(ctx context.Context, userID uint64) (*immodel.ImSession,
 		if err = db.DB.WithContext(ctx).Create(&session).Error; err != nil {
 			return &session, err
 		}
+		recordEventBestEffort(ctx, EventInput{
+			Event:     immodel.ImEventSessionCreated,
+			SessionID: session.ID,
+			UserID:    userID,
+			Source:    immodel.ImEventSourceUser,
+			Success:   true,
+			Extra:     map[string]any{"mode": session.Mode},
+		})
 		return &session, nil
 	}
 
@@ -79,6 +130,14 @@ func GetOrCreateSession(ctx context.Context, userID uint64) (*immodel.ImSession,
 	if err = db.DB.WithContext(ctx).Create(&session).Error; err != nil {
 		return &session, err
 	}
+	recordEventBestEffort(ctx, EventInput{
+		Event:     immodel.ImEventSessionCreated,
+		SessionID: session.ID,
+		UserID:    userID,
+		Source:    immodel.ImEventSourceUser,
+		Success:   true,
+		Extra:     map[string]any{"mode": session.Mode},
+	})
 	if staffID := pickAvailableStaff(ctx); staffID > 0 {
 		assignSession(ctx, &session, staffID)
 	} else {
@@ -117,6 +176,14 @@ func SwitchToHuman(ctx context.Context, sessionID uint64) error {
 
 	db.DB.WithContext(ctx).Model(&session).Update("mode", immodel.SessionModeHuman)
 	session.Mode = immodel.SessionModeHuman
+	recordEventBestEffort(ctx, EventInput{
+		Event:     immodel.ImEventToHuman,
+		SessionID: sessionID,
+		UserID:    session.UserID,
+		StaffID:   session.StaffID,
+		Source:    immodel.ImEventSourceUser,
+		Success:   true,
+	})
 
 	if staffID := pickAvailableStaff(ctx); staffID > 0 {
 		assignSession(ctx, &session, staffID)
@@ -262,6 +329,14 @@ func AcceptSession(ctx context.Context, sessionID, staffID uint64) error {
 		return fmt.Errorf("session is not waiting")
 	}
 	assignSession(ctx, &session, staffID)
+	recordEventBestEffort(ctx, EventInput{
+		Event:     immodel.ImEventStaffAccept,
+		SessionID: sessionID,
+		UserID:    session.UserID,
+		StaffID:   staffID,
+		Source:    immodel.ImEventSourceStaff,
+		Success:   true,
+	})
 	DrainQueue(ctx) // recompute positions
 	return nil
 }
@@ -341,6 +416,15 @@ func TransferSession(ctx context.Context, sessionID, fromStaffID, toStaffID uint
 		Type: "assign", SessionID: sessionID,
 		Payload: map[string]any{"action": "transfer"},
 	}))
+	recordEventBestEffort(ctx, EventInput{
+		Event:     immodel.ImEventSessionTransfer,
+		SessionID: sessionID,
+		UserID:    session.UserID,
+		StaffID:   toStaffID,
+		Source:    immodel.ImEventSourceStaff,
+		Success:   true,
+		Extra:     map[string]any{"from_staff_id": fromStaffID, "remark": remark},
+	})
 
 	return nil
 }
@@ -366,6 +450,14 @@ func CloseSession(ctx context.Context, sessionID uint64) error {
 	closeFrame := Frame{Type: "close", SessionID: sessionID, Payload: map[string]any{}}
 	data, _ := json.Marshal(closeFrame)
 	GlobalHub.Send(fmt.Sprintf("user_%d", session.UserID), data)
+	recordEventBestEffort(ctx, EventInput{
+		Event:     immodel.ImEventSessionClose,
+		SessionID: sessionID,
+		UserID:    session.UserID,
+		StaffID:   session.StaffID,
+		Source:    immodel.ImEventSourceSystem,
+		Success:   true,
+	})
 
 	DrainQueue(ctx)
 	return nil
@@ -378,6 +470,26 @@ func SaveMessage(ctx context.Context, msg *immodel.ImMessage) error {
 	}
 	db.DB.WithContext(ctx).Model(&immodel.ImSession{}).Where("id = ?", msg.SessionID).
 		Updates(map[string]any{"last_msg": msg.Content, "unread_count": db.DB.Raw("unread_count + 1")})
+	recordEventBestEffort(ctx, EventInput{
+		Event:     immodel.ImEventMessageSent,
+		SessionID: msg.SessionID,
+		UserID: func() uint64 {
+			if msg.SenderType == immodel.SenderUser {
+				return msg.SenderID
+			}
+			return 0
+		}(),
+		StaffID: func() uint64 {
+			if msg.SenderType == immodel.SenderStaff {
+				return msg.SenderID
+			}
+			return 0
+		}(),
+		MessageID: msg.ID,
+		Source:    eventSourceFromSender(msg.SenderType),
+		Success:   true,
+		Extra:     map[string]any{"type": msg.Type},
+	})
 	return nil
 }
 
@@ -493,6 +605,9 @@ func PushToUser(sessionID uint64, msg *immodel.ImMessage) {
 		"content":     msg.Content,
 		"sender_type": msg.SenderType,
 	}}
+	if extra := messageExtraPayload(msg.Extra); extra != nil {
+		frame.Payload["extra"] = extra
+	}
 	data, _ := json.Marshal(frame)
 	GlobalHub.Send(userKey, data)
 }
@@ -502,9 +617,20 @@ func PushToUser(sessionID uint64, msg *immodel.ImMessage) {
 // that nudges the user toward a human agent.
 func answerWithAI(session immodel.ImSession, userText string) {
 	ctx := context.Background()
+	start := time.Now()
 	reply, err := AIAnswer(ctx, &session, userText)
-	if err != nil || strings.TrimSpace(reply) == "" {
+	aiOK := err == nil && strings.TrimSpace(reply) != ""
+	if !aiOK {
 		reply = "抱歉，我暂时无法回答这个问题。您可以换个说法，或输入“人工”转接人工客服。"
+		recordEventBestEffort(ctx, EventInput{
+			Event:     immodel.ImEventAIFailed,
+			SessionID: session.ID,
+			UserID:    session.UserID,
+			Source:    immodel.ImEventSourceAI,
+			Success:   false,
+			LatencyMS: time.Since(start).Milliseconds(),
+			Extra:     map[string]any{"error": fmt.Sprint(err)},
+		})
 	}
 	aiMsg := &immodel.ImMessage{
 		SessionID:  session.ID,
@@ -513,6 +639,17 @@ func answerWithAI(session immodel.ImSession, userText string) {
 		Content:    reply,
 	}
 	SaveMessage(ctx, aiMsg)
+	if aiOK {
+		recordEventBestEffort(ctx, EventInput{
+			Event:     immodel.ImEventAIReply,
+			SessionID: session.ID,
+			UserID:    session.UserID,
+			MessageID: aiMsg.ID,
+			Source:    immodel.ImEventSourceAI,
+			Success:   true,
+			LatencyMS: time.Since(start).Milliseconds(),
+		})
+	}
 	data, _ := json.Marshal(Frame{Type: "msg", SessionID: session.ID, Payload: map[string]any{
 		"msg_id":      fmt.Sprintf("%d", aiMsg.ID),
 		"msg_type":    immodel.MsgTypeText,
@@ -548,6 +685,9 @@ func HandleWS(conn *websocket.Conn, clientID string, session *immodel.ImSession)
 			"content":     msg.Content,
 			"sender_type": msg.SenderType,
 		}}
+		if extra := messageExtraPayload(msg.Extra); extra != nil {
+			frame.Payload["extra"] = extra
+		}
 		data, _ := json.Marshal(frame)
 		client.Send <- data
 	}
@@ -597,6 +737,7 @@ func HandleWS(conn *websocket.Conn, clientID string, session *immodel.ImSession)
 			if msgType == "" {
 				msgType = immodel.MsgTypeText
 			}
+			extra := normalizeMessageExtra(frame.Payload["extra"])
 
 			msg := &immodel.ImMessage{
 				SessionID:  session.ID,
@@ -604,6 +745,7 @@ func HandleWS(conn *websocket.Conn, clientID string, session *immodel.ImSession)
 				SenderID:   session.UserID,
 				Type:       msgType,
 				Content:    content,
+				Extra:      extra,
 			}
 			SaveMessage(ctx, msg)
 
