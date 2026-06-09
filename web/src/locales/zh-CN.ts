@@ -46,6 +46,7 @@ export default {
     close: '关闭',
     me: '我',
     agent: '客',
+    attachment: '附件',
     inputPlaceholder: '输入消息...',
     send: '发送',
   },

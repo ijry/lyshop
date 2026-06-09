@@ -79,3 +79,45 @@ export const get = <T>(url: string, data?: any) => request<T>({ url, method: 'GE
 export const post = <T>(url: string, data?: any) => request<T>({ url, method: 'POST', data })
 export const put = <T>(url: string, data?: any) => request<T>({ url, method: 'PUT', data })
 export const del = <T>(url: string, data?: any) => request<T>({ url, method: 'DELETE', data })
+
+export function upload<T = any>(url: string, filePath: string, name = 'file', formData?: Record<string, any>): Promise<T> {
+  if (MOCK_ENABLED) {
+    return mockRequest<T>('POST', normalizeUrl(url), { name, filePath, ...(formData || {}) })
+  }
+
+  return new Promise((resolve, reject) => {
+    const token = getToken()
+    uni.uploadFile({
+      url: BASE_URL + normalizeUrl(url),
+      filePath,
+      name,
+      formData,
+      header: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      success(res) {
+        const status = Number(res.statusCode || 0)
+        if (status === 401) {
+          handleUnauthorized()
+          reject(new Error('未登录或登录已失效'))
+          return
+        }
+        try {
+          const payload = JSON.parse(String(res.data || '{}'))
+          if (payload.code !== 0) {
+            const msg = payload.msg || '上传失败'
+            uni.showToast({ title: msg, icon: 'none' })
+            reject(new Error(msg))
+            return
+          }
+          resolve(payload.data as T)
+        } catch (err) {
+          reject(err)
+        }
+      },
+      fail(err) {
+        reject(err)
+      },
+    })
+  })
+}

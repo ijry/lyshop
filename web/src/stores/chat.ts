@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { i18n } from '@/locales'
-import { get } from '@/api/request'
+import { get, upload } from '@/api/request'
 
 const t = (key: string) => i18n.global.t(key)
 
@@ -13,7 +13,7 @@ export const useChatStore = defineStore('chat', {
   state: () => ({
     show: false,
     source: 'global',
-    messages: [] as Array<{ id: number; sender_type: number; content: string }>,
+    messages: [] as Array<{ id: number; sender_type: number; content: string; type?: string; extra?: any }>,
     inputText: '',
     connected: false,
     queuePosition: 0,
@@ -57,7 +57,7 @@ export const useChatStore = defineStore('chat', {
       const content = text.trim()
       if (!content) return
 
-      this.messages.push({ id: Date.now(), sender_type: 1, content })
+      this.messages.push({ id: Date.now(), sender_type: 1, content, type: 'text' })
 
       if (ws?.readyState === WebSocket.OPEN && this.sessionID) {
         ws.send(JSON.stringify({
@@ -95,6 +95,8 @@ export const useChatStore = defineStore('chat', {
               id: Date.now(),
               sender_type: frame.payload.sender_type ?? 2,
               content: frame.payload.content,
+              type: frame.payload.msg_type || 'text',
+              extra: frame.payload.extra,
             })
           } else if (frame.type === 'queue') {
             this.queuePosition = frame.payload?.position || 0
@@ -132,6 +134,31 @@ export const useChatStore = defineStore('chat', {
           ws.send(JSON.stringify({ type: 'ping' }))
         }
       }, 30000)
+    },
+    async sendAttachment(file: File) {
+      if (!this.sessionID) return
+      const info: any = await upload('/api/v1/im/upload', file, { session_id: String(this.sessionID) })
+      const extra = {
+        file_url: info.url,
+        file_path: info.path,
+        file_name: info.name,
+        file_size: info.size,
+        mime: info.mime,
+      }
+      this.messages.push({
+        id: Date.now(),
+        sender_type: 1,
+        content: info.name,
+        type: info.message_type,
+        extra,
+      })
+      if (ws?.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'msg',
+          session_id: this.sessionID,
+          payload: { msg_type: info.message_type, content: info.name, extra },
+        }))
+      }
     },
     scheduleReconnect(token: string) {
       if (reconnectTimer) clearTimeout(reconnectTimer)

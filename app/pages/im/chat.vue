@@ -46,7 +46,12 @@
                 : 'bg-white text-gray-800 rounded-tl-8rpx rounded-tr-24rpx rounded-bl-24rpx rounded-br-24rpx'"
                 class="max-w-450rpx px-28rpx py-18rpx text-28rpx leading-40rpx"
                 style="box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.06); word-break: break-all;">
-                {{ m.content }}
+                <image v-if="m.type === 'image'" :src="fileUrl(m)" mode="widthFix" class="chat-image" @click="previewImage(m)" />
+                <view v-else-if="m.type === 'file'" class="file-card" @click="openFile(m)">
+                  <u-icon name="file-text" size="18" :color="m.sender_type === 1 ? '#ffffff' : '#64748b'" />
+                  <text>{{ fileName(m) }}</text>
+                </view>
+                <template v-else>{{ m.content }}</template>
               </view>
               <!-- Thumbs feedback — only on AI replies -->
               <view v-if="m.sender_type === 3 && !m.rated" class="flex items-center gap-16rpx mt-8rpx ml-8rpx">
@@ -89,6 +94,10 @@
       style="position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;"
       :style="{paddingBottom: 'calc(16rpx + env(safe-area-inset-bottom))'}"
     >
+      <u-button :text="$t('chat.attachment')" size="small" shape="circle" plain
+        :loading="uploading"
+        @click="chooseImage"
+        :custom-style="{width: '120rpx'}" />
       <view class="flex-1">
         <u-input v-model="inputText" :placeholder="$t('chat.inputPlaceholder')" border="surround" shape="circle"
           :maxlength="500"
@@ -107,7 +116,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { get, post } from '@/utils/request'
+import { get, post, upload } from '@/utils/request'
 
 const { t } = useI18n()
 
@@ -119,6 +128,7 @@ const connected = ref(false)
 const queuePosition = ref(0)
 const mode = ref<'ai' | 'human'>('human') // 'ai' = 大模型应答中
 const aiTyping = ref(false)
+const uploading = ref(false)
 
 let ws: any = null
 let heartbeat: any = null
@@ -160,6 +170,8 @@ function connectWS(token: string) {
           id: Date.now(),
           sender_type: frame.payload.sender_type ?? 2,
           content: frame.payload.content,
+          type: frame.payload.msg_type || 'text',
+          extra: frame.payload.extra,
         })
         scrollToBottom()
       } else if (frame.type === 'typing') {
@@ -229,7 +241,7 @@ function sendMsg() {
   const text = inputText.value.trim()
   if (!text) return
 
-  messages.value.push({ id: Date.now(), sender_type: 1, content: text })
+  messages.value.push({ id: Date.now(), sender_type: 1, content: text, type: 'text' })
   inputText.value = ''
   scrollToBottom()
 
@@ -244,6 +256,85 @@ function sendMsg() {
     return
   }
   scheduleLocalReply(text)
+}
+
+function parseExtra(message: any) {
+  if (!message?.extra) return {}
+  if (typeof message.extra === 'object') return message.extra
+  try {
+    return JSON.parse(message.extra)
+  } catch {
+    return {}
+  }
+}
+
+function fileUrl(message: any) {
+  const extra = parseExtra(message)
+  return extra.file_url || extra.url || message.content || ''
+}
+
+function fileName(message: any) {
+  const extra = parseExtra(message)
+  return extra.file_name || extra.name || message.content || '附件'
+}
+
+function previewImage(message: any) {
+  const url = fileUrl(message)
+  if (url) uni.previewImage({ urls: [url] })
+}
+
+function openFile(message: any) {
+  const url = fileUrl(message)
+  if (!url) return
+  // H5 can open directly; native/miniprogram platforms can add file preview later.
+  // #ifdef H5
+  window.open(url, '_blank')
+  // #endif
+}
+
+function sendAttachmentFrame(info: any) {
+  const extra = {
+    file_url: info.url,
+    file_path: info.path,
+    file_name: info.name,
+    file_size: info.size,
+    mime: info.mime,
+  }
+  messages.value.push({
+    id: Date.now(),
+    sender_type: 1,
+    content: info.name,
+    type: info.message_type,
+    extra,
+  })
+  scrollToBottom()
+  if (ws && connected.value) {
+    ws.send({
+      data: JSON.stringify({
+        type: 'msg',
+        session_id: sessionID.value,
+        payload: { msg_type: info.message_type, content: info.name, extra }
+      })
+    })
+  }
+}
+
+function chooseImage() {
+  if (!sessionID.value || uploading.value) return
+  uni.chooseImage({
+    count: 1,
+    success: async (res) => {
+      const filePath = res.tempFilePaths?.[0]
+      if (!filePath) return
+      uploading.value = true
+      try {
+        const info = await upload<any>('/api/v1/im/upload', filePath, 'file', { session_id: String(sessionID.value) })
+        sendAttachmentFrame(info)
+      } finally {
+        uploading.value = false
+      }
+    },
+  })
 }
 
 // requestHuman asks the backend to hand off from AI to a human agent via a
@@ -296,3 +387,8 @@ onUnmounted(() => {
   ws?.close({})
 })
 </script>
+
+<style scoped>
+.chat-image { max-width: 360rpx; border-radius: 16rpx; display: block; }
+.file-card { display: flex; align-items: center; gap: 12rpx; min-width: 240rpx; }
+</style>

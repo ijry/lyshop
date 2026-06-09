@@ -53,11 +53,14 @@ export async function del<T = any>(url: string, data?: any): Promise<T> {
   return http.delete(url, { data }) as Promise<T>
 }
 
-export async function upload<T = any>(url: string, file: File): Promise<T> {
-  if (MOCK_ENABLED) return mockRequest<T>('POST', url, { name: file.name, size: file.size })
+export async function upload<T = any>(url: string, file: File, fields?: Record<string, string>): Promise<T> {
+  if (MOCK_ENABLED) return mockRequest<T>('POST', url, { name: file.name, size: file.size, ...(fields || {}) })
   const form = new FormData()
+  Object.entries(fields || {}).forEach(([key, value]) => form.append(key, value))
   form.append('file', file)
   return http.post(url, form, {
     headers: { 'Content-Type': 'multipart/form-data' },
   }) as Promise<T>
 }
+
+export default { get, post, put, del, upload }

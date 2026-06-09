@@ -67,15 +67,16 @@ export const put = <T>(url: string, data?: any) =>
 export const del = <T>(url: string, data?: any) =>
   request<T>({ url, method: 'DELETE', data })
 
-export function upload<T = any>(url: string, filePath: string, name = 'file'): Promise<T> {
+export function upload<T = any>(url: string, filePath: string, name = 'file', formData?: Record<string, any>): Promise<T> {
   if (MOCK_ENABLED) {
-    return mockRequest<T>('POST', url, { name, filePath })
+    return mockRequest<T>('POST', url, { name, filePath, ...(formData || {}) })
   }
   return new Promise((resolve, reject) => {
     uni.uploadFile({
       url: BASE_URL + url,
       filePath,
       name,
+      formData,
       header: {
         Authorization: `Bearer ${getToken()}`,
       },

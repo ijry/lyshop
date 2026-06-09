@@ -38,7 +38,12 @@
                 ? 'bg-red-600 text-white rounded-tl-2xl rounded-tr-sm rounded-bl-2xl rounded-br-2xl'
                 : 'bg-white text-gray-800 rounded-tl-sm rounded-tr-2xl rounded-bl-2xl rounded-br-2xl'"
                 class="max-w-sm px-4 py-2.5 text-sm leading-relaxed shadow-sm">
-                {{ m.content }}
+                <img v-if="m.type === 'image'" :src="fileUrl(m)" :alt="fileName(m)" class="max-w-[240px] max-h-[240px] rounded-lg object-contain cursor-pointer" @click="openAttachment(m)" />
+                <button v-else-if="m.type === 'file'" type="button" class="flex items-center gap-2 text-left cursor-pointer" @click="openAttachment(m)">
+                  <span class="inline-flex w-8 h-8 rounded-lg items-center justify-center" :class="m.sender_type === 1 ? 'bg-white/15 text-white' : 'bg-gray-100 text-gray-500'">F</span>
+                  <span class="break-all">{{ fileName(m) }}</span>
+                </button>
+                <template v-else>{{ m.content }}</template>
               </div>
             </div>
           </div>
@@ -46,6 +51,8 @@
 
         <!-- Input -->
         <div class="px-5 py-3 border-t border-gray-100 flex gap-3 bg-white">
+          <input ref="fileInput" type="file" class="hidden" @change="onFileChange" />
+          <button class="btn-secondary !px-4" @click="chooseFile">{{ $t('chatDialog.attachment') }}</button>
           <input v-model="chat.inputText" @keyup.enter="send" :placeholder="$t('chatDialog.inputPlaceholder')" class="input-base flex-1 !rounded-xl" />
           <button @click="send" :disabled="!chat.inputText.trim()" class="btn-primary !px-6">{{ $t('chatDialog.send') }}</button>
         </div>
@@ -60,6 +67,7 @@ import { useChatStore } from '@/stores/chat'
 
 const chat = useChatStore()
 const msgBox = ref<HTMLElement>()
+const fileInput = ref<HTMLInputElement>()
 
 function send() {
   const text = chat.inputText.trim()
@@ -73,6 +81,44 @@ function scrollBottom() {
   nextTick(() => {
     if (msgBox.value) msgBox.value.scrollTop = msgBox.value.scrollHeight
   })
+}
+
+function parseExtra(message: any) {
+  if (!message?.extra) return {}
+  if (typeof message.extra === 'object') return message.extra
+  try {
+    return JSON.parse(message.extra)
+  } catch {
+    return {}
+  }
+}
+
+function fileUrl(message: any) {
+  const extra = parseExtra(message)
+  return extra.file_url || extra.url || message.content || ''
+}
+
+function fileName(message: any) {
+  const extra = parseExtra(message)
+  return extra.file_name || extra.name || message.content || '附件'
+}
+
+function openAttachment(message: any) {
+  const url = fileUrl(message)
+  if (url) window.open(url, '_blank', 'noopener,noreferrer')
+}
+
+function chooseFile() {
+  fileInput.value?.click()
+}
+
+async function onFileChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  const file = target.files?.[0]
+  target.value = ''
+  if (!file) return
+  await chat.sendAttachment(file)
+  scrollBottom()
 }
 
 watch(() => chat.messages.length, scrollBottom)

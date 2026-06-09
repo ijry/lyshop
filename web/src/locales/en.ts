@@ -46,6 +46,7 @@ export default {
     close: 'Close',
     me: 'Me',
     agent: 'CS',
+    attachment: 'Attachment',
     inputPlaceholder: 'Type a message...',
     send: 'Send',
   },

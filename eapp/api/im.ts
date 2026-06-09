@@ -1,7 +1,9 @@
-import { del, get, post, put } from '@/utils/request'
+import { del, get, post, put, upload } from '@/utils/request'
 export const getImSessions = (params?: any) => get<any>('/im/sessions', params)
 export const getImMessages = (sessionId: number) => get<any>(`/im/sessions/${sessionId}/messages`)
 export const sendImMessage = (sessionId: number, content: string) => post<any>(`/im/sessions/${sessionId}/messages`, { content, sender_type: 'staff' })
+export const replyImSession = (sessionId: number, payload: any) => post<any>(`/im/sessions/${sessionId}/reply`, payload)
+export const uploadImAttachment = (sessionId: number, filePath: string) => upload<any>('/im/upload', filePath, 'file', { session_id: String(sessionId) })
 export const getAutoReplies = () => get<any>('/im/auto-replies')
 export const createAutoReply = (payload: any) => post<any>('/im/auto-replies', payload)
 export const updateAutoReply = (id: number, payload: any) => put<any>(`/im/auto-replies/${id}`, payload)

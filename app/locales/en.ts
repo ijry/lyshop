@@ -494,6 +494,7 @@ export default {
     userAvatar: 'Me',
     inputPlaceholder: 'Type a message...',
     send: 'Send',
+    attachment: 'Image',
     autoReply1: 'Hello, we\'ve received your message and will assist you shortly.',
     autoReply2: 'Sure, we can help with this issue.',
     autoReply3: 'Please check logistics progress on the order page. Let me know if you need further help.',

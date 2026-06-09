@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onLoad, onUnload } from '@dcloudio/uni-app'
 import { ref, nextTick } from 'vue'
-import { getImMessages, sendImMessage } from '@/api/im'
+import { getImMessages, replyImSession, sendImMessage, uploadImAttachment } from '@/api/im'
 import ChatBubble from '@/components/biz/ChatBubble.vue'
 
 const sessionId = ref(0)
@@ -59,6 +59,7 @@ function connectWS() {
             sender_type: frame.payload.sender_type ?? 1,
             content: frame.payload.content,
             type: frame.payload.msg_type || 'text',
+            extra: frame.payload.extra,
             created_at: new Date().toISOString(),
           })
           scrollToBottom()
@@ -141,6 +142,40 @@ async function onSend() {
   }
 }
 
+async function chooseImage() {
+  if (!sessionId.value) return
+  uni.chooseImage({
+    count: 1,
+    success: async (res) => {
+      const filePath = res.tempFilePaths?.[0]
+      if (!filePath) return
+      const info: any = await uploadImAttachment(sessionId.value, filePath)
+      const extra = {
+        file_url: info.url,
+        file_path: info.path,
+        file_name: info.name,
+        file_size: info.size,
+        mime: info.mime,
+      }
+      await replyImSession(sessionId.value, {
+        type: info.message_type,
+        content: info.name,
+        extra: JSON.stringify(extra),
+      })
+      messages.value.push({
+        id: Date.now(),
+        session_id: sessionId.value,
+        sender_type: 2,
+        content: info.name,
+        type: info.message_type,
+        extra,
+        created_at: new Date().toISOString(),
+      })
+      scrollToBottom()
+    },
+  })
+}
+
 onLoad((query: any) => {
   sessionId.value = Number(query?.session_id || 0)
   if (sessionId.value) {
@@ -176,6 +211,7 @@ onUnload(() => {
 
     <view class="input-bar">
       <input class="msg-input" v-model="inputText" placeholder="输入消息..." @confirm="onSend" />
+      <up-button size="mini" type="info" plain @click="chooseImage">图片</up-button>
       <up-button size="mini" type="primary" @click="onSend" :disabled="!inputText.trim()">发送</up-button>
     </view>
   </view>

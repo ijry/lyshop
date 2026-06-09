@@ -494,6 +494,7 @@ export default {
     userAvatar: '我',
     inputPlaceholder: '输入消息...',
     send: '发送',
+    attachment: '图片',
     autoReply1: '您好，已收到您的消息，客服马上为您处理。',
     autoReply2: '可以的，这个问题我们支持处理。',
     autoReply3: '建议您在订单页查看物流进度，有问题我继续帮您。',
