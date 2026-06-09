@@ -2,12 +2,14 @@ package api
 
 import (
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/ijry/lyshop/core/db"
 	inventorycore "github.com/ijry/lyshop/core/inventory"
 	"github.com/ijry/lyshop/core/middleware"
 	"github.com/ijry/lyshop/core/response"
+	"gorm.io/gorm"
 )
 
 func RegisterAdminRoutes(g *gin.RouterGroup) {
@@ -27,16 +29,44 @@ func listTasks(c *gin.Context) {
 
 func retryTask(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	now := time.Now()
 	if err := db.DB.WithContext(c.Request.Context()).
 		Model(&inventorycore.InventoryIntegrationTask{}).
 		Where("id = ?", id).
-		Updates(map[string]any{"status": "pending", "last_error": ""}).Error; err != nil {
+		Updates(map[string]any{
+			"status":          inventorycore.TaskStatusPending,
+			"last_error":      "",
+			"lock_owner":      "",
+			"lock_expires_at": nil,
+			"next_retry_at":   &now,
+		}).Error; err != nil {
 		response.Fail(c, 500, err.Error())
 		return
 	}
 	response.OK(c, gin.H{"retried": id})
 }
 
+type callbackRequest struct {
+	RequestID  string `json:"request_id"`
+	CallbackID string `json:"callback_id"`
+	Status     string `json:"status"`
+	Message    string `json:"message"`
+}
+
 func callback(c *gin.Context) {
+	var req callbackRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, 400, "参数错误")
+		return
+	}
+
+	err := db.DB.WithContext(c.Request.Context()).Transaction(func(tx *gorm.DB) error {
+		return inventorycore.CompleteTaskByCallback(tx, req.RequestID, req.CallbackID, req.Status, req.Message, time.Now())
+	})
+	if err != nil {
+		response.Fail(c, 500, "回调处理失败")
+		return
+	}
+
 	response.OK(c, gin.H{"received": true})
 }

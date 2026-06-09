@@ -265,7 +265,7 @@ func CreateOrder(ctx context.Context, req CreateOrderReq) (*ordermodel.Order, er
 		if err := reserveOrderInventory(tx, order.OrderNo, items); err != nil {
 			return err
 		}
-		if err := tx.Model(&ordermodel.Order{}).Where("id = ?", order.ID).Update("inventory_status", inventorycore.InventoryStatusReserved).Error; err != nil {
+		if err := tx.Model(&ordermodel.Order{}).Where("id = ?", order.ID).Update("inventory_status", inventorycore.OrderInventoryStatusAfterReserve()).Error; err != nil {
 			return err
 		}
 		for i := range items {
@@ -625,7 +625,7 @@ func PayOrder(ctx context.Context, userID, orderID uint64) error {
 		now := time.Now()
 		if err := tx.Model(&ordermodel.Order{}).Where("id = ?", order.ID).Updates(map[string]any{
 			"status":           ordermodel.OrderStatusPaid,
-			"inventory_status": inventorycore.InventoryStatusConfirmed,
+			"inventory_status": inventorycore.OrderInventoryStatusAfterConfirm(),
 			"paid_at":          &now,
 		}).Error; err != nil {
 			return err
@@ -654,7 +654,7 @@ func CancelOrder(ctx context.Context, userID, orderID uint64) error {
 		}
 		return tx.Model(&ordermodel.Order{}).Where("id = ?", order.ID).Updates(map[string]any{
 			"status":           ordermodel.OrderStatusCanceled,
-			"inventory_status": inventorycore.InventoryStatusReleased,
+			"inventory_status": inventorycore.OrderInventoryStatusAfterRelease(),
 		}).Error
 	})
 }

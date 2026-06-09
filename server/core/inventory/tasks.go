@@ -82,3 +82,64 @@ func MarkTaskRetry(tx *gorm.DB, task *InventoryIntegrationTask, cause error, now
 		Where("id = ?", task.ID).
 		Updates(updates).Error
 }
+
+func CompleteTaskByCallback(tx *gorm.DB, requestID, callbackID, status, message string, now time.Time) error {
+	var task InventoryIntegrationTask
+	if err := tx.Where("request_id = ?", requestID).First(&task).Error; err != nil {
+		return err
+	}
+	if task.LastCallbackID == callbackID {
+		return nil
+	}
+	if task.Status == TaskStatusSuccess || task.Status == TaskStatusFailed {
+		return nil
+	}
+
+	updates := map[string]any{
+		"last_callback_id": callbackID,
+		"last_error":       message,
+		"lock_owner":       "",
+		"lock_expires_at":  nil,
+	}
+
+	inventoryStatus := InventoryStatusPending
+	switch status {
+	case "success":
+		updates["status"] = TaskStatusSuccess
+		updates["completed_at"] = now
+		inventoryStatus = callbackInventoryStatus(task.Action, true)
+	case "failed":
+		updates["status"] = TaskStatusFailed
+		updates["completed_at"] = now
+		inventoryStatus = InventoryStatusFailed
+	default:
+		updates["status"] = TaskStatusProcessing
+	}
+	if err := tx.Model(&InventoryIntegrationTask{}).Where("id = ?", task.ID).Updates(updates).Error; err != nil {
+		return err
+	}
+	return updateOrderInventoryStatusByTask(tx, task.BizType, task.BizNo, inventoryStatus, message)
+}
+
+func callbackInventoryStatus(action string, success bool) string {
+	if !success {
+		return InventoryStatusFailed
+	}
+	switch action {
+	case "reserve":
+		return InventoryStatusReserved
+	case "confirm", "deduct":
+		return InventoryStatusConfirmed
+	case "release", "restore":
+		return InventoryStatusReleased
+	default:
+		return InventoryStatusConfirmed
+	}
+}
+
+func updateOrderInventoryStatusByTask(tx *gorm.DB, bizType, bizNo, inventoryStatus, message string) error {
+	if bizType != "order" {
+		return nil
+	}
+	return tx.Table("orders").Where("order_no = ?", bizNo).Update("inventory_status", inventoryStatus).Error
+}

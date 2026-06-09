@@ -54,3 +54,29 @@ func ValidateConfig() error {
 	}
 	return nil
 }
+
+func IsAsyncExternalProvider() bool {
+	return normalizeProviderName(config.Global.Inventory.Provider) == "external_wms" &&
+		strings.ToLower(strings.TrimSpace(config.Global.Inventory.ExternalMode)) == "async"
+}
+
+func OrderInventoryStatusAfterReserve() string {
+	if IsAsyncExternalProvider() {
+		return InventoryStatusPending
+	}
+	return InventoryStatusReserved
+}
+
+func OrderInventoryStatusAfterConfirm() string {
+	if IsAsyncExternalProvider() {
+		return InventoryStatusPending
+	}
+	return InventoryStatusConfirmed
+}
+
+func OrderInventoryStatusAfterRelease() string {
+	if IsAsyncExternalProvider() {
+		return InventoryStatusPending
+	}
+	return InventoryStatusReleased
+}
