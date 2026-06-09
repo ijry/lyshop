@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/ijry/lyshop/config"
 	"github.com/stretchr/testify/require"
@@ -43,4 +44,27 @@ func TestExternalProviderReserveSyncCallsRemoteAPI(t *testing.T) {
 		Items:   []ReserveItem{{SkuID: 1, Qty: 2}},
 	})
 	require.NoError(t, err)
+}
+
+func TestBuildExternalSignature(t *testing.T) {
+	req := signedPayload{
+		AppKey:    "demo-key",
+		Timestamp: "1717910400",
+		Nonce:     "nonce-1",
+		Body:      `{"biz_no":"O1001"}`,
+	}
+
+	sign := BuildSignature(req, "demo-secret")
+	require.Equal(t, "e7593e961fe2c512caee1919359e5eee2c85003beded98875e35dd203fc8b625", sign)
+}
+
+func TestVerifyCallbackSignatureRejectsInvalidSign(t *testing.T) {
+	err := VerifyCallbackSignature(callbackEnvelope{
+		AppKey:    "demo-key",
+		Timestamp: "1717910400",
+		Nonce:     "nonce-1",
+		Sign:      "bad-sign",
+		Body:      `{"request_id":"REQ-1"}`,
+	}, "demo-secret", time.Unix(1717910400, 0))
+	require.ErrorContains(t, err, "signature")
 }

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/ijry/lyshop/config"
 	"github.com/ijry/lyshop/core/db"
 	inventorycore "github.com/ijry/lyshop/core/inventory"
 	"github.com/ijry/lyshop/core/middleware"
@@ -47,6 +48,11 @@ func retryTask(c *gin.Context) {
 }
 
 type callbackRequest struct {
+	AppKey     string `json:"app_key"`
+	Timestamp  string `json:"timestamp"`
+	Nonce      string `json:"nonce"`
+	Sign       string `json:"sign"`
+	Body       string `json:"body"`
 	RequestID  string `json:"request_id"`
 	CallbackID string `json:"callback_id"`
 	Status     string `json:"status"`
@@ -58,6 +64,12 @@ func callback(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Fail(c, 400, "参数错误")
 		return
+	}
+	if config.Global.ExternalWMS.AppSecret != "" {
+		if err := inventorycore.VerifyCallbackSignature(inventorycore.CallbackEnvelopeFromRequest(req.AppKey, req.Timestamp, req.Nonce, req.Sign, req.Body), config.Global.ExternalWMS.AppSecret, time.Now()); err != nil {
+			response.Fail(c, 400, "签名校验失败")
+			return
+		}
 	}
 
 	err := db.DB.WithContext(c.Request.Context()).Transaction(func(tx *gorm.DB) error {

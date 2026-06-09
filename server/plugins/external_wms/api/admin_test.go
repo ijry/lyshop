@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/glebarez/sqlite"
+	"github.com/ijry/lyshop/config"
 	"github.com/ijry/lyshop/core/db"
 	inventorycore "github.com/ijry/lyshop/core/inventory"
 	ordermodel "github.com/ijry/lyshop/plugins/order/model"
@@ -96,6 +97,17 @@ func TestExternalWMSCallbackMarksOrderInventoryFailed(t *testing.T) {
 	require.Equal(t, "CALLBACK-2", latest.LastCallbackID)
 	require.Equal(t, "stock not enough", latest.LastError)
 	requireOrderInventoryStatus(t, gdb, "O1002", inventorycore.InventoryStatusFailed)
+}
+
+func TestExternalWMSCallbackRejectsInvalidSignature(t *testing.T) {
+	original := config.Global
+	t.Cleanup(func() { config.Global = original })
+	config.Global.ExternalWMS.AppSecret = "demo-secret"
+	config.Global.ExternalWMS.SignatureTTL = 300
+
+	router, _ := setupExternalAdminRouter(t)
+	resp := doExternalAdminReq(t, router, http.MethodPost, "/admin/external-wms/callback", `{"app_key":"demo-key","timestamp":"1717910400","nonce":"nonce-1","sign":"bad-sign","body":"{\"request_id\":\"REQ-1\"}","request_id":"REQ-1","callback_id":"CALLBACK-3","status":"success"}`, "*")
+	require.NotEqual(t, 0, resp.Code)
 }
 
 func setupExternalAdminRouter(t *testing.T) (*gin.Engine, *gorm.DB) {

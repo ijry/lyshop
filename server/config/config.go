@@ -49,6 +49,8 @@ type ExternalWMSConfig struct {
 	AppSecret       string                 `mapstructure:"app_secret"`
 	TimeoutMS       int                    `mapstructure:"timeout_ms"`
 	CallbackEnabled bool                   `mapstructure:"callback_enabled"`
+	SignatureTTL    int                    `mapstructure:"signature_ttl"`
+	WorkerIntervalSec int                  `mapstructure:"worker_interval_sec"`
 	Retry           ExternalWMSRetryConfig `mapstructure:"retry"`
 }
 
