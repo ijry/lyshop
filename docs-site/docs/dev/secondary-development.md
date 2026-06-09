@@ -4,6 +4,86 @@
 
 ---
 
+## 统一库存架构说明
+
+当前最新架构下，商城库存能力不再默认等于 WMS，而是统一收口到 `server/core/inventory` 抽象层。
+
+### 核心原则
+
+- 商品主数据、SKU 主数据由 `product` 管理
+- 库存交易能力由 `inventory` 管理
+- `wms` 只是一个内置库存 provider，不再是唯一库存真源
+- 企业已有 WMS 通过 `external_wms` provider 对接
+- SKU 是库存占用、扣减、回补、可售库存查询的统一粒度
+
+### 三种库存模式
+
+1. `local`
+   - 默认模式
+   - 直接使用 `product_skus.stock`
+2. `builtin_wms`
+   - 启用内置 `wms` 插件
+   - 使用系统内仓储库存表与预占能力
+3. `external_wms`
+   - 对接企业外部 WMS
+   - 支持 `sync` 与 `async`
+
+### 推荐依赖关系
+
+二次开发时：
+
+- 订单、商品、积分商城等业务模块，应依赖 `core/inventory`
+- 不要直接从业务插件硬连 `plugins/wms/service`
+- 若新增新的库存来源，应新增一个新的 inventory provider，而不是把判断分散写进业务层
+
+### 关键目录
+
+```text
+server/core/inventory/
+├── provider.go        # Provider 接口与注册
+├── router.go          # Provider 选择与模式判断
+├── model.go           # 统一库存共享模型
+├── local.go           # 本地库存实现
+├── external.go        # 外部WMS provider
+├── external_adapter.go # 外部WMS通用企业协议适配层
+├── tasks.go           # 异步任务状态迁移
+└── worker*.go         # 异步任务执行与轮询
+```
+
+### 共享模型
+
+- `inventory_reservation`
+  - 统一预占记录
+- `order_inventory_state`
+  - 统一订单库存状态
+- `inventory_integration_tasks`
+  - `external_wms + async` 模式下的异步任务表
+
+### 订单库存状态
+
+统一使用 `orders.inventory_status` 表达库存结果：
+
+- `none`
+- `pending`
+- `reserved`
+- `confirmed`
+- `released`
+- `failed`
+
+其中：
+
+- `external_wms + async` 模式下，订单在收到最终结果前会先保持 `pending`
+- 最终状态由异步任务执行结果和回调共同收口
+
+### 二开建议
+
+- 新增库存相关业务时，先判断该业务是“商品主数据问题”还是“库存来源问题”
+- 若只是新增商品字段、规格生成、SKU 展示，优先改 `product`
+- 若涉及库存扣减、释放、可售库存查询，优先接入 `inventory`
+- 若接第三方仓储系统，优先新增 adapter / provider，不要污染订单和商品服务
+
+---
+
 ## 目录
 
 1. [概述与环境准备](#一、概述与环境准备)
