@@ -19,6 +19,12 @@ func ListStaff(ctx context.Context) ([]immodel.ImStaff, error) {
 	return list, err
 }
 
+func GetSession(ctx context.Context, sessionID uint64) (*immodel.ImSession, error) {
+	var session immodel.ImSession
+	err := db.DB.WithContext(ctx).First(&session, sessionID).Error
+	return &session, err
+}
+
 // CreateStaff creates a new staff record.
 func CreateStaff(ctx context.Context, staff *immodel.ImStaff) error {
 	return db.DB.WithContext(ctx).Create(staff).Error
@@ -394,8 +400,12 @@ func MarkRead(ctx context.Context, sessionID uint64) error {
 // ListSessions returns sessions for admin seat view.
 func ListSessions(ctx context.Context, staffID uint64, status int8) ([]immodel.ImSession, error) {
 	tx := db.DB.WithContext(ctx)
-	if staffID > 0 { tx = tx.Where("staff_id = ?", staffID) }
-	if status > 0 { tx = tx.Where("status = ?", status) }
+	if staffID > 0 {
+		tx = tx.Where("staff_id = ?", staffID)
+	}
+	if status > 0 {
+		tx = tx.Where("status = ?", status)
+	}
 	var list []immodel.ImSession
 	err := tx.Order("updated_at desc").Limit(50).Find(&list).Error
 	return list, err
@@ -403,13 +413,17 @@ func ListSessions(ctx context.Context, staffID uint64, status int8) ([]immodel.I
 
 // ListMessages returns message history for a session.
 func ListMessages(ctx context.Context, sessionID uint64, page, size int) ([]immodel.ImMessage, int64, error) {
-	if page <= 0 { page = 1 }
-	if size <= 0 || size > 100 { size = 50 }
+	if page <= 0 {
+		page = 1
+	}
+	if size <= 0 || size > 100 {
+		size = 50
+	}
 	var total int64
 	db.DB.WithContext(ctx).Model(&immodel.ImMessage{}).Where("session_id = ?", sessionID).Count(&total)
 	var list []immodel.ImMessage
 	err := db.DB.WithContext(ctx).Where("session_id = ?", sessionID).
-		Order("id desc").Offset((page-1)*size).Limit(size).Find(&list).Error
+		Order("id desc").Offset((page - 1) * size).Limit(size).Find(&list).Error
 	return list, total, err
 }
 
@@ -420,9 +434,13 @@ func CheckAutoReply(ctx context.Context, content string) string {
 	for _, r := range rules {
 		switch r.MatchType {
 		case 1: // exact
-			if content == r.Keyword { return r.Reply }
+			if content == r.Keyword {
+				return r.Reply
+			}
 		case 2: // contains
-			if strings.Contains(content, r.Keyword) { return r.Reply }
+			if strings.Contains(content, r.Keyword) {
+				return r.Reply
+			}
 		}
 	}
 	return ""
@@ -562,17 +580,23 @@ func HandleWS(conn *websocket.Conn, clientID string, session *immodel.ImSession)
 	})
 	for {
 		_, raw, err := conn.ReadMessage()
-		if err != nil { break }
+		if err != nil {
+			break
+		}
 		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 
 		var frame Frame
-		if err := json.Unmarshal(raw, &frame); err != nil { continue }
+		if err := json.Unmarshal(raw, &frame); err != nil {
+			continue
+		}
 
 		switch frame.Type {
 		case "msg":
 			content, _ := frame.Payload["content"].(string)
 			msgType, _ := frame.Payload["msg_type"].(string)
-			if msgType == "" { msgType = immodel.MsgTypeText }
+			if msgType == "" {
+				msgType = immodel.MsgTypeText
+			}
 
 			msg := &immodel.ImMessage{
 				SessionID:  session.ID,

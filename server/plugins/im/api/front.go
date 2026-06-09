@@ -16,7 +16,7 @@ import (
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
-	CheckOrigin:    func(_ *http.Request) bool { return true },
+	CheckOrigin:     func(_ *http.Request) bool { return true },
 }
 
 func RegisterFrontRoutes(g *gin.RouterGroup) {
@@ -24,6 +24,7 @@ func RegisterFrontRoutes(g *gin.RouterGroup) {
 	auth.Use(middleware.RequireAuth)
 	auth.GET("/im/session", getOrCreateSession)
 	auth.GET("/im/messages", getMessages)
+	auth.POST("/im/upload", uploadAttachment)
 	auth.POST("/im/feedback", submitFeedback)
 }
 
@@ -81,6 +82,31 @@ func submitFeedback(c *gin.Context) {
 		return
 	}
 	response.OK(c, nil)
+}
+
+func uploadAttachment(c *gin.Context) {
+	userID, _ := c.Get("user_id")
+	sessionID, _ := strconv.ParseUint(c.PostForm("session_id"), 10, 64)
+	if sessionID == 0 {
+		response.Fail(c, 400, "session_id required")
+		return
+	}
+	session, err := imsvc.GetSession(c.Request.Context(), sessionID)
+	if err != nil || session.UserID != userID.(uint64) {
+		response.Fail(c, 403, "无权上传到该会话")
+		return
+	}
+	fh, err := c.FormFile("file")
+	if err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	info, err := imsvc.UploadAttachment(c.Request.Context(), fh)
+	if err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	response.OK(c, info)
 }
 
 func wsHandler(c *gin.Context) {

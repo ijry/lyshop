@@ -19,6 +19,7 @@ func RegisterAdminRoutes(g *gin.RouterGroup) {
 	g.POST("/im/sessions/:id/accept", middleware.RequirePermission("im:reply"), adminAcceptSession)
 	g.POST("/im/sessions/:id/close", middleware.RequirePermission("im:reply"), adminCloseSession)
 	g.POST("/im/sessions/:id/transfer", middleware.RequirePermission("im:reply"), adminTransferSession)
+	g.POST("/im/upload", middleware.RequirePermission("im:reply"), adminUploadAttachment)
 	g.GET("/im/analytics", middleware.RequirePermission("im:view"), adminAnalytics)
 	g.GET("/im/logs", middleware.RequirePermission("im:view"), adminListEventLogs)
 	g.GET("/im/staff/status", middleware.RequirePermission("im:view"), adminGetStaffStatus)
@@ -93,6 +94,29 @@ func adminListEventLogs(c *gin.Context) {
 		return
 	}
 	response.OK(c, response.PageData{List: list, Total: total, Page: page, Size: size})
+}
+
+func adminUploadAttachment(c *gin.Context) {
+	sessionID, _ := strconv.ParseUint(c.PostForm("session_id"), 10, 64)
+	if sessionID == 0 {
+		response.Fail(c, 400, "session_id required")
+		return
+	}
+	if _, err := imsvc.GetSession(c.Request.Context(), sessionID); err != nil {
+		response.Fail(c, 404, "会话不存在")
+		return
+	}
+	fh, err := c.FormFile("file")
+	if err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	info, err := imsvc.UploadAttachment(c.Request.Context(), fh)
+	if err != nil {
+		response.Fail(c, 400, err.Error())
+		return
+	}
+	response.OK(c, info)
 }
 
 func adminListKnowledge(c *gin.Context) {
