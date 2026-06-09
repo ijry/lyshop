@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 
 	"github.com/gin-gonic/gin"
+	"github.com/ijry/lyshop/core/plugin"
 	imapi "github.com/ijry/lyshop/plugins/im/api"
 	immodel "github.com/ijry/lyshop/plugins/im/model"
 	imsvc "github.com/ijry/lyshop/plugins/im/service"
-	"github.com/ijry/lyshop/core/plugin"
 	"gorm.io/gorm"
 )
 
@@ -42,6 +42,7 @@ func (p *imPlugin) Migrate(db *gorm.DB) error {
 		&immodel.ImTransferLog{},
 		&immodel.ImKnowledge{},
 		&immodel.ImFeedback{},
+		&immodel.ImEventLog{},
 	)
 }
 

@@ -7,9 +7,9 @@ import (
 )
 
 const (
-	SessionStatusWaiting  int8 = 1
-	SessionStatusOngoing  int8 = 2
-	SessionStatusClosed   int8 = 3
+	SessionStatusWaiting int8 = 1
+	SessionStatusOngoing int8 = 2
+	SessionStatusClosed  int8 = 3
 
 	// SessionMode marks who is currently serving the session.
 	// New sessions start in "ai" mode (answered by the local LLM); when the
@@ -19,6 +19,7 @@ const (
 
 	MsgTypeText        = "text"
 	MsgTypeImage       = "image"
+	MsgTypeFile        = "file"
 	MsgTypeProductCard = "product_card"
 	MsgTypeOrderCard   = "order_card"
 	MsgTypeSystem      = "system" // 系统通知（接入、排队等）
@@ -27,6 +28,24 @@ const (
 	SenderStaff  int8 = 2
 	SenderSystem int8 = 0
 	SenderAI     int8 = 3 // 本地大模型客服
+)
+
+const (
+	ImEventSessionCreated  = "session_created"
+	ImEventMessageSent     = "message_sent"
+	ImEventAIReply         = "ai_reply"
+	ImEventAIFailed        = "ai_failed"
+	ImEventRAGHit          = "rag_hit"
+	ImEventToHuman         = "to_human"
+	ImEventStaffAccept     = "staff_accept"
+	ImEventSessionClose    = "session_close"
+	ImEventSessionTransfer = "session_transfer"
+	ImEventFileUploaded    = "file_uploaded"
+
+	ImEventSourceUser   = "user"
+	ImEventSourceStaff  = "staff"
+	ImEventSourceAI     = "ai"
+	ImEventSourceSystem = "system"
 )
 
 // ImStaff tracks online status and load for each staff member.
@@ -69,6 +88,19 @@ type ImMessage struct {
 	IsRead     int8   `gorm:"not null;default:0" json:"is_read"`
 }
 
+type ImEventLog struct {
+	model.Base
+	Event     string `gorm:"size:64;not null;index" json:"event"`
+	SessionID uint64 `gorm:"not null;default:0;index" json:"session_id"`
+	UserID    uint64 `gorm:"not null;default:0;index" json:"user_id"`
+	StaffID   uint64 `gorm:"not null;default:0;index" json:"staff_id"`
+	MessageID uint64 `gorm:"not null;default:0;index" json:"message_id"`
+	Source    string `gorm:"size:16;not null;default:'system';index" json:"source"`
+	Success   int8   `gorm:"not null;default:1;index" json:"success"`
+	LatencyMS int64  `gorm:"not null;default:0" json:"latency_ms"`
+	Extra     string `gorm:"type:json" json:"extra"`
+}
+
 type ImAutoReply struct {
 	model.Base
 	Keyword   string `gorm:"size:128;not null" json:"keyword"`
@@ -85,7 +117,7 @@ type ImAutoReply struct {
 type ImFeedback struct {
 	model.Base
 	SessionID    uint64  `gorm:"not null;index"   json:"session_id"`
-	Source       string  `gorm:"size:16;not null" json:"source"` // user|auto
+	Source       string  `gorm:"size:16;not null" json:"source"`   // user|auto
 	Rating       int8    `gorm:"not null;default:0" json:"rating"` // user: 1=👍 -1=👎 0=unset
 	Comment      string  `gorm:"size:512"          json:"comment"`
 	Faithfulness float64 `gorm:"not null;default:0" json:"faithfulness"` // auto 0-5
@@ -106,8 +138,8 @@ type ImKnowledge struct {
 	model.Base
 	Title     string          `gorm:"size:255;not null"   json:"title"`
 	Content   string          `gorm:"type:text;not null"  json:"content"`
-	Tags      string          `gorm:"size:255"            json:"tags"` // 逗号分隔，便于关键词召回
-	Embedding json.RawMessage `gorm:"type:json"           json:"-"`    // []float64，前端无需返回
+	Tags      string          `gorm:"size:255"            json:"tags"`    // 逗号分隔，便于关键词召回
+	Embedding json.RawMessage `gorm:"type:json"           json:"-"`       // []float64，前端无需返回
 	Indexed   int8            `gorm:"not null;default:0"  json:"indexed"` // 1=已向量化
 	Sort      int             `gorm:"not null;default:0"  json:"sort"`
 	Status    int8            `gorm:"not null;default:1"  json:"status"` // 1启用 0停用
