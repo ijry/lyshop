@@ -16,6 +16,20 @@ jwt:
   secret: "your-secret-key-change-in-production"
   expire_hours: 168
 
+inventory:
+  provider: local
+  external_mode: sync
+
+external_wms:
+  endpoint: ""
+  app_key: ""
+  app_secret: ""
+  timeout_ms: 3000
+  callback_enabled: true
+  retry:
+    max_attempts: 8
+    backoff_seconds: 30
+
 plugins:
   enabled:
     - product
@@ -29,6 +43,5 @@ plugins:
     - checkin
     - message
     - im
-    - wms
     - decor
     - ai_image

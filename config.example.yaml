@@ -22,12 +22,25 @@ jwt:
   secret: "change-this-to-a-random-string"
   expire_hours: 168   # 7 days
 
+inventory:
+  provider: local           # local | builtin_wms | external_wms
+  external_mode: sync       # sync | async
+
+external_wms:
+  endpoint: ""
+  app_key: ""
+  app_secret: ""
+  timeout_ms: 3000
+  callback_enabled: true
+  retry:
+    max_attempts: 8
+    backoff_seconds: 30
+
 plugins:
   enabled:
     # Core commerce
     - product
     - order
-    - wms
     - marketing
     # Communication
     - im

@@ -3,11 +3,13 @@ package config
 import "github.com/spf13/viper"
 
 type Config struct {
-	Server   ServerConfig   `mapstructure:"server"`
-	Database DatabaseConfig `mapstructure:"database"`
-	Redis    RedisConfig    `mapstructure:"redis"`
-	JWT      JWTConfig      `mapstructure:"jwt"`
-	Plugins  PluginsConfig  `mapstructure:"plugins"`
+	Server      ServerConfig      `mapstructure:"server"`
+	Database    DatabaseConfig    `mapstructure:"database"`
+	Redis       RedisConfig       `mapstructure:"redis"`
+	JWT         JWTConfig         `mapstructure:"jwt"`
+	Plugins     PluginsConfig     `mapstructure:"plugins"`
+	Inventory   InventoryConfig   `mapstructure:"inventory"`
+	ExternalWMS ExternalWMSConfig `mapstructure:"external_wms"`
 }
 
 type ServerConfig struct {
@@ -34,6 +36,25 @@ type JWTConfig struct {
 
 type PluginsConfig struct {
 	Enabled []string `mapstructure:"enabled"`
+}
+
+type InventoryConfig struct {
+	Provider     string `mapstructure:"provider"`
+	ExternalMode string `mapstructure:"external_mode"`
+}
+
+type ExternalWMSConfig struct {
+	Endpoint        string                 `mapstructure:"endpoint"`
+	AppKey          string                 `mapstructure:"app_key"`
+	AppSecret       string                 `mapstructure:"app_secret"`
+	TimeoutMS       int                    `mapstructure:"timeout_ms"`
+	CallbackEnabled bool                   `mapstructure:"callback_enabled"`
+	Retry           ExternalWMSRetryConfig `mapstructure:"retry"`
+}
+
+type ExternalWMSRetryConfig struct {
+	MaxAttempts    int `mapstructure:"max_attempts"`
+	BackoffSeconds int `mapstructure:"backoff_seconds"`
 }
 
 // Global is the loaded config, available after Load().

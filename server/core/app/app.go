@@ -17,6 +17,7 @@ import (
 	"github.com/ijry/lyshop/core/db"
 	driverStorage "github.com/ijry/lyshop/core/driver/storage"
 	"github.com/ijry/lyshop/core/i18n"
+	"github.com/ijry/lyshop/core/inventory"
 	"github.com/ijry/lyshop/core/middleware"
 	"github.com/ijry/lyshop/core/plugin"
 	"github.com/ijry/lyshop/core/response"
@@ -29,6 +30,9 @@ import (
 func Init(cfgPath string) error {
 	if err := config.Load(cfgPath); err != nil {
 		return fmt.Errorf("load config: %w", err)
+	}
+	if err := inventory.ValidateConfig(); err != nil {
+		return fmt.Errorf("validate inventory config: %w", err)
 	}
 	gin.SetMode(config.Global.Server.Mode)
 
