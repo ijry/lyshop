@@ -5,13 +5,15 @@
 仓储模块围绕“仓库管理、出入库单、库存台账、库存流水”提供后台能力。库存变更以单据完成动作为准，所有变更可通过流水追溯到业务单据。
 后台管理菜单默认入口为 `/wms/warehouse`、`/wms/docs`、`/wms/stock`、`/wms/movements`。
 
+`wms` 是商城的内置库存 provider 之一，而不是唯一库存模式。只有在 `inventory.provider=builtin_wms` 时，订单库存交易才以 WMS 为真源；当商城运行于 `local` 或 `external_wms` 模式时，WMS 后台能力不是必选依赖。
+
 ## 功能说明
 
 - 仓库管理：支持仓库分页查询、新建、编辑和启停用。
 - 出入库单：统一单据模型，支持入库/出库、多 SKU 明细、草稿保存。
 - 单据流转：仅草稿可编辑，支持 `draft -> completed` 与 `draft -> canceled`。
 - 库存台账：按仓库、SKU、预警状态查询库存数量与安全库存。
-- 库存预占：支持订单预占、确认、释放三段式交易，维护 `reserved_qty`。
+- 库存预占：在 `builtin_wms` 模式下支持订单预占、确认、释放三段式交易，维护 `reserved_qty`。
 - 安全库存：支持按库存记录维护 `safe_qty`，用于低库存预警识别。
 - 库存流水追溯：按仓库、SKU、业务类型、单号、时间区间查询变更明细。
 
@@ -100,7 +102,10 @@
 ## 部署与配置影响
 
 - 无新增第三方依赖。
-- 无新增环境变量与配置项。
+- 仅在 `inventory.provider=builtin_wms` 时需要启用 `wms` 插件。
+- 统一库存配置使用：
+  - `inventory.provider`
+  - `inventory.external_mode`
 - `wms` 插件在服务启动时自动迁移仓储相关表结构（仓库、库存、单据、单据明细、流水）。
 - 新增库存预占结构（自动迁移）：
   - `inventory_stock.reserved_qty`

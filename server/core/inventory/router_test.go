@@ -45,3 +45,14 @@ func TestValidateConfigRejectsBuiltinWMSWithoutPlugin(t *testing.T) {
 	err := ValidateConfig()
 	require.ErrorContains(t, err, "wms")
 }
+
+func TestValidateConfigRejectsExternalWMSWithoutEndpoint(t *testing.T) {
+	original := config.Global
+	t.Cleanup(func() { config.Global = original })
+	config.Global.Inventory.Provider = "external_wms"
+	config.Global.Inventory.ExternalMode = "sync"
+	config.Global.ExternalWMS.Endpoint = ""
+
+	err := ValidateConfig()
+	require.ErrorContains(t, err, "external_wms.endpoint")
+}

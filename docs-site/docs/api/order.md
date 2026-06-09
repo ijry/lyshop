@@ -54,7 +54,9 @@
 - 前台与后台建议统一维护状态文案映射：订单状态、售后状态、物流状态与日志状态流转文案应保持一致。
 - 订单状态当前定义：`1待付款`、`2待发货`、`3待收货`、`4已完成`、`5售后`、`6已取消`。
 - 待付款订单支持用户主动取消：`POST /api/v1/orders/:id/cancel`。
-- 订单库存以 WMS 为真源：下单预占、支付确认、取消释放，详见 [库存预占规则](./stock-reservation)。
+- 订单库存由统一 `inventory` provider 负责：支持 `local`、`builtin_wms`、`external_wms` 三种模式，详见 [库存预占规则](./stock-reservation)。
+- 订单新增 `inventory_status` 字段：`none`、`pending`、`reserved`、`confirmed`、`released`、`failed`。
+- 仅 `inventory_status=reserved` 的订单允许进入支付确认链路；异步外部 WMS 模式下，`pending` 状态表示库存意图已落库但外部预占尚未完成。
 - 售后相关查询接口在保留枚举字段的同时，兼容返回可读标签字段（`*_label`），用于前端直接展示中文文案。
 - 后台商品列表“管理评价”弹窗复用现有评价接口（`GET /admin/api/reviews`、`GET /admin/api/reviews/:id`、`POST /admin/api/reviews/:id/reply`），通过 `product_id` + `keyword` 组合筛选当前商品评价，无新增接口。
 - 管理端“管理评价”按钮按权限显隐：优先校验 JWT 权限码 `order:view`，并兼容以菜单 `/review/list` 作为兜底判断，避免无权限账号误触。
@@ -235,7 +237,13 @@
 ## 部署与配置影响
 
 - 本次仅为订单与售后能力增强，无新增部署步骤，无新增环境变量。
-- 订单库存交易依赖 WMS 预占模型，需确保 WMS 迁移已执行（`reserved_qty` 与 `inventory_reservation`）。
+- 订单库存交易依赖统一 inventory 共享模型，服务启动时会自动迁移：
+  - `orders.inventory_status`
+  - `inventory_reservation`
+  - `order_inventory_state`
+  - `inventory_integration_tasks`
+- 当 `inventory.provider=builtin_wms` 时，仍需确保 `wms` 插件迁移已执行（含 `reserved_qty` 与 WMS 预占表）。
+- 当 `inventory.provider=external_wms` 时，需配置 `external_wms.endpoint`；若启用 `inventory.external_mode=async`，还需启用任务执行与重试能力。
 - 活动来源链路新增后，`order_items` 会新增活动快照字段（`activity_product_id`、`activity_id`、`activity_type`、`activity_title`），需依赖服务启动自动迁移。
 - Redis 购物车键由单一 `sku_id` 兼容升级为 `sku_id:activity_product_id` 复合键（旧键可兼容读取），无新增配置项。
 - 后台商品列表评价弹窗仅涉及管理端前端交互改造，服务端接口、数据库结构与配置项均无变化。
