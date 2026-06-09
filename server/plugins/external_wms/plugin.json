@@ -1,0 +1,14 @@
+{
+  "name": "external_wms",
+  "title": "外部WMS集成",
+  "version": "1.0.0",
+  "description": "企业外部WMS同步与异步对接",
+  "author": "lyshop",
+  "depends": ["order"],
+  "permissions": ["system:config"],
+  "config_items": [
+    { "key": "endpoint", "label": "接口地址", "type": "text", "required": false, "placeholder": "https://wms.example.com/api" },
+    { "key": "app_key", "label": "应用Key", "type": "text", "required": false },
+    { "key": "app_secret", "label": "应用Secret", "type": "password", "required": false }
+  ]
+}
