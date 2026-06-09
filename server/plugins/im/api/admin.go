@@ -81,6 +81,10 @@ func adminListEventLogs(c *gin.Context) {
 	}
 	list, total, err := imsvc.ListEventLogs(c.Request.Context(), imsvc.EventLogQuery{
 		Event:     c.Query("event"),
+		Level:     c.Query("level"),
+		Category:  c.Query("category"),
+		TraceID:   c.Query("trace_id"),
+		Keyword:   c.Query("keyword"),
 		SessionID: sessionID,
 		UserID:    userID,
 		StaffID:   staffID,

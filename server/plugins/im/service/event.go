@@ -13,6 +13,9 @@ import (
 
 type EventInput struct {
 	Event     string
+	Level     string
+	Category  string
+	TraceID   string
 	SessionID uint64
 	UserID    uint64
 	StaffID   uint64
@@ -20,11 +23,17 @@ type EventInput struct {
 	Source    string
 	Success   bool
 	LatencyMS int64
+	Message   string
+	Meta      map[string]any
 	Extra     map[string]any
 }
 
 type EventLogQuery struct {
 	Event     string
+	Level     string
+	Category  string
+	TraceID   string
+	Keyword   string
 	SessionID uint64
 	UserID    uint64
 	StaffID   uint64
@@ -42,6 +51,14 @@ func RecordEvent(ctx context.Context, input EventInput) error {
 	if source == "" {
 		source = immodel.ImEventSourceSystem
 	}
+	level := strings.TrimSpace(input.Level)
+	if level == "" {
+		level = "info"
+	}
+	category := strings.TrimSpace(input.Category)
+	if category == "" {
+		category = "im"
+	}
 	success := int8(0)
 	if input.Success {
 		success = 1
@@ -51,8 +68,16 @@ func RecordEvent(ctx context.Context, input EventInput) error {
 		raw, _ := json.Marshal(input.Extra)
 		extra = string(raw)
 	}
+	meta := ""
+	if len(input.Meta) > 0 {
+		raw, _ := json.Marshal(input.Meta)
+		meta = string(raw)
+	}
 	row := &immodel.ImEventLog{
 		Event:     input.Event,
+		Level:     level,
+		Category:  category,
+		TraceID:   strings.TrimSpace(input.TraceID),
 		SessionID: input.SessionID,
 		UserID:    input.UserID,
 		StaffID:   input.StaffID,
@@ -60,6 +85,8 @@ func RecordEvent(ctx context.Context, input EventInput) error {
 		Source:    source,
 		Success:   success,
 		LatencyMS: input.LatencyMS,
+		Message:   strings.TrimSpace(input.Message),
+		Meta:      meta,
 		Extra:     extra,
 	}
 	return db.DB.WithContext(ctx).Create(row).Error
@@ -75,6 +102,19 @@ func ListEventLogs(ctx context.Context, q EventLogQuery) ([]immodel.ImEventLog, 
 	tx := db.DB.WithContext(ctx).Model(&immodel.ImEventLog{})
 	if q.Event != "" {
 		tx = tx.Where("event = ?", q.Event)
+	}
+	if q.Level != "" {
+		tx = tx.Where("level = ?", q.Level)
+	}
+	if q.Category != "" {
+		tx = tx.Where("category = ?", q.Category)
+	}
+	if q.TraceID != "" {
+		tx = tx.Where("trace_id = ?", q.TraceID)
+	}
+	if q.Keyword != "" {
+		like := "%" + strings.TrimSpace(q.Keyword) + "%"
+		tx = tx.Where("event LIKE ? OR message LIKE ?", like, like)
 	}
 	if q.SessionID > 0 {
 		tx = tx.Where("session_id = ?", q.SessionID)

@@ -58,6 +58,12 @@ type AIConfig struct {
 	// Evaluation. When AutoEval is true, AIAnswer scores its own output using
 	// the LLM-as-judge pattern and stores the result in ImFeedback.
 	AutoEval bool
+
+	WebSearchEnabled  bool
+	WebSearchProvider string
+	WebSearchAPIKey   string
+	WebSearchEndpoint string
+	WebSearchTopK     int
 }
 
 const aiConfigPlugin = "im"
@@ -136,6 +142,12 @@ func LoadAIConfig() AIConfig {
 		QueryRewriteN: loadInt("ai_query_rewrite_n", 3),
 
 		AutoEval: loadBool("ai_auto_eval", false),
+
+		WebSearchEnabled:  loadBool("ai_web_search_enabled", false),
+		WebSearchProvider: strings.ToLower(loadCfg("ai_web_search_provider", "serper")),
+		WebSearchAPIKey:   loadCfg("ai_web_search_api_key", ""),
+		WebSearchEndpoint: strings.TrimRight(loadCfg("ai_web_search_endpoint", "https://google.serper.dev/search"), "/"),
+		WebSearchTopK:     loadInt("ai_web_search_top_k", 3),
 	}
 }
 
@@ -580,6 +592,9 @@ func AIAnswer(ctx context.Context, session *immodel.ImSession, userText string) 
 			b.WriteString("\n")
 		}
 		ctxParts = append(ctxParts, b.String())
+	}
+	if web := retrieveWebSearch(ctx, cfg, session, retrievalQuery); web != "" {
+		ctxParts = append(ctxParts, web)
 	}
 	if len(ctxParts) > 0 {
 		recordEventBestEffort(ctx, EventInput{

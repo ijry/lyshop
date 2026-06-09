@@ -41,6 +41,7 @@ const (
 	ImEventSessionClose    = "session_close"
 	ImEventSessionTransfer = "session_transfer"
 	ImEventFileUploaded    = "file_uploaded"
+	ImEventWebSearch       = "web_search"
 
 	ImEventSourceUser   = "user"
 	ImEventSourceStaff  = "staff"
@@ -59,13 +60,23 @@ type ImStaff struct {
 
 type ImSession struct {
 	model.Base
-	UserID        uint64 `gorm:"not null;index"            json:"user_id"`
-	StaffID       uint64 `gorm:"not null;default:0;index"  json:"staff_id"`
-	Mode          string `gorm:"size:16;not null;default:'ai'" json:"mode"` // ai|human
-	Status        int8   `gorm:"not null"                  json:"status"`
-	QueuePosition int    `gorm:"not null;default:0"        json:"queue_position"`
-	LastMsg       string `gorm:"size:255"                  json:"last_msg"`
-	UnreadCount   int    `gorm:"not null;default:0"        json:"unread_count"`
+	UserID          uint64 `gorm:"not null;index"            json:"user_id"`
+	StaffID         uint64 `gorm:"not null;default:0;index"  json:"staff_id"`
+	Mode            string `gorm:"size:16;not null;default:'ai'" json:"mode"` // ai|human
+	Status          int8   `gorm:"not null"                  json:"status"`
+	QueuePosition   int    `gorm:"not null;default:0"        json:"queue_position"`
+	LastMsg         string `gorm:"size:255"                  json:"last_msg"`
+	UnreadCount     int    `gorm:"not null;default:0"        json:"unread_count"`
+	VisitorID       string `gorm:"size:128;index"            json:"visitor_id"`
+	VisitorIP       string `gorm:"size:64"                   json:"visitor_ip"`
+	VisitorLocation string `gorm:"size:128"                json:"visitor_location"`
+	VisitorBrowser  string `gorm:"size:64"                  json:"visitor_browser"`
+	VisitorOS       string `gorm:"size:64"                  json:"visitor_os"`
+	VisitorLanguage string `gorm:"size:32"                  json:"visitor_language"`
+	VisitorReferrer string `gorm:"size:512"                 json:"visitor_referrer"`
+	VisitorURL      string `gorm:"size:512"                 json:"visitor_url"`
+	VisitorDevice   string `gorm:"size:64"                  json:"visitor_device"`
+	VisitorExtra    string `gorm:"type:json"                json:"visitor_extra"`
 }
 
 // ImTransferLog records every session transfer for audit and history.
@@ -91,6 +102,9 @@ type ImMessage struct {
 type ImEventLog struct {
 	model.Base
 	Event     string `gorm:"size:64;not null;index" json:"event"`
+	Level     string `gorm:"size:16;not null;default:'info';index" json:"level"`
+	Category  string `gorm:"size:32;not null;default:'im';index" json:"category"`
+	TraceID   string `gorm:"size:64;index" json:"trace_id"`
 	SessionID uint64 `gorm:"not null;default:0;index" json:"session_id"`
 	UserID    uint64 `gorm:"not null;default:0;index" json:"user_id"`
 	StaffID   uint64 `gorm:"not null;default:0;index" json:"staff_id"`
@@ -98,6 +112,8 @@ type ImEventLog struct {
 	Source    string `gorm:"size:16;not null;default:'system';index" json:"source"`
 	Success   int8   `gorm:"not null;default:1;index" json:"success"`
 	LatencyMS int64  `gorm:"not null;default:0" json:"latency_ms"`
+	Message   string `gorm:"size:512" json:"message"`
+	Meta      string `gorm:"type:json" json:"meta"`
 	Extra     string `gorm:"type:json" json:"extra"`
 }
 

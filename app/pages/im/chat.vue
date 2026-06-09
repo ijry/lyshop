@@ -89,6 +89,9 @@
     </view>
 
     <!-- Input bar -->
+    <view v-if="peerDraft" class="typing-draft">
+      <text>客服正在输入：{{ peerDraft }}</text>
+    </view>
     <view
       class="bg-white border-t-1 border-gray-100 px-20rpx py-16rpx flex items-center gap-16rpx"
       style="position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;"
@@ -101,6 +104,7 @@
       <view class="flex-1">
         <u-input v-model="inputText" :placeholder="$t('chat.inputPlaceholder')" border="surround" shape="circle"
           :maxlength="500"
+          @change="onInputChange"
           @confirm="sendMsg"
           confirmType="send"
           clearable
@@ -129,6 +133,7 @@ const queuePosition = ref(0)
 const mode = ref<'ai' | 'human'>('human') // 'ai' = 大模型应答中
 const aiTyping = ref(false)
 const uploading = ref(false)
+const peerDraft = ref('')
 
 let ws: any = null
 let heartbeat: any = null
@@ -206,6 +211,10 @@ function connectWS(token: string) {
           content: t('chat.closedNotice'),
         })
         scrollToBottom()
+      } else if (frame.type === 'typing_draft') {
+        peerDraft.value = frame.payload?.draft || ''
+      } else if (frame.type === 'typing_stop') {
+        peerDraft.value = ''
       }
     } catch {}
   })
@@ -243,6 +252,7 @@ function sendMsg() {
 
   messages.value.push({ id: Date.now(), sender_type: 1, content: text, type: 'text' })
   inputText.value = ''
+  sendTypingStop()
   scrollToBottom()
 
   if (ws && connected.value) {
@@ -256,6 +266,32 @@ function sendMsg() {
     return
   }
   scheduleLocalReply(text)
+}
+
+function onInputChange(value: string) {
+  if (!sessionID.value || !ws || !connected.value) return
+  if (!String(value || '').trim()) {
+    sendTypingStop()
+    return
+  }
+  ws.send({
+    data: JSON.stringify({
+      type: 'typing_draft',
+      session_id: sessionID.value,
+      payload: { draft: value },
+    })
+  })
+}
+
+function sendTypingStop() {
+  if (!sessionID.value || !ws || !connected.value) return
+  ws.send({
+    data: JSON.stringify({
+      type: 'typing_stop',
+      session_id: sessionID.value,
+      payload: {},
+    })
+  })
 }
 
 function parseExtra(message: any) {
@@ -391,4 +427,5 @@ onUnmounted(() => {
 <style scoped>
 .chat-image { max-width: 360rpx; border-radius: 16rpx; display: block; }
 .file-card { display: flex; align-items: center; gap: 12rpx; min-width: 240rpx; }
+.typing-draft { position: fixed; left: 20rpx; right: 20rpx; bottom: calc(104rpx + env(safe-area-inset-bottom)); z-index: 31; padding: 12rpx 18rpx; border-radius: 18rpx; background: #fffbeb; color: #92400e; font-size: 22rpx; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>

@@ -50,6 +50,9 @@
         </div>
 
         <!-- Input -->
+        <div v-if="chat.peerDraft" class="px-5 py-2 border-t border-gray-100 bg-amber-50 text-xs text-amber-700">
+          客服正在输入：{{ chat.peerDraft }}
+        </div>
         <div class="px-5 py-3 border-t border-gray-100 flex gap-3 bg-white">
           <input ref="fileInput" type="file" class="hidden" @change="onFileChange" />
           <button class="btn-secondary !px-4" @click="chooseFile">{{ $t('chatDialog.attachment') }}</button>
@@ -68,6 +71,7 @@ import { useChatStore } from '@/stores/chat'
 const chat = useChatStore()
 const msgBox = ref<HTMLElement>()
 const fileInput = ref<HTMLInputElement>()
+let typingTimer: any = null
 
 function send() {
   const text = chat.inputText.trim()
@@ -122,4 +126,12 @@ async function onFileChange(e: Event) {
 }
 
 watch(() => chat.messages.length, scrollBottom)
+watch(() => chat.inputText, (value) => {
+  if (typingTimer) clearTimeout(typingTimer)
+  if (value.trim()) {
+    typingTimer = setTimeout(() => chat.sendTypingDraft(value), 250)
+  } else {
+    chat.sendTypingStop()
+  }
+})
 </script>

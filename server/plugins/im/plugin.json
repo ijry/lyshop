@@ -50,6 +50,13 @@
         {"label": "multi（多路变体+RRF）", "value": "multi"}
       ], "placeholder": "默认关闭" },
     { "key": "ai_query_rewrite_n", "label": "多路变体数", "type": "number", "placeholder": "multi 模式生成的查询变体数，默认 3" },
-    { "key": "ai_auto_eval", "label": "自动评估（LLM-as-Judge）", "type": "switch", "placeholder": "AI 回答后自动用大模型评估忠实度与相关性并记录" }
+    { "key": "ai_auto_eval", "label": "自动评估（LLM-as-Judge）", "type": "switch", "placeholder": "AI 回答后自动用大模型评估忠实度与相关性并记录" },
+    { "key": "ai_web_search_enabled", "label": "启用联网搜索", "type": "switch", "placeholder": "默认关闭；开启后 AI 可在回答前检索外部最新信息" },
+    { "key": "ai_web_search_provider", "label": "联网搜索提供方", "type": "select", "options": [
+        {"label": "Serper", "value": "serper"}
+      ], "placeholder": "默认 serper" },
+    { "key": "ai_web_search_api_key", "label": "联网搜索 API Key", "type": "password", "placeholder": "Serper API Key；未配置时不会联网" },
+    { "key": "ai_web_search_endpoint", "label": "联网搜索地址", "type": "text", "placeholder": "默认 https://google.serper.dev/search" },
+    { "key": "ai_web_search_top_k", "label": "联网搜索条数", "type": "number", "placeholder": "默认 3，最大 8" }
   ]
 }

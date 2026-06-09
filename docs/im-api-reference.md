@@ -25,7 +25,17 @@ IM 客服插件提供实时客服聊天功能，支持 WebSocket 实时通信、
 
 **接口**: `GET /api/v1/im/session`  
 **权限**: 需要用户登录  
-**说明**: 获取当前用户的开放会话，不存在则自动创建
+**说明**: 获取当前用户的开放会话，不存在则自动创建。接口支持可选访客上下文参数，Web 嵌入脚本和 H5 页面可把当前访问环境写入会话，供客服工作台展示。
+
+**可选查询参数**:
+- `visitor_id`: 站点侧访客标识
+- `visitor_location`: 访客地区
+- `visitor_browser` / `visitor_os`: 浏览器与系统
+- `visitor_language`: 语言，未传时使用 `Accept-Language`
+- `visitor_referrer`: 来源页面，未传时使用 `Referer`
+- `visitor_url`: 当前页面 URL
+- `visitor_device`: 设备类型
+- `visitor_extra`: JSON 字符串，保存页面标题、UA、渠道等扩展信息
 
 **响应示例**:
 ```json
@@ -38,6 +48,11 @@ IM 客服插件提供实时客服聊天功能，支持 WebSocket 实时通信、
   "queue_position": 0,
   "last_msg": "您好，有什么可以帮您？",
   "unread_count": 0,
+  "visitor_id": "v_mbs0w9_abcd1234",
+  "visitor_ip": "203.0.113.10",
+  "visitor_referrer": "https://example.com/landing",
+  "visitor_url": "https://example.com/products/1",
+  "visitor_language": "zh-CN",
   "created_at": "2026-05-31T10:00:00Z",
   "updated_at": "2026-05-31T10:05:00Z"
 }
@@ -143,7 +158,7 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 **消息帧格式**:
 ```json
 {
-  "type": "msg|typing|to_human|queue|assign|close|ping|pong",
+  "type": "msg|typing|typing_draft|typing_stop|to_human|queue|assign|close|ping|pong",
   "session_id": 1,
   "payload": {}
 }
@@ -155,6 +170,8 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 |---|---|---|---|
 | `msg` | 双向 | `{msg_type, content, sender_type, extra}` | 消息内容（`sender_type`：0系统/1用户/2人工/3AI） |
 | `typing` | 服务端→客户端 | `{sender_type}` | AI 正在生成回复的输入指示 |
+| `typing_draft` | 双向转发 | `{draft,sender_type,sender_id,updated_at}` | 实时输入草稿，服务端最多保留 500 字符并只转发给会话对端 |
+| `typing_stop` | 双向转发 | `{sender_type,sender_id,updated_at}` | 输入停止或消息已发送 |
 | `to_human` | 客户端→服务端 | `{}` | 用户请求转人工（等价于发送转人工关键词） |
 | `queue` | 服务端→客户端 | `{position}` | 排队位置更新 |
 | `assign` | 服务端→客户端 | `{action}` | 接入/转接通知 |
@@ -262,6 +279,47 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
   "extra": ""
 }
 ```
+
+**输入草稿示例**:
+```json
+{
+  "type": "typing_draft",
+  "session_id": 1,
+  "payload": {
+    "draft": "我想咨询这个订单",
+    "sender_type": 1,
+    "sender_id": 1001,
+    "updated_at": 1780992000000
+  }
+}
+```
+
+发送消息或清空输入框时发送 `typing_stop`。草稿帧不落库，不参与未读计数。
+
+---
+
+### 4.1 Web 嵌入脚本
+
+**脚本**: `/im-widget.js`  
+**说明**: 在任意站点以 iframe 方式嵌入现有 Web 客服页 `/chat?embed=1`。
+
+```html
+<script src="https://shop.example.com/im-widget.js"></script>
+<script>
+  LYShopIMWidget.init({
+    baseUrl: 'https://shop.example.com',
+    token: 'USER_JWT',
+    title: '在线客服',
+    launcherText: '咨询客服',
+    context: {
+      visitor_location: '上海',
+      visitor_extra: { channel: 'campaign-a' }
+    }
+  })
+</script>
+```
+
+`context` 会合并脚本自动采集的 `visitor_language`、`visitor_referrer`、`visitor_url`、`visitor_device`、页面标题和 UA，并在 iframe 初始化后写入 `/api/v1/im/session`。
 
 **响应**: 返回创建的消息对象
 
@@ -602,11 +660,16 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 **权限**: `im:view`
 
 **参数**:
-- `event`、`session_id`、`user_id`、`staff_id`、`source`、`success`
+- `event`、`level`、`category`、`trace_id`、`keyword`
+- `session_id`、`user_id`、`staff_id`、`source`、`success`
 - `page`、`size`
 
 **参数说明**:
 - `event`: 事件类型，如 `message_sent`
+- `level`: `debug`、`info`、`warn`、`error` 等级，默认写入 `info`
+- `category`: 日志分类，IM 默认 `im`
+- `trace_id`: 调用链标识
+- `keyword`: 匹配 `event` 或 `message`
 - `source`: `user`、`staff`、`ai`、`system`
 - `success`: `1` 成功，`0` 失败
 - `size`: 默认 20，最大 100
@@ -618,6 +681,9 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
     {
       "id": 101,
       "event": "file_uploaded",
+      "level": "info",
+      "category": "im",
+      "trace_id": "",
       "session_id": 1,
       "user_id": 1001,
       "staff_id": 0,
@@ -625,6 +691,8 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
       "source": "user",
       "success": 1,
       "latency_ms": 0,
+      "message": "附件上传完成",
+      "meta": "{\"provider\":\"local\"}",
       "extra": "{\"name\":\"photo.png\",\"size\":1024,\"type\":\"image\"}",
       "created_at": "2026-06-09T10:00:00Z"
     }
@@ -649,6 +717,7 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 | `session_close` | 会话关闭 |
 | `session_transfer` | 会话转接 |
 | `file_uploaded` | 用户或客服上传附件 |
+| `web_search` | AI 可选联网搜索完成或失败 |
 
 ---
 
@@ -688,6 +757,11 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 | `ai_query_rewrite` | 查询改写模式：`""` 关闭 / `rewrite` LLM改写 / `hyde` 生成假设回答 / `multi` 多路变体+RRF |
 | `ai_query_rewrite_n` | `multi` 模式生成的查询变体数（默认 3） |
 | `ai_auto_eval` | 开启 LLM-as-Judge 自动评估（忠实度 + 相关性，异步存入 `ImFeedback`） |
+| `ai_web_search_enabled` | 开启可选联网搜索，默认关闭 |
+| `ai_web_search_provider` | 联网搜索提供方，当前支持 `serper` |
+| `ai_web_search_api_key` | Serper API Key，未配置时不会联网 |
+| `ai_web_search_endpoint` | Serper 兼容搜索接口，默认 `https://google.serper.dev/search` |
+| `ai_web_search_top_k` | 搜索摘要条数，默认 3，最大 8 |
 
 ### 召回 → 融合 → 重排 Pipeline
 
@@ -722,6 +796,8 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 | 上述任一 + `ai_rerank_url` | 视配置 | 视配置 | ✅ cross-encoder |
 
 **数据同步**：知识条目的新增/编辑会异步向量化并 upsert 到 Qdrant；删除会同步删除向量点；状态停用通过 upsert 更新 `status` payload，使其不再被检索命中。`POST /im/knowledge/reindex` 会重建 Qdrant 集合并全量重灌。DB 的 `embedding` 列作为本地缓存与回退保留。
+
+**联网搜索**：`ai_web_search_enabled` 开启后，AI 在生成前按检索问题调用 Serper 兼容接口，最多取 `ai_web_search_top_k` 条搜索摘要作为 `【联网搜索】` 上下文。搜索失败只记录 `web_search` 日志，不阻断知识库/商品信息回答。
 
 > 部署：`docker-compose.yml` 已内置 `qdrant` 服务，容器内将地址配置为 `http://qdrant:6333` 即可。
 
@@ -779,6 +855,16 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 | queue_position | int | 排队位置 (0=未排队) |
 | last_msg | string | 最后一条消息 (255字符) |
 | unread_count | int | 未读消息数 |
+| visitor_id | string | 访客标识 |
+| visitor_ip | string | 请求 IP |
+| visitor_location | string | 访客地区 |
+| visitor_browser | string | 浏览器 |
+| visitor_os | string | 操作系统 |
+| visitor_language | string | 语言 |
+| visitor_referrer | string | 来源页面 |
+| visitor_url | string | 当前页面 |
+| visitor_device | string | 设备类型 |
+| visitor_extra | json | 扩展访客上下文 |
 | created_at | time | 创建时间 |
 | updated_at | time | 更新时间 |
 
@@ -884,6 +970,9 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 |---|---|---|
 | id | uint64 | 主键 |
 | event | string | 事件类型，如 `session_created`、`message_sent`、`file_uploaded` |
+| level | string | 日志等级，默认 `info` |
+| category | string | 日志分类，默认 `im` |
+| trace_id | string | 调用链标识 |
 | session_id | uint64 | 会话 ID |
 | user_id | uint64 | 用户 ID |
 | staff_id | uint64 | 客服 ID |
@@ -891,6 +980,8 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 | source | string | 来源：`user`、`staff`、`ai`、`system` |
 | success | int8 | 是否成功 |
 | latency_ms | int64 | 延迟毫秒 |
+| message | string | 可读日志消息 |
+| meta | json | 结构化日志字段 |
 | extra | json | 扩展信息 |
 | created_at | time | 创建时间 |
 
@@ -940,3 +1031,4 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 - 对象存储或本地上传目录必须对 Web、App、Eapp 和 Admin 可访问；返回的 `url` 是前端预览和下载的唯一入口。
 - 多副本部署时不要把上传目录放在单个 Pod/容器临时目录，除非所有副本共享同一挂载或使用对象存储。
 - 使用本地大模型时，后端服务需要能访问 `ai_base_url`、`ai_qdrant_url` 和 `ai_rerank_url` 对应网络地址；容器内地址应使用 compose/service 名称。
+- 启用联网搜索时，后端服务需要能访问 `ai_web_search_endpoint`，并配置 `ai_web_search_api_key`；关闭或未配置时不会发起外部请求。

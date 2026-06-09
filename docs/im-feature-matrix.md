@@ -11,6 +11,9 @@
 | 图片/文件消息 | ✅ | ✅ | ✅ | ✅ | 上传、发送、预览图片，文件以卡片展示 |
 | WebSocket | ✅ | ✅ | ✅ | ✅ | 实时通信，心跳保活，自动重连 |
 | 跨实例 WebSocket | ✅ | ✅ | ✅ | ✅ | 后端通过 Redis Pub/Sub 扇出到其他副本 |
+| 实时输入草稿 | ✅ | ✅ | - | ✅ | `typing_draft`/`typing_stop` 实时转发，客服可看到用户当前输入 |
+| 访客上下文 | ✅ | - | - | ✅ | 会话记录访客 ID、IP、来源页面、浏览器、系统、语言、设备等 |
+| Web 嵌入脚本 | - | - | - | ✅ | `/im-widget.js` 以 iframe 方式嵌入现有 `/chat?embed=1` |
 | 系统消息 | ✅ | ✅ | ✅ | ✅ | 接入/转接/结束通知 |
 | **排队机制** |
 | 排队位置显示 | ✅ | ✅ | ✅ | ✅ | 显示"排队第N位" |
@@ -35,6 +38,7 @@
 | 本地大模型应答 | ✅ | - | ✅ | ✅ | 新会话默认由本地大模型 AI 接待 |
 | RAG 知识库召回 | ✅ | - | ✅ | ✅ | 向量召回，无向量模型时退化为关键词召回 |
 | 商品信息分析 | ✅ | - | ✅ | ✅ | 回答时检索在售商品价格/库存/销量 |
+| 可选联网搜索 | ✅ | - | ✅ | ✅ | 默认关闭；配置 Serper 后注入外部搜索摘要并记录日志 |
 | 转人工 | ✅ | - | ✅ | ✅ | 输入“人工”关键词或点击转人工按钮进入排队 |
 | 知识库管理 | ✅ | - | - | - | 知识条目 CRUD + 重建向量索引 + 连通性测试 |
 | 文档切片入库 | ✅ | - | - | - | 上传 TXT/MD/CSV/JSON/XML/HTML/DOCX/PDF/XLSX 自动切片为多条知识 |
@@ -50,7 +54,7 @@
 | Admin | 平台/商家后台客服与管理员 | 会话处理、坐席管理、知识库、报表、日志、反馈统计、附件发送 | 需要按角色授予 `im:*` 权限；报表和日志只在 Admin 提供 |
 | Eapp | 商家移动端客服 | 会话列表、接入/回复/转接/结束、附件发送、连接状态 | 面向移动客服处理，不承载知识库和报表管理 |
 | App | 用户移动端 | 创建会话、AI 接待、转人工、附件消息、反馈 | 附件上传仅允许当前用户自己的会话 |
-| Web | PC/H5 用户端 | 站内聊天弹窗、AI 接待、转人工、附件消息、反馈 | 推荐使用弹窗保持购物链路，不建议跳转独立客服页 |
+| Web | PC/H5 用户端 | 站内聊天弹窗、嵌入 iframe、AI 接待、转人工、附件消息、反馈、草稿同步 | 推荐使用弹窗或 `/im-widget.js` 保持购物链路，不建议跳转独立客服页 |
 
 ## 消息类型与展示
 
@@ -85,8 +89,9 @@
 - **跨实例投递**: Redis Pub/Sub（频道 `lyshop:im:ws`，节点 ID 防回环）
 - **附件存储**: 复用系统 storage driver，本地 Docker 使用 `./data/uploads:/app/uploads`
 - **事件统计**: `im_event_logs` 统一记录会话、消息、AI、转人工、转接、上传事件，报表按事件聚合生成
+- **日志中心**: `im_event_logs` 包含 `level/category/trace_id/message/meta`，支持事件检索、关键字检索和 AI 联网搜索诊断
 - **数据库表**:
-  - `im_sessions` - 会话表（用户、客服、**接待模式 mode(ai/human)**、状态、排队位置）
+  - `im_sessions` - 会话表（用户、客服、**接待模式 mode(ai/human)**、状态、排队位置、访客上下文）
   - `im_messages` - 消息表（会话ID、发送者类型含 **AI=3**、内容）
   - `im_event_logs` - 事件日志表（会话、消息、AI、转人工、上传等审计和报表来源）
   - `im_staffs` - 客服表（管理员ID、在线状态、负载）
@@ -104,6 +109,7 @@
 - **混合检索（Hybrid + RRF）**：`ai_hybrid=on` 时向量召回与关键词召回并行，结果经 Reciprocal Rank Fusion（k=60）融合，召回长尾更稳。
 - **重排（Rerank）**：配置 `ai_rerank_url` 后，召回候选池（RecallK）送 cross-encoder 精排，支持 Cohere / Jina / TEI 兼容 `/rerank` 接口；不配置则保持召回顺序直接取 TopK。
 - **查询改写**：`ai_query_rewrite` 可选 `rewrite`（LLM 扩写口语化问题）、`hyde`（生成假设回答作为检索向量）、`multi`（生成 N 个变体各自检索再 RRF 融合）；改写仅作用于检索，不影响发给 LLM 的原始问题。
+- **联网搜索**：`ai_web_search_enabled` 默认关闭；开启后通过 `ai_web_search_provider=serper`、`ai_web_search_api_key`、`ai_web_search_endpoint`、`ai_web_search_top_k` 获取搜索摘要并注入 `【联网搜索】` 上下文，失败只记录 `web_search` 事件，不阻断回答。
 - **评估闭环**：用户可在聊天页对 AI 回答👍/👎，结果存入 `ImFeedback`（source=user）；开启 `ai_auto_eval` 后 AI 回答完成后自动用 LLM-as-Judge 评估忠实度和相关性（0-5，source=auto）；管理后台可查看列表和聚合统计（`/admin/api/im/feedback`）。
 - **向量库部署**: `docker-compose.yml` 内置 `qdrant` 服务（`qdrant/qdrant`），容器内地址 `http://qdrant:6333`，默认 Qdrant collection 为 `im_knowledge`。
 - **配置项**（配置中心 → IM客服）：`ai_enabled`、`ai_base_url`、`ai_api_key`、`ai_chat_model`、`ai_embed_model`、`ai_system_prompt`、`ai_human_keywords`、`ai_top_k`、`ai_temperature`、`ai_product_search`、`ai_timeout_sec`、`ai_qdrant_url`、`ai_qdrant_api_key`、`ai_qdrant_collection`、`ai_score_threshold`、`ai_hybrid`、`ai_recall_k`、`ai_rerank_url`、`ai_rerank_api_key`、`ai_rerank_model`。
@@ -137,6 +143,8 @@
 |---|---|---|
 | `msg` | 双向 | 消息内容（`sender_type`：0系统/1用户/2人工客服/3AI） |
 | `typing` | 服务端→客户端 | AI 正在生成回复的输入指示 |
+| `typing_draft` | 双向转发 | 实时输入草稿，payload 含 `draft/sender_type/sender_id/updated_at` |
+| `typing_stop` | 双向转发 | 输入停止或消息已发送 |
 | `to_human` | 客户端→服务端 | 用户点击“转人工”，请求转接人工 |
 | `queue` | 服务端→客户端 | 排队位置更新 |
 | `assign` | 服务端→客户端 | 接入/转接通知 |
@@ -196,12 +204,19 @@
 
 如果未连接外部 Redis，系统仍可单实例工作；多副本场景会出现用户和客服连接到不同副本时无法实时互通的问题。
 
+### 7. Web 嵌入与访客上下文
+1. 宿主站引入 `/im-widget.js` 并调用 `LYShopIMWidget.init({baseUrl, token, context})`
+2. 脚本生成右下角按钮和 iframe，打开 `/chat?embed=1`
+3. iframe 通过 `postMessage` 接收访客上下文，调用 `/api/v1/im/session` 时写入 `ImSession`
+4. 客服接入或查看会话时，可看到访客来源、页面、语言、浏览器、设备等信息
+
 ## 文件位置
 
 ### 后端
 - `server/plugins/im/model/im.go` - 数据模型
 - `server/plugins/im/service/session.go` - 业务逻辑（会话/排队/转接/转人工/WS）
 - `server/plugins/im/service/ai.go` - 本地大模型调用、RAG 召回、商品信息分析
+- `server/plugins/im/service/web_search.go` - 可选联网搜索 Provider
 - `server/plugins/im/service/vectorstore.go` - Qdrant 向量库客户端（REST）
 - `server/plugins/im/service/rerank.go` - 混合检索 RRF 融合 + cross-encoder 重排客户端
 - `server/plugins/im/service/query_rewrite.go` - 查询改写（rewrite/HyDE/multi）
@@ -228,6 +243,7 @@
 - `web/src/views/Chat.vue` - Web 聊天页面
 - `web/src/components/ChatDialog.vue` - 聊天弹窗
 - `web/src/stores/chat.ts` - 聊天状态管理
+- `web/public/im-widget.js` - 可嵌入站点的客服 iframe 脚本
 
 ## 部署影响
 
@@ -244,4 +260,5 @@
 - 上传目录或对象存储已持久化，返回 URL 可被四端访问。
 - 多副本部署使用外部 Redis，并确认所有副本连接同一个 Redis。
 - AI 客服启用前已验证 `ai_base_url` 与 `ai_chat_model`；需要 RAG 时验证 embedding/Qdrant；需要精排时验证 rerank 服务。
+- 联网搜索启用前已配置 `ai_web_search_api_key`，并确认后端可以访问 `ai_web_search_endpoint`。
 - 前端重连后会补拉历史消息，避免 WebSocket 断线期间漏展示。

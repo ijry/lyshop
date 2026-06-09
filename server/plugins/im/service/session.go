@@ -25,6 +25,146 @@ func GetSession(ctx context.Context, sessionID uint64) (*immodel.ImSession, erro
 	return &session, err
 }
 
+type SessionContextInput struct {
+	VisitorID       string         `json:"visitor_id"`
+	VisitorIP       string         `json:"visitor_ip"`
+	VisitorLocation string         `json:"visitor_location"`
+	VisitorBrowser  string         `json:"visitor_browser"`
+	VisitorOS       string         `json:"visitor_os"`
+	VisitorLanguage string         `json:"visitor_language"`
+	VisitorReferrer string         `json:"visitor_referrer"`
+	VisitorURL      string         `json:"visitor_url"`
+	VisitorDevice   string         `json:"visitor_device"`
+	VisitorExtra    map[string]any `json:"visitor_extra"`
+}
+
+func (input SessionContextInput) hasValues() bool {
+	return strings.TrimSpace(input.VisitorID) != "" ||
+		strings.TrimSpace(input.VisitorIP) != "" ||
+		strings.TrimSpace(input.VisitorLocation) != "" ||
+		strings.TrimSpace(input.VisitorBrowser) != "" ||
+		strings.TrimSpace(input.VisitorOS) != "" ||
+		strings.TrimSpace(input.VisitorLanguage) != "" ||
+		strings.TrimSpace(input.VisitorReferrer) != "" ||
+		strings.TrimSpace(input.VisitorURL) != "" ||
+		strings.TrimSpace(input.VisitorDevice) != "" ||
+		len(input.VisitorExtra) > 0
+}
+
+func trimField(value string, max int) string {
+	value = strings.TrimSpace(value)
+	runes := []rune(value)
+	if len(runes) > max {
+		return string(runes[:max])
+	}
+	return value
+}
+
+func sessionContextUpdates(input SessionContextInput) map[string]any {
+	updates := map[string]any{}
+	if v := trimField(input.VisitorID, 128); v != "" {
+		updates["visitor_id"] = v
+	}
+	if v := trimField(input.VisitorIP, 64); v != "" {
+		updates["visitor_ip"] = v
+	}
+	if v := trimField(input.VisitorLocation, 128); v != "" {
+		updates["visitor_location"] = v
+	}
+	if v := trimField(input.VisitorBrowser, 64); v != "" {
+		updates["visitor_browser"] = v
+	}
+	if v := trimField(input.VisitorOS, 64); v != "" {
+		updates["visitor_os"] = v
+	}
+	if v := trimField(input.VisitorLanguage, 32); v != "" {
+		updates["visitor_language"] = v
+	}
+	if v := trimField(input.VisitorReferrer, 512); v != "" {
+		updates["visitor_referrer"] = v
+	}
+	if v := trimField(input.VisitorURL, 512); v != "" {
+		updates["visitor_url"] = v
+	}
+	if v := trimField(input.VisitorDevice, 64); v != "" {
+		updates["visitor_device"] = v
+	}
+	if len(input.VisitorExtra) > 0 {
+		raw, _ := json.Marshal(input.VisitorExtra)
+		updates["visitor_extra"] = string(raw)
+	}
+	return updates
+}
+
+func applySessionContext(ctx context.Context, session *immodel.ImSession, input SessionContextInput) {
+	if !input.hasValues() {
+		return
+	}
+	updates := sessionContextUpdates(input)
+	if len(updates) == 0 {
+		return
+	}
+	db.DB.WithContext(ctx).Model(session).Updates(updates)
+	if v, ok := updates["visitor_id"].(string); ok {
+		session.VisitorID = v
+	}
+	if v, ok := updates["visitor_ip"].(string); ok {
+		session.VisitorIP = v
+	}
+	if v, ok := updates["visitor_location"].(string); ok {
+		session.VisitorLocation = v
+	}
+	if v, ok := updates["visitor_browser"].(string); ok {
+		session.VisitorBrowser = v
+	}
+	if v, ok := updates["visitor_os"].(string); ok {
+		session.VisitorOS = v
+	}
+	if v, ok := updates["visitor_language"].(string); ok {
+		session.VisitorLanguage = v
+	}
+	if v, ok := updates["visitor_referrer"].(string); ok {
+		session.VisitorReferrer = v
+	}
+	if v, ok := updates["visitor_url"].(string); ok {
+		session.VisitorURL = v
+	}
+	if v, ok := updates["visitor_device"].(string); ok {
+		session.VisitorDevice = v
+	}
+	if v, ok := updates["visitor_extra"].(string); ok {
+		session.VisitorExtra = v
+	}
+}
+
+func visitorPayload(session *immodel.ImSession) map[string]any {
+	if session == nil {
+		return nil
+	}
+	payload := map[string]any{}
+	add := func(key, value string) {
+		if strings.TrimSpace(value) != "" {
+			payload[key] = value
+		}
+	}
+	add("visitor_id", session.VisitorID)
+	add("ip", session.VisitorIP)
+	add("location", session.VisitorLocation)
+	add("browser", session.VisitorBrowser)
+	add("os", session.VisitorOS)
+	add("language", session.VisitorLanguage)
+	add("referrer", session.VisitorReferrer)
+	add("url", session.VisitorURL)
+	add("device", session.VisitorDevice)
+	if extra := messageExtraPayload(session.VisitorExtra); extra != nil {
+		payload["extra"] = extra
+	}
+	if len(payload) == 0 {
+		return nil
+	}
+	return payload
+}
+
 func recordEventBestEffort(ctx context.Context, input EventInput) {
 	_ = RecordEvent(ctx, input)
 }
@@ -68,6 +208,42 @@ func normalizeMessageExtra(value any) string {
 	}
 }
 
+func truncateDraft(value string) string {
+	value = strings.TrimSpace(value)
+	runes := []rune(value)
+	if len(runes) > 500 {
+		return string(runes[:500])
+	}
+	return value
+}
+
+func forwardTypingFrame(session immodel.ImSession, senderType int8, senderID uint64, draft string, stop bool) {
+	targetID := ""
+	if senderType == immodel.SenderUser {
+		if session.StaffID == 0 {
+			return
+		}
+		targetID = fmt.Sprintf("staff_%d", session.StaffID)
+	} else if senderType == immodel.SenderStaff {
+		targetID = fmt.Sprintf("user_%d", session.UserID)
+	} else {
+		return
+	}
+	frameType := "typing_draft"
+	if stop {
+		frameType = "typing_stop"
+	}
+	frame := Frame{Type: frameType, SessionID: session.ID, Payload: map[string]any{
+		"sender_type": senderType,
+		"sender_id":   senderID,
+		"updated_at":  time.Now().UnixMilli(),
+	}}
+	if !stop {
+		frame.Payload["draft"] = truncateDraft(draft)
+	}
+	GlobalHub.Send(targetID, mustMarshal(frame))
+}
+
 // CreateStaff creates a new staff record.
 func CreateStaff(ctx context.Context, staff *immodel.ImStaff) error {
 	return db.DB.WithContext(ctx).Create(staff).Error
@@ -93,11 +269,16 @@ func DeleteStaff(ctx context.Context, id uint64) error {
 // When AI is disabled, a new session falls back to the classic human flow:
 // assign an available staff immediately, otherwise queue.
 func GetOrCreateSession(ctx context.Context, userID uint64) (*immodel.ImSession, error) {
+	return GetOrCreateSessionWithContext(ctx, userID, SessionContextInput{})
+}
+
+func GetOrCreateSessionWithContext(ctx context.Context, userID uint64, input SessionContextInput) (*immodel.ImSession, error) {
 	var session immodel.ImSession
 	err := db.DB.WithContext(ctx).
 		Where("user_id = ? AND status != ?", userID, immodel.SessionStatusClosed).
 		First(&session).Error
 	if err == nil {
+		applySessionContext(ctx, &session, input)
 		return &session, nil
 	}
 
@@ -110,6 +291,7 @@ func GetOrCreateSession(ctx context.Context, userID uint64) (*immodel.ImSession,
 		if err = db.DB.WithContext(ctx).Create(&session).Error; err != nil {
 			return &session, err
 		}
+		applySessionContext(ctx, &session, input)
 		recordEventBestEffort(ctx, EventInput{
 			Event:     immodel.ImEventSessionCreated,
 			SessionID: session.ID,
@@ -130,6 +312,7 @@ func GetOrCreateSession(ctx context.Context, userID uint64) (*immodel.ImSession,
 	if err = db.DB.WithContext(ctx).Create(&session).Error; err != nil {
 		return &session, err
 	}
+	applySessionContext(ctx, &session, input)
 	recordEventBestEffort(ctx, EventInput{
 		Event:     immodel.ImEventSessionCreated,
 		SessionID: session.ID,
@@ -233,6 +416,9 @@ func assignSession(ctx context.Context, session *immodel.ImSession, staffID uint
 	frame := Frame{Type: "assign", SessionID: session.ID, Payload: map[string]any{
 		"action": "new", "user_id": session.UserID,
 	}}
+	if visitor := visitorPayload(session); visitor != nil {
+		frame.Payload["visitor"] = visitor
+	}
 	data, _ := json.Marshal(frame)
 	GlobalHub.Send(fmt.Sprintf("staff_%d", staffID), data)
 }
@@ -585,8 +771,20 @@ func HandleWSStaff(conn *websocket.Conn, clientID string, adminID uint64) {
 		return nil
 	})
 	for {
-		if _, _, err := conn.ReadMessage(); err != nil {
+		if _, raw, err := conn.ReadMessage(); err != nil {
 			break
+		} else {
+			var frame Frame
+			if json.Unmarshal(raw, &frame) == nil {
+				switch frame.Type {
+				case "typing_draft", "typing_stop":
+					var session immodel.ImSession
+					if frame.SessionID > 0 && db.DB.WithContext(ctx).First(&session, frame.SessionID).Error == nil && session.StaffID == adminID {
+						draft, _ := frame.Payload["draft"].(string)
+						forwardTypingFrame(session, immodel.SenderStaff, adminID, draft, frame.Type == "typing_stop")
+					}
+				}
+			}
 		}
 		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 	}
@@ -792,6 +990,14 @@ func HandleWS(conn *websocket.Conn, clientID string, session *immodel.ImSession)
 		case "to_human":
 			// Explicit "转人工" button: hand off regardless of locale/keywords.
 			SwitchToHuman(ctx, session.ID)
+
+		case "typing_draft", "typing_stop":
+			var cur immodel.ImSession
+			if db.DB.WithContext(ctx).First(&cur, session.ID).Error == nil {
+				session = &cur
+			}
+			draft, _ := frame.Payload["draft"].(string)
+			forwardTypingFrame(*session, immodel.SenderUser, session.UserID, draft, frame.Type == "typing_stop")
 
 		case "ping":
 			pong := Frame{Type: "pong"}

@@ -18,8 +18,13 @@ export const useChatStore = defineStore('chat', {
     connected: false,
     queuePosition: 0,
     sessionID: 0,
+    context: {} as Record<string, any>,
+    peerDraft: '',
   }),
   actions: {
+    setContext(context: Record<string, any>) {
+      this.context = { ...this.context, ...(context || {}) }
+    },
     async open(source = 'global') {
       this.source = source
       this.show = true
@@ -30,7 +35,7 @@ export const useChatStore = defineStore('chat', {
       // Initialize session and WebSocket
       if (!this.sessionID) {
         try {
-          const session = await get<any>('/api/v1/im/session')
+          const session = await get<any>('/api/v1/im/session', buildSessionContextParams(this.context))
           if (session) {
             this.sessionID = session.id
             this.queuePosition = session.queue_position || 0
@@ -60,6 +65,7 @@ export const useChatStore = defineStore('chat', {
       this.messages.push({ id: Date.now(), sender_type: 1, content, type: 'text' })
 
       if (ws?.readyState === WebSocket.OPEN && this.sessionID) {
+        this.sendTypingStop()
         ws.send(JSON.stringify({
           type: 'msg',
           session_id: this.sessionID,
@@ -76,6 +82,22 @@ export const useChatStore = defineStore('chat', {
           content: t('chatStore.followUp')
         })
       }, 400)
+    },
+    sendTypingDraft(draft: string) {
+      if (ws?.readyState !== WebSocket.OPEN || !this.sessionID) return
+      ws.send(JSON.stringify({
+        type: 'typing_draft',
+        session_id: this.sessionID,
+        payload: { draft },
+      }))
+    },
+    sendTypingStop() {
+      if (ws?.readyState !== WebSocket.OPEN || !this.sessionID) return
+      ws.send(JSON.stringify({
+        type: 'typing_stop',
+        session_id: this.sessionID,
+        payload: {},
+      }))
     },
     connectWS(token: string) {
       const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:'
@@ -115,6 +137,10 @@ export const useChatStore = defineStore('chat', {
               sender_type: 0,
               content: t('chatStore.closedNotice'),
             })
+          } else if (frame.type === 'typing_draft') {
+            this.peerDraft = frame.payload?.draft || ''
+          } else if (frame.type === 'typing_stop') {
+            this.peerDraft = ''
           }
         } catch {}
       }
@@ -153,6 +179,7 @@ export const useChatStore = defineStore('chat', {
         extra,
       })
       if (ws?.readyState === WebSocket.OPEN) {
+        this.sendTypingStop()
         ws.send(JSON.stringify({
           type: 'msg',
           session_id: this.sessionID,
@@ -175,3 +202,24 @@ export const useChatStore = defineStore('chat', {
     }
   },
 })
+
+function buildSessionContextParams(context: Record<string, any>) {
+  const params: Record<string, string> = {}
+  const keys = [
+    'visitor_id',
+    'visitor_location',
+    'visitor_browser',
+    'visitor_os',
+    'visitor_language',
+    'visitor_referrer',
+    'visitor_url',
+    'visitor_device',
+  ]
+  for (const key of keys) {
+    if (context?.[key]) params[key] = String(context[key])
+  }
+  if (context?.visitor_extra) {
+    params.visitor_extra = JSON.stringify(context.visitor_extra)
+  }
+  return params
+}

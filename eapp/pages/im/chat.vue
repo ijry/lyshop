@@ -10,6 +10,7 @@ const inputText = ref('')
 const loading = ref(false)
 const scrollId = ref('')
 const connected = ref(false)
+const typingDraft = ref('')
 
 let ws: any = null
 let heartbeat: any = null
@@ -87,6 +88,10 @@ function connectWS() {
             scrollToBottom()
           }
         }
+      } else if (frame.type === 'typing_draft' && frame.session_id === sessionId.value) {
+        typingDraft.value = frame.payload?.draft || ''
+      } else if (frame.type === 'typing_stop' && frame.session_id === sessionId.value) {
+        typingDraft.value = ''
       }
     } catch {}
   })
@@ -118,6 +123,7 @@ async function onSend() {
   const text = inputText.value.trim()
   if (!text || !sessionId.value) return
   inputText.value = ''
+  sendTypingStop()
 
   messages.value.push({
     id: Date.now(),
@@ -140,6 +146,33 @@ async function onSend() {
   } else {
     await sendImMessage(sessionId.value, text)
   }
+}
+
+function onInputChange(e: any) {
+  const value = e?.detail?.value ?? inputText.value
+  if (!sessionId.value || !ws || !connected.value) return
+  if (!String(value).trim()) {
+    sendTypingStop()
+    return
+  }
+  ws.send({
+    data: JSON.stringify({
+      type: 'typing_draft',
+      session_id: sessionId.value,
+      payload: { draft: value },
+    }),
+  })
+}
+
+function sendTypingStop() {
+  if (!sessionId.value || !ws || !connected.value) return
+  ws.send({
+    data: JSON.stringify({
+      type: 'typing_stop',
+      session_id: sessionId.value,
+      payload: {},
+    }),
+  })
 }
 
 async function chooseImage() {
@@ -210,7 +243,8 @@ onUnload(() => {
     </scroll-view>
 
     <view class="input-bar">
-      <input class="msg-input" v-model="inputText" placeholder="输入消息..." @confirm="onSend" />
+      <view v-if="typingDraft" class="typing-draft">用户正在输入：{{ typingDraft }}</view>
+      <input class="msg-input" v-model="inputText" placeholder="输入消息..." @input="onInputChange" @confirm="onSend" />
       <up-button size="mini" type="info" plain @click="chooseImage">图片</up-button>
       <up-button size="mini" type="primary" @click="onSend" :disabled="!inputText.trim()">发送</up-button>
     </view>
@@ -230,6 +264,7 @@ onUnload(() => {
 .msg-list { flex: 1; padding: 20rpx; box-sizing: border-box; display: flex; flex-direction: column; }
 .loading { text-align: center; color: var(--eapp-text-muted); padding: 40rpx 0; }
 .empty { text-align: center; color: var(--eapp-text-muted); padding: 80rpx 0; }
-.input-bar { display: flex; align-items: center; gap: 12rpx; padding: 16rpx 20rpx; background: #fff; border-top: 1px solid var(--eapp-border); padding-bottom: calc(16rpx + env(safe-area-inset-bottom, 0)); }
+.input-bar { position: relative; display: flex; align-items: center; gap: 12rpx; padding: 16rpx 20rpx; background: #fff; border-top: 1px solid var(--eapp-border); padding-bottom: calc(16rpx + env(safe-area-inset-bottom, 0)); }
+.typing-draft { position: absolute; left: 20rpx; right: 20rpx; top: -56rpx; padding: 12rpx 18rpx; border-radius: 16rpx; background: #fffbeb; color: #92400e; font-size: 22rpx; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .msg-input { flex: 1; height: 72rpx; padding: 0 20rpx; border: 1px solid var(--eapp-border); border-radius: 36rpx; font-size: 26rpx; background: #f8fafc; }
 </style>

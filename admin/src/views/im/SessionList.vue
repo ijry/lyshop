@@ -101,6 +101,11 @@
             </button>
           </div>
         </div>
+        <div v-if="visitorInfo.length" class="px-5 py-2 border-b border-slate-100 bg-slate-50 flex flex-wrap gap-2 text-xs text-slate-500">
+          <span v-for="item in visitorInfo" :key="item.label" class="rounded-full bg-white border border-slate-100 px-2 py-1">
+            {{ item.label }}: {{ item.value }}
+          </span>
+        </div>
 
         <!-- Messages -->
         <div ref="msgContainer" class="flex-1 overflow-y-auto px-5 py-4">
@@ -133,6 +138,9 @@
         </div>
 
         <!-- Input -->
+        <div v-if="typingDraft" class="px-5 py-2 border-t border-slate-100 bg-amber-50 text-xs text-amber-700">
+          用户正在输入：{{ typingDraft }}
+        </div>
         <div class="px-5 py-3 border-t border-slate-100 flex gap-3 shrink-0">
           <input ref="fileInput" type="file" class="hidden" @change="onFileChange" />
           <button type="button" @click="chooseFile" :disabled="activeSession.status !== 2 || uploading"
@@ -184,7 +192,7 @@
 
 <script setup lang="ts">
 // @ts-nocheck
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { computed, ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import request from '@/api/request'
 
@@ -202,6 +210,23 @@ const staffStatus = ref({ current_load: 0, max_load: 5 })
 const showTransferModal = ref(false)
 const transferForm = ref({ toStaffId: null as number | null, remark: '' })
 const uploading = ref(false)
+const typingDrafts = ref<Record<number, string>>({})
+const typingDraft = computed(() => activeSession.value ? typingDrafts.value[activeSession.value.id] || '' : '')
+const visitorInfo = computed(() => {
+  const s = activeSession.value
+  if (!s) return []
+  return [
+    { label: '访客', value: s.visitor_id },
+    { label: 'IP', value: s.visitor_ip },
+    { label: '地区', value: s.visitor_location },
+    { label: '浏览器', value: s.visitor_browser },
+    { label: '系统', value: s.visitor_os },
+    { label: '语言', value: s.visitor_language },
+    { label: '来源', value: s.visitor_referrer },
+    { label: '页面', value: s.visitor_url },
+    { label: '设备', value: s.visitor_device },
+  ].filter(item => item.value)
+})
 
 // Sound notification
 const notifySound = new Audio('data:audio/wav;base64,UklGRl9vT19teleVmH0AAAAQAAABAAAQ//8CABAAD//')
@@ -259,6 +284,16 @@ function connectWS() {
           sessions.value = sessions.value.filter(s => s.id !== frame.session_id)
           if (activeSession.value?.id === frame.session_id) activeSession.value = null
           loadStaffStatus()
+        }
+      } else if (frame.type === 'typing_draft') {
+        if (frame.session_id) {
+          typingDrafts.value = { ...typingDrafts.value, [frame.session_id]: frame.payload?.draft || '' }
+        }
+      } else if (frame.type === 'typing_stop') {
+        if (frame.session_id) {
+          const next = { ...typingDrafts.value }
+          delete next[frame.session_id]
+          typingDrafts.value = next
         }
       }
     } catch {}

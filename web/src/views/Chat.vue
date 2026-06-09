@@ -1,7 +1,7 @@
 <template>
-  <div class="max-w-3xl mx-auto px-6 py-8">
-    <h1 class="text-xl font-bold text-gray-900 mb-6">{{ $t('chat.title') }}</h1>
-    <div class="card flex flex-col" style="height: 600px;">
+  <div :class="embedMode ? 'h-screen bg-white' : 'max-w-3xl mx-auto px-6 py-8'">
+    <h1 v-if="!embedMode" class="text-xl font-bold text-gray-900 mb-6">{{ $t('chat.title') }}</h1>
+    <div :class="embedMode ? 'h-screen rounded-none border-0 shadow-none' : 'card'" class="flex flex-col" :style="embedMode ? '' : 'height: 600px;'">
       <!-- Header -->
       <div class="px-5 py-3 border-b border-gray-100 flex-between">
         <div class="flex items-center gap-2">
@@ -60,6 +60,9 @@
       </div>
 
       <!-- Input -->
+      <div v-if="peerDraft" class="px-5 py-2 border-t border-gray-100 bg-amber-50 text-xs text-amber-700">
+        客服正在输入：{{ peerDraft }}
+      </div>
       <div class="px-5 py-3 border-t border-gray-100 flex gap-3">
         <input ref="fileInput" type="file" class="hidden" @change="onFileChange" />
         <button class="btn-secondary !px-4" @click="chooseFile">附件</button>
@@ -73,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, nextTick, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { get, upload } from '@/api/request'
 
@@ -86,15 +89,22 @@ const fileInput = ref<HTMLInputElement>()
 const connected = ref(false)
 const queuePosition = ref(0)
 const sessionID = ref(0)
+const embedMode = new URLSearchParams(location.search).get('embed') === '1'
+const visitorContext = ref<Record<string, any>>(inferVisitorContext())
+const peerDraft = ref('')
 
 let ws: WebSocket | null = null
 let heartbeat: any = null
 let reconnectTimer: any = null
 let reconnectDelay = 3000
+let typingTimer: any = null
 
 onMounted(async () => {
+  window.addEventListener('message', onWidgetMessage)
   try {
-    const session = await get<any>('/api/v1/im/session')
+    const tokenFromURL = new URLSearchParams(location.search).get('token')
+    if (tokenFromURL) localStorage.setItem('user_token', tokenFromURL)
+    const session = await get<any>('/api/v1/im/session', buildSessionContextParams(visitorContext.value))
     if (session) {
       sessionID.value = session.id
       queuePosition.value = session.queue_position || 0
@@ -151,6 +161,10 @@ function connectWS(token: string) {
           content: t('chat.closedNotice'),
         })
         scrollBottom()
+      } else if (frame.type === 'typing_draft') {
+        peerDraft.value = frame.payload?.draft || ''
+      } else if (frame.type === 'typing_stop') {
+        peerDraft.value = ''
       }
     } catch {}
   }
@@ -186,6 +200,7 @@ function send() {
 
   messages.value.push({ id: Date.now(), sender_type: 1, content: text, type: 'text' })
   inputText.value = ''
+  sendTypingStop()
   scrollBottom()
 
   if (ws?.readyState === WebSocket.OPEN) {
@@ -212,6 +227,24 @@ function send() {
     })
     scrollBottom()
   }, 800 + Math.random() * 1200)
+}
+
+function sendTypingDraft(draft: string) {
+  if (ws?.readyState !== WebSocket.OPEN || !sessionID.value) return
+  ws.send(JSON.stringify({
+    type: 'typing_draft',
+    session_id: sessionID.value,
+    payload: { draft },
+  }))
+}
+
+function sendTypingStop() {
+  if (ws?.readyState !== WebSocket.OPEN || !sessionID.value) return
+  ws.send(JSON.stringify({
+    type: 'typing_stop',
+    session_id: sessionID.value,
+    payload: {},
+  }))
 }
 
 function parseExtra(message: any) {
@@ -265,12 +298,44 @@ async function onFileChange(e: Event) {
   })
   scrollBottom()
   if (ws?.readyState === WebSocket.OPEN) {
+    sendTypingStop()
     ws.send(JSON.stringify({
       type: 'msg',
       session_id: sessionID.value,
       payload: { msg_type: info.message_type, content: info.name, extra },
     }))
   }
+}
+
+function onWidgetMessage(event: MessageEvent) {
+  const data = event.data || {}
+  if (data.type !== 'lyshop-im-context') return
+  visitorContext.value = { ...visitorContext.value, ...(data.context || {}) }
+  if (sessionID.value) {
+    get('/api/v1/im/session', buildSessionContextParams(visitorContext.value)).catch(() => {})
+  }
+}
+
+function inferVisitorContext() {
+  return {
+    visitor_language: navigator.language || '',
+    visitor_referrer: document.referrer || '',
+    visitor_url: location.href,
+    visitor_device: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
+    visitor_extra: {
+      title: document.title || '',
+      user_agent: navigator.userAgent || '',
+    },
+  }
+}
+
+function buildSessionContextParams(context: Record<string, any>) {
+  const params: Record<string, string> = {}
+  for (const key of ['visitor_id', 'visitor_location', 'visitor_browser', 'visitor_os', 'visitor_language', 'visitor_referrer', 'visitor_url', 'visitor_device']) {
+    if (context?.[key]) params[key] = String(context[key])
+  }
+  if (context?.visitor_extra) params.visitor_extra = JSON.stringify(context.visitor_extra)
+  return params
 }
 
 function scrollBottom() {
@@ -280,8 +345,18 @@ function scrollBottom() {
 }
 
 onUnmounted(() => {
+  window.removeEventListener('message', onWidgetMessage)
   if (heartbeat) clearInterval(heartbeat)
   if (reconnectTimer) clearTimeout(reconnectTimer)
   ws?.close()
+})
+
+watch(inputText, (value) => {
+  if (typingTimer) clearTimeout(typingTimer)
+  if (value.trim()) {
+    typingTimer = setTimeout(() => sendTypingDraft(value), 250)
+  } else {
+    sendTypingStop()
+  }
 })
 </script>
