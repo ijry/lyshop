@@ -12,9 +12,13 @@ describe('mock /dashboard upgraded', () => {
     const r = matchMock('GET', '/admin/api/dashboard', {})
     expect(r.matched).toBe(true)
     const d = r.data
-    expect(d.trend.revenue_7d.categories).toHaveLength(7)
-    expect(d.trend.revenue_7d.series[0].data).toHaveLength(7)
-    expect(d.trend.revenue_30d.categories).toHaveLength(30)
+    expect(d.sales_trend).toHaveLength(30)
+    expect(d.sales_trend.slice(-7)).toHaveLength(7)
+    expect(d.sales_trend[0]).toMatchObject({
+      date: expect.any(String),
+      sales: expect.any(Number),
+      orders: expect.any(Number),
+    })
     expect(d.status_distribution.length).toBeGreaterThanOrEqual(3)
     expect(d.hot_products.length).toBeLessThanOrEqual(5)
     expect(d.announcements.length).toBeGreaterThan(0)
@@ -25,7 +29,7 @@ describe('mock /dashboard upgraded', () => {
     const { matchMock } = await import('../../../admin/src/mock/index')
     const a = matchMock('GET', '/admin/api/dashboard', {}).data
     const b = matchMock('GET', '/admin/api/dashboard', {}).data
-    expect(a.trend.revenue_7d.series[0].data).toEqual(b.trend.revenue_7d.series[0].data)
+    expect(a.sales_trend.map((item: any) => item.sales)).toEqual(b.sales_trend.map((item: any) => item.sales))
   })
 })
 
