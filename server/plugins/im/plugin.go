@@ -1,6 +1,7 @@
 package im
 
 import (
+	"context"
 	_ "embed"
 	"encoding/json"
 
@@ -48,6 +49,7 @@ func (p *imPlugin) Migrate(db *gorm.DB) error {
 
 func (p *imPlugin) Install() error {
 	go imsvc.GlobalHub.Run()
+	imsvc.GlobalHub.InitRedisBus(context.Background())
 	return nil
 }
 

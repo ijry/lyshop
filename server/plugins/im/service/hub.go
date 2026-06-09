@@ -1,14 +1,22 @@
 package service
 
 import (
+	"context"
+	"crypto/rand"
+	"encoding/hex"
+	"encoding/json"
+	"log/slog"
+	"os"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/ijry/lyshop/core/cache"
 )
 
 // Frame is the WebSocket message envelope.
 type Frame struct {
-	Type      string         `json:"type"`       // msg|ack|typing|assign|close|ping
+	Type      string         `json:"type"` // msg|ack|typing|assign|close|ping
 	SessionID uint64         `json:"session_id"`
 	Payload   map[string]any `json:"payload"`
 }
@@ -22,16 +30,27 @@ type Client struct {
 
 // Hub manages all active WebSocket connections.
 type Hub struct {
-	clients    map[string]*Client
-	register   chan *Client
-	unregister chan *Client
-	broadcast  chan *delivery
-	mu         sync.RWMutex
+	clients      map[string]*Client
+	register     chan *Client
+	unregister   chan *Client
+	broadcast    chan *delivery
+	nodeID       string
+	redisEnabled bool
+	mu           sync.RWMutex
 }
 
 type delivery struct {
 	targetID string
 	data     []byte
+}
+
+const imWSChannel = "lyshop:im:ws"
+
+type hubEnvelope struct {
+	NodeID    string          `json:"node_id"`
+	TargetID  string          `json:"target_id"`
+	Data      json.RawMessage `json:"data"`
+	CreatedAt int64           `json:"created_at"`
 }
 
 var GlobalHub = NewHub()
@@ -42,6 +61,7 @@ func NewHub() *Hub {
 		register:   make(chan *Client, 16),
 		unregister: make(chan *Client, 16),
 		broadcast:  make(chan *delivery, 256),
+		nodeID:     newNodeID(),
 	}
 }
 
@@ -83,7 +103,71 @@ func (h *Hub) Run() {
 
 // Send delivers bytes to a specific client by ID.
 func (h *Hub) Send(targetID string, data []byte) {
+	h.sendLocal(targetID, data)
+	h.publishRemote(context.Background(), targetID, data)
+}
+
+func (h *Hub) sendLocal(targetID string, data []byte) {
 	h.broadcast <- &delivery{targetID: targetID, data: data}
+}
+
+func (h *Hub) InitRedisBus(ctx context.Context) {
+	if cache.Client == nil {
+		return
+	}
+	h.redisEnabled = true
+	pubsub := cache.Client.Subscribe(ctx, imWSChannel)
+	go func() {
+		defer pubsub.Close()
+		ch := pubsub.Channel()
+		for msg := range ch {
+			if !h.shouldDeliverRemote([]byte(msg.Payload)) {
+				continue
+			}
+			var env hubEnvelope
+			if err := json.Unmarshal([]byte(msg.Payload), &env); err != nil {
+				continue
+			}
+			h.sendLocal(env.TargetID, []byte(env.Data))
+		}
+	}()
+}
+
+func (h *Hub) publishRemote(ctx context.Context, targetID string, data []byte) {
+	if !h.redisEnabled || cache.Client == nil {
+		return
+	}
+	env := hubEnvelope{
+		NodeID:    h.nodeID,
+		TargetID:  targetID,
+		Data:      json.RawMessage(data),
+		CreatedAt: time.Now().UnixMilli(),
+	}
+	raw, err := json.Marshal(env)
+	if err != nil {
+		return
+	}
+	if err := cache.Client.Publish(ctx, imWSChannel, raw).Err(); err != nil {
+		slog.Warn("im websocket redis publish failed", "error", err)
+	}
+}
+
+func (h *Hub) shouldDeliverRemote(raw []byte) bool {
+	var env hubEnvelope
+	if err := json.Unmarshal(raw, &env); err != nil {
+		return false
+	}
+	return env.NodeID != "" && env.NodeID != h.nodeID && env.TargetID != "" && len(env.Data) > 0
+}
+
+func newNodeID() string {
+	var buf [4]byte
+	_, _ = rand.Read(buf[:])
+	host, _ := os.Hostname()
+	if host == "" {
+		host = "node"
+	}
+	return host + "-" + hex.EncodeToString(buf[:])
 }
 
 // Register adds a client to the hub.
