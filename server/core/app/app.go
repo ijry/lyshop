@@ -44,7 +44,15 @@ func Init(cfgPath string) error {
 	}
 
 	// Auto-migrate core tables
-	db.DB.AutoMigrate(&model.Admin{}, &model.Role{}, &model.ConfigKV{}, &model.User{})
+	db.DB.AutoMigrate(
+		&model.Admin{},
+		&model.Role{},
+		&model.ConfigKV{},
+		&model.User{},
+		&inventory.InventoryReservation{},
+		&inventory.OrderInventoryState{},
+		&inventory.InventoryIntegrationTask{},
+	)
 
 	// Seed super admin on first run
 	if err := adminsvc.EnsureSuperAdmin(); err != nil {
