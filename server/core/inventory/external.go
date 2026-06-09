@@ -102,8 +102,31 @@ func (p *externalProvider) SyncSkuTx(tx *gorm.DB, in SyncSkuInput) error {
 	})
 }
 
-func (p *externalProvider) GetSellableStock(_ context.Context, _ []uint64) ([]SellableStock, error) {
-	return []SellableStock{}, nil
+func (p *externalProvider) GetSellableStock(ctx context.Context, skuIDs []uint64) ([]SellableStock, error) {
+	reqBody, err := json.Marshal(map[string]any{
+		"sku_ids": skuIDs,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := p.doSignedRequest(ctx, http.MethodPost, "/stock/sellable", reqBody)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp struct {
+		Code int             `json:"code"`
+		Msg  string          `json:"msg"`
+		Data []SellableStock `json:"data"`
+	}
+	if err := json.Unmarshal(body, &resp); err != nil {
+		return nil, err
+	}
+	if resp.Code != 0 {
+		return nil, fmt.Errorf("external wms stock query failed: %s", resp.Msg)
+	}
+	return resp.Data, nil
 }
 
 func (p *externalProvider) postJSON(ctx context.Context, path string, payload map[string]any) error {

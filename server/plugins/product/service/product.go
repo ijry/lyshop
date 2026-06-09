@@ -127,6 +127,7 @@ func GetProduct(ctx context.Context, id uint64, userID uint64) (*ProductDetail, 
 	db.DB.WithContext(ctx).
 		Where("product_id = ? AND (status = ? OR status = '')", id, productmodel.ProductSkuStatusActive).
 		Find(&detail.SKUs)
+	applyExternalSellableStock(ctx, detail.SKUs)
 	db.DB.WithContext(ctx).Where("product_id = ?", id).Order("sort asc").Find(&detail.Images)
 	favoritedSet, err := getFavoritedProductIDSet(ctx, userID, []uint64{id})
 	if err != nil {
@@ -316,4 +317,31 @@ func syncInventoryForNewSkus(tx *gorm.DB, skus []productmodel.ProductSku) error 
 		}
 	}
 	return nil
+}
+
+func applyExternalSellableStock(ctx context.Context, skus []productmodel.ProductSku) {
+	if len(skus) == 0 {
+		return
+	}
+	provider, err := getInventoryProviderForProductFn()
+	if err != nil || provider == nil || provider.Name() != "external_wms" {
+		return
+	}
+	skuIDs := make([]uint64, 0, len(skus))
+	for _, sku := range skus {
+		skuIDs = append(skuIDs, sku.ID)
+	}
+	stocks, err := provider.GetSellableStock(ctx, skuIDs)
+	if err != nil {
+		return
+	}
+	stockMap := make(map[uint64]int, len(stocks))
+	for _, item := range stocks {
+		stockMap[item.SkuID] = item.SellableStock
+	}
+	for i := range skus {
+		if stock, ok := stockMap[skus[i].ID]; ok {
+			skus[i].Stock = stock
+		}
+	}
 }

@@ -155,10 +155,10 @@ func (p *localProvider) GetSellableStock(ctx context.Context, skuIDs []uint64) (
 	out := make([]SellableStock, 0, len(rows))
 	for _, row := range rows {
 		out = append(out, SellableStock{
-			SkuID:    row.ID,
-			Sellable: row.Stock,
-			Reserved: 0,
-			OnHand:   row.Stock,
+			SkuID:         row.ID,
+			SellableStock: row.Stock,
+			Reserved:      0,
+			OnHand:        row.Stock,
 		})
 	}
 	return out, nil

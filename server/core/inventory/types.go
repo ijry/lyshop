@@ -34,8 +34,8 @@ type SyncSkuInput struct {
 }
 
 type SellableStock struct {
-	SkuID    uint64 `json:"sku_id"`
-	Sellable int    `json:"sellable"`
-	Reserved int    `json:"reserved"`
-	OnHand   int    `json:"on_hand"`
+	SkuID         uint64 `json:"sku_id"`
+	SellableStock int    `json:"sellable_stock"`
+	Reserved      int    `json:"reserved"`
+	OnHand        int    `json:"on_hand"`
 }

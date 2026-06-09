@@ -122,10 +122,10 @@ func (p *builtinProvider) GetSellableStock(ctx context.Context, skuIDs []uint64)
 	out := make([]inventorycore.SellableStock, 0, len(rows))
 	for _, row := range rows {
 		out = append(out, inventorycore.SellableStock{
-			SkuID:    row.SkuID,
-			OnHand:   row.Qty,
-			Reserved: row.ReservedQty,
-			Sellable: row.Qty - row.ReservedQty,
+			SkuID:         row.SkuID,
+			OnHand:        row.Qty,
+			Reserved:      row.ReservedQty,
+			SellableStock: row.Qty - row.ReservedQty,
 		})
 	}
 	return out, nil

@@ -2,6 +2,7 @@ package inventory
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"net/http"
 	"testing"
@@ -67,4 +68,49 @@ func TestVerifyCallbackSignatureRejectsInvalidSign(t *testing.T) {
 		Body:      `{"request_id":"REQ-1"}`,
 	}, "demo-secret", time.Unix(1717910400, 0))
 	require.ErrorContains(t, err, "signature")
+}
+
+func TestExternalProviderGetSellableStock(t *testing.T) {
+	originalClient := externalHTTPClient
+	externalHTTPClient = &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		require.Equal(t, "POST", req.Method)
+		require.Equal(t, "/stock/sellable", req.URL.Path)
+		return &http.Response{
+			StatusCode: 200,
+			Body: io.NopCloser(bytes.NewBufferString(`{"code":0,"data":[{"sku_id":11,"sellable_stock":7},{"sku_id":12,"sellable_stock":0}]}`)),
+			Header: make(http.Header),
+		}, nil
+	})}
+	t.Cleanup(func() { externalHTTPClient = originalClient })
+
+	original := config.Global
+	t.Cleanup(func() { config.Global = original })
+	config.Global.ExternalWMS.Endpoint = "https://wms.example.com"
+
+	provider := &externalProvider{}
+	stocks, err := provider.GetSellableStock(context.Background(), []uint64{11, 12})
+	require.NoError(t, err)
+	require.Len(t, stocks, 2)
+	require.Equal(t, uint64(11), stocks[0].SkuID)
+	require.Equal(t, 7, stocks[0].SellableStock)
+}
+
+func TestExternalProviderGetSellableStockMapsRemoteError(t *testing.T) {
+	originalClient := externalHTTPClient
+	externalHTTPClient = &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		return &http.Response{
+			StatusCode: 200,
+			Body: io.NopCloser(bytes.NewBufferString(`{"code":5001,"msg":"remote error"}`)),
+			Header: make(http.Header),
+		}, nil
+	})}
+	t.Cleanup(func() { externalHTTPClient = originalClient })
+
+	original := config.Global
+	t.Cleanup(func() { config.Global = original })
+	config.Global.ExternalWMS.Endpoint = "https://wms.example.com"
+
+	provider := &externalProvider{}
+	_, err := provider.GetSellableStock(context.Background(), []uint64{11})
+	require.ErrorContains(t, err, "remote error")
 }
