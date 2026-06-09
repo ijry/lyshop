@@ -8,7 +8,9 @@
 |---|:---:|:---:|:---:|:---:|---|
 | **基础功能** |
 | 消息收发 | ✅ | ✅ | ✅ | ✅ | 实时文本消息 |
+| 图片/文件消息 | ✅ | ✅ | ✅ | ✅ | 上传、发送、预览图片，文件以卡片展示 |
 | WebSocket | ✅ | ✅ | ✅ | ✅ | 实时通信，心跳保活，自动重连 |
+| 跨实例 WebSocket | ✅ | ✅ | ✅ | ✅ | 后端通过 Redis Pub/Sub 扇出到其他副本 |
 | 系统消息 | ✅ | ✅ | ✅ | ✅ | 接入/转接/结束通知 |
 | **排队机制** |
 | 排队位置显示 | ✅ | ✅ | ✅ | ✅ | 显示"排队第N位" |
@@ -27,6 +29,8 @@
 | 自动回复规则 | ✅ | ✅ | - | - | 关键词匹配自动回复 |
 | 会话列表 | ✅ | ✅ | - | - | 查看所有会话 |
 | 会话历史 | ✅ | ✅ | ✅ | ✅ | 消息历史记录 |
+| 客服报表 | ✅ | - | - | - | 会话、消息、AI、RAG、转人工、附件等统计 |
+| 事件日志 | ✅ | - | - | - | 查询会话、消息、AI、转接、上传等事件 |
 | **AI 智能客服** |
 | 本地大模型应答 | ✅ | - | ✅ | ✅ | 新会话默认由本地大模型 AI 接待 |
 | RAG 知识库召回 | ✅ | - | ✅ | ✅ | 向量召回，无向量模型时退化为关键词召回 |
@@ -55,9 +59,12 @@
 - **语言**: Go
 - **WebSocket**: gorilla/websocket
 - **消息总线**: Hub 模式（单播/广播）
+- **跨实例投递**: Redis Pub/Sub（频道 `lyshop:im:ws`，节点 ID 防回环）
+- **附件存储**: 复用系统 storage driver，本地 Docker 使用 `./data/uploads:/app/uploads`
 - **数据库表**:
   - `im_session` - 会话表（用户、客服、**接待模式 mode(ai/human)**、状态、排队位置）
   - `im_message` - 消息表（会话ID、发送者类型含 **AI=3**、内容）
+  - `im_event_log` - 事件日志表（会话、消息、AI、转人工、上传等审计和报表来源）
   - `im_staff` - 客服表（管理员ID、在线状态、负载）
   - `im_transfer_log` - 转接记录表
   - `im_auto_reply` - 自动回复规则表
@@ -145,12 +152,16 @@
 - `server/plugins/im/service/knowledge.go` - 知识库 CRUD、文档导入切片
 - `server/plugins/im/service/document.go` - 多格式文本提取与切片
 - `server/plugins/im/service/hub.go` - WebSocket Hub
+- `server/plugins/im/service/event.go` - 事件日志与报表聚合
+- `server/plugins/im/service/upload.go` - 附件校验与上传
 - `server/plugins/im/api/admin.go` - Admin API（含知识库/AI 测试）
 - `server/plugins/im/api/front.go` - 用户端 API
 - `server/plugins/im/plugin.json` - 插件配置（菜单/权限/config_items）
 
 ### 前端
 - `admin/src/views/im/SessionList.vue` - 客服会话页面
+- `admin/src/views/im/Analytics.vue` - 客服报表页面
+- `admin/src/views/im/EventLogs.vue` - 事件日志页面
 - `admin/src/views/im/StaffManage.vue` - 坐席管理页面
 - `admin/src/views/im/KnowledgeManage.vue` - AI 知识库管理页面
 - `eapp/pages/me/im-sessions.vue` - 会话列表
@@ -161,26 +172,8 @@
 - `web/src/components/ChatDialog.vue` - 聊天弹窗
 - `web/src/stores/chat.ts` - 聊天状态管理
 
-## 更新日志
+## 部署影响
 
-### 2026-06-01
-- ✅ 接入本地大模型 AI 客服：新会话默认 AI 接待（`mode=ai`），可一键/关键词转人工
-- ✅ RAG 知识库：`im_knowledge` 表 + 向量召回（无向量模型时关键词召回兜底）
-- ✅ 文档切片入库：上传企业多格式文档（TXT/MD/CSV/TSV/JSON/XML/HTML/DOCX/PDF/XLSX）自动提取并切片为多条知识
-- ✅ 商品信息分析：回答时检索在售商品价格/库存/销量并注入提示
-- ✅ Admin 新增「AI知识库」页面（CRUD + 重建索引 + 连通性测试）与 `im:knowledge` 权限
-- ✅ 插件 `config_items`：在配置中心维护大模型服务地址/模型/提示词等
-- ✅ Qdrant 向量库检索：docker-compose 内置 qdrant，CRUD/导入/重建双写同步、按 ID 回查保序、未配置时回退内存余弦/关键词
-- ✅ 混合检索（RRF）：向量 + 关键词双路召回经 Reciprocal Rank Fusion 融合（`ai_hybrid`）
-- ✅ 重排（Rerank）：cross-encoder 精排候选池，兼容 Cohere/Jina/TEI（`ai_rerank_url`）
-- ✅ 查询改写：rewrite / HyDE / multi（N 变体+RRF），仅作用于检索侧
-- ✅ 评估闭环：用户👍👎反馈 + LLM-as-Judge 自动评估（忠实度+相关性），管理后台聚合统计
-- ✅ 新增 WS 帧：`typing`（AI 输入指示）、`to_human`（转人工请求）
-
-### 2026-05-31
-- ✅ 完成排队机制（排队位置显示、自动分配）
-- ✅ 完成转接功能（客服间转接、转接通知）
-- ✅ 完成客服在线状态管理
-- ✅ 完成客服坐席管理（CRUD）
-- ✅ 四端 WebSocket 实时通信全部实现
-- ✅ 系统消息支持（接入/转接/结束通知）
+- 多副本后端必须连接同一个外部 Redis，才能保证用户和客服 WebSocket 分布在不同副本时仍可互通。
+- 嵌入式 Redis 只适合单实例运行。
+- 附件消息使用当前启用的 storage driver；本地存储部署需确保 uploads 目录持久化。

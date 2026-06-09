@@ -2,7 +2,7 @@
 
 ## 概述
 
-IM 客服插件提供实时客服聊天功能，支持 WebSocket 实时通信、多坐席管理、排队机制、会话转接等企业级客服功能，并内置基于本地大模型的 AI 智能客服（RAG 知识库 + 商品信息分析）。新会话默认由 AI 接待，用户可随时转人工排队。
+IM 客服插件提供实时客服聊天功能，支持 WebSocket 实时通信、多坐席管理、排队机制、会话转接、附件消息、事件审计、报表统计等企业级客服功能，并内置基于本地大模型的 AI 智能客服（RAG 知识库 + 商品信息分析）。新会话默认由 AI 接待，用户可随时转人工排队。
 
 **插件标识**: `im`  
 **版本**: `1.1.0`  
@@ -81,10 +81,37 @@ IM 客服插件提供实时客服聊天功能，支持 WebSocket 实时通信、
 **字段说明**:
 - `sender_type`: 0=系统, 1=用户, 2=人工客服, 3=AI 客服
 - `type`: text=文本, image=图片, product_card=商品卡片, order_card=订单卡片, system=系统消息
+- `extra`: 附件或卡片扩展信息，附件消息使用 `{file_url,file_path,file_name,file_size,mime}`
 
 ---
 
-### 3. WebSocket 连接
+### 3. 上传会话附件
+
+**接口**: `POST /api/v1/im/upload`  
+**权限**: 需要用户登录  
+**请求**: `multipart/form-data`
+
+**表单字段**:
+- `session_id` (必填): 当前用户所属会话 ID
+- `file` (必填): 图片或文件
+
+**响应示例**:
+```json
+{
+  "url": "https://example.com/uploads/im/photo.png",
+  "path": "uploads/im/photo.png",
+  "name": "photo.png",
+  "size": 1024,
+  "mime": "image/png",
+  "message_type": "image"
+}
+```
+
+**说明**: 单文件最大 10MB；图片类型为 `.jpg/.jpeg/.png/.gif/.webp`，文件类型为 `.pdf/.doc/.docx/.xls/.xlsx/.txt/.csv/.md/.zip`。上传结果通过 WebSocket `msg` 帧发送，`msg_type` 为 `image` 或 `file`。
+
+---
+
+### 4. WebSocket 连接
 
 **接口**: `GET /ws/im?token={jwt_token}`  
 **协议**: WebSocket  
@@ -108,7 +135,7 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 
 | 类型 | 方向 | Payload | 说明 |
 |---|---|---|---|
-| `msg` | 双向 | `{msg_type, content, sender_type}` | 消息内容（`sender_type`：0系统/1用户/2人工/3AI） |
+| `msg` | 双向 | `{msg_type, content, sender_type, extra}` | 消息内容（`sender_type`：0系统/1用户/2人工/3AI） |
 | `typing` | 服务端→客户端 | `{sender_type}` | AI 正在生成回复的输入指示 |
 | `to_human` | 客户端→服务端 | `{}` | 用户请求转人工（等价于发送转人工关键词） |
 | `queue` | 服务端→客户端 | `{position}` | 排队位置更新 |
@@ -123,8 +150,15 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
   "type": "msg",
   "session_id": 1,
   "payload": {
-    "msg_type": "text",
-    "content": "你好"
+    "msg_type": "image",
+    "content": "photo.png",
+    "extra": {
+      "file_url": "https://example.com/uploads/im/photo.png",
+      "file_path": "uploads/im/photo.png",
+      "file_name": "photo.png",
+      "file_size": 1024,
+      "mime": "image/png"
+    }
   }
 }
 ```
@@ -136,9 +170,13 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
   "session_id": 1,
   "payload": {
     "msg_id": "123",
-    "msg_type": "text",
-    "content": "您好，有什么可以帮您？",
-    "sender_type": 2
+    "msg_type": "file",
+    "content": "policy.pdf",
+    "sender_type": 2,
+    "extra": {
+      "file_url": "https://example.com/uploads/im/policy.pdf",
+      "file_name": "policy.pdf"
+    }
   }
 }
 ```
@@ -193,7 +231,8 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 ```json
 {
   "content": "您好，有什么可以帮您？",
-  "type": "text"
+  "type": "text",
+  "extra": ""
 }
 ```
 
@@ -459,6 +498,71 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 
 ---
 
+### 22. 管理端上传会话附件
+
+**接口**: `POST /admin/api/im/upload`  
+**权限**: `im:reply`  
+**请求**: `multipart/form-data`
+
+**表单字段**:
+- `session_id` (必填): 会话 ID
+- `file` (必填): 图片或文件
+
+**响应**: 同用户端上传附件接口。
+
+---
+
+### 23. 客服报表
+
+**接口**: `GET /admin/api/im/analytics`  
+**权限**: `im:view`
+
+**参数**:
+- `from` (可选): 起始日期，格式 `YYYY-MM-DD`
+- `to` (可选): 结束日期，格式 `YYYY-MM-DD`
+- `staff_id` (可选): 客服 ID
+
+**响应示例**:
+```json
+{
+  "summary": {
+    "sessions": 12,
+    "messages": 88,
+    "ai_replies": 31,
+    "ai_failed": 1,
+    "rag_hits": 20,
+    "to_human": 6,
+    "accepts": 5,
+    "closes": 4,
+    "transfers": 1,
+    "files": 3
+  },
+  "trend": [
+    {
+      "date": "2026-06-09",
+      "sessions": 12,
+      "messages": 88,
+      "files": 3
+    }
+  ]
+}
+```
+
+---
+
+### 24. 事件日志
+
+**接口**: `GET /admin/api/im/logs`  
+**权限**: `im:view`
+
+**参数**:
+- `event`、`session_id`、`user_id`、`staff_id`、`source`、`success`
+- `page`、`size`
+
+**响应**: `{ list, total, page, size }`
+
+---
+
 ## AI 智能客服
 
 ### 接待流程
@@ -597,7 +701,7 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 | session_id | uint64 | 会话ID (索引) |
 | sender_type | int8 | 发送者类型 (0=系统, 1=用户, 2=人工客服, 3=AI客服) |
 | sender_id | uint64 | 发送者ID |
-| type | string | 消息类型 (text/image/product_card/order_card/system) |
+| type | string | 消息类型 (text/image/file/product_card/order_card/system) |
 | content | text | 消息内容 |
 | extra | json | 扩展字段 |
 | is_read | int8 | 是否已读 (0=未读, 1=已读) |
@@ -683,6 +787,24 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 
 ---
 
+### ImEventLog (事件日志表)
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| id | uint64 | 主键 |
+| event | string | 事件类型，如 `session_created`、`message_sent`、`file_uploaded` |
+| session_id | uint64 | 会话 ID |
+| user_id | uint64 | 用户 ID |
+| staff_id | uint64 | 客服 ID |
+| message_id | uint64 | 消息 ID |
+| source | string | 来源：`user`、`staff`、`ai`、`system` |
+| success | int8 | 是否成功 |
+| latency_ms | int64 | 延迟毫秒 |
+| extra | json | 扩展信息 |
+| created_at | time | 创建时间 |
+
+---
+
 ## 权限说明
 
 | 权限 | 说明 |
@@ -707,27 +829,8 @@ const ws = new WebSocket('ws://localhost:8080/ws/im?token=xxx')
 
 ---
 
-## 更新日志
+## 部署与存储
 
-### v1.1.0 (2026-06-01)
-- ✅ 本地大模型 AI 智能客服：新会话默认 AI 接待，输入“人工”或点击转人工进入排队
-- ✅ RAG 知识库：`im_knowledge` 表 + 向量召回（无向量模型时关键词召回兜底）
-- ✅ 文档切片入库：上传 TXT/MD/CSV/TSV/JSON/XML/HTML/DOCX/PDF/XLSX，自动提取并切片为多条知识
-- ✅ 商品信息分析：回答时检索在售商品价格/库存/销量
-- ✅ 知识库管理接口与 `im:knowledge` 权限、配置中心 `config_items`
-- ✅ Qdrant 向量库检索：CRUD/导入/重建双写同步，按 ID 回查并保序，未配置时回退内存余弦/关键词
-- ✅ 混合检索（RRF 融合）：向量召回 + 关键词召回按 Reciprocal Rank Fusion 融合（`ai_hybrid=on`）
-- ✅ 重排（Rerank）：cross-encoder 精排候选池至 TopK，兼容 Cohere/Jina/TEI `/rerank` 接口
-- ✅ 查询改写：rewrite（LLM 扩写）/ hyde（假设文档嵌入）/ multi（N 变体+RRF）
-- ✅ 评估闭环：用户👍👎反馈（`POST /im/feedback`）+ LLM-as-Judge 自动评估忠实度/相关性（`ai_auto_eval`）
-- ✅ 新增 WS 帧 `typing` / `to_human`，`sender_type` 扩展 AI=3
-
-### v1.0.0 (2026-05-31)
-- ✅ 基础消息收发功能
-- ✅ WebSocket 实时通信
-- ✅ 排队机制
-- ✅ 会话转接
-- ✅ 客服在线状态管理
-- ✅ 客服坐席管理
-- ✅ 自动回复规则
-- ✅ 系统消息通知
+- 附件上传复用系统当前启用的 storage driver；Docker 本地存储沿用 `./data/uploads:/app/uploads`。
+- 多个后端副本必须共享同一个外部 Redis，WebSocket Hub 通过 `lyshop:im:ws` Pub/Sub 频道跨实例扇出消息，并通过节点 ID 避免回环。
+- 嵌入式 Redis 适合单实例运行，不提供跨副本投递能力。
