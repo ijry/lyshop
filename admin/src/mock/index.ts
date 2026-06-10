@@ -82,8 +82,11 @@ const decorVariantsSource: any[] = [
     published_at: '2026-05-25T10:00:00Z',
   },
 ]
-const pcDecorSource: any = {
-  id: 1,
+const pcDecorVariantsSource: any[] = [{
+  id: 101,
+  page_key: 'pc',
+  variant_key: 'default',
+  variant_name: '默认副本',
   components: JSON.stringify({
     pageStyle: {
       background: {
@@ -113,7 +116,8 @@ const pcDecorSource: any = {
     ],
   }),
   is_published: true,
-}
+  published_at: '2026-05-28T10:00:00Z',
+}]
 
 const vipPlansSource: any[] = [
   { id: 1, name: '月卡', months: 1, price: 19.9, status: 1 },
@@ -2504,16 +2508,72 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     return { matched: true, data: null }
   }
   // PC Decor
-  if (key === 'GET /admin/api/decor/pc') {
-    return { matched: true, data: clone(pcDecorSource) }
+  if (key === 'GET /admin/api/decor/pc/variants') {
+    return { matched: true, data: clone(pcDecorVariantsSource) }
   }
-  if (key === 'PUT /admin/api/decor/pc') {
-    const payload = (params as any)?.components
-    pcDecorSource.components = JSON.stringify(payload || { pageStyle: null, components: [] })
-    return { matched: true, data: clone(pcDecorSource) }
+  if (key.startsWith('GET /admin/api/decor/pc')) {
+    const parsed = new URL(url, 'https://mock.local')
+    const variantKey = String(parsed.searchParams.get('variant') || 'default')
+    const item = pcDecorVariantsSource.find((row: any) => String(row.variant_key) === variantKey) || pcDecorVariantsSource[0]
+    return { matched: true, data: clone(item) }
   }
-  if (key === 'POST /admin/api/decor/pc/publish') {
-    pcDecorSource.is_published = true
+  if (key.startsWith('PUT /admin/api/decor/pc/variants/')) {
+    const variantKey = decodeURIComponent(url.split('/').pop() || '')
+    const target = pcDecorVariantsSource.find((row: any) => String(row.variant_key) === variantKey)
+    if (target) {
+      target.variant_name = String((params as any)?.variant_name || target.variant_name)
+    }
+    return { matched: true, data: null }
+  }
+  if (key.startsWith('PUT /admin/api/decor/pc')) {
+    const parsed = new URL(url, 'https://mock.local')
+    const variantKey = String(parsed.searchParams.get('variant') || 'default')
+    const target = pcDecorVariantsSource.find((row: any) => String(row.variant_key) === variantKey)
+    if (target) {
+      target.components = JSON.stringify((params as any)?.components || { pageStyle: null, components: [] })
+    }
+    return { matched: true, data: target ? clone(target) : null }
+  }
+  if (key.startsWith('POST /admin/api/decor/pc/publish')) {
+    const parsed = new URL(url, 'https://mock.local')
+    const variantKey = String(parsed.searchParams.get('variant') || 'default')
+    const now = new Date().toISOString()
+    for (const row of pcDecorVariantsSource) {
+      row.is_published = false
+      row.published_at = null
+    }
+    const target = pcDecorVariantsSource.find((row: any) => String(row.variant_key) === variantKey)
+    if (target) {
+      target.is_published = true
+      target.published_at = now
+    }
+    return { matched: true, data: null }
+  }
+  if (key === 'POST /admin/api/decor/pc/copies') {
+    const payload: any = params || {}
+    const fromVariantKey = String(payload.from_variant_key || 'default')
+    const newVariantKey = String(payload.new_variant_key || '').trim()
+    const newVariantName = String(payload.new_variant_name || '').trim() || `副本 ${newVariantKey}`
+    const source = pcDecorVariantsSource.find((row: any) => String(row.variant_key) === fromVariantKey)
+    if (!source || !newVariantKey) return { matched: true, data: null }
+    if (!pcDecorVariantsSource.find((row: any) => String(row.variant_key) === newVariantKey)) {
+      pcDecorVariantsSource.push({
+        ...clone(source),
+        id: Math.max(...pcDecorVariantsSource.map((row: any) => Number(row.id || 0))) + 1,
+        variant_key: newVariantKey,
+        variant_name: newVariantName,
+        is_published: false,
+        published_at: null,
+      })
+    }
+    return { matched: true, data: null }
+  }
+  if (key.startsWith('DELETE /admin/api/decor/pc/variants/')) {
+    const variantKey = decodeURIComponent(url.split('/').pop() || '')
+    if (variantKey !== 'default') {
+      const idx = pcDecorVariantsSource.findIndex((row: any) => String(row.variant_key) === variantKey && !row.is_published)
+      if (idx >= 0) pcDecorVariantsSource.splice(idx, 1)
+    }
     return { matched: true, data: null }
   }
 
