@@ -49,7 +49,17 @@
               <label class="block text-sm font-medium text-slate-700">{{ $t('product.form.coverUrl') }}</label>
               <span class="text-xs text-slate-400">{{ $t('product.form.coverHint') }}</span>
             </div>
-            <input v-model="form.cover" class="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-blue-400" placeholder="https://..." />
+            <ProductImageUpload
+              v-model="form.cover"
+              :empty-text="$t('product.form.noImage')"
+              :upload-text="$t('product.form.uploadImage')"
+              :uploading-text="$t('common.uploading')"
+              :clear-text="$t('common.clear')"
+              :preview-alt="$t('product.form.coverPreview')"
+              :invalid-file-text="$t('product.form.imageInvalid')"
+              :upload-result-missing-text="$t('product.form.imageUploadMissingUrl')"
+              :upload-failed-text="$t('product.form.imageUploadFailed')"
+            />
           </div>
 
           <div>
@@ -237,10 +247,26 @@
               <button class="text-xs text-blue-600 hover:underline" @click="addGalleryImage('')">{{ $t('product.form.addBlank') }}</button>
             </div>
             <div class="space-y-2">
-              <div v-for="(img, idx) in galleryImages" :key="idx" class="grid grid-cols-[1fr_auto] gap-2">
-                <input v-model="img.url" class="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-400" placeholder="https://..." />
-                <button class="px-3 py-2 text-xs bg-slate-100 rounded-lg hover:bg-slate-200" @click="removeGalleryImage(idx)">{{ $t('common.delete') }}</button>
+              <div v-for="(img, idx) in galleryImages" :key="idx" class="rounded-xl border border-slate-100 bg-slate-50/50 p-3">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs text-slate-500">{{ $t('product.form.carouselImageLabel', { idx: idx + 1 }) }}</span>
+                  <button class="px-3 py-1.5 text-xs bg-red-50 text-red-600 rounded-lg hover:bg-red-100" @click="removeGalleryImage(idx)">{{ $t('common.delete') }}</button>
+                </div>
+                <ProductImageUpload
+                  v-model="img.url"
+                  :empty-text="$t('product.form.noImage')"
+                  :upload-text="$t('product.form.uploadImage')"
+                  :uploading-text="$t('common.uploading')"
+                  :clear-text="$t('common.clear')"
+                  :preview-alt="$t('product.form.carouselPreview')"
+                  :invalid-file-text="$t('product.form.imageInvalid')"
+                  :upload-result-missing-text="$t('product.form.imageUploadMissingUrl')"
+                  :upload-failed-text="$t('product.form.imageUploadFailed')"
+                />
               </div>
+            </div>
+            <div v-if="!galleryImages.length" class="rounded-xl border border-dashed border-slate-200 py-5 text-center text-xs text-slate-400">
+              {{ $t('product.form.carouselEmpty') }}
             </div>
           </div>
 
@@ -375,6 +401,7 @@ import { useI18n } from 'vue-i18n'
 import { createProduct, createVipSkuPrice, deleteVipSkuPrice, generateAiImage, getAiModels, getAiTask, getCategories, getProduct, getSpecTemplates, getStocksBySkuIds, getVipLevels, getVipSkuPrices, updateProduct, updateVipSkuPrice, uploadFile } from '@/api/plugins'
 import { getMenus, type AdminMenuGroupedResponse, type AdminMenuItem, type AdminMenuResponse } from '@/api/auth'
 import { useAuthStore } from '@/stores/auth'
+import ProductImageUpload from '@/components/common/ProductImageUpload.vue'
 import RichTextEditor from '@/views/decor/editors/RichTextEditor.vue'
 
 type DetailBlock = {

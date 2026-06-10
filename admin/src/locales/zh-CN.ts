@@ -98,6 +98,7 @@ export default {
   'common.select': '选择',
   'common.upload': '上传',
   'common.uploading': '上传中...',
+  'common.clear': '清除',
   'common.noImage': '暂无',
 
   // Layout
@@ -211,6 +212,15 @@ export default {
   'product.form.coverHint': '可手输或由 AI 生成覆盖',
   'product.form.carousel': '轮播图',
   'product.form.addBlank': '+ 新增空白项',
+  'product.form.uploadImage': '上传图片',
+  'product.form.noImage': '暂无图片',
+  'product.form.coverPreview': '商品封面预览',
+  'product.form.carouselPreview': '商品轮播图预览',
+  'product.form.carouselImageLabel': '轮播图 {idx}',
+  'product.form.carouselEmpty': '暂无轮播图，点击新增空白项后上传或填写图片地址',
+  'product.form.imageInvalid': '请选择图片文件',
+  'product.form.imageUploadMissingUrl': '上传结果缺少图片地址',
+  'product.form.imageUploadFailed': '图片上传失败',
   'product.form.detail': '商品详情（JSON Blocks）',
   'product.form.detailHint': '支持 text/image/rich_text，按顺序渲染',
   'product.form.blockLabel': 'Block {idx} · {type}',

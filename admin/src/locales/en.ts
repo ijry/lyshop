@@ -98,6 +98,7 @@ export default {
   'common.select': 'Select',
   'common.upload': 'Upload',
   'common.uploading': 'Uploading...',
+  'common.clear': 'Clear',
   'common.noImage': 'None',
 
   // Layout
@@ -211,6 +212,15 @@ export default {
   'product.form.coverHint': 'Manual input or AI generated',
   'product.form.carousel': 'Carousel Images',
   'product.form.addBlank': '+ Add blank item',
+  'product.form.uploadImage': 'Upload image',
+  'product.form.noImage': 'No image',
+  'product.form.coverPreview': 'Product cover preview',
+  'product.form.carouselPreview': 'Product carousel preview',
+  'product.form.carouselImageLabel': 'Carousel image {idx}',
+  'product.form.carouselEmpty': 'No carousel images yet. Add a blank item, then upload or enter an image URL.',
+  'product.form.imageInvalid': 'Please choose an image file',
+  'product.form.imageUploadMissingUrl': 'Upload result does not include an image URL',
+  'product.form.imageUploadFailed': 'Image upload failed',
   'product.form.detail': 'Product Detail (JSON Blocks)',
   'product.form.detailHint': 'Supports text/image/rich_text, rendered in order',
   'product.form.blockLabel': 'Block {idx} · {type}',

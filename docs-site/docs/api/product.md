@@ -10,6 +10,7 @@
 - 后台商品列表可直接读取收藏数字段展示。
 - 活动来源场景下，商品详情页采用“双请求”模式：先请求标准商品详情，再按 `activity_product_id` 追加请求营销活动商品详情接口。
 - 商品编辑统一采用后端规格引擎：前端提交 `sku_generation_mode=auto + spec_schema + sku_overrides`，后端生成并维护 SKU 集合并返回 `sku_diff`。
+- 后台商品编辑的封面图与轮播图使用图片上传组件维护：上传复用 `POST /admin/api/upload`，也支持直接填写图片 URL，保存时仍提交商品 `cover` 字段与 `images[]` 轮播图数组。
 - 规格模板为正式后台资源：`admin` 与 `eapp` 共用 `/admin/api/spec-templates*` 接口。
 - 后台商品编辑支持在 SKU 区直接配置会员价（需启用 `vip` 插件）。
 - 当前最新架构下，SKU 是商品销售、库存占用、库存扣减、库存回补、库存查询的统一粒度。
@@ -57,6 +58,8 @@
   - 推荐请求模式：`sku_generation_mode=auto`
     - `spec_schema`: 规格组定义（属性名 + 值集合）
     - `sku_overrides`: 覆盖项（按 `sku_key` 指定价格/库存/编码）
+    - `product.cover`: 商品封面图片 URL，可由管理端上传组件写入
+    - `images`: 商品轮播图数组，元素结构为 `{ url, sort }`，可由管理端上传组件写入
   - `sku_key` 唯一约束为 `(product_id, sku_key)`，确保“同商品内唯一”。
   - 返回 `sku_diff`：`{ added, kept, inactivated }`
   - 旧 SKU 采用软删除（`status=inactive`），历史订单可继续读取。
@@ -106,6 +109,7 @@
 - `DELETE /admin/api/categories/:id`
 - `GET /admin/api/products`
 - `GET /admin/api/spec-templates`
+- `POST /admin/api/upload`
 - `POST /admin/api/spec-templates`
 - `PUT /admin/api/spec-templates/:id`
 - `DELETE /admin/api/spec-templates/:id`
@@ -114,6 +118,7 @@
 
 - 无新增环境变量。
 - 无新增中间件或外部依赖。
+- 商品封面和轮播图上传沿用后台通用上传接口与当前 storage driver；本地部署需保持上传目录可被前端访问。
 - SKU 模型新增字段（自动迁移）：
   - `product_skus.sku_key`
   - `product_skus.status`（`active|inactive`）
