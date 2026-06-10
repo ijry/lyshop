@@ -5,6 +5,7 @@ export default defineConfig({
   lang: "zh-CN",
   title: "LYShop 零云商城",
   description: "LYShop 零云商城 - 开源插件化商城系统，基于 Go + Vue3 + uni-app，支持多端（PC/H5/小程序/App），插件化架构，AI生图，IM客服，Docker一键部署，免费开源电商解决方案",
+  ignoreDeadLinks: [/^\/web-demo\/index/],
 
   head: [
     ["link", { rel: "icon", href: "/lyshop/lyshop-mark.svg", type: "image/svg+xml" }],
