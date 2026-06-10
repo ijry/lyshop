@@ -1,15 +1,35 @@
 <template>
   <div>
     <div class="flex items-center justify-between mb-4">
-      <h2 class="text-xl font-semibold text-slate-800">PC 首页装修</h2>
+      <div class="flex items-center gap-3">
+        <h2 class="text-xl font-semibold text-slate-800">PC 首页装修</h2>
+        <select v-model="currentVariantKey" @change="changeVariant"
+          class="border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-slate-700 bg-white">
+          <option v-for="v in variants" :key="v.variant_key" :value="v.variant_key">
+            {{ v.variant_name }}（{{ v.variant_key }}）{{ v.is_published ? ' · ' + t('decor.published') : '' }}
+          </option>
+        </select>
+        <button @click="copyVariant"
+          class="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs hover:bg-slate-200 transition">
+          {{ t('decor.copyVariant') }}
+        </button>
+        <button @click="renameVariant"
+          class="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs hover:bg-slate-200 transition">
+          {{ t('decor.rename') }}
+        </button>
+        <button @click="deleteVariant"
+          class="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs hover:bg-red-100 transition">
+          {{ t('decor.deleteVariant') }}
+        </button>
+      </div>
       <div class="flex gap-2">
         <button @click="save" :disabled="saving"
           class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm hover:bg-slate-200 transition">
-          {{ saving ? '保存中...' : '保存' }}
+          {{ saving ? '保存中...' : t('decor.saveDraft') }}
         </button>
         <button @click="publish"
           class="px-4 py-2 bg-blue-700 text-white rounded-xl text-sm hover:bg-blue-600 transition">
-          发布上线
+          {{ t('decor.publish') }}
         </button>
       </div>
     </div>
@@ -100,8 +120,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import request from '@/api/request'
 import { notify } from '@/utils/notify'
+import { confirmAction, promptText } from '@/utils/dialog'
 import {
   pcComponentLib,
   pcCompTitleMap,
@@ -125,7 +147,10 @@ import SpacerEditor from './editors/SpacerEditor.vue'
 import PcPageStyleEditor from './widgets/PcPageStyleEditor.vue'
 import PcComponentStyleEditor from './widgets/PcComponentStyleEditor.vue'
 
+const { t } = useI18n()
 const pagePayload = ref<PcDecorPagePayload>(createDefaultPcDecorPayload())
+const variants = ref<any[]>([])
+const currentVariantKey = ref('default')
 const selectedIndex = ref<number | null>(null)
 const saving = ref(false)
 const previewScale = ref(0.8)
@@ -187,20 +212,94 @@ function remove(i: number) {
 async function save() {
   saving.value = true
   try {
-    await request.put('/decor/pc', { components: pagePayload.value })
+    await request.put(`/decor/pc?variant=${encodeURIComponent(currentVariantKey.value)}`, { components: pagePayload.value })
+    await loadVariants()
     notify('保存成功')
   } finally { saving.value = false }
 }
 
 async function publish() {
   await save()
-  await request.post('/decor/pc/publish')
-  notify('已发布上线')
+  await request.post(`/decor/pc/publish?variant=${encodeURIComponent(currentVariantKey.value)}`)
+  await loadVariants()
+  notify(t('decor.publishedNote'))
+}
+
+async function loadVariants() {
+  const data: any = await request.get('/decor/pc/variants')
+  variants.value = Array.isArray(data) ? data : []
+  if (!variants.value.length) {
+    variants.value = [{
+      variant_key: 'default',
+      variant_name: t('decor.variantName', { key: 'default' }),
+      is_published: false,
+    }]
+  }
+  const currentExists = variants.value.some(v => v.variant_key === currentVariantKey.value)
+  if (!currentExists) {
+    const published = variants.value.find(v => v.is_published)
+    currentVariantKey.value = published?.variant_key || variants.value[0].variant_key || 'default'
+  }
+}
+
+async function loadCurrentVariant() {
+  const data: any = await request.get(`/decor/pc?variant=${encodeURIComponent(currentVariantKey.value)}`)
+  pagePayload.value = normalizePayload(data?.components)
+  selectedIndex.value = null
+}
+
+async function changeVariant() {
+  await loadCurrentVariant()
+}
+
+function toVariantKey(raw: string) {
+  return raw.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '')
+}
+
+async function copyVariant() {
+  const keyRaw = promptText(t('decor.promptKey'))
+  if (!keyRaw) return
+  const newVariantKey = toVariantKey(keyRaw)
+  if (!newVariantKey) {
+    notify(t('decor.invalidKey'))
+    return
+  }
+  const defaultName = t('decor.variantName', { key: newVariantKey })
+  const newVariantName = promptText(t('decor.promptName'), defaultName) || defaultName
+  await request.post('/decor/pc/copies', {
+    from_variant_key: currentVariantKey.value,
+    new_variant_key: newVariantKey,
+    new_variant_name: newVariantName,
+  })
+  await loadVariants()
+  currentVariantKey.value = newVariantKey
+  await loadCurrentVariant()
+}
+
+async function renameVariant() {
+  const current = variants.value.find(v => v.variant_key === currentVariantKey.value)
+  const next = promptText(t('decor.promptName'), current?.variant_name || '')
+  if (!next) return
+  await request.put(`/decor/pc/variants/${encodeURIComponent(currentVariantKey.value)}`, {
+    variant_name: next,
+  })
+  await loadVariants()
+}
+
+async function deleteVariant() {
+  if (currentVariantKey.value === 'default') {
+    notify(t('decor.defaultNoDelete'))
+    return
+  }
+  if (!confirmAction(t('decor.confirmDeleteVariant', { key: currentVariantKey.value }))) return
+  await request.delete(`/decor/pc/variants/${encodeURIComponent(currentVariantKey.value)}`)
+  await loadVariants()
+  await loadCurrentVariant()
 }
 
 onMounted(async () => {
-  const data: any = await request.get('/decor/pc')
-  pagePayload.value = normalizePayload(data?.components)
+  await loadVariants()
+  await loadCurrentVariant()
 })
 
 function normalizePayload(raw: any): PcDecorPagePayload {
