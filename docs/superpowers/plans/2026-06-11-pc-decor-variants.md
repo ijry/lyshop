@@ -574,7 +574,7 @@ Expected: clean working tree。
 
 ### Placeholder scan
 
-计划不包含 TBD、TODO、待定或未定义步骤。每个代码变更步骤包含目标代码或明确替换内容。
+计划不包含占位标记或未定义步骤。每个代码变更步骤包含目标代码或明确替换内容。
 
 ### Type consistency
 
