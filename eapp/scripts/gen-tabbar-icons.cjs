@@ -162,7 +162,7 @@ function buildPng(idat) {
 /* ---------- 输出 ---------- */
 const COLORS = {
   normal: [0x98, 0xa2, 0xb3],
-  active: [0x1d, 0x4e, 0xd8],
+  active: [0xc6, 0x2f, 0x24],
 }
 
 fs.mkdirSync(OUT_DIR, { recursive: true })

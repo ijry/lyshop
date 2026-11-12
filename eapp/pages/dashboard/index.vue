@@ -17,6 +17,7 @@ import { useDashboard } from '@/composables/useDashboard'
 import { useShopStore } from '@/stores/shop'
 import { useBadgeStore } from '@/stores/badge'
 import { setStorage } from '@/utils/storage'
+import { MARKETING_ROUTES } from '@/utils/marketing'
 import type { ChartCategoriesSeries, ChartPie } from '@/utils/ly-charts'
 
 const { t } = useI18n()
@@ -97,22 +98,13 @@ const marketingActions = [
   { key: 'pointsMall', label: t('marketing.pointsMall'), iconName: 'diamond' },
 ]
 
-const marketingRoutes: Record<string, string> = {
-  coupon: '/pages/marketing/coupon',
-  seckill: '/pages/marketing/seckill',
-  groupBuy: '/pages/marketing/group-buy',
-  bargain: '/pages/marketing/bargain',
-  vip: '/pages/vip/plan-list',
-  messageBroadcast: '/pages/me/messages',
-  decor: '/pages/decor/editor',
-  specTemplate: '/pages/product/spec-templates',
-  distribution: '/pages/distribution/index',
-  pointsMall: '/pages/points/index',
+function onMarketingClick(key: string) {
+  const path = MARKETING_ROUTES[key]
+  if (path) uni.navigateTo({ url: path })
 }
 
-function onMarketingClick(key: string) {
-  const path = marketingRoutes[key]
-  if (path) uni.navigateTo({ url: path })
+function goMarketingCenter() {
+  uni.navigateTo({ url: MARKETING_ROUTES.center })
 }
 
 /* ---------- 生命周期 ---------- */
@@ -267,7 +259,7 @@ onShow(loadAll)
 
       <!-- 营销中心 -->
       <view class="section">
-        <SectionHeader title="营销中心" />
+        <SectionHeader title="营销中心" extra="进入营销中心" arrow @click="goMarketingCenter" />
         <view class="panel">
           <ActionGrid :items="marketingActions" :columns="5" @click="onMarketingClick" />
         </view>

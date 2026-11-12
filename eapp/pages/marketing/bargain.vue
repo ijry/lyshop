@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import ActivityManager from '@/components/marketing/ActivityManager.vue'
+import ActivityListPage from '@/components/marketing/ActivityListPage.vue'
 </script>
 
 <template>
-  <ActivityManager kind="bargain" />
+  <ActivityListPage kind="bargain" />
 </template>

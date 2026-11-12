@@ -233,7 +233,7 @@ function onCellChange() { emit('update', matrix.value) }
 .val { display: flex; align-items: center; gap: 6rpx; background: var(--eapp-card); padding: 4rpx 8rpx; border-radius: 10rpx; }
 .x { color: var(--eapp-danger); font-size: 22rpx; padding: 0 6rpx; }
 .chip { padding: 8rpx 20rpx; border-radius: 999rpx; font-size: 24rpx; border: 2rpx solid var(--eapp-border); color: var(--eapp-text-muted); background: var(--eapp-card); }
-.chip-on { border-color: var(--eapp-primary, #3b82f6); color: var(--eapp-primary, #3b82f6); background: color-mix(in srgb, var(--eapp-primary, #3b82f6) 10%, transparent); }
+.chip-on { border-color: var(--eapp-primary, #c62f24); color: var(--eapp-primary, #c62f24); background: color-mix(in srgb, var(--eapp-primary, #c62f24) 10%, transparent); }
 .bulk { display: flex; gap: 8rpx; align-items: center; flex-wrap: wrap; }
 .bulk-in { width: 200rpx; }
 .matrix { background: var(--eapp-card); border: 1rpx solid var(--eapp-border); border-radius: 16rpx; padding: 10rpx; }
@@ -242,6 +242,6 @@ function onCellChange() { emit('update', matrix.value) }
 .cell { width: 160rpx; }
 .cell.flex { flex: 1; }
 .wms-col { width: 130rpx; font-size: 22rpx; }
-.wms-val { color: var(--eapp-primary, #3b82f6); font-weight: 600; }
+.wms-val { color: var(--eapp-primary, #c62f24); font-weight: 600; }
 .wms-new { color: var(--eapp-text-muted); font-style: italic; }
 </style>

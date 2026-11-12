@@ -182,15 +182,21 @@ const specTemplatesSource: any[] = [
   { id: 3, name: '鞋类', category_ids: [23], attrs: [{ name: '颜色', values: ['黑色', '棕色', '白色'] }, { name: '尺码', values: ['36', '37', '38', '39', '40', '41', '42', '43', '44'] }], status: 1 },
 ]
 let specTemplateSeq = 3
+/** 演示数据按当前时间生成，保证列表始终覆盖「进行中 / 未开始 / 已结束 / 已停用」四种状态 */
+const hoursFromNow = (hours: number) => new Date(Date.now() + hours * 3600 * 1000).toISOString()
 const seckillActivitiesSource: any[] = [
-  { id: 1, type: 'seckill', name: '午场秒杀', start_at: '2026-05-27T10:00:00Z', end_at: '2026-05-27T12:00:00Z', status: 1 },
-  { id: 2, type: 'seckill', name: '晚场秒杀', start_at: '2026-05-27T20:00:00Z', end_at: '2026-05-27T22:00:00Z', status: 1 },
+  { id: 1, type: 'seckill', name: '午场限时秒杀', start_at: hoursFromNow(-1), end_at: hoursFromNow(2), status: 1 },
+  { id: 2, type: 'seckill', name: '晚场限时秒杀', start_at: hoursFromNow(6), end_at: hoursFromNow(9), status: 1 },
+  { id: 3, type: 'seckill', name: '上周会员日秒杀', start_at: hoursFromNow(-168), end_at: hoursFromNow(-164), status: 1 },
+  { id: 4, type: 'seckill', name: '周末大促（待启用）', start_at: hoursFromNow(120), end_at: hoursFromNow(124), status: 0 },
 ]
 const groupBuyActivitiesSource: any[] = [
-  { id: 11, type: 'group_buy', name: '今日拼团', start_at: '2026-05-27T00:00:00Z', end_at: '2026-05-27T23:59:59Z', status: 1 },
+  { id: 11, type: 'group_buy', name: '今日拼团', start_at: hoursFromNow(-2), end_at: hoursFromNow(22), status: 1 },
+  { id: 12, type: 'group_buy', name: '周末拼团预告', start_at: hoursFromNow(48), end_at: hoursFromNow(72), status: 1 },
 ]
 const bargainActivitiesSource: any[] = [
-  { id: 21, type: 'bargain', name: '砍价专场', start_at: '2026-05-27T00:00:00Z', end_at: '2026-05-28T23:59:59Z', status: 1 },
+  { id: 21, type: 'bargain', name: '砍价专场', start_at: hoursFromNow(-3), end_at: hoursFromNow(21), status: 1 },
+  { id: 22, type: 'bargain', name: '换季清仓砍价（待启用）', start_at: hoursFromNow(144), end_at: hoursFromNow(168), status: 0 },
 ]
 const seckillProductsSource: any[] = [
   { id: 1001, activity_id: 1, product_id: 1, sku_id: 10011, activity_price: 3599, start_price: 0, floor_price: 0, limit_per_order: 1, total_stock_limit: 120, sold_qty: 18, product_title: '旗舰智能手机 Pro Max', product_cover: 'https://picsum.photos/120/120?random=101', sku_price: 4999, sku_stock: 400, sku_attrs: [{ name: '颜色', value: '曜石黑' }] },
@@ -1339,7 +1345,7 @@ const routes: Record<string, any> = {
   ],
 }
 
-export function matchMock(method: string, url: string, params?: Record<string, any>): { matched: boolean; data?: any } {
+export function matchMock(method: string, url: string, params?: Record<string, any>): { matched: boolean; data?: any; error?: string } {
   const key = `${method.toUpperCase()} ${url}`
   const query = params || {}
   const getActivityStore = (type: 'seckill' | 'group-buy' | 'bargain') => {
@@ -1358,10 +1364,14 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     if (path.includes('/bargain/')) return 'bargain'
     return null
   }
+  const isValidPeriod = (startAt: string, endAt: string) => {
+    const start = new Date(startAt).getTime()
+    const end = new Date(endAt).getTime()
+    return Boolean(start && end && start < end)
+  }
   const hasTimeConflict = (store: any[], startAt: string, endAt: string, excludeID = 0) => {
     const start = new Date(startAt).getTime()
     const end = new Date(endAt).getTime()
-    if (!start || !end || start >= end) return true
     return store.some((item: any) => {
       if (Number(item.id || 0) === excludeID) return false
       const left = new Date(String(item.start_at || '')).getTime()
@@ -1805,8 +1815,11 @@ export function matchMock(method: string, url: string, params?: Record<string, a
         const payload: any = params || {}
         const startAt = String(payload.start_at || '')
         const endAt = String(payload.end_at || '')
+        if (!isValidPeriod(startAt, endAt)) {
+          return { matched: true, data: null, error: '请填写有效的活动时间区间' }
+        }
         if (hasTimeConflict(activityStore, startAt, endAt)) {
-          throw new Error('同类型活动时间段冲突')
+          return { matched: true, data: null, error: '同类型活动时间段冲突' }
         }
         marketingActivitySeq += 1
         const row = {
@@ -1828,13 +1841,25 @@ export function matchMock(method: string, url: string, params?: Record<string, a
       const payload: any = params || {}
       const startAt = String(payload.start_at || target.start_at || '')
       const endAt = String(payload.end_at || target.end_at || '')
+      if (!isValidPeriod(startAt, endAt)) {
+        return { matched: true, data: null, error: '请填写有效的活动时间区间' }
+      }
       if (hasTimeConflict(activityStore, startAt, endAt, id)) {
-        throw new Error('同类型活动时间段冲突')
+        return { matched: true, data: null, error: '同类型活动时间段冲突' }
       }
       target.name = String(payload.name || target.name)
       target.start_at = startAt
       target.end_at = endAt
       target.status = Number(payload.status ?? target.status) === 1 ? 1 : 0
+      return { matched: true, data: null }
+    }
+    if (methodUpper === 'DELETE' && /\/activities\/\d+$/.test(url)) {
+      const id = Number(url.split('/').pop() || 0)
+      const index = activityStore.findIndex((item: any) => Number(item.id || 0) === id)
+      if (index >= 0) activityStore.splice(index, 1)
+      for (let i = productStore.length - 1; i >= 0; i -= 1) {
+        if (Number(productStore[i].activity_id || 0) === id) productStore.splice(i, 1)
+      }
       return { matched: true, data: null }
     }
     if (key.endsWith('/products')) {
@@ -1848,32 +1873,52 @@ export function matchMock(method: string, url: string, params?: Record<string, a
         if (keyword) list = list.filter((item: any) => String(item.product_title || '').toLowerCase().includes(keyword))
         return { matched: true, data: toPageData(list, page, size) }
       }
-      if (method.toUpperCase() === 'PUT' && /\/activities\/\d+\/products$/.test(url)) {
+      if (methodUpper === 'PUT' && /\/activities\/\d+\/products$/.test(url)) {
         const activityID = Number(url.match(/\/activities\/(\d+)\/products$/)?.[1] || 0)
         const rows = Array.isArray(params) ? params : []
+        // 整表替换前留下旧行，避免封面 / 原价 / 已售数量等冗余字段丢失
+        const previousBySku = new Map<string, any>()
+        for (const old of productStore) {
+          if (Number(old.activity_id || 0) !== activityID) continue
+          previousBySku.set(`${Number(old.product_id || 0)}:${Number(old.sku_id || 0)}`, old)
+        }
         for (let i = productStore.length - 1; i >= 0; i -= 1) {
-          if (Number(productStore[i].activity_id || 0) === activityID) {
-            productStore.splice(i, 1)
-          }
+          if (Number(productStore[i].activity_id || 0) === activityID) productStore.splice(i, 1)
         }
         for (const row of rows) {
-          marketingProductSeq += 1
+          const source: any = row as any
+          const productID = Number(source.product_id || 0)
+          const skuID = Number(source.sku_id || 0)
+          const previous = previousBySku.get(`${productID}:${skuID}`) || {}
+          const catalog: any = productListSource.find((p: any) => Number(p.id || 0) === productID) || {}
+          const catalogSku: any = (Array.isArray(catalog.skus) ? catalog.skus : [])
+            .find((s: any) => Number(s.id || 0) === skuID) || {}
+          const pick = (field: string, fallback: any) => {
+            if (source[field] !== undefined && source[field] !== null && source[field] !== '') return source[field]
+            if (previous[field] !== undefined && previous[field] !== null && previous[field] !== '') return previous[field]
+            return fallback
+          }
+          const skuAttrs = Array.isArray(source.sku_attrs)
+            ? source.sku_attrs
+            : Array.isArray(previous.sku_attrs)
+              ? previous.sku_attrs
+              : Array.isArray(catalogSku.attrs) ? catalogSku.attrs : []
           productStore.push({
-            id: marketingProductSeq,
+            id: Number(previous.id || 0) > 0 ? Number(previous.id) : (marketingProductSeq += 1),
             activity_id: activityID,
-            product_id: Number((row as any).product_id || 0),
-            sku_id: Number((row as any).sku_id || 0),
-            activity_price: Number((row as any).activity_price || 0),
-            start_price: Number((row as any).start_price || 0),
-            floor_price: Number((row as any).floor_price || 0),
-            limit_per_order: Number((row as any).limit_per_order || 0),
-            total_stock_limit: Number((row as any).total_stock_limit || 0),
-            sold_qty: 0,
-            product_title: String((row as any).product_title || `商品${(row as any).product_id || ''}`),
-            product_cover: String((row as any).product_cover || ''),
-            sku_price: Number((row as any).sku_price || 0),
-            sku_stock: Number((row as any).sku_stock || 0),
-            sku_attrs: Array.isArray((row as any).sku_attrs) ? (row as any).sku_attrs : [],
+            product_id: productID,
+            sku_id: skuID,
+            activity_price: Number(source.activity_price || 0),
+            start_price: Number(source.start_price || 0),
+            floor_price: Number(source.floor_price || 0),
+            limit_per_order: Number(source.limit_per_order || 0),
+            total_stock_limit: Number(source.total_stock_limit || 0),
+            sold_qty: Number(pick('sold_qty', 0) || 0),
+            product_title: String(pick('product_title', catalog.title || `商品 #${productID}`)),
+            product_cover: String(pick('product_cover', catalog.cover || '')),
+            sku_price: Number(pick('sku_price', catalogSku.price || catalog.price || 0) || 0),
+            sku_stock: Number(pick('sku_stock', catalogSku.stock || catalog.stock || 0) || 0),
+            sku_attrs: skuAttrs,
           })
         }
         return { matched: true, data: null }

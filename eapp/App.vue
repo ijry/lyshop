@@ -42,10 +42,10 @@ export default {
 :root,
 page {
   /* 品牌 */
-  --eapp-primary: #1d4ed8;
-  --eapp-primary-deep: #173b9e;
-  --eapp-primary-soft: #eef3fd;
-  --eapp-primary-border: #d3def7;
+  --eapp-primary: #c62f24;
+  --eapp-primary-deep: #8f2018;
+  --eapp-primary-soft: #fdf0ee;
+  --eapp-primary-border: #f4cbc5;
   --eapp-primary-on: #ffffff;
 
   /* 语义色：低饱和，适合长时间办公阅读 */
@@ -57,8 +57,8 @@ page {
   --eapp-danger-soft: #fbeeec;
   --eapp-accent: #0e7490;
   --eapp-accent-soft: #e9f4f7;
-  --eapp-info: #1d4ed8;
-  --eapp-info-soft: #eef3fd;
+  --eapp-info: #475467;
+  --eapp-info-soft: #f2f4f7;
 
   /* 中性色阶 */
   --eapp-bg: #f5f7fa;
@@ -101,10 +101,10 @@ page {
   --eapp-space-6: 32rpx;
 
   /* uview-plus 主题桥接 */
-  --up-primary: #1d4ed8;
-  --up-primary-dark: #173b9e;
-  --up-primary-disabled: #aabff0;
-  --up-primary-light: #eef3fd;
+  --up-primary: #c62f24;
+  --up-primary-dark: #8f2018;
+  --up-primary-disabled: #e6a9a3;
+  --up-primary-light: #fdf0ee;
   --up-success: #157f4b;
   --up-success-dark: #116a3f;
   --up-success-disabled: #9ccdb2;
@@ -129,7 +129,7 @@ page {
   --up-bg-color: #f5f7fa;
 
   /* legacy 变量兜底 */
-  --u-primary: #1d4ed8;
+  --u-primary: #c62f24;
   --u-success: #157f4b;
   --u-warning: #a75a08;
   --u-error: #b42318;
@@ -249,5 +249,119 @@ button::after {
 .u-button--mini {
   width: auto !important;
   flex-shrink: 0;
+}
+
+/* ==========================================================================
+   表单控件：营销活动 / 优惠券等弹层表单共用
+   ========================================================================== */
+.eapp-form-group {
+  margin-bottom: var(--eapp-space-6);
+}
+.eapp-form-group:last-child {
+  margin-bottom: 0;
+}
+.eapp-form-group__title {
+  display: flex;
+  align-items: center;
+  gap: var(--eapp-space-2);
+  font-size: var(--eapp-fs-sm);
+  font-weight: 700;
+  color: var(--eapp-text-secondary);
+  margin-bottom: var(--eapp-space-3);
+}
+.eapp-form-group__bar {
+  width: 6rpx;
+  height: 24rpx;
+  border-radius: 3rpx;
+  background: var(--eapp-primary);
+  flex-shrink: 0;
+}
+.eapp-form-label {
+  display: block;
+  font-size: var(--eapp-fs-sm);
+  color: var(--eapp-text-secondary);
+  margin: var(--eapp-space-3) 0 var(--eapp-space-2);
+}
+.eapp-form-label__required {
+  color: var(--eapp-danger);
+  margin-left: 4rpx;
+}
+.eapp-form-input,
+.eapp-form-picker {
+  min-height: 84rpx;
+  padding: 0 var(--eapp-space-4);
+  background: var(--eapp-surface-subtle);
+  border: 1rpx solid var(--eapp-border);
+  border-radius: var(--eapp-radius);
+  box-sizing: border-box;
+}
+.eapp-form-input {
+  display: flex;
+  align-items: center;
+}
+.eapp-form-picker {
+  display: flex;
+  align-items: center;
+  gap: var(--eapp-space-2);
+}
+.eapp-form-picker__value {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--eapp-fs-base);
+  color: var(--eapp-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.eapp-form-picker__value--empty {
+  color: var(--eapp-text-faint);
+}
+.eapp-form-row {
+  display: flex;
+  gap: var(--eapp-space-3);
+}
+.eapp-form-col {
+  flex: 1;
+  min-width: 0;
+}
+.eapp-form-segment {
+  display: flex;
+  gap: var(--eapp-space-2);
+}
+.eapp-form-segment__item {
+  flex: 1;
+  height: 76rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1rpx solid var(--eapp-border);
+  border-radius: var(--eapp-radius);
+  background: var(--eapp-surface-subtle);
+  color: var(--eapp-text-secondary);
+  font-size: var(--eapp-fs-base);
+  box-sizing: border-box;
+}
+.eapp-form-segment__item--active {
+  border-color: var(--eapp-primary);
+  background: var(--eapp-primary-soft);
+  color: var(--eapp-primary);
+  font-weight: 600;
+}
+.eapp-form-hint {
+  font-size: var(--eapp-fs-xs);
+  color: var(--eapp-text-faint);
+  line-height: 1.6;
+  margin-top: var(--eapp-space-2);
+}
+.eapp-form-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--eapp-space-2);
+  padding: var(--eapp-space-3);
+  border-radius: var(--eapp-radius);
+  background: var(--eapp-primary-soft);
+  color: var(--eapp-text-secondary);
+  font-size: var(--eapp-fs-xs);
+  line-height: 1.6;
 }
 </style>

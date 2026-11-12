@@ -114,8 +114,8 @@ export type IconName = keyof typeof ICON_PATHS
 
 /** 语义色键 → 具体色值（SVG data URI 内无法解析 CSS 变量，故使用固定色值） */
 export const ICON_COLORS = {
-  primary: '#1d4ed8',
-  'primary-deep': '#173b9e',
+  primary: '#c62f24',
+  'primary-deep': '#8f2018',
   text: '#101828',
   secondary: '#475467',
   muted: '#667085',

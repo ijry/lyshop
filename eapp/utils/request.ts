@@ -31,6 +31,14 @@ async function mockRequest<T = any>(method: string, url: string, data?: any): Pr
   const result = matchMock(String(method || 'GET').toUpperCase(), normalizeUrl(String(url || '')), data)
   await new Promise((resolve) => setTimeout(resolve, 80 + Math.random() * 120))
   if (result.matched) {
+    // mock 与真实后端保持一致：业务错误统一提示一次，并透传给调用方决定是否回滚状态
+    if (result.error) {
+      const message = String(result.error)
+      uni.showToast({ title: message, icon: 'none' })
+      const error: any = new Error(message)
+      error.__toasted = true
+      throw error
+    }
     return (result.data ?? null) as T
   }
   console.warn(`[eapp-mock] unmatched route: ${method} ${normalizeUrl(String(url || ''))}`)
@@ -63,7 +71,9 @@ export function request<T = any>(options: UniNamespace.RequestOptions): Promise<
         if (payload.code !== 0) {
           const msg = payload.msg || '请求失败'
           uni.showToast({ title: msg, icon: 'none' })
-          reject(new Error(msg))
+          const error: any = new Error(msg)
+          error.__toasted = true
+          reject(error)
           return
         }
         resolve(payload.data)

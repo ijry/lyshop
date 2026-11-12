@@ -32,8 +32,8 @@ const merchantFunctions = [
 ]
 
 const marketingAppShots = [
-  { title: '营销首页', image: 'eapp-marketing-index.png', desc: '优惠券、秒杀、拼团、砍价功能入口统一收拢' },
-  { title: '秒杀活动管理', image: 'eapp-marketing-seckill.png', desc: '活动切换、活动商品维护与状态管理移动化操作' },
+  { title: '营销中心', image: 'eapp-marketing-index.png', desc: '活动概览与秒杀、拼团、砍价、优惠券统一入口' },
+  { title: '秒杀活动管理', image: 'eapp-marketing-seckill.png', desc: '活动状态筛选、周期进度与商品维护移动化操作' },
 ]
 
 const marketingFunctions = [

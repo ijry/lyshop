@@ -12,6 +12,8 @@ const props = defineProps<{
 const KNOWN = new Set([
   'inbox', 'order', 'package', 'product', 'search', 'document', 'chat', 'chart',
   'list', 'star', 'coupon', 'users', 'warehouse', 'warning', 'info',
+  'flash', 'money', 'target', 'tag', 'clock', 'calendar', 'filter', 'layers',
+  'pie', 'trend-up', 'edit', 'help', 'check-circle', 'close-circle', 'wallet',
 ])
 
 const iconName = computed(() => (props.icon && KNOWN.has(props.icon) ? props.icon : 'inbox'))

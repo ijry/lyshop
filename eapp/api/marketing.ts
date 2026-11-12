@@ -28,6 +28,9 @@ export const createActivity = (kind: MarketingKind, payload: any) =>
 export const updateActivity = (kind: MarketingKind, activityID: number | string, payload: any) =>
   put<any>(`${activityPrefix(kind)}/activities/${activityID}`, payload)
 
+export const deleteActivity = (kind: MarketingKind, activityID: number | string) =>
+  del<any>(`${activityPrefix(kind)}/activities/${activityID}`)
+
 export const getActivityProducts = (kind: MarketingKind, params?: any) =>
   get<any>(`${activityPrefix(kind)}/products`, params)
 

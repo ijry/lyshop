@@ -414,8 +414,8 @@ onLoad(async (opts) => {
 .tpl-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14rpx; }
 .tpl-label { font-size: 24rpx; color: var(--eapp-text-muted); }
 .tpl-actions { display: flex; align-items: center; gap: 8rpx; }
-.tpl-tag { display: flex; align-items: center; gap: 8rpx; background: color-mix(in srgb, var(--eapp-primary, #3b82f6) 12%, transparent); border: 2rpx solid var(--eapp-primary, #3b82f6); border-radius: 999rpx; padding: 4rpx 16rpx; }
-.tpl-tag-name { font-size: 24rpx; color: var(--eapp-primary, #3b82f6); font-weight: 600; }
+.tpl-tag { display: flex; align-items: center; gap: 8rpx; background: color-mix(in srgb, var(--eapp-primary, #c62f24) 12%, transparent); border: 2rpx solid var(--eapp-primary, #c62f24); border-radius: 999rpx; padding: 4rpx 16rpx; }
+.tpl-tag-name { font-size: 24rpx; color: var(--eapp-primary, #c62f24); font-weight: 600; }
 .tpl-tag-x { font-size: 22rpx; color: var(--eapp-text-muted); padding-left: 4rpx; }
 .popup-body { padding: 24rpx; box-sizing: border-box; }
 .popup-title { font-size: 30rpx; font-weight: 700; margin-bottom: 14rpx; }

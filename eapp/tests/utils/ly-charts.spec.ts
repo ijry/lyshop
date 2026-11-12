@@ -14,7 +14,7 @@ import {
 
 describe('ly-charts utils', () => {
   it('brand palette starts with the merchant primary color', () => {
-    expect(EAPP_CHART_COLORS[0]).toBe('#1D4ED8')
+    expect(EAPP_CHART_COLORS[0]).toBe('#C62F24')
     expect(EAPP_CHART_COLORS.length).toBeGreaterThanOrEqual(4)
   })
 

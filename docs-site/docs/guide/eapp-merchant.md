@@ -9,19 +9,22 @@
 ## 顶层结构
 
 - **4 个底部 Tab**：工作台 / 订单 / 客服 / 我的，各带常态与选中态线性 PNG 图标
-- **自定义导航**：登录、工作台、订单、客服、我的、商品列表使用 `navigationStyle: custom`，由 `PageHeader` 统一渲染标题、辅助文案与右侧图标按钮
+- **自定义导航**：登录、工作台、订单、客服、我的、商品列表以及营销域 6 个页面（营销中心 / 秒杀 / 拼团 / 砍价 / 优惠券 / 活动详情）使用 `navigationStyle: custom`，由 `PageHeader` 统一渲染标题、辅助文案与右侧图标按钮
 - **图表能力**：基于 `ly-charts (qiun-data-charts)` 跨端集成，业务方用 `ChartPanel + AreaChart / RingChart / BarChart` 统一调用
 - **商家高阶组件库**：`components/biz/` 提供 PageHeader / SectionHeader / EntryList / MetricCard / ActionGrid / TodoCenter / AnnouncementBar / FilterDrawer / BatchBar / BatchResultPopup / Timeline / EmptyState / OrderCard / ProductCard / AfterSaleCard / SkuMatrixEditor / CategoryTreePicker / RichTextEditor / ShipPopup / RepricingPopup / RemarkPopup
 - **通用组件**：`components/common/` 提供 AppIcon / SkeletonCard / StatusTag / StatCard / TodoCard
-- **composables**：`useDashboard / useOrderList / useProductList / useBatchSelection / useFilter / useRequest`
+- **composables**：`useDashboard / useOrderList / useProductList / useBatchSelection / useFilter / useRequest / useCouponList / useActivityCenter`
+- **营销组件**：`components/marketing/` 提供 `FormSheet / ActivityListPage / ActivityCard / ActivityFormPopup / ActivityProductCard / ActivityProductFormPopup / CouponForm / CouponSendPopup`
 
 ## 视觉与交互规范
 
-界面采用沉稳商务蓝 + 中性石板灰，所有颜色、圆角、阴影、字阶、间距都从 `App.vue` 的 CSS 变量取值，页面与组件不硬编码颜色。
+界面采用沉稳品牌红 + 中性石板灰，所有颜色、圆角、阴影、字阶、间距都从 `App.vue` 的 CSS 变量取值，页面与组件不硬编码颜色。
+
+商家端主色为品牌红 `#c62f24`（深色态 `#8f2018`、浅底 `#fdf0ee`、描边 `#f4cbc5`），用于主操作、品牌区、选中态与图标强调；`uview-plus` 的 `--up-*` / `--u-*`、tabBar `selectedColor`、tabBar 选中态 PNG、图表首色与 `ICON_COLORS.primary` 全部同步该红色。信息类提示改用中性石板灰，避免与红色危险操作混淆；危险语义色仍为深红 `#b42318`，以「淡底描边按钮」与「实心主按钮」区分层级。
 
 | 令牌组 | 变量 | 用途 |
 |--------|------|------|
-| 品牌 | `--eapp-primary` / `--eapp-primary-deep` / `--eapp-primary-soft` | 主操作、品牌区、图标底 |
+| 品牌 | `--eapp-primary` (#c62f24) / `--eapp-primary-deep` (#8f2018) / `--eapp-primary-soft` (#fdf0ee) | 主操作、品牌区、图标底 |
 | 语义 | `--eapp-success` / `--eapp-warning` / `--eapp-danger` / `--eapp-accent` | 状态、趋势、预警（低饱和） |
 | 中性 | `--eapp-bg` / `--eapp-card` / `--eapp-text*` / `--eapp-border*` | 背景、表面、文字、描边 |
 | 形状 | `--eapp-radius*` / `--eapp-shadow*` / `--eapp-space-*` | 圆角、阴影、间距 |
@@ -29,11 +32,12 @@
 - **uview-plus 桥接**：`--up-*` / `--u-*` 变量在 `App.vue` 统一定义，`up-*` 组件自动继承同一主题；`uni.scss` 只引入 `uview-plus/theme.scss`，不重复声明颜色。
 - **图标系统**：`utils/icons.ts` 维护一套 24×24、1.7 描边的线性图标，运行时生成 base64 SVG data URI，由 `AppIcon.vue` 以 `<image>` 渲染，兼容 H5 / 微信小程序 / App；不使用 emoji，也不使用内联 `<svg>` 标签。
 - **统一组件**：卡片用 1rpx 描边 + 极淡阴影；状态用带圆点的低饱和标签；区块标题用 `SectionHeader`（左侧主色竖条 + 可选「查看全部」）；入口列表用 `EntryList`；加载态用 `SkeletonCard`；点击反馈统一 `hover-class="eapp-hover"`。
-- **图表色板**：`utils/ly-charts.ts` 的 `EAPP_CHART_COLORS` 与主题同源（品牌蓝 → 青 → 绿 → 琥珀 → 红 → 石板灰），坐标轴与网格线使用中性灰，避免高饱和彩虹配色。
+- **图表色板**：`utils/ly-charts.ts` 的 `EAPP_CHART_COLORS` 与主题同源（品牌红 → 青 → 绿 → 琥珀 → 深红 → 石板灰），坐标轴与网格线使用中性灰，避免高饱和彩虹配色。
   > 实现约束：本项目内置的 `uni_modules/ly-charts` 是 **26.1.4 旧副本**，其 line / bar / pie 组件**不读取** ECharts 顶层的 `option.color`，只按 `series.color`、`series.itemStyle.color`、饼图数据项的 `color` / `itemStyle.color` 取色，未指定时会回退到组件内置的 ECharts 高饱和默认色板。因此所有 option 构造函数除了设置顶层 `color`，还必须通过 `paletteColor(index)` 给每条 series、每个扇区显式着色，否则截图里仍会出现淡紫面积图和彩虹环形图。新增图表类型时同样处理。
   >
   > 上游组件库 `D:\Repos\xyito\open\lyCharts` 已修复该缺陷（Vue / uvue / uni-app x 全端支持顶层 `option.color`，取色优先级为显式色 → `itemStyle.color` → `option.color[index]` → 内置色板）。待本项目把 `uni_modules/ly-charts` 升级到含该修复的版本后，可保留顶层 `color` 并移除逐项显式着色；在升级之前不要删除 `paletteColor` 逻辑，也不要直接改项目内的第三方组件副本。
 - **数字排版**：金额、指标、编号使用 `.eapp-num` 等宽数字对齐；`MetricCard` / `StatCard` 按数值字符数自适应字号，避免 393px 手机三列布局下长金额（如 `¥28960.50`）被省略号截断。
+- **表单弹层**：营销与优惠券表单统一用 `FormSheet` 外壳 + `App.vue` 的 `.eapp-form-*` 全局类；长表单内容区用 `scroll-view` 并显式给 `bodyHeight`，不在 `view` 上依赖 `overflow-y: auto`（小程序端不生效）。标题、标签、必填标记、分段控件、picker 选择行、提示条的样式与间距全部由全局类提供。
 
 ## 构建与静态资源
 
@@ -41,6 +45,18 @@
 - `scripts/normalize-theme.cjs` 用于把页面里遗留的硬编码颜色批量收敛到设计令牌，新增页面后可复跑。
 - `vite.config.ts` 的 `copyStaticAssets` 插件在 H5 构建时把 `static/` 复制到产物根目录：uni 的 Vite 构建默认不复制该目录，而 tabBar 的 `iconPath` 在 H5 端会解析为 `/static/...` 绝对路径，缺少这一步会导致图标 404。小程序与 App 端由 uni 自行处理静态资源。
 - 部署 H5 时按 `manifest.json` 的 `h5.router.base`（默认 `/eapp/`）配置静态站点与 history 回退。
+
+### 官网截图维护
+
+官网首页的商家端手机截图位于 `docs-site/docs/public/showcase/eapp-*.png`，共 5 张（工作台 / 订单 / 商品 / 营销中心 / 秒杀活动），由 `docs-site/scripts/capture-showcase.js` 生成。改动商家端视觉后按以下顺序更新：
+
+1. 在 `docs-site/` 执行 `npm run eapp-demo:build`，把最新 eapp 源码构建到 `docs/public/eapp-demo/`（hash 路由 + `base="./"`）。
+2. 执行 `npm run showcase:capture -- --only=eapp-`，只重截商家端 5 张图，避免覆盖买家端 H5 与 PC 演示截图。
+
+- 视口固定 `390×844`、`deviceScaleFactor=2`，输出 `780×1688`，与首页 `.phone-frame img` 的 `aspect-ratio: 390/844` 对齐；不要改成桌面视口。
+- 脚本自动注入商家端 mock 登录态（`eapp_admin_token`），避免首帧闪登录页；每张图带 `expect` 文案断言，页面未渲染出预期内容时直接报错而不是写入白屏图。
+- uni-app H5 demo 存在轮询请求，因此等待策略是 `domcontentloaded` + 页面文本，不能用 `networkidle`。
+- 浏览器优先使用 Playwright 自带 Chromium；本机未执行 `npx playwright install` 时自动回退系统 Chrome / Edge。也可通过 `LYSHOP_SHOWCASE_PORT` 改本地服务端口。
 
 ## 接口与配置
 
@@ -108,12 +124,51 @@
 
 ## 营销
 
-营销中心按「活动与优惠 / 会员与运营 / 内容与工具」三组组织 10 个管理入口，统一使用 `EntryList`：
+营销域采用「营销中心 → 活动列表 → 活动详情」三层结构；营销域 6 个页面全部使用 `navigationStyle: custom` + `PageHeader`，工作台「营销中心」区块的「进入营销中心」可直达中心页。
+
+### 统一元数据与数据层
+
+- `utils/marketing.ts`：`ACTIVITY_META`（秒杀 / 拼团 / 砍价的标题、图标、路由、价格语义）、`MARKETING_ROUTES`（10 个营销入口，工作台与营销中心共用）、`activityState` / `activityProgress` / `activityTimeRange` / `formatMoney` / `parseSkuLabel`。
+- 活动状态由「`status` + 当前时间」共同推导：`已停用 / 未开始 / 进行中 / 已结束 / 待排期`，前端不依赖后端下发状态文案。
+- `composables/useActivityCenter.ts` 是活动列表与活动商品的数据层，统一处理请求、错误提示与防重复提交；`api/marketing.ts` 提供 `getActivities / createActivity / updateActivity / deleteActivity / getActivityProducts / upsertActivityProducts`，按 kind 映射到 `/seckill`、`/group-buy`、`/bargain` 前缀。
+- `ACTIVITY_KINDS` 是唯一的活动类型清单；新增活动类型只需扩元数据，不再维护多份路由表。
+
+### 营销中心 `/pages/marketing/index`
+
+- 深蓝概览卡：进行中活动数、待开始、优惠券数、活动总数，由三个活动接口与优惠券接口并发聚合。
+- 「活动管理」2×2 宫格：秒杀 / 拼团 / 砍价 / 优惠券；活动卡显示「进行中 / 总数」，优惠券卡显示可用张数。
+- 「全部功能 / 会员与运营 / 内容与工具」三组 `EntryList`，与工作台快捷入口共用 `MARKETING_ROUTES`。
+
+### 活动列表（秒杀 / 拼团 / 砍价）
+
+`pages/marketing/seckill.vue`、`group-buy.vue`、`bargain.vue` 是薄壳，统一渲染 `components/marketing/ActivityListPage.vue`：
+
+- 顶部概览（全部 / 进行中 / 未开始 / 已停用）、名称搜索、状态筛选 chips（全部 / 进行中 / 未开始 / 已结束 / 已停用）。
+- `ActivityCard` 展示状态标签、活动周期、周期进度条、活动商品数与「编辑 / 启停 / 删除」操作；删除有二次确认。
+- `ActivityFormPopup` 基于 `FormSheet`，按「基础信息 / 活动周期」分组，校验名称、起止时间与「结束晚于开始」；同类型活动时间段冲突由 mock / 后端返回业务错误并统一提示一次。
+- 点击卡片进入详情页；加载态用 `SkeletonCard`，空态用 `EmptyState`。
+
+### 活动详情 `/pages/marketing/activity-detail`
+
+- 通过 `?kind=&id=&name=` 传参；概要卡展示状态、周期进度、商品数、累计已售与预估销售额。
+- `ActivityProductCard` 展示封面、SKU、活动价 / 原价（砍价展示起砍价 / 底价）、折扣、限购 / 库存 / 已售。
+- `ActivityProductFormPopup` 按 kind 切换价格字段，选择商品后联动加载 SKU，校验重复 SKU、价格与库存合法性。
+- 后端 `PUT /activities/:id/products` 是整表替换，因此提交时回传 `product_title / product_cover / sku_price / sku_stock / sku_attrs / sold_qty` 冗余字段；mock 侧也会按 `product_id + sku_id` 从旧行继承，避免卡片退化成「商品 #ID」。
+
+### 优惠券 `/pages/marketing/coupon`
+
+- 概览统计、名称搜索、启用状态筛选；券卡片用「面额块 + 信息区 + 标签区 + 操作区」结构。
+- `CouponForm` 按「基础信息 / 优惠规则 / 发放设置」分组，使用分段控件与统一 picker，含完整校验；`CouponSendPopup` 用步进器与快捷数量发放。
+- 所有弹层复用 `FormSheet`（底部抽屉 + `scroll-view` 滚动区 + 取消 / 提交），解决小程序端 `view` 的 `overflow` 不生效、长表单无法滚动的问题。
+
+### 表单组件库
+
+`components/marketing/` 提供 `FormSheet / ActivityCard / ActivityFormPopup / ActivityProductCard / ActivityProductFormPopup / ActivityListPage`；`App.vue` 提供全局 `.eapp-form-*` 类（分组标题、标签、输入框、选择行、分段控件、提示条），营销与优惠券表单共用，避免每个弹层重复定义样式。
+
+### 其他营销能力
 
 - **优惠券**：全字段 CRUD + 叠加规则（互斥 / 同类可叠 / 跨类可叠）+ 定向发券（全部用户 / 会员等级 / 新用户）
-- **秒杀**：活动 + 活动商品管理
-- **拼团**：活动 + 活动商品管理
-- **砍价**：活动 + 活动商品管理（起砍价/底价模式）
+- **秒杀 / 拼团 / 砍价**：见上方活动列表与活动详情
 - **VIP 会员**：套餐 / 等级 / 领券规则 / SKU 专属价 4 页 CRUD
 - **店铺装修**：简化版可视化编辑器，8 种组件类型，卡片列表排序 + 属性编辑弹窗 + 多副本管理
 - **规格模板**：预定义属性组 + 应用分类，可在商品编辑中一键应用生成 SKU 笛卡尔积
