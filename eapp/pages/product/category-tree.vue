@@ -79,7 +79,7 @@ onShow(load)
 <style scoped>
 .page { min-height: 100vh; padding: 20rpx; background: var(--eapp-bg); }
 .add-top { margin-bottom: 14rpx; }
-.node-block { background: var(--eapp-card); border: 1px solid var(--eapp-border); border-radius: 14rpx; padding: 6rpx 10rpx; margin-bottom: 8rpx; }
+.node-block { background: var(--eapp-card); border: 1rpx solid var(--eapp-border); border-radius: 14rpx; padding: 6rpx 10rpx; margin-bottom: 8rpx; }
 .node { display: flex; align-items: center; padding: 12rpx 8rpx; gap: 10rpx; }
 .node.lvl2 { padding-left: 30rpx; }
 .node.lvl3 { padding-left: 60rpx; }

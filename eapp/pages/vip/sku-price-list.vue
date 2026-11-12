@@ -143,20 +143,20 @@ onShow(async () => {
 .top-bar { display: flex; align-items: center; justify-content: space-between; }
 .title { font-size: 32rpx; font-weight: 700; }
 .filter-row { display: flex; gap: 12rpx; }
-.picker-sm { min-height: 60rpx; border: 1px solid var(--eapp-border); border-radius: 12rpx; padding: 0 16rpx; display: flex; align-items: center; font-size: 24rpx; color: var(--eapp-text); }
-.card { background: #fff; border: 1px solid var(--eapp-border); border-radius: 20rpx; padding: 20rpx; }
+.picker-sm { min-height: 60rpx; border: 1rpx solid var(--eapp-border); border-radius: 12rpx; padding: 0 16rpx; display: flex; align-items: center; font-size: 24rpx; color: var(--eapp-text); }
+.card { background: #fff; border: 1rpx solid var(--eapp-border); border-radius: var(--eapp-radius-lg); padding: 20rpx; }
 .row { display: flex; align-items: center; justify-content: space-between; }
 .name { font-size: 28rpx; font-weight: 600; }
 .badge { font-size: 22rpx; padding: 4rpx 14rpx; border-radius: 999rpx; }
-.badge.on { background: #dcfce7; color: #16a34a; }
-.badge.off { background: #fee2e2; color: #dc2626; }
+.badge.on { background: var(--eapp-success-soft); color: var(--eapp-success); }
+.badge.off { background: var(--eapp-danger-soft); color: var(--eapp-danger); }
 .desc { margin-top: 8rpx; color: var(--eapp-text-muted); font-size: 24rpx; }
 .actions { margin-top: 12rpx; display: flex; gap: 10rpx; justify-content: flex-end; }
 .empty { text-align: center; color: var(--eapp-text-muted); padding: 80rpx 0; }
 .loading { text-align: center; color: var(--eapp-text-muted); padding: 20rpx 0; }
 .popup-body { padding: 24rpx; box-sizing: border-box; }
 .popup-title { font-size: 30rpx; font-weight: 700; margin-bottom: 14rpx; }
-.picker { min-height: 76rpx; border: 1px solid var(--eapp-border); border-radius: 12rpx; padding: 0 20rpx; display: flex; align-items: center; color: var(--eapp-text); }
+.picker { min-height: 76rpx; border: 1rpx solid var(--eapp-border); border-radius: 12rpx; padding: 0 20rpx; display: flex; align-items: center; color: var(--eapp-text); }
 .mt { margin-top: 12rpx; }
 .mt-lg { margin-top: 16rpx; }
 </style>

@@ -24,9 +24,9 @@ onLoad(() => load())
 
     <view class="body">
       <view class="metric-row">
-        <MetricCard :title="t('analytics.totalCustomers')" :value="String(summary.total_customers || 0)" color="#2563eb" />
-        <MetricCard :title="t('analytics.repurchaseRate')" :value="`${Number(summary.repurchase_rate || 0).toFixed(1)}%`" color="#16a34a" />
-        <MetricCard :title="t('analytics.avgCustomerValue')" :value="`¥${Number(summary.avg_customer_value || 0).toFixed(0)}`" color="#f59e0b" />
+        <MetricCard :title="t('analytics.totalCustomers')" :value="String(summary.total_customers || 0)" color="var(--eapp-primary)" />
+        <MetricCard :title="t('analytics.repurchaseRate')" :value="`${Number(summary.repurchase_rate || 0).toFixed(1)}%`" color="var(--eapp-success)" />
+        <MetricCard :title="t('analytics.avgCustomerValue')" :value="`¥${Number(summary.avg_customer_value || 0).toFixed(0)}`" color="var(--eapp-warning)" />
       </view>
 
       <RingChart :title="t('analytics.newVsReturning')" :loading="loading" :data="data?.new_vs_returning" />

@@ -48,7 +48,7 @@ function save() {
       <template v-if="component.type === 'notice'">
         <up-input v-model="form.text" placeholder="公告内容" />
         <view class="mt" />
-        <up-input v-model="form.color" placeholder="颜色 #f59e0b" />
+        <up-input v-model="form.color" placeholder="颜色 var(--eapp-warning)" />
       </template>
 
       <!-- image_ad -->

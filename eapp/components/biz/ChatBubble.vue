@@ -68,8 +68,8 @@ function openFile(url: string) {
 .bubble-right { align-self: flex-end; align-items: flex-end; }
 .sender { font-size: 20rpx; color: var(--eapp-text-muted); margin-bottom: 4rpx; }
 .bubble { padding: 16rpx 20rpx; border-radius: 16rpx; max-width: 100%; word-break: break-all; }
-.bubble-user { background: #f1f5f9; color: #1e293b; border-top-left-radius: 4rpx; }
-.bubble-staff { background: #dbeafe; color: #1e40af; border-top-right-radius: 4rpx; }
+.bubble-user { background: var(--eapp-surface-subtle); color: var(--eapp-text); border-top-left-radius: 4rpx; }
+.bubble-staff { background: var(--eapp-primary-soft); color: #1e40af; border-top-right-radius: 4rpx; }
 .bubble-text { font-size: 26rpx; line-height: 1.5; }
 .chat-image { max-width: 360rpx; border-radius: 12rpx; display: block; }
 .file-card { min-width: 240rpx; font-size: 24rpx; line-height: 1.4; }

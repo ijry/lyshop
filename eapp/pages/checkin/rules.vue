@@ -65,10 +65,10 @@ onShow(() => loadRules())
 .page { min-height: 100vh; background: var(--eapp-bg); padding: 20rpx; box-sizing: border-box; display: grid; gap: 14rpx; align-content: start; }
 .top-bar { display: flex; align-items: center; justify-content: space-between; }
 .title { font-size: 32rpx; font-weight: 700; }
-.card { background: #fff; border: 1px solid var(--eapp-border); border-radius: 20rpx; padding: 20rpx; }
+.card { background: #fff; border: 1rpx solid var(--eapp-border); border-radius: var(--eapp-radius-lg); padding: 20rpx; }
 .form-row { display: flex; align-items: flex-end; gap: 12rpx; }
 .form-item { flex: 1; }
-.label { font-size: 22rpx; color: #475569; margin-bottom: 4rpx; display: block; }
+.label { font-size: 22rpx; color: var(--eapp-text-secondary); margin-bottom: 4rpx; display: block; }
 .save-bar { margin-top: 10rpx; }
 .empty { text-align: center; color: var(--eapp-text-muted); padding: 80rpx 0; }
 .loading { text-align: center; color: var(--eapp-text-muted); padding: 20rpx 0; }

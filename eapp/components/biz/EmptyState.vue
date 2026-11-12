@@ -1,14 +1,27 @@
 <script setup lang="ts">
-defineProps<{
+import { computed } from 'vue'
+import AppIcon from '@/components/common/AppIcon.vue'
+
+const props = defineProps<{
   title?: string
   desc?: string
+  /** 线性图标名；传入历史 emoji 时统一降级为 inbox */
   icon?: string
 }>()
+
+const KNOWN = new Set([
+  'inbox', 'order', 'package', 'product', 'search', 'document', 'chat', 'chart',
+  'list', 'star', 'coupon', 'users', 'warehouse', 'warning', 'info',
+])
+
+const iconName = computed(() => (props.icon && KNOWN.has(props.icon) ? props.icon : 'inbox'))
 </script>
 
 <template>
   <view class="empty-state">
-    <text v-if="icon" class="empty-state__icon">{{ icon }}</text>
+    <view class="empty-state__illustration">
+      <AppIcon :name="iconName" :size="64" color="faint" :stroke-width="1.4" />
+    </view>
     <text v-if="title" class="empty-state__title">{{ title }}</text>
     <text v-if="desc" class="empty-state__desc">{{ desc }}</text>
     <view v-if="$slots.default" class="empty-state__action">
@@ -23,28 +36,38 @@ defineProps<{
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 80rpx 40rpx;
-  gap: 16rpx;
+  padding: 88rpx 40rpx;
+  gap: 12rpx;
+  box-sizing: border-box;
 }
 
-.empty-state__icon {
-  font-size: 72rpx;
-  margin-bottom: 8rpx;
+.empty-state__illustration {
+  width: 128rpx;
+  height: 128rpx;
+  border-radius: 50%;
+  background: var(--eapp-surface-subtle);
+  border: 1rpx solid var(--eapp-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12rpx;
+  box-sizing: border-box;
 }
 
 .empty-state__title {
-  font-size: 30rpx;
+  font-size: var(--eapp-fs-md);
   font-weight: 600;
-  color: var(--eapp-text);
+  color: var(--eapp-text-secondary);
 }
 
 .empty-state__desc {
-  font-size: 24rpx;
-  color: var(--eapp-text-muted);
+  font-size: var(--eapp-fs-sm);
+  color: var(--eapp-text-faint);
   text-align: center;
+  line-height: 1.6;
 }
 
 .empty-state__action {
-  margin-top: 24rpx;
+  margin-top: 20rpx;
 }
 </style>

@@ -3,6 +3,8 @@ import { onShow } from '@dcloudio/uni-app'
 import { ref } from 'vue'
 import { getImSessions, getStaffStatus, setStaffOnline, acceptSession, closeSession, transferSession } from '@/api/im'
 import EmptyState from '@/components/biz/EmptyState.vue'
+import PageHeader from '@/components/biz/PageHeader.vue'
+import AppIcon from '@/components/common/AppIcon.vue'
 
 const list = ref<any[]>([])
 const loading = ref(false)
@@ -141,24 +143,31 @@ onShow(() => {
 
 <template>
   <view class="page">
-    <view class="header">
-      <view class="header-left">
-        <text class="header-title">客服会话</text>
-        <text class="header-count">{{ list.length }} 个</text>
-      </view>
-      <view class="header-right">
-        <view v-if="staffOnline" class="load-badge">{{ staffStatus.current_load }}/{{ staffStatus.max_load }}</view>
-        <view :class="['online-toggle', staffOnline ? 'online' : 'offline']" @click="toggleOnline">
-          <view class="toggle-dot" />
-          <text class="toggle-text">{{ staffOnline ? '在线' : '离线' }}</text>
+    <PageHeader title="客服会话" eyebrow="CUSTOMER SERVICE" :subtitle="`${list.length} 个会话`">
+      <template #right>
+        <view class="eapp-icon-btn" hover-class="eapp-hover" @click="toggleOnline">
+          <AppIcon :name="staffOnline ? 'check-circle' : 'info'" :size="30" :color="staffOnline ? 'success' : 'muted'" />
         </view>
+      </template>
+    </PageHeader>
+
+    <view class="status-bar">
+      <view class="status-bar__left">
+        <view :class="['status-dot', staffOnline && 'status-dot--on']" />
+        <text class="status-bar__text">{{ staffOnline ? '接待中' : '已离线' }}</text>
+        <text v-if="staffOnline" class="status-bar__load eapp-num">
+          当前接待 {{ staffStatus.current_load }}/{{ staffStatus.max_load }}
+        </text>
+      </view>
+      <view class="status-bar__toggle" hover-class="eapp-hover" @click="toggleOnline">
+        <text class="status-bar__toggle-text">{{ staffOnline ? '切换为离线' : '上线接客' }}</text>
       </view>
     </view>
 
     <EmptyState v-if="!loading && !list.length" title="暂无会话" desc="等待买家发起咨询" />
 
     <view class="list">
-      <view v-for="item in list" :key="item.id" class="session" @click="goChat(item.id)">
+      <view v-for="item in list" :key="item.id" class="session" hover-class="eapp-hover" :hover-stay-time="80" @click="goChat(item.id)">
         <view class="avatar-wrap">
           <image v-if="item.user_avatar" :src="item.user_avatar" mode="aspectFill" class="avatar" />
           <view v-else class="avatar avatar-placeholder">
@@ -219,30 +228,29 @@ onShow(() => {
 <style scoped>
 .page { min-height: 100vh; background: var(--eapp-bg); }
 
-.header { padding: 24rpx 28rpx 16rpx; display: flex; align-items: center; justify-content: space-between; }
-.header-left { display: flex; align-items: baseline; gap: 12rpx; }
-.header-title { font-size: 34rpx; font-weight: 700; color: var(--eapp-text); }
-.header-count { font-size: 22rpx; color: var(--eapp-text-muted); }
-.header-right { display: flex; align-items: center; gap: 12rpx; }
+.status-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 16rpx;
+  padding: 20rpx 28rpx; margin-bottom: 8rpx;
+  background: var(--eapp-card); border-bottom: 1rpx solid var(--eapp-border);
+}
+.status-bar__left { display: flex; align-items: center; gap: 10rpx; min-width: 0; }
+.status-dot { width: 14rpx; height: 14rpx; border-radius: 50%; background: var(--eapp-border-strong); flex-shrink: 0; }
+.status-dot--on { background: var(--eapp-success); }
+.status-bar__text { font-size: 24rpx; font-weight: 600; color: var(--eapp-text-secondary); flex-shrink: 0; }
+.status-bar__load { font-size: 22rpx; color: var(--eapp-text-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.status-bar__toggle { flex-shrink: 0; padding: 8rpx 18rpx; border: 1rpx solid var(--eapp-primary-border); border-radius: var(--eapp-radius-sm); background: var(--eapp-primary-soft); }
+.status-bar__toggle-text { font-size: 22rpx; font-weight: 600; color: var(--eapp-primary); }
 
-.load-badge { font-size: 22rpx; color: var(--eapp-success); font-weight: 600; padding: 4rpx 12rpx; background: var(--eapp-success-soft); border-radius: 999rpx; }
-
-.online-toggle { display: flex; align-items: center; gap: 8rpx; padding: 8rpx 16rpx; border-radius: 999rpx; transition: all 0.3s; }
-.online-toggle.online { background: var(--eapp-success); }
-.online-toggle.offline { background: #cbd5e1; }
-.toggle-dot { width: 12rpx; height: 12rpx; border-radius: 50%; background: rgba(255,255,255,0.9); }
-.toggle-text { font-size: 22rpx; color: #fff; font-weight: 600; }
-
-.list { padding: 0 20rpx 20rpx; display: grid; gap: 2rpx; }
+.list { padding: 20rpx; padding-bottom: calc(env(safe-area-inset-bottom) + 40rpx); display: grid; gap: 16rpx; }
 
 .session {
   display: flex; align-items: center; gap: 20rpx;
   background: var(--eapp-card); padding: 24rpx 20rpx;
-  border-bottom: 1rpx solid var(--eapp-border);
+  border: 1rpx solid var(--eapp-border);
+  border-radius: var(--eapp-radius-lg);
+  box-shadow: var(--eapp-shadow);
+  box-sizing: border-box;
 }
-.session:first-child { border-radius: 20rpx 20rpx 0 0; }
-.session:last-child { border-radius: 0 0 20rpx 20rpx; border-bottom: none; }
-.session:only-child { border-radius: 20rpx; }
 
 .avatar-wrap { position: relative; flex-shrink: 0; }
 .avatar { width: 88rpx; height: 88rpx; border-radius: 50%; background: var(--eapp-bg); }
@@ -253,7 +261,7 @@ onShow(() => {
 .session-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8rpx; }
 .nickname-row { display: flex; align-items: center; gap: 8rpx; }
 .nickname { font-size: 28rpx; font-weight: 600; color: var(--eapp-text); }
-.queue-badge { font-size: 20rpx; color: #d97706; background: #fef3c7; padding: 2rpx 10rpx; border-radius: 999rpx; }
+.queue-badge { font-size: 20rpx; color: #d97706; background: var(--eapp-warning-soft); padding: 2rpx 10rpx; border-radius: 999rpx; }
 .time { font-size: 22rpx; color: var(--eapp-text-faint); flex-shrink: 0; }
 .session-bottom { display: flex; align-items: center; justify-content: space-between; gap: 12rpx; }
 .last-msg { font-size: 24rpx; color: var(--eapp-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }

@@ -15,6 +15,6 @@ defineEmits<{ (e: 'requestEdit'): void }>()
 
 <style scoped>
 .rt { display: grid; gap: 12rpx; }
-.preview { background: var(--eapp-bg); border: 1px solid var(--eapp-border); border-radius: 14rpx; padding: 14rpx; min-height: 160rpx; }
+.preview { background: var(--eapp-bg); border: 1rpx solid var(--eapp-border); border-radius: 14rpx; padding: 14rpx; min-height: 160rpx; }
 .empty { color: var(--eapp-text-muted); font-size: 24rpx; text-align: center; padding: 30rpx 0; }
 </style>

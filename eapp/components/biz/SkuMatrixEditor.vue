@@ -236,7 +236,7 @@ function onCellChange() { emit('update', matrix.value) }
 .chip-on { border-color: var(--eapp-primary, #3b82f6); color: var(--eapp-primary, #3b82f6); background: color-mix(in srgb, var(--eapp-primary, #3b82f6) 10%, transparent); }
 .bulk { display: flex; gap: 8rpx; align-items: center; flex-wrap: wrap; }
 .bulk-in { width: 200rpx; }
-.matrix { background: var(--eapp-card); border: 1px solid var(--eapp-border); border-radius: 16rpx; padding: 10rpx; }
+.matrix { background: var(--eapp-card); border: 1rpx solid var(--eapp-border); border-radius: 16rpx; padding: 10rpx; }
 .row { display: flex; gap: 8rpx; align-items: center; padding: 8rpx 4rpx; border-bottom: 1px dashed var(--eapp-border); }
 .row.head { font-weight: 600; color: var(--eapp-text-muted); }
 .cell { width: 160rpx; }

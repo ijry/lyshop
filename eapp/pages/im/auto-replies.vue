@@ -125,12 +125,12 @@ onShow(loadData)
 .page { min-height: 100vh; background: var(--eapp-bg); padding: 20rpx; box-sizing: border-box; display: grid; gap: 14rpx; align-content: start; }
 .top-bar { display: flex; align-items: center; justify-content: space-between; }
 .title { font-size: 32rpx; font-weight: 700; }
-.card { background: #fff; border: 1px solid var(--eapp-border); border-radius: 20rpx; padding: 20rpx; }
+.card { background: #fff; border: 1rpx solid var(--eapp-border); border-radius: var(--eapp-radius-lg); padding: 20rpx; }
 .row { display: flex; align-items: center; justify-content: space-between; }
 .name { font-size: 28rpx; font-weight: 600; }
 .badge { font-size: 22rpx; padding: 4rpx 14rpx; border-radius: 999rpx; }
-.badge.on { background: #dcfce7; color: #16a34a; }
-.badge.off { background: #fee2e2; color: #dc2626; }
+.badge.on { background: var(--eapp-success-soft); color: var(--eapp-success); }
+.badge.off { background: var(--eapp-danger-soft); color: var(--eapp-danger); }
 .desc { margin-top: 8rpx; color: var(--eapp-text-muted); font-size: 24rpx; }
 .reply-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .actions { margin-top: 12rpx; display: flex; gap: 10rpx; justify-content: flex-end; }
@@ -140,8 +140,8 @@ onShow(loadData)
 .popup-title { font-size: 30rpx; font-weight: 700; margin-bottom: 14rpx; }
 .label { font-size: 26rpx; font-weight: 600; margin-bottom: 8rpx; }
 .type-row { display: flex; gap: 10rpx; }
-.type-tag { padding: 8rpx 20rpx; font-size: 24rpx; border-radius: 999rpx; background: #f1f5f9; border: 1px solid var(--eapp-border); }
-.type-tag.active { background: var(--eapp-primary, #2563eb); color: #fff; border-color: var(--eapp-primary, #2563eb); }
+.type-tag { padding: 8rpx 20rpx; font-size: 24rpx; border-radius: 999rpx; background: var(--eapp-surface-subtle); border: 1rpx solid var(--eapp-border); }
+.type-tag.active { background: var(--eapp-primary, var(--eapp-primary)); color: #fff; border-color: var(--eapp-primary, var(--eapp-primary)); }
 .mt { margin-top: 12rpx; }
 .mt-lg { margin-top: 16rpx; }
 </style>

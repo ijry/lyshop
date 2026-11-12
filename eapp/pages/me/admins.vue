@@ -29,7 +29,7 @@ onShow(loadData)
 
 <style scoped>
 .page { min-height: 100vh; background: var(--eapp-bg); padding: 20rpx; box-sizing: border-box; display: grid; gap: 12rpx; }
-.card { background: #fff; border: 1px solid var(--eapp-border); border-radius: 20rpx; padding: 20rpx; }
+.card { background: #fff; border: 1rpx solid var(--eapp-border); border-radius: var(--eapp-radius-lg); padding: 20rpx; }
 .title { font-size: 28rpx; font-weight: 600; }
 .desc { margin-top: 8rpx; color: var(--eapp-text-muted); }
 .empty { text-align: center; color: var(--eapp-text-muted); padding: 80rpx 0; }

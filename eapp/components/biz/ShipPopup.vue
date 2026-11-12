@@ -73,7 +73,7 @@ function onSubmit() {
 <style scoped>
 .popup { padding: 24rpx; }
 .title { font-size: 30rpx; font-weight: 700; margin-bottom: 14rpx; }
-.picker { min-height: 76rpx; border: 1px solid var(--eapp-border); border-radius: 12rpx; padding: 0 20rpx; display: flex; align-items: center; }
+.picker { min-height: 76rpx; border: 1rpx solid var(--eapp-border); border-radius: 12rpx; padding: 0 20rpx; display: flex; align-items: center; }
 .mt { margin-top: 12rpx; }
 .mt-l { margin-top: 20rpx; }
 </style>

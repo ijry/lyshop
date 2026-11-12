@@ -51,6 +51,6 @@ onShow(loadData)
 
 <style scoped>
 .page { min-height: 100vh; background: var(--eapp-bg); padding: 20rpx; box-sizing: border-box; }
-.card { background: #fff; border: 1px solid var(--eapp-border); border-radius: 20rpx; padding: 20rpx; }
+.card { background: #fff; border: 1rpx solid var(--eapp-border); border-radius: var(--eapp-radius-lg); padding: 20rpx; }
 .empty { text-align: center; color: var(--eapp-text-muted); padding: 80rpx 0; }
 </style>

@@ -54,10 +54,10 @@ onShow(() => loadConfig())
 
 <style scoped>
 .page { min-height: 100vh; background: var(--eapp-bg); padding: 20rpx; box-sizing: border-box; }
-.card { background: #fff; border: 1px solid var(--eapp-border); border-radius: 20rpx; padding: 24rpx; }
+.card { background: #fff; border: 1rpx solid var(--eapp-border); border-radius: var(--eapp-radius-lg); padding: 24rpx; }
 .form-title { font-size: 30rpx; font-weight: 700; margin-bottom: 16rpx; }
 .form-item { margin-top: 14rpx; }
-.label { font-size: 26rpx; color: #475569; margin-bottom: 6rpx; display: block; }
+.label { font-size: 26rpx; color: var(--eapp-text-secondary); margin-bottom: 6rpx; display: block; }
 .mt-lg { margin-top: 20rpx; }
 .loading { text-align: center; color: var(--eapp-text-muted); padding: 20rpx 0; }
 </style>

@@ -17,7 +17,7 @@ defineEmits<{ (e: 'click'): void }>()
 </template>
 
 <style scoped>
-.card { background: var(--eapp-card); border: 1px solid var(--eapp-border); border-radius: 22rpx; padding: 20rpx; }
+.card { background: var(--eapp-card); border: 1rpx solid var(--eapp-border); border-radius: var(--eapp-radius-lg); padding: 20rpx; }
 .head { display: flex; justify-content: space-between; align-items: center; }
 .no { font-size: 26rpx; font-weight: 600; }
 .line { margin-top: 6rpx; color: var(--eapp-text-muted); font-size: 23rpx; }

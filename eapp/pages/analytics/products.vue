@@ -34,9 +34,9 @@ onLoad(() => load())
 
     <view class="body">
       <view class="metric-row">
-        <MetricCard :title="t('analytics.totalSku')" :value="String(summary.total_sku || 0)" color="#2563eb" />
-        <MetricCard :title="t('analytics.activeSkuRate')" :value="`${(Number(summary.active_sku_rate || 0) * 100).toFixed(0)}%`" color="#16a34a" />
-        <MetricCard :title="t('analytics.avgTurnover')" :value="String(summary.avg_inventory_turnover || 0)" color="#f59e0b" />
+        <MetricCard :title="t('analytics.totalSku')" :value="String(summary.total_sku || 0)" color="var(--eapp-primary)" />
+        <MetricCard :title="t('analytics.activeSkuRate')" :value="`${(Number(summary.active_sku_rate || 0) * 100).toFixed(0)}%`" color="var(--eapp-success)" />
+        <MetricCard :title="t('analytics.avgTurnover')" :value="String(summary.avg_inventory_turnover || 0)" color="var(--eapp-warning)" />
       </view>
 
       <BarChart :title="t('analytics.skuRanking')" :loading="loading" :data="skuBarData" horizontal />

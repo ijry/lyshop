@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import AppIcon from '@/components/common/AppIcon.vue'
 
 const props = defineProps<{ order: any; selectable?: boolean; selected?: boolean }>()
 defineEmits<{ (e: 'click'): void; (e: 'toggle'): void; (e: 'action', key: string): void }>()
@@ -15,7 +16,6 @@ function money(v: any) { return Number(v || 0).toFixed(2) }
 function formatTime(v?: string) {
   if (!v) return ''
   const s = String(v).replace('T', ' ')
-  // MM/DD HH:mm
   const m = s.match(/\d{4}-(\d{2})-(\d{2}) (\d{2}:\d{2})/)
   return m ? `${m[1]}/${m[2]} ${m[3]}` : s.slice(5, 16)
 }
@@ -25,81 +25,70 @@ function maskPhone(v?: string) {
   return String(v).replace(/(\d{3})\d{4}(\d{4})/, '$1****$2')
 }
 
-// Left accent bar color by status
-const accentColor = computed(() => {
-  const s = String(props.order?.status || '')
-  if (s === '1') return 'var(--eapp-warning)'   // 待付款 - amber
-  if (s === '2') return 'var(--eapp-primary)'   // 待发货 - blue
-  if (s === '3') return 'var(--eapp-accent)'    // 已发货 - orange
-  if (s === '4') return 'var(--eapp-success)'   // 已完成 - green
-  if (s === '6') return 'var(--eapp-text-faint)' // 已取消 - gray
-  return 'var(--eapp-border-strong)'
-})
-
-// Status badge style
+/** 状态徽标：低饱和底 + 同色系细边框 + 深色文字 */
 const statusStyle = computed(() => {
   const s = String(props.order?.status || '')
-  if (s === '1') return { bg: 'var(--eapp-warning-soft)', color: '#92400e' }
-  if (s === '2') return { bg: 'var(--eapp-primary-soft)', color: '#1d4ed8' }
-  if (s === '3') return { bg: 'var(--eapp-accent-soft)', color: '#c2410c' }
-  if (s === '4') return { bg: 'var(--eapp-success-soft)', color: '#166534' }
-  if (s === '6') return { bg: '#f1f5f9', color: '#64748b' }
-  return { bg: '#f1f5f9', color: '#64748b' }
+  if (s === '1') return { bg: 'var(--eapp-warning-soft)', color: 'var(--eapp-warning)', border: '#ecd6b8' }
+  if (s === '2') return { bg: 'var(--eapp-primary-soft)', color: 'var(--eapp-primary)', border: 'var(--eapp-primary-border)' }
+  if (s === '3') return { bg: 'var(--eapp-accent-soft)', color: 'var(--eapp-accent)', border: '#c4dee6' }
+  if (s === '4') return { bg: 'var(--eapp-success-soft)', color: 'var(--eapp-success)', border: '#c7e3d2' }
+  return { bg: 'var(--eapp-surface-subtle)', color: 'var(--eapp-text-muted)', border: 'var(--eapp-border-strong)' }
 })
 </script>
 
 <template>
-  <view :class="['order-card', selected && 'is-selected']" @click="$emit('click')">
-    <!-- Status accent bar -->
-    <view class="accent-bar" :style="{ background: accentColor }" />
-
+  <view
+    :class="['order-card', selected && 'is-selected']"
+    hover-class="eapp-hover"
+    :hover-stay-time="80"
+    @click="$emit('click')"
+  >
     <view class="body">
       <!-- Header row -->
       <view class="head">
         <view class="head-left">
           <view v-if="selectable" class="checkbox" @click.stop="$emit('toggle')">
             <view :class="['cb', selected && 'cb-on']">
-              <text v-if="selected" class="cb-check">✓</text>
+              <AppIcon v-if="selected" name="check" :size="20" color="white" :stroke-width="2.4" />
             </view>
           </view>
-          <text class="order-no">#{{ order.id }}</text>
-          <text v-if="order.created_at" class="order-time">{{ formatTime(order.created_at) }}</text>
+          <text class="order-no eapp-num">#{{ order.id }}</text>
+          <text v-if="order.created_at" class="order-time eapp-num">{{ formatTime(order.created_at) }}</text>
         </view>
-        <text
+        <view
           class="status-badge"
-          :style="{ background: statusStyle.bg, color: statusStyle.color }"
-        >{{ order.status_label || '-' }}</text>
+          :style="{ background: statusStyle.bg, borderColor: statusStyle.border, color: statusStyle.color }"
+        >
+          <view class="status-badge__dot" :style="{ background: statusStyle.color }" />
+          <text class="status-badge__text">{{ order.status_label || '-' }}</text>
+        </view>
       </view>
 
       <!-- Products row -->
       <view class="products">
         <view class="thumbs">
           <image v-for="it in thumbs" :key="it.id" :src="it.cover || ''" mode="aspectFill" class="thumb" />
-          <view v-if="remain > 0" class="thumb-extra">+{{ remain }}</view>
+          <view v-if="remain > 0" class="thumb-extra eapp-num">+{{ remain }}</view>
         </view>
         <view class="product-meta">
           <text v-if="firstItem" class="product-name" :numberOfLines="2">{{ firstItem.title || firstItem.name || '商品' }}</text>
           <text v-if="items.length > 1" class="product-more">等 {{ items.length }} 件商品</text>
           <view class="price-row">
             <text class="qty-label">共 {{ itemCount }} 件</text>
-            <text class="amount">¥{{ money(order.pay_amount || order.total_amount) }}</text>
+            <text class="amount eapp-num">¥{{ money(order.pay_amount || order.total_amount) }}</text>
           </view>
         </view>
       </view>
 
       <!-- Buyer info -->
       <view v-if="order.user_nickname || order.receiver_name || order.receiver_phone" class="buyer-row">
-        <view class="buyer-icon">
-          <!-- person icon SVG -->
-          <text class="icon-dot">·</text>
-        </view>
+        <AppIcon name="user" :size="26" color="faint" />
         <text class="buyer-name">{{ order.user_nickname || order.receiver_name || '匿名买家' }}</text>
-        <text v-if="order.receiver_phone" class="buyer-phone">{{ maskPhone(order.receiver_phone) }}</text>
+        <text v-if="order.receiver_phone" class="buyer-phone eapp-num">{{ maskPhone(order.receiver_phone) }}</text>
         <view class="buyer-spacer" />
         <text v-if="order.remark" class="has-note">有备注</text>
       </view>
 
-      <!-- Divider -->
       <view class="sep" />
 
       <!-- Actions -->
@@ -125,32 +114,24 @@ const statusStyle = computed(() => {
 </template>
 
 <style scoped>
-/* Card shell */
 .order-card {
-  display: flex;
-  flex-direction: row;
   background: var(--eapp-card);
-  border-radius: 20rpx;
+  border: 1rpx solid var(--eapp-border);
+  border-radius: var(--eapp-radius-lg);
+  box-shadow: var(--eapp-shadow);
   overflow: hidden;
-  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
 }
+
 .order-card.is-selected {
-  box-shadow: 0 0 0 3rpx var(--eapp-primary);
+  border-color: var(--eapp-primary);
   background: var(--eapp-primary-soft);
 }
 
-/* Accent bar */
-.accent-bar {
-  width: 8rpx;
-  flex-shrink: 0;
-  border-radius: 20rpx 0 0 20rpx;
-}
-
-/* Inner body */
 .body {
-  flex: 1;
-  padding: 20rpx 22rpx 16rpx;
+  padding: var(--eapp-space-4) var(--eapp-space-5) var(--eapp-space-3);
   min-width: 0;
+  box-sizing: border-box;
 }
 
 /* Header */
@@ -158,58 +139,78 @@ const statusStyle = computed(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8rpx;
+  gap: var(--eapp-space-2);
 }
+
 .head-left {
   display: flex;
   align-items: center;
   gap: 10rpx;
   overflow: hidden;
   flex: 1;
+  min-width: 0;
 }
+
 .checkbox {
   flex-shrink: 0;
+  padding: 4rpx;
 }
+
 .cb {
-  width: 38rpx;
-  height: 38rpx;
-  border-radius: 10rpx;
+  width: 34rpx;
+  height: 34rpx;
+  border-radius: var(--eapp-radius-sm);
   border: 2rpx solid var(--eapp-border-strong);
-  background: #fff;
+  background: var(--eapp-card);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
 }
+
 .cb.cb-on {
   background: var(--eapp-primary);
   border-color: var(--eapp-primary);
 }
-.cb-check {
-  color: #fff;
-  font-size: 22rpx;
-  line-height: 1;
-  font-weight: 700;
-}
+
 .order-no {
-  font-size: 24rpx;
+  font-size: var(--eapp-fs-base);
   font-weight: 700;
   color: var(--eapp-text);
   flex-shrink: 0;
 }
+
 .order-time {
-  font-size: 20rpx;
+  font-size: var(--eapp-fs-xs);
   color: var(--eapp-text-faint);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
 .status-badge {
-  font-size: 20rpx;
-  border-radius: 999rpx;
-  padding: 6rpx 14rpx;
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  border: 1rpx solid;
+  border-radius: var(--eapp-radius-sm);
+  padding: 6rpx 12rpx;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.status-badge__dot {
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-badge__text {
+  font-size: var(--eapp-fs-xs);
   font-weight: 600;
   white-space: nowrap;
-  flex-shrink: 0;
+  color: inherit;
 }
 
 /* Products */
@@ -217,33 +218,41 @@ const statusStyle = computed(() => {
   display: flex;
   align-items: flex-start;
   gap: 14rpx;
-  margin-top: 16rpx;
+  margin-top: var(--eapp-space-3);
 }
+
 .thumbs {
   display: flex;
   gap: 6rpx;
   flex-shrink: 0;
   flex-wrap: nowrap;
 }
+
 .thumb {
   width: 84rpx;
   height: 84rpx;
-  border-radius: 10rpx;
+  border-radius: var(--eapp-radius-sm);
+  border: 1rpx solid var(--eapp-border);
   background: var(--eapp-bg);
   flex-shrink: 0;
+  box-sizing: border-box;
 }
+
 .thumb-extra {
   width: 84rpx;
   height: 84rpx;
-  border-radius: 10rpx;
-  background: var(--eapp-bg);
+  border-radius: var(--eapp-radius-sm);
+  background: var(--eapp-surface-subtle);
+  border: 1rpx solid var(--eapp-border);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22rpx;
+  font-size: var(--eapp-fs-sm);
   color: var(--eapp-text-muted);
   flex-shrink: 0;
+  box-sizing: border-box;
 }
+
 .product-meta {
   flex: 1;
   min-width: 0;
@@ -251,8 +260,9 @@ const statusStyle = computed(() => {
   flex-direction: column;
   gap: 4rpx;
 }
+
 .product-name {
-  font-size: 26rpx;
+  font-size: var(--eapp-fs-base);
   color: var(--eapp-text);
   line-height: 1.5;
   overflow: hidden;
@@ -260,22 +270,27 @@ const statusStyle = computed(() => {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
+
 .product-more {
-  font-size: 20rpx;
+  font-size: var(--eapp-fs-xs);
   color: var(--eapp-text-faint);
 }
+
 .price-row {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+  gap: 8rpx;
   margin-top: 4rpx;
 }
+
 .qty-label {
-  font-size: 20rpx;
+  font-size: var(--eapp-fs-xs);
   color: var(--eapp-text-faint);
 }
+
 .amount {
-  font-size: 32rpx;
+  font-size: var(--eapp-fs-lg);
   font-weight: 700;
   color: var(--eapp-primary);
 }
@@ -285,59 +300,60 @@ const statusStyle = computed(() => {
   display: flex;
   align-items: center;
   gap: 8rpx;
-  margin-top: 12rpx;
+  margin-top: var(--eapp-space-2);
 }
-.icon-dot {
-  color: var(--eapp-text-faint);
-  font-size: 24rpx;
-}
+
 .buyer-name {
-  font-size: 24rpx;
+  font-size: var(--eapp-fs-sm);
   color: var(--eapp-text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 160rpx;
 }
+
 .buyer-phone {
-  font-size: 22rpx;
+  font-size: var(--eapp-fs-xs);
   color: var(--eapp-text-faint);
   flex-shrink: 0;
 }
+
 .buyer-spacer {
   flex: 1;
 }
+
 .has-note {
-  font-size: 20rpx;
+  font-size: var(--eapp-fs-xs);
   color: var(--eapp-warning);
   background: var(--eapp-warning-soft);
-  border-radius: 999rpx;
-  padding: 4rpx 10rpx;
+  border: 1rpx solid #ecd6b8;
+  border-radius: var(--eapp-radius-sm);
+  padding: 2rpx 10rpx;
   flex-shrink: 0;
 }
 
-/* Separator */
 .sep {
   height: 1rpx;
-  background: var(--eapp-border);
-  margin: 14rpx 0 12rpx;
+  background: var(--eapp-divider);
+  margin: var(--eapp-space-3) 0 var(--eapp-space-2);
 }
 
-/* Actions */
 .actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8rpx;
+  gap: var(--eapp-space-1);
 }
+
 .actions-sec {
   display: flex;
-  gap: 8rpx;
+  gap: var(--eapp-space-1);
   flex-wrap: wrap;
 }
+
 .actions-pri {
   display: flex;
-  gap: 8rpx;
+  gap: var(--eapp-space-1);
   flex-shrink: 0;
 }
 </style>

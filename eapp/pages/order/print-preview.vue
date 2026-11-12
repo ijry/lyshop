@@ -24,7 +24,7 @@ function onPrint() { uni.showToast({ title: '已发送至默认打印机', icon:
 
 <style scoped>
 .page { min-height: 100vh; padding: 20rpx; background: var(--eapp-bg); }
-.card { background: var(--eapp-card); border: 1px solid var(--eapp-border); border-radius: 22rpx; padding: 20rpx; min-height: 480rpx; }
+.card { background: var(--eapp-card); border: 1rpx solid var(--eapp-border); border-radius: var(--eapp-radius-lg); padding: 20rpx; min-height: 480rpx; }
 .empty { text-align: center; color: var(--eapp-text-muted); padding: 60rpx 0; }
 .mt { margin-top: 20rpx; }
 </style>

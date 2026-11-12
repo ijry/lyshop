@@ -26,10 +26,12 @@ withDefaults(defineProps<{
 .eapp-shell {
   min-height: 100vh;
   background: var(--eapp-bg);
+  box-sizing: border-box;
 }
 
 .eapp-shell__header {
-  padding-top: env(safe-area-inset-top);
+  /* 自定义导航页由 PageHeader 自行处理状态栏安全区 */
+  background: var(--eapp-card);
 }
 
 .eapp-shell__header--sticky {
@@ -44,6 +46,7 @@ withDefaults(defineProps<{
 }
 
 .eapp-shell__body--padded {
-  padding: 24rpx;
+  padding: var(--eapp-space-5);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 48rpx);
 }
 </style>

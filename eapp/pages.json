@@ -9,15 +9,15 @@
     }
   },
   "pages": [
-    { "path": "pages/login/index", "style": { "navigationBarTitleText": "登录" } },
+    { "path": "pages/login/index", "style": { "navigationBarTitleText": "登录", "navigationStyle": "custom" } },
     { "path": "pages/dashboard/index", "style": { "navigationBarTitleText": "工作台", "navigationStyle": "custom" } },
-    { "path": "pages/order/list", "style": { "navigationBarTitleText": "订单" } },
+    { "path": "pages/order/list", "style": { "navigationBarTitleText": "订单", "navigationStyle": "custom" } },
     { "path": "pages/order/detail", "style": { "navigationBarTitleText": "订单详情" } },
     { "path": "pages/order/after-sale-list", "style": { "navigationBarTitleText": "售后列表" } },
     { "path": "pages/order/after-sale-detail", "style": { "navigationBarTitleText": "售后详情" } },
     { "path": "pages/order/batch", "style": { "navigationBarTitleText": "批量操作" } },
     { "path": "pages/order/print-preview", "style": { "navigationBarTitleText": "面单预览" } },
-    { "path": "pages/product/list", "style": { "navigationBarTitleText": "商品" } },
+    { "path": "pages/product/list", "style": { "navigationBarTitleText": "商品", "navigationStyle": "custom" } },
     { "path": "pages/product/edit", "style": { "navigationBarTitleText": "商品编辑" } },
     { "path": "pages/product/category-tree", "style": { "navigationBarTitleText": "分类管理" } },
     { "path": "pages/product/spec-templates", "style": { "navigationBarTitleText": "规格模板" } },
@@ -31,9 +31,9 @@
     { "path": "pages/vip/coupon-rule-list", "style": { "navigationBarTitleText": "会员领券规则" } },
     { "path": "pages/vip/sku-price-list", "style": { "navigationBarTitleText": "会员SKU价格" } },
     { "path": "pages/decor/editor", "style": { "navigationBarTitleText": "店铺装修" } },
-    { "path": "pages/me/index", "style": { "navigationBarTitleText": "我的" } },
-    { "path": "pages/me/messages", "style": { "navigationBarTitleText": "消息群发", "navigationBarButtons": [{ "text": "+ 新增", "color": "#2563eb" }] } },
-    { "path": "pages/me/im-sessions", "style": { "navigationBarTitleText": "客服会话" } },
+    { "path": "pages/me/index", "style": { "navigationBarTitleText": "我的", "navigationStyle": "custom" } },
+    { "path": "pages/me/messages", "style": { "navigationBarTitleText": "消息群发", "navigationBarButtons": [{ "text": "+ 新增", "color": "#1d4ed8" }] } },
+    { "path": "pages/me/im-sessions", "style": { "navigationBarTitleText": "客服会话", "navigationStyle": "custom" } },
     { "path": "pages/me/site-settings", "style": { "navigationBarTitleText": "店铺设置" } },
     { "path": "pages/me/admins", "style": { "navigationBarTitleText": "管理员" } },
     { "path": "pages/me/roles", "style": { "navigationBarTitleText": "角色权限" } },
@@ -63,20 +63,20 @@
     { "path": "pages/checkin/logs", "style": { "navigationBarTitleText": "签到记录" } }
   ],
   "tabBar": {
-    "color": "#64748b",
-    "selectedColor": "#2563eb",
+    "color": "#98a2b3",
+    "selectedColor": "#1d4ed8",
     "backgroundColor": "#ffffff",
-    "borderStyle": "black",
+    "borderStyle": "white",
     "list": [
-      { "pagePath": "pages/dashboard/index", "text": "工作台" },
-      { "pagePath": "pages/order/list", "text": "订单" },
-      { "pagePath": "pages/me/im-sessions", "text": "客服" },
-      { "pagePath": "pages/me/index", "text": "我的" }
+      { "pagePath": "pages/dashboard/index", "text": "工作台", "iconPath": "static/tabbar/dashboard.png", "selectedIconPath": "static/tabbar/dashboard-active.png" },
+      { "pagePath": "pages/order/list", "text": "订单", "iconPath": "static/tabbar/order.png", "selectedIconPath": "static/tabbar/order-active.png" },
+      { "pagePath": "pages/me/im-sessions", "text": "客服", "iconPath": "static/tabbar/chat.png", "selectedIconPath": "static/tabbar/chat-active.png" },
+      { "pagePath": "pages/me/index", "text": "我的", "iconPath": "static/tabbar/me.png", "selectedIconPath": "static/tabbar/me-active.png" }
     ]
   },
   "globalStyle": {
     "navigationBarTextStyle": "black",
     "navigationBarBackgroundColor": "#FFFFFF",
-    "backgroundColor": "#F8FAFC"
+    "backgroundColor": "#F5F7FA"
   }
 }

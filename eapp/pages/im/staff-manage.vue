@@ -146,16 +146,16 @@ onShow(loadData)
 
 .list { padding: 0 20rpx; display: grid; gap: 16rpx; }
 
-.staff-card { background: var(--eapp-card); border-radius: 20rpx; padding: 24rpx; border: 1rpx solid var(--eapp-border); }
+.staff-card { background: var(--eapp-card); border-radius: var(--eapp-radius-lg); padding: 24rpx; border: 1rpx solid var(--eapp-border); }
 .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20rpx; }
 .staff-info { display: flex; flex-direction: column; gap: 6rpx; }
 .staff-id { font-size: 24rpx; color: var(--eapp-text-muted); }
 .admin-id { font-size: 28rpx; font-weight: 600; color: var(--eapp-text); }
 .status-badge { padding: 6rpx 16rpx; border-radius: 999rpx; }
 .status-badge.online { background: var(--eapp-success-soft); }
-.status-badge.offline { background: #f1f5f9; }
+.status-badge.offline { background: var(--eapp-surface-subtle); }
 .status-badge.online .status-text { color: var(--eapp-success); font-size: 22rpx; font-weight: 600; }
-.status-badge.offline .status-text { color: #94a3b8; font-size: 22rpx; font-weight: 600; }
+.status-badge.offline .status-text { color: var(--eapp-text-faint); font-size: 22rpx; font-weight: 600; }
 
 .card-body { display: grid; gap: 12rpx; margin-bottom: 20rpx; }
 .info-row { display: flex; justify-content: space-between; align-items: center; }

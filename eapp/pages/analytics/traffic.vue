@@ -24,10 +24,10 @@ onLoad(() => load())
 
     <view class="body">
       <view class="metric-row">
-        <MetricCard :title="t('analytics.totalPv')" :value="String(summary.total_pv || 0)" color="#2563eb" />
-        <MetricCard :title="t('analytics.totalUv')" :value="String(summary.total_uv || 0)" color="#16a34a" />
-        <MetricCard :title="t('analytics.avgStay')" :value="`${summary.avg_stay_seconds || 0}s`" color="#f59e0b" />
-        <MetricCard :title="t('analytics.bounceRate')" :value="`${Number(summary.bounce_rate || 0).toFixed(1)}%`" color="#ef4444" />
+        <MetricCard :title="t('analytics.totalPv')" :value="String(summary.total_pv || 0)" color="var(--eapp-primary)" />
+        <MetricCard :title="t('analytics.totalUv')" :value="String(summary.total_uv || 0)" color="var(--eapp-success)" />
+        <MetricCard :title="t('analytics.avgStay')" :value="`${summary.avg_stay_seconds || 0}s`" color="var(--eapp-warning)" />
+        <MetricCard :title="t('analytics.bounceRate')" :value="`${Number(summary.bounce_rate || 0).toFixed(1)}%`" color="var(--eapp-danger)" />
       </view>
 
       <AreaChart :title="t('analytics.pvUvTrend')" :loading="loading" :data="data?.pv_uv_trend" />

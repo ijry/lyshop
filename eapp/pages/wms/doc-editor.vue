@@ -147,16 +147,16 @@ onLoad(async (query: any) => {
 
 <style scoped>
 .page { min-height: 100vh; background: var(--eapp-bg); padding: 20rpx; box-sizing: border-box; display: grid; gap: 16rpx; align-content: start; }
-.section { background: #fff; border: 1px solid var(--eapp-border); border-radius: 20rpx; padding: 20rpx; }
+.section { background: #fff; border: 1rpx solid var(--eapp-border); border-radius: var(--eapp-radius-lg); padding: 20rpx; }
 .label { font-size: 26rpx; font-weight: 600; margin-bottom: 10rpx; }
 .type-row { display: flex; gap: 10rpx; flex-wrap: wrap; }
-.type-tag { padding: 8rpx 20rpx; font-size: 24rpx; border-radius: 999rpx; background: #f1f5f9; border: 1px solid var(--eapp-border); }
-.type-tag.active { background: var(--eapp-primary, #2563eb); color: #fff; border-color: var(--eapp-primary, #2563eb); }
+.type-tag { padding: 8rpx 20rpx; font-size: 24rpx; border-radius: 999rpx; background: var(--eapp-surface-subtle); border: 1rpx solid var(--eapp-border); }
+.type-tag.active { background: var(--eapp-primary, var(--eapp-primary)); color: #fff; border-color: var(--eapp-primary, var(--eapp-primary)); }
 .row { display: flex; align-items: center; justify-content: space-between; }
-.item-card { background: #f8fafc; border: 1px solid var(--eapp-border); border-radius: 12rpx; padding: 14rpx; margin-top: 10rpx; display: grid; gap: 8rpx; }
+.item-card { background: var(--eapp-bg); border: 1rpx solid var(--eapp-border); border-radius: 12rpx; padding: 14rpx; margin-top: 10rpx; display: grid; gap: 8rpx; }
 .item-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8rpx; }
 .item-remove { text-align: right; }
-.remove-text { font-size: 22rpx; color: #dc2626; }
+.remove-text { font-size: 22rpx; color: var(--eapp-danger); }
 .actions { display: grid; gap: 10rpx; }
 .loading { text-align: center; color: var(--eapp-text-muted); padding: 80rpx 0; }
 </style>

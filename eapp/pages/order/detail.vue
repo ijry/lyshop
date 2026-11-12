@@ -362,14 +362,14 @@ onLoad(async (opts) => {
 
 <style scoped>
 .page { min-height: 100vh; background: var(--eapp-bg); padding: 20rpx; box-sizing: border-box; display: grid; gap: 14rpx; }
-.card { background: #fff; border: 1px solid var(--eapp-border); border-radius: 24rpx; padding: 22rpx; }
+.card { background: #fff; border: 1rpx solid var(--eapp-border); border-radius: var(--eapp-radius-lg); padding: 22rpx; }
 .head { display: flex; justify-content: space-between; align-items: center; gap: 12rpx; }
 .section-title { font-size: 30rpx; font-weight: 700; }
 .line { margin-top: 10rpx; color: var(--eapp-text-muted); font-size: 24rpx; }
-.item-row { margin-top: 12rpx; padding: 14rpx; border: 1px solid var(--eapp-border); border-radius: 14rpx; }
+.item-row { margin-top: 12rpx; padding: 14rpx; border: 1rpx solid var(--eapp-border); border-radius: 14rpx; }
 .item-title { font-size: 26rpx; font-weight: 600; color: var(--eapp-text); }
 .item-sub { margin-top: 6rpx; color: var(--eapp-text-muted); font-size: 23rpx; }
-.ship-card { margin-top: 12rpx; padding: 14rpx; border: 1px solid var(--eapp-border); border-radius: 14rpx; }
+.ship-card { margin-top: 12rpx; padding: 14rpx; border: 1rpx solid var(--eapp-border); border-radius: 14rpx; }
 .ship-head { display: flex; justify-content: space-between; align-items: center; gap: 10rpx; }
 .track-row { margin-top: 8rpx; padding-top: 8rpx; border-top: 1px dashed var(--eapp-border); color: var(--eapp-text-muted); font-size: 22rpx; }
 .empty { padding: 100rpx 0; text-align: center; color: var(--eapp-text-muted); }
@@ -377,5 +377,5 @@ onLoad(async (opts) => {
 .popup-body { padding: 24rpx; box-sizing: border-box; }
 .popup-title { font-size: 30rpx; font-weight: 700; margin-bottom: 14rpx; }
 .op { color: var(--eapp-primary); font-size: 24rpx; padding-left: 16rpx; }
-.picker { min-height: 76rpx; border: 1px solid var(--eapp-border); border-radius: 12rpx; padding: 0 20rpx; display: flex; align-items: center; color: var(--eapp-text); }
+.picker { min-height: 76rpx; border: 1rpx solid var(--eapp-border); border-radius: 12rpx; padding: 0 20rpx; display: flex; align-items: center; color: var(--eapp-text); }
 </style>

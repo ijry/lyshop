@@ -65,6 +65,6 @@ onLoad(load); onShow(load)
 <style scoped>
 .page { min-height: 100vh; background: var(--eapp-bg); }
 .filter { padding: 16rpx 20rpx; }
-.picker { display: inline-flex; height: 60rpx; align-items: center; padding: 0 18rpx; border: 1px solid var(--eapp-border); border-radius: 12rpx; background: var(--eapp-card); }
+.picker { display: inline-flex; height: 60rpx; align-items: center; padding: 0 18rpx; border: 1rpx solid var(--eapp-border); border-radius: 12rpx; background: var(--eapp-card); }
 .list { padding: 20rpx; display: grid; gap: 14rpx; }
 </style>

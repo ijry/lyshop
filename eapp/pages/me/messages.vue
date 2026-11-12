@@ -126,14 +126,14 @@ onShow(loadData)
 <style scoped>
 .page { min-height: 100vh; background: var(--eapp-bg); padding: 20rpx; box-sizing: border-box; }
 .list { margin-top: 14rpx; display: grid; gap: 12rpx; }
-.msg-item { background: #fff; border: 1px solid var(--eapp-border); border-radius: 20rpx; padding: 18rpx; }
+.msg-item { background: #fff; border: 1rpx solid var(--eapp-border); border-radius: var(--eapp-radius-lg); padding: 18rpx; }
 .msg-top { display: flex; align-items: center; justify-content: space-between; }
 .title-row { display: flex; align-items: center; gap: 8rpx; }
 .priority-dot { width: 14rpx; height: 14rpx; border-radius: 50%; flex-shrink: 0; }
-.dot-urgent { background: #dc2626; }
-.dot-important { background: #f59e0b; }
+.dot-urgent { background: var(--eapp-danger); }
+.dot-important { background: var(--eapp-warning); }
 .title { font-size: 28rpx; font-weight: 600; }
-.read-btn { font-size: 22rpx; color: var(--eapp-primary, #2563eb); padding: 4rpx 12rpx; }
+.read-btn { font-size: 22rpx; color: var(--eapp-primary, var(--eapp-primary)); padding: 4rpx 12rpx; }
 .content { margin-top: 6rpx; color: var(--eapp-text-muted); font-size: 24rpx; }
 .empty { text-align: center; color: var(--eapp-text-muted); padding: 80rpx 0; }
 .modal-body { padding: 32rpx 24rpx 48rpx; }

@@ -7,6 +7,7 @@ import EmptyState from '@/components/biz/EmptyState.vue'
 import FilterDrawer from '@/components/biz/FilterDrawer.vue'
 import BatchBar from '@/components/biz/BatchBar.vue'
 import BatchResultPopup from '@/components/biz/BatchResultPopup.vue'
+import AppIcon from '@/components/common/AppIcon.vue'
 import { useProductList } from '@/composables/useProductList'
 import { batchUpdateProductCategory, batchUpdateProductPrice, batchUpdateProductStatus, updateProduct } from '@/api/product'
 import { getStorage, removeStorage } from '@/utils/storage'
@@ -19,6 +20,7 @@ const tabs = [
   { name: '预警', status: '' as ''|0|1, low_stock: true },
 ]
 const current = ref(0)
+const quickKeyword = ref('')
 const showFilter = ref(false); const showResult = ref(false)
 const showSortPicker = ref(false)
 const sortOptions = [
@@ -34,7 +36,18 @@ const result = ref<{ success_ids: number[]; fail: Array<{ id: number; reason: st
 
 function onTab(idx: number) {
   current.value = idx
-  h.applyFilter({ status: tabs[idx].status, low_stock: tabs[idx].low_stock })
+  h.applyFilter({ status: tabs[idx].status, low_stock: tabs[idx].low_stock, keyword: quickKeyword.value || undefined })
+  h.load()
+}
+
+function onQuickSearch() {
+  h.applyFilter({ keyword: quickKeyword.value || undefined })
+  h.load()
+}
+
+function clearQuickSearch() {
+  quickKeyword.value = ''
+  h.applyFilter({ keyword: undefined })
   h.load()
 }
 
@@ -91,25 +104,53 @@ onReachBottom(() => h.loadMore())
 
 <template>
   <view class="page">
-    <PageHeader title="商品">
+    <PageHeader title="商品管理" eyebrow="PRODUCTS">
       <template #right>
-        <text class="icon-btn" @click="goCategoryTree">分类</text>
-        <text class="icon-btn" @click="openFilter">⚲</text>
+        <view class="head-action" hover-class="eapp-hover" @click="goCategoryTree">
+          <AppIcon name="layers" :size="26" color="primary" />
+          <text class="head-action__text">分类</text>
+        </view>
+        <view class="head-action" hover-class="eapp-hover" @click="openFilter">
+          <AppIcon name="filter" :size="26" color="primary" />
+          <text class="head-action__text">筛选</text>
+        </view>
       </template>
     </PageHeader>
-    <up-tabs
-      :list="tabs"
-      :current="current"
-      :scrollable="true"
-      keyName="name"
-      @click="(item) => onTab(item.index)"
-      :activeStyle="{ color: '#fff', backgroundColor: 'var(--eapp-primary)', borderRadius: '999rpx', height: '56rpx', lineHeight: '56rpx', padding: '0 24rpx' }"
-      :inactiveStyle="{ color: 'var(--eapp-text-muted)', backgroundColor: 'var(--eapp-bg)', borderRadius: '999rpx', height: '56rpx', lineHeight: '56rpx', padding: '0 24rpx' }"
-      :itemStyle="{ padding: '0 4rpx', height: '80rpx' }"
-      lineColor="transparent"
-    />
+
+    <view class="tab-wrap">
+      <up-tabs
+        :list="tabs"
+        :current="current"
+        :scrollable="true"
+        keyName="name"
+        @click="(item) => onTab(item.index)"
+        :activeStyle="{ color: 'var(--eapp-primary)', fontWeight: '700', fontSize: '28rpx' }"
+        :inactiveStyle="{ color: 'var(--eapp-text-muted)', fontSize: '26rpx' }"
+        :itemStyle="{ padding: '0 8rpx', height: '80rpx' }"
+        lineColor="var(--eapp-primary)"
+        lineWidth="40rpx"
+        lineHeight="4rpx"
+        :lineStyle="{ borderRadius: '2rpx' }"
+      />
+    </view>
+
+    <view class="search-bar">
+      <up-search
+        v-model="quickKeyword"
+        placeholder="搜索商品名称"
+        :showAction="!!quickKeyword"
+        actionText="清空"
+        shape="round"
+        :inputStyle="{ fontSize: '26rpx' }"
+        @search="onQuickSearch"
+        @custom="clearQuickSearch"
+      />
+    </view>
+
     <view class="list">
-      <EmptyState v-if="!h.loading.value && !h.list.value.length" title="暂无商品" />
+      <EmptyState v-if="!h.loading.value && !h.list.value.length" title="暂无商品" desc="调整筛选条件或新建商品" icon="product">
+        <up-button size="mini" plain hairline @click="newProduct">新建商品</up-button>
+      </EmptyState>
       <ProductCard
         v-for="p in h.list.value"
         :key="p.id"
@@ -143,17 +184,30 @@ onReachBottom(() => h.loadMore())
     <BatchResultPopup :show="showResult" :success="result.success_ids" :fails="result.fail" @close="showResult = false" />
 
     <view class="fab">
-      <up-button type="primary" shape="circle" @click="newProduct">+ 新建</up-button>
-      <up-button shape="circle" plain @click="aiHint">AI</up-button>
+      <up-button shape="circle" plain @click="aiHint">AI 生图</up-button>
+      <up-button type="primary" shape="circle" @click="newProduct">+ 新建商品</up-button>
     </view>
   </view>
 </template>
 
 <style scoped>
 .page { min-height: 100vh; background: var(--eapp-bg); }
-.icon-btn { font-size: 28rpx; padding: 0 12rpx; color: var(--eapp-primary); }
-.list { padding: 20rpx; display: grid; gap: 14rpx; padding-bottom: 200rpx; }
+
+.head-action {
+  display: flex; align-items: center; gap: 6rpx;
+  padding: 10rpx 14rpx;
+  border: 1rpx solid var(--eapp-primary-border);
+  border-radius: var(--eapp-radius);
+  background: var(--eapp-primary-soft);
+  box-sizing: border-box;
+}
+.head-action__text { font-size: 24rpx; font-weight: 600; color: var(--eapp-primary); }
+
+.tab-wrap { background: var(--eapp-card); border-bottom: 1rpx solid var(--eapp-border); }
+.search-bar { background: var(--eapp-card); padding: 12rpx 24rpx 16rpx; border-bottom: 1rpx solid var(--eapp-border); }
+
+.list { padding: 20rpx; display: grid; gap: 16rpx; padding-bottom: 240rpx; }
 .fab { position: fixed; right: 24rpx; bottom: calc(140rpx + env(safe-area-inset-bottom)); display: grid; gap: 12rpx; z-index: 20; }
-.picker { display: inline-flex; height: 60rpx; align-items: center; padding: 0 18rpx; border: 1px solid var(--eapp-border); border-radius: 12rpx; background: var(--eapp-card); }
+.picker { display: inline-flex; height: 60rpx; align-items: center; padding: 0 18rpx; border: 1rpx solid var(--eapp-border); border-radius: var(--eapp-radius); background: var(--eapp-card); }
 .mt { margin-top: 12rpx; }
 </style>

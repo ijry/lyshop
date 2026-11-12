@@ -25,9 +25,9 @@ onLoad(() => load())
 
     <view class="body">
       <view class="metric-row">
-        <MetricCard :title="t('analytics.gmv')" :value="`¥${Number(summary.gmv || 0).toFixed(0)}`" color="#2563eb" />
-        <MetricCard :title="t('analytics.orderCount')" :value="String(summary.order_count || 0)" color="#16a34a" />
-        <MetricCard :title="t('analytics.avgOrderValue')" :value="`¥${Number(summary.avg_order_value || 0).toFixed(0)}`" color="#f59e0b" />
+        <MetricCard :title="t('analytics.gmv')" :value="`¥${Number(summary.gmv || 0).toFixed(0)}`" color="var(--eapp-primary)" />
+        <MetricCard :title="t('analytics.orderCount')" :value="String(summary.order_count || 0)" color="var(--eapp-success)" />
+        <MetricCard :title="t('analytics.avgOrderValue')" :value="`¥${Number(summary.avg_order_value || 0).toFixed(0)}`" color="var(--eapp-warning)" />
       </view>
 
       <AreaChart :title="t('analytics.revenueChart')" :loading="loading" :data="data?.revenue_trend" />

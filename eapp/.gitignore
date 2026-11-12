@@ -4,4 +4,6 @@ dist/
 .idea/
 .vscode/
 coverage/
+.playwright-cli/
+.vitest-tmp/
 *.log

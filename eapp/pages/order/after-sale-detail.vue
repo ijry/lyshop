@@ -399,19 +399,19 @@ onLoad((opts) => {
 
 <style scoped>
 .page { min-height: 100vh; background: var(--eapp-bg); padding: 20rpx; box-sizing: border-box; display: grid; gap: 14rpx; }
-.card { background: #fff; border: 1px solid var(--eapp-border); border-radius: 22rpx; padding: 20rpx; }
+.card { background: #fff; border: 1rpx solid var(--eapp-border); border-radius: var(--eapp-radius-lg); padding: 20rpx; }
 .head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10rpx; }
 .section-title { font-size: 30rpx; font-weight: 700; margin-bottom: 10rpx; }
 .line { margin-top: 8rpx; color: var(--eapp-text-muted); font-size: 24rpx; }
 .item-sub { margin-top: 6rpx; color: var(--eapp-text-muted); font-size: 23rpx; }
 .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10rpx; }
-.log-row { margin-top: 12rpx; padding: 14rpx; border: 1px solid var(--eapp-border); border-radius: 14rpx; }
-.tips { margin-bottom: 12rpx; padding: 14rpx; border: 1px solid #bfdbfe; border-radius: 14rpx; background: #eff6ff; display: flex; align-items: center; justify-content: space-between; gap: 12rpx; color: #1e3a8a; font-size: 23rpx; }
+.log-row { margin-top: 12rpx; padding: 14rpx; border: 1rpx solid var(--eapp-border); border-radius: 14rpx; }
+.tips { margin-bottom: 12rpx; padding: 14rpx; border: 1rpx solid #bfdbfe; border-radius: 14rpx; background: var(--eapp-primary-soft); display: flex; align-items: center; justify-content: space-between; gap: 12rpx; color: #1e3a8a; font-size: 23rpx; }
 .empty { padding: 100rpx 0; text-align: center; color: var(--eapp-text-muted); }
 .empty-row { color: var(--eapp-text-muted); font-size: 24rpx; text-align: center; padding: 30rpx 0; }
 .popup-body { padding: 24rpx; box-sizing: border-box; }
 .popup-title { font-size: 30rpx; font-weight: 700; margin-bottom: 14rpx; }
-.progress { background: var(--eapp-card); border: 1px solid var(--eapp-border); border-radius: 22rpx; padding: 20rpx; display: flex; justify-content: space-between; align-items: center; }
+.progress { background: var(--eapp-card); border: 1rpx solid var(--eapp-border); border-radius: var(--eapp-radius-lg); padding: 20rpx; display: flex; justify-content: space-between; align-items: center; }
 .step { display: flex; flex-direction: column; align-items: center; gap: 6rpx; flex: 1; }
 .step .dot { width: 44rpx; height: 44rpx; border-radius: 50%; background: var(--eapp-border); color: #fff; display: flex; align-items: center; justify-content: center; }
 .step.active .dot { background: var(--eapp-primary); }

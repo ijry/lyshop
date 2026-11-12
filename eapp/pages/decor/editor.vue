@@ -145,10 +145,10 @@ onLoad(bootstrap)
 <style scoped>
 .page { min-height: 100vh; background: var(--eapp-bg); padding: 20rpx; padding-bottom: 160rpx; box-sizing: border-box; }
 .toolbar { display: flex; gap: 12rpx; align-items: center; margin-bottom: 16rpx; }
-.picker { min-height: 76rpx; border: 1px solid var(--eapp-border); border-radius: 12rpx; padding: 0 20rpx; display: flex; align-items: center; color: var(--eapp-text); flex: 1; }
+.picker { min-height: 76rpx; border: 1rpx solid var(--eapp-border); border-radius: 12rpx; padding: 0 20rpx; display: flex; align-items: center; color: var(--eapp-text); flex: 1; }
 .comp-list { display: grid; gap: 12rpx; }
-.comp-card { background: #fff; border: 1px solid var(--eapp-border); border-radius: 18rpx; padding: 18rpx; display: flex; align-items: center; justify-content: space-between; }
-.comp-card.selected { border-color: var(--eapp-primary); background: #eff6ff; }
+.comp-card { background: #fff; border: 1rpx solid var(--eapp-border); border-radius: 18rpx; padding: 18rpx; display: flex; align-items: center; justify-content: space-between; }
+.comp-card.selected { border-color: var(--eapp-primary); background: var(--eapp-primary-soft); }
 .comp-info { display: flex; align-items: center; gap: 12rpx; }
 .comp-icon { font-size: 32rpx; }
 .comp-title { font-size: 28rpx; font-weight: 600; }

@@ -42,7 +42,7 @@ onShow(() => loadLogs())
 .page { min-height: 100vh; background: var(--eapp-bg); padding: 20rpx; box-sizing: border-box; display: grid; gap: 14rpx; align-content: start; }
 .title-bar { display: flex; align-items: center; }
 .title { font-size: 32rpx; font-weight: 700; }
-.card { background: #fff; border: 1px solid var(--eapp-border); border-radius: 20rpx; padding: 20rpx; }
+.card { background: #fff; border: 1rpx solid var(--eapp-border); border-radius: var(--eapp-radius-lg); padding: 20rpx; }
 .row { display: flex; align-items: center; justify-content: space-between; }
 .name { font-size: 28rpx; font-weight: 600; }
 .date { font-size: 24rpx; color: var(--eapp-text-muted); }

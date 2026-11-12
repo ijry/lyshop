@@ -8,30 +8,69 @@
 
 ## 顶层结构
 
-- **5 个底部 Tab**：工作台 / 订单 / 商品 / 营销 / 我的
+- **4 个底部 Tab**：工作台 / 订单 / 客服 / 我的，各带常态与选中态线性 PNG 图标
+- **自定义导航**：登录、工作台、订单、客服、我的、商品列表使用 `navigationStyle: custom`，由 `PageHeader` 统一渲染标题、辅助文案与右侧图标按钮
 - **图表能力**：基于 `ly-charts (qiun-data-charts)` 跨端集成，业务方用 `ChartPanel + AreaChart / RingChart / BarChart` 统一调用
-- **商家高阶组件库**：`components/biz/` 提供 PageHeader / MetricCard / ActionGrid / TodoCenter / AnnouncementBar / FilterDrawer / BatchBar / BatchResultPopup / Timeline / EmptyState / OrderCard / ProductCard / AfterSaleCard / SkuMatrixEditor / CategoryTreePicker / RichTextEditor / ShipPopup / RepricingPopup / RemarkPopup
+- **商家高阶组件库**：`components/biz/` 提供 PageHeader / SectionHeader / EntryList / MetricCard / ActionGrid / TodoCenter / AnnouncementBar / FilterDrawer / BatchBar / BatchResultPopup / Timeline / EmptyState / OrderCard / ProductCard / AfterSaleCard / SkuMatrixEditor / CategoryTreePicker / RichTextEditor / ShipPopup / RepricingPopup / RemarkPopup
+- **通用组件**：`components/common/` 提供 AppIcon / SkeletonCard / StatusTag / StatCard / TodoCard
 - **composables**：`useDashboard / useOrderList / useProductList / useBatchSelection / useFilter / useRequest`
+
+## 视觉与交互规范
+
+界面采用沉稳商务蓝 + 中性石板灰，所有颜色、圆角、阴影、字阶、间距都从 `App.vue` 的 CSS 变量取值，页面与组件不硬编码颜色。
+
+| 令牌组 | 变量 | 用途 |
+|--------|------|------|
+| 品牌 | `--eapp-primary` / `--eapp-primary-deep` / `--eapp-primary-soft` | 主操作、品牌区、图标底 |
+| 语义 | `--eapp-success` / `--eapp-warning` / `--eapp-danger` / `--eapp-accent` | 状态、趋势、预警（低饱和） |
+| 中性 | `--eapp-bg` / `--eapp-card` / `--eapp-text*` / `--eapp-border*` | 背景、表面、文字、描边 |
+| 形状 | `--eapp-radius*` / `--eapp-shadow*` / `--eapp-space-*` | 圆角、阴影、间距 |
+
+- **uview-plus 桥接**：`--up-*` / `--u-*` 变量在 `App.vue` 统一定义，`up-*` 组件自动继承同一主题；`uni.scss` 只引入 `uview-plus/theme.scss`，不重复声明颜色。
+- **图标系统**：`utils/icons.ts` 维护一套 24×24、1.7 描边的线性图标，运行时生成 base64 SVG data URI，由 `AppIcon.vue` 以 `<image>` 渲染，兼容 H5 / 微信小程序 / App；不使用 emoji，也不使用内联 `<svg>` 标签。
+- **统一组件**：卡片用 1rpx 描边 + 极淡阴影；状态用带圆点的低饱和标签；区块标题用 `SectionHeader`（左侧主色竖条 + 可选「查看全部」）；入口列表用 `EntryList`；加载态用 `SkeletonCard`；点击反馈统一 `hover-class="eapp-hover"`。
+- **图表色板**：`utils/ly-charts.ts` 的 `EAPP_CHART_COLORS` 与主题同源（品牌蓝 → 青 → 绿 → 琥珀 → 红 → 石板灰），坐标轴与网格线使用中性灰，避免高饱和彩虹配色。
+  > 实现约束：本项目内置的 `uni_modules/ly-charts` 是 **26.1.4 旧副本**，其 line / bar / pie 组件**不读取** ECharts 顶层的 `option.color`，只按 `series.color`、`series.itemStyle.color`、饼图数据项的 `color` / `itemStyle.color` 取色，未指定时会回退到组件内置的 ECharts 高饱和默认色板。因此所有 option 构造函数除了设置顶层 `color`，还必须通过 `paletteColor(index)` 给每条 series、每个扇区显式着色，否则截图里仍会出现淡紫面积图和彩虹环形图。新增图表类型时同样处理。
+  >
+  > 上游组件库 `D:\Repos\xyito\open\lyCharts` 已修复该缺陷（Vue / uvue / uni-app x 全端支持顶层 `option.color`，取色优先级为显式色 → `itemStyle.color` → `option.color[index]` → 内置色板）。待本项目把 `uni_modules/ly-charts` 升级到含该修复的版本后，可保留顶层 `color` 并移除逐项显式着色；在升级之前不要删除 `paletteColor` 逻辑，也不要直接改项目内的第三方组件副本。
+- **数字排版**：金额、指标、编号使用 `.eapp-num` 等宽数字对齐；`MetricCard` / `StatCard` 按数值字符数自适应字号，避免 393px 手机三列布局下长金额（如 `¥28960.50`）被省略号截断。
+
+## 构建与静态资源
+
+- `scripts/gen-tabbar-icons.cjs` 用纯 Node 光栅化生成 `static/tabbar/` 下 8 张 tabBar PNG（4 个入口 × 常态/选中态），修改图标后重新执行 `node scripts/gen-tabbar-icons.cjs`。
+- `scripts/normalize-theme.cjs` 用于把页面里遗留的硬编码颜色批量收敛到设计令牌，新增页面后可复跑。
+- `vite.config.ts` 的 `copyStaticAssets` 插件在 H5 构建时把 `static/` 复制到产物根目录：uni 的 Vite 构建默认不复制该目录，而 tabBar 的 `iconPath` 在 H5 端会解析为 `/static/...` 绝对路径，缺少这一步会导致图标 404。小程序与 App 端由 uni 自行处理静态资源。
+- 部署 H5 时按 `manifest.json` 的 `h5.router.base`（默认 `/eapp/`）配置静态站点与 history 回退。
+
+## 接口与配置
+
+- 数据交互统一走 `/admin/api/*`，界面层不持有独立接口，mock 模式由 `VITE_MOCK=true` 切换。
+- 运行与部署无需额外环境变量；构建产物包含 `static/tabbar/`，需随站点一起发布。
 
 ## 工作台（Dashboard）
 
-- 顶部：店铺名（来自 `/shops/current`）+ 扫码 + 消息入口
-- 营业概览：今日营收 / 今日订单 / 客单价 + 同环比小标签
-- 营收趋势：近 7 / 30 日切换的 `AreaChart`
-- 订单状态分布：`RingChart` + 图例
-- 公告通知带（横滑）
-- 待办中心 6 项：待发货 / 待审售后 / 待回消息 / 库存预警 / 待开发票 / 待处理退款（点击直跳到对应业务页并自动应用筛选）
-- 快捷九宫格 8 项：扫码发货 / 新建商品 / 优惠券 / 装修 / 数据 / 客户 / 财务 / WMS（后 4 项 P2 阶段实现）
-- 商品销量 Top5 `BarChart`
-- 库存预警列表
+页面按「店铺状态 → 核心指标 → 待办 → 公告 → 入口 → 分析 → 预警」组织，区块标题统一使用 `SectionHeader`。
+
+- 顶部 `PageHeader`：店铺名（来自 `/shops/current`）+ 扫码 + 消息入口（带未读红点）
+- 店铺概览条：店铺标识、营业状态、当前日期、经营报表入口
+- 今日营业概览：今日营收 / 今日订单 / 客单价三列 `MetricCard`，附环比趋势
+- 待办中心：待发货 / 待审售后 / 未读消息 / 库存预警四项，点击直达对应业务页并自动应用筛选
+- 公告通知：`AnnouncementBar` 按通知 / 提醒 / 紧急分类，点击查看详情
+- 快捷入口：订单 / 商品 / 售后 / 评价 / 装修 / 数据报表 / 仓储，统一线性图标
+- 营销中心：优惠券 / 秒杀 / 拼团 / 砍价 / 会员 / 消息群发 / 装修 / 规格模板 / 分销 / 积分商城
+- 经营分析：营收趋势（近 7 / 30 日 `AreaChart`）、订单状态分布（`RingChart`）、商品销量 Top5（`BarChart`）
+- 库存预警列表：显示预警阈值与当前库存，点击跳转商品列表「预警」页签
+- 扫码结果写入订单关键词，跳转到订单列表后自动作为搜索条件生效
 
 ## 订单
 
 ### 列表
-- 顶部 9 状态 tabs：全部 / 待付款 / 待发货 / 已发货 / 已完成 / 已关闭 / 售后中 / 待评价 / 待开票
-- 高级筛选抽屉：关键词、金额区间、物流公司、收货省份、支付方式、是否含售后、时间
-- 卡片操作菜单：详情 / 改价 / 催付 / 发货 / 备注 / 打单
-- 长按或勾选进入批量模式：批量发货 / 批量备注 / 批量关闭
+- 顶部 7 状态 tabs：全部 / 待付款 / 待发货 / 已发货 / 已完成 / 已取消 / 售后中
+- 快捷搜索：订单号 / 买家 / 商品，支持回车提交与一键清空；工作台扫码结果可直接作为关键词
+- 高级筛选抽屉：关键词、金额区间、物流公司、收货省份、支付方式
+- 卡片操作：详情 / 改价 / 催付 / 发货 / 备注 / 打单
+- 勾选进入批量模式：批量发货 / 批量备注 / 批量关闭；结果弹窗分别列出成功与失败项
+- 首次加载用 `SkeletonCard` 骨架屏，空态提供「清除筛选」快捷操作
 
 ### 详情
 - 顶部订单进度 Timeline（下单→支付→发货→签收→完成）
@@ -69,7 +108,7 @@
 
 ## 营销
 
-营销模块覆盖 9 个管理入口：
+营销中心按「活动与优惠 / 会员与运营 / 内容与工具」三组组织 10 个管理入口，统一使用 `EntryList`：
 
 - **优惠券**：全字段 CRUD + 叠加规则（互斥 / 同类可叠 / 跨类可叠）+ 定向发券（全部用户 / 会员等级 / 新用户）
 - **秒杀**：活动 + 活动商品管理
@@ -111,7 +150,11 @@
 
 ## 我的
 
-P1 保留现有实现（店铺设置 / 管理员 / 角色等），P2 之后会与商家工作台进一步集成。
+- 账号卡：头像、登录账号、认证状态
+- 店铺管理：店铺设置 / 管理员 / 角色权限（按 RBAC 权限动态过滤）
+- 客服与消息：自动回复 / 消息群发 / 客服会话（tabBar 页面用 `switchTab` 跳转）
+- 经营工具：数据分析 / 店铺装修 / 仓储管理
+- 退出登录带二次确认
 
 ## 仓储管理（WMS）
 
@@ -152,10 +195,11 @@ IM 模块提供客服会话管理、实时聊天与自动回复能力：
 
 ## 平台兼容
 
-- H5：主跑 demo，`env(safe-area-inset-top)` 在桌面自然降级为 0
-- 微信小程序：ly-charts 自带 canvas 兼容；富文本编辑器演示期只读
+- H5：主跑 demo，`env(safe-area-inset-top)` 在桌面自然降级为 0；`vite.config.ts` 负责把 `static/` 复制到产物
+- 微信小程序：`AppIcon` 以 base64 SVG data URI 渲染 `<image>`，不依赖内联 `<svg>`；ly-charts 自带 canvas 兼容；富文本编辑器演示期只读
 - App：面单预览用 `rich-text`/`web-view` 渲染
-- 旧机型：九宫格不超过 8 项、公告带最多 5 条
+- 安全区：抽屉、批量操作条、页面底部留白统一用 `env(safe-area-inset-bottom)` 处理
+- 旧机型：快捷入口 4 列、营销中心 5 列，公告按条展示不做横滑
 
 ## 分销管理
 

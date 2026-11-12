@@ -255,16 +255,16 @@ onUnload(() => {
 .page { height: 100vh; display: flex; flex-direction: column; background: var(--eapp-bg); }
 .status-bar { display: flex; align-items: center; gap: 8rpx; padding: 12rpx 20rpx; font-size: 22rpx; }
 .status-bar.online { background: #ecfdf5; border-bottom: 1rpx solid #a7f3d0; }
-.status-bar.offline { background: #fef3c7; border-bottom: 1rpx solid #fde68a; }
+.status-bar.offline { background: var(--eapp-warning-soft); border-bottom: 1rpx solid #fde68a; }
 .status-dot { width: 12rpx; height: 12rpx; border-radius: 50%; }
 .status-bar.online .status-dot { background: #10b981; }
-.status-bar.offline .status-dot { background: #f59e0b; }
+.status-bar.offline .status-dot { background: var(--eapp-warning); }
 .status-bar.online .status-text { color: #065f46; }
-.status-bar.offline .status-text { color: #92400e; }
+.status-bar.offline .status-text { color: var(--eapp-warning); }
 .msg-list { flex: 1; padding: 20rpx; box-sizing: border-box; display: flex; flex-direction: column; }
 .loading { text-align: center; color: var(--eapp-text-muted); padding: 40rpx 0; }
 .empty { text-align: center; color: var(--eapp-text-muted); padding: 80rpx 0; }
 .input-bar { position: relative; display: flex; align-items: center; gap: 12rpx; padding: 16rpx 20rpx; background: #fff; border-top: 1px solid var(--eapp-border); padding-bottom: calc(16rpx + env(safe-area-inset-bottom, 0)); }
-.typing-draft { position: absolute; left: 20rpx; right: 20rpx; top: -56rpx; padding: 12rpx 18rpx; border-radius: 16rpx; background: #fffbeb; color: #92400e; font-size: 22rpx; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.msg-input { flex: 1; height: 72rpx; padding: 0 20rpx; border: 1px solid var(--eapp-border); border-radius: 36rpx; font-size: 26rpx; background: #f8fafc; }
+.typing-draft { position: absolute; left: 20rpx; right: 20rpx; top: -56rpx; padding: 12rpx 18rpx; border-radius: 16rpx; background: #fffbeb; color: var(--eapp-warning); font-size: 22rpx; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.msg-input { flex: 1; height: 72rpx; padding: 0 20rpx; border: 1rpx solid var(--eapp-border); border-radius: 36rpx; font-size: 26rpx; background: var(--eapp-bg); }
 </style>

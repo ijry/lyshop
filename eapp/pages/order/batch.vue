@@ -66,10 +66,10 @@ onLoad(() => {
 
 <style scoped>
 .page { min-height: 100vh; padding: 20rpx; background: var(--eapp-bg); display: grid; gap: 14rpx; }
-.head { display: flex; align-items: center; justify-content: space-between; background: var(--eapp-card); border-radius: 18rpx; padding: 18rpx; border: 1px solid var(--eapp-border); }
+.head { display: flex; align-items: center; justify-content: space-between; background: var(--eapp-card); border-radius: 18rpx; padding: 18rpx; border: 1rpx solid var(--eapp-border); }
 .company { display: flex; align-items: center; gap: 10rpx; font-size: 24rpx; }
-.picker { border: 1px solid var(--eapp-border); border-radius: 10rpx; padding: 0 16rpx; height: 60rpx; display: flex; align-items: center; }
-.row { display: flex; align-items: center; gap: 12rpx; background: var(--eapp-card); padding: 14rpx; border-radius: 18rpx; border: 1px solid var(--eapp-border); }
+.picker { border: 1rpx solid var(--eapp-border); border-radius: 10rpx; padding: 0 16rpx; height: 60rpx; display: flex; align-items: center; }
+.row { display: flex; align-items: center; gap: 12rpx; background: var(--eapp-card); padding: 14rpx; border-radius: 18rpx; border: 1rpx solid var(--eapp-border); }
 .no { font-size: 24rpx; color: var(--eapp-text-muted); min-width: 120rpx; }
 .col-c { width: 200rpx; }
 .col-t { flex: 1; }

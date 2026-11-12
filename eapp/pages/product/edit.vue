@@ -393,7 +393,7 @@ onLoad(async (opts) => {
 
 <style scoped>
 .page { min-height: 100vh; background: var(--eapp-bg); padding: 20rpx; padding-bottom: 160rpx; display: grid; gap: 16rpx; box-sizing: border-box; }
-.section { background: var(--eapp-card); border: 1px solid var(--eapp-border); border-radius: 22rpx; padding: 20rpx; }
+.section { background: var(--eapp-card); border: 1rpx solid var(--eapp-border); border-radius: var(--eapp-radius-lg); padding: 20rpx; }
 .section-title { font-size: 30rpx; font-weight: 700; margin-bottom: 10rpx; display: flex; align-items: center; justify-content: space-between; }
 .mt { margin-top: 12rpx; }
 .tag-row { display: flex; gap: 10rpx; flex-wrap: wrap; align-items: center; }
@@ -420,7 +420,7 @@ onLoad(async (opts) => {
 .popup-body { padding: 24rpx; box-sizing: border-box; }
 .popup-title { font-size: 30rpx; font-weight: 700; margin-bottom: 14rpx; }
 .empty-tpl { text-align: center; color: var(--eapp-text-muted); padding: 40rpx 0; }
-.tpl-item { padding: 16rpx; border: 1px solid var(--eapp-border); border-radius: 14rpx; margin-bottom: 10rpx; }
+.tpl-item { padding: 16rpx; border: 1rpx solid var(--eapp-border); border-radius: 14rpx; margin-bottom: 10rpx; }
 .tpl-name { font-size: 28rpx; font-weight: 600; }
 .tpl-desc { display: block; margin-top: 6rpx; color: var(--eapp-text-muted); font-size: 22rpx; }
 </style>

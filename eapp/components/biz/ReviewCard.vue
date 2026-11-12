@@ -57,8 +57,8 @@ function truncate(text: string, max = 60) {
 <style scoped>
 .review-card {
   background: var(--eapp-card);
-  border: 1px solid var(--eapp-border);
-  border-radius: 22rpx;
+  border: 1rpx solid var(--eapp-border);
+  border-radius: var(--eapp-radius-lg);
   padding: 20rpx;
 }
 .review-card__product {
@@ -89,7 +89,7 @@ function truncate(text: string, max = 60) {
 }
 .review-card__scores {
   font-size: 22rpx;
-  color: #f59e0b;
+  color: var(--eapp-warning);
 }
 .review-card__content {
   display: -webkit-box;

@@ -10,6 +10,8 @@ import BatchResultPopup from '@/components/biz/BatchResultPopup.vue'
 import RemarkPopup from '@/components/biz/RemarkPopup.vue'
 import RepricingPopup from '@/components/biz/RepricingPopup.vue'
 import ShipPopup from '@/components/biz/ShipPopup.vue'
+import AppIcon from '@/components/common/AppIcon.vue'
+import SkeletonCard from '@/components/common/SkeletonCard.vue'
 import { useOrderList } from '@/composables/useOrderList'
 import { addOrderNote, batchCloseOrders, batchNoteOrders, getDeliveryMode, remindPay, repriceOrder, shipOrder } from '@/api/order'
 import { getStorage, removeStorage, setStorage } from '@/utils/storage'
@@ -132,6 +134,12 @@ onLoad(async () => {
     const idx = tabs.findIndex((tab) => tab.status === status)
     if (idx >= 0) current.value = idx
   }
+  // 工作台扫码结果在此落地为订单关键词
+  const scanKeyword = String(getStorage('eapp_order_keyword_filter') || '')
+  if (scanKeyword) {
+    removeStorage('eapp_order_keyword_filter')
+    quickKeyword.value = scanKeyword
+  }
   onTabChange(current.value)
   await loadDelivery()
 })
@@ -142,12 +150,10 @@ onReachBottom(() => h.loadMore())
 
 <template>
   <view class="page">
-    <PageHeader title="订单管理">
+    <PageHeader title="订单管理" eyebrow="ORDER MANAGEMENT">
       <template #right>
-        <view class="filter-btn" @click="openFilter">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3 4.5h18M7 12h10M10.5 19.5h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-          </svg>
+        <view class="eapp-icon-btn" hover-class="eapp-hover" @click="openFilter">
+          <AppIcon name="filter" :size="32" color="secondary" />
         </view>
       </template>
     </PageHeader>
@@ -186,41 +192,24 @@ onReachBottom(() => h.loadMore())
 
     <!-- Order count hint -->
     <view v-if="h.total && h.total.value > 0" class="list-meta">
-      <text class="list-meta-text">共 {{ h.total.value }} 个订单</text>
+      <view class="list-meta__bar" />
+      <text class="list-meta-text">共 <text class="list-meta__num eapp-num">{{ h.total.value }}</text> 个订单</text>
     </view>
 
     <!-- List -->
     <view class="list">
-      <!-- Skeleton loading -->
       <template v-if="h.loading.value && !h.list.value.length">
-        <view v-for="i in 4" :key="i" class="skeleton-card">
-          <view class="sk-accent" />
-          <view class="sk-body">
-            <view class="sk-row">
-              <view class="sk-block" style="width: 160rpx; height: 28rpx;" />
-              <view class="sk-block" style="width: 80rpx; height: 28rpx;" />
-            </view>
-            <view class="sk-row" style="margin-top: 16rpx; gap: 8rpx;">
-              <view class="sk-block" style="width: 84rpx; height: 84rpx; border-radius: 10rpx;" />
-              <view class="sk-block" style="width: 84rpx; height: 84rpx; border-radius: 10rpx;" />
-              <view style="flex: 1; display: flex; flex-direction: column; gap: 8rpx; padding-top: 4rpx;">
-                <view class="sk-block" style="width: 80%; height: 24rpx;" />
-                <view class="sk-block" style="width: 50%; height: 24rpx;" />
-              </view>
-            </view>
-            <view class="sk-row" style="margin-top: 12rpx;">
-              <view class="sk-block" style="width: 120rpx; height: 22rpx;" />
-              <view class="sk-block" style="width: 100rpx; height: 36rpx;" />
-            </view>
-          </view>
-        </view>
+        <SkeletonCard v-for="i in 4" :key="i" />
       </template>
 
       <EmptyState
         v-else-if="!h.loading.value && !h.list.value.length"
         title="暂无订单"
         desc="切换状态或调整筛选条件试试"
-      />
+        icon="order"
+      >
+        <up-button size="mini" plain hairline @click="clearQuickSearch">清除筛选</up-button>
+      </EmptyState>
 
       <OrderCard
         v-for="o in h.list.value"
@@ -237,7 +226,9 @@ onReachBottom(() => h.loadMore())
         <text class="loading-text">加载中…</text>
       </view>
       <view v-if="!h.loading.value && h.list.value.length && h.list.value.length >= h.total.value && h.total.value > 0" class="no-more">
-        · 没有更多了 ·
+        <view class="no-more__line" />
+        <text class="no-more__text">没有更多了</text>
+        <view class="no-more__line" />
       </view>
     </view>
 
@@ -275,7 +266,6 @@ onReachBottom(() => h.loadMore())
 
 <style scoped>
 .page { min-height: 100vh; background: var(--eapp-bg); }
-.filter-btn { padding: 4rpx 8rpx; color: var(--eapp-primary); display: flex; align-items: center; }
 
 /* Tabs */
 .tab-wrap { background: var(--eapp-card); border-bottom: 1rpx solid var(--eapp-border); }
@@ -284,8 +274,10 @@ onReachBottom(() => h.loadMore())
 .search-bar { background: var(--eapp-card); padding: 12rpx 24rpx 16rpx; border-bottom: 1rpx solid var(--eapp-border); }
 
 /* List meta */
-.list-meta { padding: 12rpx 24rpx 4rpx; }
-.list-meta-text { font-size: 22rpx; color: var(--eapp-text-faint); }
+.list-meta { display: flex; align-items: center; gap: 10rpx; padding: 20rpx 24rpx 4rpx; }
+.list-meta__bar { width: 6rpx; height: 22rpx; border-radius: 3rpx; background: var(--eapp-primary); flex-shrink: 0; }
+.list-meta-text { font-size: 22rpx; color: var(--eapp-text-muted); }
+.list-meta__num { color: var(--eapp-text); font-weight: 700; }
 
 /* List */
 .list { padding: 16rpx 20rpx; display: grid; gap: 16rpx; padding-bottom: 200rpx; }
@@ -295,18 +287,12 @@ onReachBottom(() => h.loadMore())
 .loading-text { font-size: 26rpx; color: var(--eapp-text-muted); }
 
 /* No more */
-.no-more { text-align: center; font-size: 24rpx; color: var(--eapp-text-faint); padding: 16rpx 0; letter-spacing: 2rpx; }
+.no-more { display: flex; align-items: center; justify-content: center; gap: 16rpx; padding: 20rpx 0; }
+.no-more__line { width: 48rpx; height: 1rpx; background: var(--eapp-border-strong); }
+.no-more__text { font-size: 22rpx; color: var(--eapp-text-faint); letter-spacing: 1rpx; }
 
 /* Filter drawer helpers */
 .row { display: flex; align-items: center; gap: 12rpx; }
 .dash { color: var(--eapp-text-muted); font-size: 28rpx; flex-shrink: 0; }
 .mt { margin-top: 16rpx; }
-
-/* Skeleton */
-.skeleton-card { display: flex; flex-direction: row; background: var(--eapp-card); border-radius: 20rpx; overflow: hidden; }
-.sk-accent { width: 8rpx; background: var(--eapp-border); }
-.sk-body { flex: 1; padding: 20rpx 22rpx; }
-.sk-row { display: flex; align-items: center; justify-content: space-between; }
-.sk-block { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; border-radius: 8rpx; animation: shimmer 1.5s infinite; }
-@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 </style>

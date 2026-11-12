@@ -88,14 +88,14 @@ onShow(() => h.load())
 .page { min-height: 100vh; background: var(--eapp-bg); padding: 20rpx; box-sizing: border-box; display: grid; gap: 14rpx; align-content: start; }
 .top-bar { display: flex; gap: 12rpx; align-items: center; }
 .search { flex: 1; }
-.card { background: #fff; border: 1px solid var(--eapp-border); border-radius: 20rpx; padding: 20rpx; }
+.card { background: #fff; border: 1rpx solid var(--eapp-border); border-radius: var(--eapp-radius-lg); padding: 20rpx; }
 .row { display: flex; align-items: center; justify-content: space-between; }
 .name { font-size: 28rpx; font-weight: 600; }
 .badge { font-size: 22rpx; padding: 4rpx 14rpx; border-radius: 999rpx; }
-.badge.on { background: #dcfce7; color: #16a34a; }
-.badge.off { background: #fee2e2; color: #dc2626; }
+.badge.on { background: var(--eapp-success-soft); color: var(--eapp-success); }
+.badge.off { background: var(--eapp-danger-soft); color: var(--eapp-danger); }
 .desc { margin-top: 8rpx; color: var(--eapp-text-muted); font-size: 23rpx; }
-.stack-badge { display: inline-block; background: #eff6ff; color: #2563eb; padding: 2rpx 10rpx; border-radius: 6rpx; font-size: 22rpx; }
+.stack-badge { display: inline-block; background: var(--eapp-primary-soft); color: var(--eapp-primary); padding: 2rpx 10rpx; border-radius: 6rpx; font-size: 22rpx; }
 .actions { margin-top: 12rpx; display: flex; gap: 10rpx; justify-content: flex-end; }
 .empty { text-align: center; color: var(--eapp-text-muted); padding: 80rpx 0; }
 .loading { text-align: center; color: var(--eapp-text-muted); padding: 20rpx 0; }

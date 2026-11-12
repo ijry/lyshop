@@ -228,7 +228,7 @@ onReachBottom(() => loadMore())
 .detail-cover { width: 96rpx; height: 96rpx; border-radius: 14rpx; flex-shrink: 0; }
 .detail-product-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6rpx; }
 .detail-product-title { font-size: 28rpx; font-weight: 600; color: var(--eapp-text); }
-.detail-scores { font-size: 24rpx; color: #f59e0b; }
+.detail-scores { font-size: 24rpx; color: var(--eapp-warning); }
 .detail-content { font-size: 26rpx; color: var(--eapp-text); line-height: 1.7; display: block; margin-bottom: 12rpx; }
 .detail-images { display: flex; gap: 10rpx; flex-wrap: wrap; margin-bottom: 12rpx; }
 .detail-img { width: 140rpx; height: 140rpx; border-radius: 12rpx; }

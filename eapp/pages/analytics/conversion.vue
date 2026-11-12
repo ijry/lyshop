@@ -24,8 +24,8 @@ onLoad(() => load())
 
     <view class="body">
       <view class="metric-row">
-        <MetricCard :title="t('analytics.overallRate')" :value="`${Number(summary.overall_rate || 0).toFixed(2)}%`" color="#2563eb" />
-        <MetricCard :title="t('analytics.abandonedCart')" :value="`${Number(summary.abandoned_cart_rate || 0).toFixed(1)}%`" color="#ef4444" />
+        <MetricCard :title="t('analytics.overallRate')" :value="`${Number(summary.overall_rate || 0).toFixed(2)}%`" color="var(--eapp-primary)" />
+        <MetricCard :title="t('analytics.abandonedCart')" :value="`${Number(summary.abandoned_cart_rate || 0).toFixed(1)}%`" color="var(--eapp-danger)" />
       </view>
 
       <FunnelChart :title="t('analytics.funnelChart')" :loading="loading" :steps="data?.funnel" />

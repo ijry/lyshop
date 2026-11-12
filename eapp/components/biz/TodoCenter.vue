@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import AppIcon from '@/components/common/AppIcon.vue'
+
 export interface TodoItem {
   key: string
   title: string
@@ -14,14 +16,31 @@ const emit = defineEmits<{
   click: [key: string]
 }>()
 
-function toneColor(tone?: string) {
-  const map: Record<string, string> = {
-    warning: 'var(--eapp-warning)',
-    danger: 'var(--eapp-danger)',
-    primary: 'var(--eapp-primary)',
-    success: 'var(--eapp-success)',
-  }
-  return map[tone || ''] || 'var(--eapp-primary)'
+const ICON_BY_KEY: Record<string, string> = {
+  pending_ship: 'truck',
+  pending_after_sale: 'after-sale',
+  unread_message: 'chat',
+  stock_warning: 'warning',
+  today_orders: 'order',
+  pending_invoice: 'document',
+  pending_refund: 'money',
+}
+
+type Tone = NonNullable<TodoItem['tone']>
+
+const TONE: Record<Tone, { color: string; soft: string; icon: string }> = {
+  warning: { color: 'var(--eapp-warning)', soft: 'var(--eapp-warning-soft)', icon: 'warning' },
+  danger: { color: 'var(--eapp-danger)', soft: 'var(--eapp-danger-soft)', icon: 'danger' },
+  primary: { color: 'var(--eapp-primary)', soft: 'var(--eapp-primary-soft)', icon: 'primary' },
+  success: { color: 'var(--eapp-success)', soft: 'var(--eapp-success-soft)', icon: 'success' },
+}
+
+function toneOf(tone?: string) {
+  return TONE[(tone || 'primary') as Tone] || TONE.primary
+}
+
+function iconOf(item: TodoItem) {
+  return ICON_BY_KEY[item.key] || 'clipboard'
 }
 </script>
 
@@ -31,9 +50,17 @@ function toneColor(tone?: string) {
       v-for="item in items"
       :key="item.key"
       class="todo-center__item"
+      hover-class="eapp-hover"
+      :hover-stay-time="80"
       @click="emit('click', item.key)"
     >
-      <text class="todo-center__value" :style="{ color: toneColor(item.tone) }">
+      <view class="todo-center__top">
+        <view class="todo-center__icon" :style="{ background: toneOf(item.tone).soft }">
+          <AppIcon :name="iconOf(item)" :size="32" :color="toneOf(item.tone).icon" />
+        </view>
+        <AppIcon name="chevron-right" :size="24" color="faint" />
+      </view>
+      <text class="todo-center__value eapp-num" :style="{ color: toneOf(item.tone).color }">
         {{ item.value }}
       </text>
       <text class="todo-center__title">{{ item.title }}</text>
@@ -44,29 +71,51 @@ function toneColor(tone?: string) {
 <style scoped>
 .todo-center {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20rpx;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--eapp-space-3);
 }
 
 .todo-center__item {
   display: flex;
   flex-direction: column;
+  background: var(--eapp-card);
+  border: 1rpx solid var(--eapp-border);
+  border-radius: var(--eapp-radius-lg);
+  box-shadow: var(--eapp-shadow);
+  padding: var(--eapp-space-4);
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.todo-center__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
+}
+
+.todo-center__icon {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--eapp-card);
-  border-radius: 22rpx;
-  padding: 28rpx 16rpx;
-  gap: 8rpx;
-  min-height: 44rpx;
+  border-radius: var(--eapp-radius);
+  box-sizing: border-box;
 }
 
 .todo-center__value {
-  font-size: 40rpx;
+  font-size: var(--eapp-fs-2xl);
   font-weight: 700;
+  line-height: 1.15;
 }
 
 .todo-center__title {
-  font-size: 24rpx;
+  margin-top: 4rpx;
+  font-size: var(--eapp-fs-sm);
   color: var(--eapp-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 </style>

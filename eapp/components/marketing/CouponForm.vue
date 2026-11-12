@@ -117,7 +117,7 @@ function submit() {
 <style scoped>
 .popup-body { padding: 24rpx; box-sizing: border-box; max-height: 80vh; overflow-y: auto; }
 .popup-title { font-size: 30rpx; font-weight: 700; margin-bottom: 14rpx; }
-.picker { min-height: 76rpx; border: 1px solid var(--eapp-border); border-radius: 12rpx; padding: 0 20rpx; display: flex; align-items: center; color: var(--eapp-text); }
+.picker { min-height: 76rpx; border: 1rpx solid var(--eapp-border); border-radius: 12rpx; padding: 0 20rpx; display: flex; align-items: center; color: var(--eapp-text); }
 .row { display: flex; align-items: center; justify-content: space-between; font-size: 26rpx; }
 .mt { margin-top: 12rpx; }
 .mt-lg { margin-top: 16rpx; }
