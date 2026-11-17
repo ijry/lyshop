@@ -3,18 +3,20 @@ import { onShow } from '@dcloudio/uni-app'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useDistributionList } from '@/composables/useDistributionList'
-import { updateDistributorStatus } from '@/api/distribution'
+import { updateDistributorStatus, type DistributorStatus } from '@/api/distribution'
 
 const { t } = useI18n()
 const h = useDistributionList('distributors')
 const keyword = ref('')
 const current = ref(0)
-const statusTab = ref<number | ''>('')
+const statusTab = ref<DistributorStatus | ''>('')
 const tabs = [
-  { label: '全部', value: '' as const },
-  { label: '启用', value: 1 },
-  { label: '禁用', value: 0 },
-]
+  { label: '全部', value: '' },
+  { label: '待审核', value: 'pending' },
+  { label: '启用', value: 'active' },
+  { label: '禁用', value: 'disabled' },
+] as const
+const statusLabels: Record<DistributorStatus, string> = { pending: '待审核', active: '启用', disabled: '禁用' }
 
 function doSearch() {
   const params: any = { page: 1, size: 50 }
@@ -30,7 +32,7 @@ function switchTab(item: any) {
 }
 
 async function toggleStatus(item: any) {
-  const newStatus = Number(item.status) === 1 ? 0 : 1
+  const newStatus = item.status === 'active' ? 'disabled' : 'active'
   await updateDistributorStatus(item.id, newStatus)
   doSearch()
 }
@@ -57,13 +59,13 @@ onShow(() => doSearch())
     <view v-if="!h.loading.value && !h.list.value.length" class="empty">暂无分销商</view>
     <view v-for="item in h.list.value" :key="item.id" class="card">
       <view class="row">
-        <text class="name">{{ item.nickname }}</text>
-        <text :class="['badge', item.status === 1 ? 'on' : 'off']">{{ item.status === 1 ? '启用' : '禁用' }}</text>
+        <text class="name">{{ item.real_name }}</text>
+        <text :class="['badge', item.status]">{{ statusLabels[item.status] || '未知' }}</text>
       </view>
       <view class="desc">{{ item.phone }} · {{ item.level === 1 ? '一级' : '二级' }}</view>
-      <view class="desc">余额 ¥{{ Number(item.balance || 0).toFixed(2) }} · 累计 ¥{{ Number(item.total_earn || 0).toFixed(2) }}</view>
+      <view class="desc">余额 ¥{{ Number(item.available_amount || 0).toFixed(2) }} · 累计 ¥{{ Number(item.total_earnings || 0).toFixed(2) }}</view>
       <view class="actions">
-        <up-button size="mini" :type="item.status === 1 ? 'error' : 'primary'" plain @click="toggleStatus(item)">{{ item.status === 1 ? '禁用' : '启用' }}</up-button>
+        <up-button size="mini" :type="item.status === 'active' ? 'error' : 'primary'" plain @click="toggleStatus(item)">{{ item.status === 'active' ? '禁用' : '启用' }}</up-button>
       </view>
     </view>
     <view v-if="h.loading.value" class="loading">加载中…</view>
@@ -77,8 +79,9 @@ onShow(() => doSearch())
 .row { display: flex; align-items: center; justify-content: space-between; }
 .name { font-size: 28rpx; font-weight: 600; }
 .badge { font-size: 22rpx; padding: 4rpx 14rpx; border-radius: 999rpx; }
-.badge.on { background: var(--eapp-success-soft); color: var(--eapp-success); }
-.badge.off { background: var(--eapp-danger-soft); color: var(--eapp-danger); }
+.badge.pending { background: var(--eapp-warning-soft); color: var(--eapp-warning); }
+.badge.active { background: var(--eapp-success-soft); color: var(--eapp-success); }
+.badge.disabled { background: var(--eapp-danger-soft); color: var(--eapp-danger); }
 .desc { margin-top: 8rpx; color: var(--eapp-text-muted); font-size: 24rpx; }
 .actions { margin-top: 12rpx; display: flex; gap: 10rpx; justify-content: flex-end; }
 .empty { text-align: center; color: var(--eapp-text-muted); padding: 80rpx 0; }

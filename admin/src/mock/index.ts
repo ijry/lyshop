@@ -137,11 +137,11 @@ const vipSkuPricesSource: any[] = [
   { id: 3, product_id: 1, sku_id: 2, level_id: 2, level_name: '金卡', vip_price: 5399, status: 1 },
 ]
 const distributorsSource: any[] = [
-  { id: 1, user_id: 1001, parent_id: 0, level: 1, total_earn: 1280.50, balance: 580.50, status: 1, nickname: '张三', phone: '138****1001', created_at: '2026-04-01T08:00:00Z', updated_at: '2026-05-28T10:00:00Z' },
-  { id: 2, user_id: 1002, parent_id: 1, level: 2, total_earn: 420.00, balance: 200.00, status: 1, nickname: '李四', phone: '138****1002', created_at: '2026-04-10T08:00:00Z', updated_at: '2026-05-28T10:00:00Z' },
-  { id: 3, user_id: 1003, parent_id: 1, level: 2, total_earn: 310.20, balance: 150.20, status: 1, nickname: '王五', phone: '138****1003', created_at: '2026-04-15T08:00:00Z', updated_at: '2026-05-28T10:00:00Z' },
-  { id: 4, user_id: 1004, parent_id: 2, level: 2, total_earn: 85.00, balance: 85.00, status: 0, nickname: '赵六', phone: '138****1004', created_at: '2026-05-01T08:00:00Z', updated_at: '2026-05-28T10:00:00Z' },
-  { id: 5, user_id: 1005, parent_id: 0, level: 1, total_earn: 960.00, balance: 400.00, status: 1, nickname: '陈七', phone: '138****1005', created_at: '2026-04-20T08:00:00Z', updated_at: '2026-05-28T10:00:00Z' },
+  { id: 1, user_id: 1001, parent_id: 0, level: 1, total_earnings: 1280.50, available_amount: 580.50, frozen_amount: 300, withdrawn_amount: 400, total_customers: 12, total_orders: 20, status: 'active', real_name: '张三', id_card: '', phone: '138****1001', created_at: '2026-04-01T08:00:00Z', updated_at: '2026-05-28T10:00:00Z' },
+  { id: 2, user_id: 1002, parent_id: 1, level: 2, total_earnings: 420, available_amount: 200, frozen_amount: 120, withdrawn_amount: 100, total_customers: 6, total_orders: 8, status: 'active', real_name: '李四', id_card: '', phone: '138****1002', created_at: '2026-04-10T08:00:00Z', updated_at: '2026-05-28T10:00:00Z' },
+  { id: 3, user_id: 1003, parent_id: 1, level: 2, total_earnings: 310.20, available_amount: 150.20, frozen_amount: 100, withdrawn_amount: 60, total_customers: 4, total_orders: 5, status: 'disabled', real_name: '王五', id_card: '', phone: '138****1003', created_at: '2026-04-15T08:00:00Z', updated_at: '2026-05-28T10:00:00Z' },
+  { id: 4, user_id: 1004, parent_id: 2, level: 2, total_earnings: 0, available_amount: 0, frozen_amount: 0, withdrawn_amount: 0, total_customers: 0, total_orders: 0, status: 'pending', real_name: '赵六', id_card: '', phone: '138****1004', created_at: '2026-05-01T08:00:00Z', updated_at: '2026-05-28T10:00:00Z' },
+  { id: 5, user_id: 1005, parent_id: 0, level: 1, total_earnings: 960, available_amount: 400, frozen_amount: 0, withdrawn_amount: 560, total_customers: 9, total_orders: 15, status: 'active', real_name: '陈七', id_card: '', phone: '138****1005', created_at: '2026-04-20T08:00:00Z', updated_at: '2026-05-28T10:00:00Z' },
 ]
 const commissionsSource: any[] = [
   { id: 1, order_id: 10001, distributor_id: 1, level: 1, amount: 49.90, status: 1, created_at: '2026-05-20T10:00:00Z' },
@@ -153,7 +153,31 @@ const commissionsSource: any[] = [
   { id: 7, order_id: 10005, distributor_id: 5, level: 2, amount: 29.95, status: 1, created_at: '2026-05-25T10:00:00Z' },
   { id: 8, order_id: 10006, distributor_id: 2, level: 1, amount: 19.90, status: 2, created_at: '2026-05-12T10:00:00Z' },
 ]
-const distributionConfigSource: any = { level1_rate: 0.10, level2_rate: 0.05 }
+const distributionOrdersSource: any[] = commissionsSource.map((item: any) => ({
+  id: item.id,
+  order_id: item.order_id,
+  distributor_id: item.distributor_id,
+  level: item.level,
+  order_amount: Math.round(item.amount * (item.level === 1 ? 10 : 20) * 100) / 100,
+  commission_rate: item.level === 1 ? 10 : 5,
+  commission: item.amount,
+  status: ({ 1: 'pending', 2: 'settled', 3: 'cancelled' } as Record<number, string>)[item.status],
+  settled_at: item.status === 2 ? item.created_at : null,
+  created_at: item.created_at,
+  updated_at: item.created_at,
+}))
+const distributionWithdrawalsSource: any[] = [
+  { id: 1, distributor_id: 1, amount: 300, fee: 0, actual_amount: 300, status: 'pending', reject_reason: '', bank_name: '演示银行', bank_account: '****1001', account_name: '张三', processed_at: null, completed_at: null, created_at: '2026-05-28T08:00:00Z', updated_at: '2026-05-28T08:00:00Z' },
+  { id: 2, distributor_id: 2, amount: 120, fee: 0, actual_amount: 120, status: 'approved', reject_reason: '', bank_name: '演示银行', bank_account: '****1002', account_name: '李四', processed_at: '2026-05-27T10:00:00Z', completed_at: null, created_at: '2026-05-27T08:00:00Z', updated_at: '2026-05-27T10:00:00Z' },
+  { id: 3, distributor_id: 3, amount: 100, fee: 0, actual_amount: 100, status: 'pending', reject_reason: '', bank_name: '演示银行', bank_account: '****1003', account_name: '王五', processed_at: null, completed_at: null, created_at: '2026-05-26T08:00:00Z', updated_at: '2026-05-26T08:00:00Z' },
+  { id: 4, distributor_id: 5, amount: 560, fee: 0, actual_amount: 560, status: 'completed', reject_reason: '', bank_name: '演示银行', bank_account: '****1005', account_name: '陈七', processed_at: '2026-05-24T10:00:00Z', completed_at: '2026-05-25T10:00:00Z', created_at: '2026-05-24T08:00:00Z', updated_at: '2026-05-25T10:00:00Z' },
+  { id: 5, distributor_id: 2, amount: 100, fee: 0, actual_amount: 100, status: 'rejected', reject_reason: '收款信息需确认', bank_name: '演示银行', bank_account: '****1002', account_name: '李四', processed_at: '2026-05-23T10:00:00Z', completed_at: null, created_at: '2026-05-23T08:00:00Z', updated_at: '2026-05-23T10:00:00Z' },
+]
+const distributionConfigSource: any = {
+  id: 1, enabled: true, level: 2, level1_rate: 10, level2_rate: 5, level3_rate: 2,
+  min_withdraw: 100, withdraw_fee_rate: 0, auto_approve: false, require_real_name: true,
+  created_at: '2026-04-01T08:00:00Z', updated_at: '2026-05-28T10:00:00Z',
+}
 let pointsProductSeq = 6
 const pointsProductsSource: any[] = [
   { id: 1, title: '10元无门槛优惠券', type: 'coupon', points_price: 500, stock: 100, status: 1, cover: 'https://picsum.photos/120/120?random=pts1', description: '消费满0元可用', created_at: '2026-05-01T08:00:00Z' },
@@ -1297,9 +1321,6 @@ const routes: Record<string, any> = {
   },
   'PUT /admin/api/site-settings': { success: true },
 
-  // Distribution
-  'GET /admin/api/distribution/config': distributionConfigSource,
-
   // Points
   'GET /admin/api/points/summary': null as any,
 
@@ -1978,29 +1999,91 @@ export function matchMock(method: string, url: string, params?: Record<string, a
   const vipSkuResult = vipCrud('/admin/api/vip/sku-prices', vipSkuPricesSource)
   if (vipSkuResult) return vipSkuResult
 
-  // Distribution routes
+  // 分销接口与真实模型保持一致
   if (key === 'GET /admin/api/distribution/distributors') {
     let list = clone(distributorsSource) as any[]
     const keyword = String(query.keyword || '').trim().toLowerCase()
-    const hasStatus = query.status !== undefined && query.status !== null && String(query.status).trim() !== ''
-    const status = Number(query.status || 0)
-    if (keyword) list = list.filter((item: any) => String(item.nickname || '').toLowerCase().includes(keyword) || String(item.phone || '').includes(keyword))
-    if (hasStatus) list = list.filter((item: any) => Number(item.status || 0) === status)
+    const status = String(query.status ?? '').trim()
+    if (keyword) list = list.filter((item: any) => String(item.real_name || '').toLowerCase().includes(keyword) || String(item.phone || '').includes(keyword))
+    if (status) list = list.filter((item: any) => item.status === status)
+    list.sort((a: any, b: any) => b.id - a.id)
     return { matched: true, data: toPageData(list, Number(query.page || 1), Number(query.size || 20)) }
   }
-  if (key.startsWith('GET /admin/api/distribution/distributors/') && !key.includes('/status')) {
-    const id = Number(url.split('/').pop() || 0)
-    const found = distributorsSource.find((item: any) => Number(item.id || 0) === id)
-    return { matched: true, data: found ? clone(found) : null }
+  if (methodUpper === 'GET' && /^\/admin\/api\/distribution\/distributors\/\d+$/.test(url)) {
+    const id = Number(url.split('/').pop())
+    const found = distributorsSource.find((item: any) => item.id === id)
+    if (!found) throw new Error('分销商不存在')
+    return { matched: true, data: clone(found) }
   }
-  if (methodUpper === 'PUT' && /\/admin\/api\/distribution\/distributors\/\d+\/status$/.test(url)) {
-    const parts = url.split('/')
-    const id = Number(parts[parts.length - 2] || 0)
-    const target = distributorsSource.find((item: any) => Number(item.id || 0) === id)
-    if (target) {
-      target.status = Number((params as any)?.status || 0)
-      target.updated_at = new Date().toISOString()
+  if (methodUpper === 'PUT' && /^\/admin\/api\/distribution\/distributors\/\d+$/.test(url)) {
+    const id = Number(url.split('/').pop())
+    const target = distributorsSource.find((item: any) => item.id === id)
+    if (!target) throw new Error('分销商不存在')
+    for (const field of ['user_id', 'parent_id', 'level', 'status', 'total_earnings', 'available_amount', 'frozen_amount', 'withdrawn_amount', 'total_customers', 'total_orders', 'real_name', 'id_card', 'phone']) {
+      if (query[field] !== undefined) target[field] = query[field]
     }
+    target.updated_at = new Date().toISOString()
+    return { matched: true, data: null }
+  }
+  // eapp 仍使用独立的状态更新入口，写入时转换为真实模型状态。
+  if (methodUpper === 'PUT' && /^\/admin\/api\/distribution\/distributors\/\d+\/status$/.test(url)) {
+    const id = Number(url.split('/')[5])
+    const target = distributorsSource.find((item: any) => item.id === id)
+    if (!target) throw new Error('分销商不存在')
+    target.status = Number(query.status) === 1 ? 'active' : 'disabled'
+    target.updated_at = new Date().toISOString()
+    return { matched: true, data: null }
+  }
+  if (key === 'GET /admin/api/distribution/orders' || key === 'GET /admin/api/distribution/withdrawals') {
+    const source = url.endsWith('/orders') ? distributionOrdersSource : distributionWithdrawalsSource
+    let list = clone(source) as any[]
+    const status = String(query.status || '').trim()
+    const distributorID = Number(query.distributor_id || 0)
+    if (status) list = list.filter((item: any) => item.status === status)
+    if (distributorID > 0) list = list.filter((item: any) => item.distributor_id === distributorID)
+    list.sort((a: any, b: any) => b.id - a.id)
+    return { matched: true, data: toPageData(list, Number(query.page || 1), Number(query.size || 20)) }
+  }
+  if (methodUpper === 'GET' && /^\/admin\/api\/distribution\/(orders|withdrawals)\/\d+$/.test(url)) {
+    const source = url.includes('/orders/') ? distributionOrdersSource : distributionWithdrawalsSource
+    const id = Number(url.split('/').pop())
+    const found = source.find((item: any) => item.id === id)
+    if (!found) throw new Error('记录不存在')
+    return { matched: true, data: clone(found) }
+  }
+  if (methodUpper === 'POST' && /^\/admin\/api\/distribution\/withdrawals\/\d+\/(approve|reject|complete)$/.test(url)) {
+    const parts = url.split('/')
+    const id = Number(parts[5])
+    const action = parts[6]
+    const target = distributionWithdrawalsSource.find((item: any) => item.id === id)
+    if (!target) throw new Error('提现申请不存在')
+    if (target.status !== (action === 'complete' ? 'approved' : 'pending')) throw new Error('提现状态不正确')
+    const reason = String(query.reason || '')
+    if (action === 'reject' && !reason.trim()) throw new Error('请输入拒绝原因')
+    const now = new Date().toISOString()
+    const distributor = distributorsSource.find((item: any) => item.id === target.distributor_id)
+    if (action === 'approve') {
+      target.status = 'approved'
+      target.processed_at = now
+    } else if (action === 'reject') {
+      target.status = 'rejected'
+      target.reject_reason = reason
+      target.processed_at = now
+      if (distributor) {
+        distributor.available_amount = Math.round((distributor.available_amount + target.amount) * 100) / 100
+        distributor.frozen_amount = Math.round((distributor.frozen_amount - target.amount) * 100) / 100
+        distributor.updated_at = now
+      }
+    } else {
+      target.status = 'completed'
+      target.completed_at = now
+      if (distributor && distributor.frozen_amount >= target.amount) {
+        distributor.frozen_amount = Math.round((distributor.frozen_amount - target.amount) * 100) / 100
+        distributor.withdrawn_amount = Math.round((distributor.withdrawn_amount + target.amount) * 100) / 100
+        distributor.updated_at = now
+      }
+    }
+    target.updated_at = now
     return { matched: true, data: null }
   }
   if (key === 'GET /admin/api/distribution/commissions') {
@@ -2022,7 +2105,19 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     if (target && Number(target.status) === 1) {
       target.status = 2
       const dist = distributorsSource.find((d: any) => Number(d.id || 0) === Number(target.distributor_id || 0))
-      if (dist) { dist.balance = Number(dist.balance || 0) + Number(target.amount || 0); dist.updated_at = new Date().toISOString() }
+      const now = new Date().toISOString()
+      if (dist) {
+        dist.available_amount = Math.round((dist.available_amount + target.amount) * 100) / 100
+        dist.total_earnings = Math.round((dist.total_earnings + target.amount) * 100) / 100
+        dist.total_orders += 1
+        dist.updated_at = now
+      }
+      const order = distributionOrdersSource.find((item: any) => item.id === target.id)
+      if (order) {
+        order.status = 'settled'
+        order.settled_at = now
+        order.updated_at = now
+      }
     }
     return { matched: true, data: null }
   }
@@ -2030,13 +2125,27 @@ export function matchMock(method: string, url: string, params?: Record<string, a
     const parts = url.split('/')
     const id = Number(parts[parts.length - 2] || 0)
     const target = commissionsSource.find((item: any) => Number(item.id || 0) === id)
-    if (target) target.status = 3
+    if (target) {
+      target.status = 3
+      const order = distributionOrdersSource.find((item: any) => item.id === target.id)
+      if (order) {
+        order.status = 'cancelled'
+        order.updated_at = new Date().toISOString()
+      }
+    }
     return { matched: true, data: null }
   }
+  if (key === 'GET /admin/api/distribution/config') {
+    return { matched: true, data: clone(distributionConfigSource) }
+  }
   if (key === 'PUT /admin/api/distribution/config') {
-    const payload = params as any
-    if (payload?.level1_rate !== undefined) distributionConfigSource.level1_rate = Number(payload.level1_rate)
-    if (payload?.level2_rate !== undefined) distributionConfigSource.level2_rate = Number(payload.level2_rate)
+    for (const field of ['enabled', 'auto_approve', 'require_real_name']) {
+      if (query[field] !== undefined) distributionConfigSource[field] = Boolean(query[field])
+    }
+    for (const field of ['level', 'level1_rate', 'level2_rate', 'level3_rate', 'min_withdraw', 'withdraw_fee_rate']) {
+      if (query[field] !== undefined) distributionConfigSource[field] = Number(query[field])
+    }
+    distributionConfigSource.updated_at = new Date().toISOString()
     return { matched: true, data: null }
   }
 

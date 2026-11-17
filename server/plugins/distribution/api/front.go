@@ -12,7 +12,7 @@ import (
 
 // RegisterFrontRoutes 注册前端路由
 func RegisterFrontRoutes(r *gin.RouterGroup) {
-	g := r.Group("/api/v1/distribution").Use(middleware.RequireAuth)
+	g := r.Group("/distribution").Use(middleware.RequireAuth)
 	{
 		// 分销商信息
 		g.GET("/info", getDistributorInfo)

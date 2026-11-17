@@ -55,9 +55,9 @@ onMounted(() => loadData())
 
       <el-form-item label="分销层级">
         <el-radio-group v-model="form.level">
-          <el-radio :label="1">一级</el-radio>
-          <el-radio :label="2">二级</el-radio>
-          <el-radio :label="3">三级</el-radio>
+          <el-radio :value="1">一级</el-radio>
+          <el-radio :value="2">二级</el-radio>
+          <el-radio :value="3">三级</el-radio>
         </el-radio-group>
       </el-form-item>
 

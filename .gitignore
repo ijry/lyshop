@@ -12,6 +12,7 @@ config.yaml
 # Node
 admin/node_modules/
 admin/dist/
+/outputs/admin-fixed-demo/
 app/node_modules/
 app/dist/
 app/unpackage/

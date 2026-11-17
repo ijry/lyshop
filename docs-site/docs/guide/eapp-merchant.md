@@ -263,9 +263,11 @@ IM 模块提供客服会话管理、实时聊天与自动回复能力：
 | 页面 | 路径 | 功能 |
 |------|------|------|
 | 分销总览 | `/pages/distribution/index` | 3 指标卡（总分销商/待结算佣金/已结算总额）+ 3 入口 |
-| 分销商管理 | `/pages/distribution/distributor-list` | 关键词搜索 + 状态 tabs（全部/启用/禁用），启用/禁用切换 |
+| 分销商管理 | `/pages/distribution/distributor-list` | 关键词搜索 + 状态 tabs（全部/待审核/启用/禁用），审核激活与启用/禁用切换 |
 | 佣金管理 | `/pages/distribution/commission-list` | 状态 tabs（全部/待结算/已结算/已退回），结算/退回操作 |
 | 分销配置 | `/pages/distribution/config` | 一级/二级佣金比例设置 |
+
+分销商接口为 `/admin/api/distribution/distributors`，状态使用 `pending`、`active`、`disabled`；列表展示 `real_name`、`available_amount`、`total_earnings`，状态更新复用 `PUT /admin/api/distribution/distributors/:id`。配置中的 `level1_rate`、`level2_rate` 直接以百分数传递（`10` 表示 `10%`），页面输入、保存和演示数据使用同一单位。商家端与管理后台共用 Mock 数据，部署时需同步更新对应前端产物，无新增后端接口或配置项。
 
 ## 积分商城
 

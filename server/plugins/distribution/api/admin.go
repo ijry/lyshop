@@ -10,7 +10,7 @@ import (
 
 // RegisterAdminRoutes 注册管理端路由
 func RegisterAdminRoutes(r *gin.RouterGroup) {
-	g := r.Group("/admin/api/distribution")
+	g := r.Group("/distribution")
 	{
 		// 配置管理
 		g.GET("/config", api.RequirePermission("distribution:view"), getConfig)

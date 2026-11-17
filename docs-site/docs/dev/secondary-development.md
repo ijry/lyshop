@@ -122,7 +122,7 @@ lyshop/
 │   ├── plugins/       # 25+ 业务插件
 │   ├── api/           # 核心路由（认证、管理员）
 │   └── service/       # 核心业务逻辑
-├── admin/             # Vue3 管理后台（TailwindCSS + Vite）
+├── admin/             # Vue3 管理后台（UnoCSS + Element Plus + Vite）
 ├── web/               # Vue3 PC 端商城（UnoCSS + Vite）
 ├── app/               # uni-app 移动端/小程序（UnoCSS + uview-plus）
 └── docs-site/         # VitePress 文档站点
@@ -142,7 +142,7 @@ lyshop/
 | **状态管理** | Pinia | 2.1+ |
 | **路由** | Vue Router | 4.3+ |
 | **HTTP 客户端** | Axios / uni.request | 1.7+ |
-| **Admin 样式** | TailwindCSS | 3.4+ |
+| **Admin 样式与组件** | UnoCSS + Element Plus | - |
 | **Web 样式** | UnoCSS | - |
 | **App 框架** | uni-app + uview-plus | 3.0+ |
 | **文档** | VitePress | - |
@@ -1482,7 +1482,8 @@ func (c *fullReduceCalc) Calculate(ctx *marketing.PriceContext) (bool, error) {
 |------|------|
 | 框架 | Vue 3 + TypeScript |
 | 构建 | Vite 5 |
-| 样式 | TailwindCSS 3.4 |
+| 样式 | UnoCSS |
+| UI 组件 | Element Plus（入口统一注册，中文语言包） |
 | 状态 | Pinia |
 | 路由 | Vue Router 4 (hash/history) |
 | 图标 | lucide-vue-next |
@@ -1512,6 +1513,22 @@ admin/src/
 │   └── dialog.ts     # 对话框
 └── views/            # 页面组件（按模块分目录）
 ```
+
+#### 组件与指令注册
+
+`admin/src/main.ts` 在挂载应用前安装 Element Plus，并在基础 reset 样式之后加载 `element-plus/dist/index.css` 和中文语言包，确保按钮背景等组件样式不被重置覆盖。分销、拼团、砍价管理页的表格、表单、弹窗，以及首页日期选择器均使用这一入口注册；`v-loading`、消息提示和确认框的样式也由入口提供。
+
+```typescript
+import ElementPlus from 'element-plus'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
+import 'element-plus/dist/index.css'
+
+app.use(ElementPlus, { locale: zhCn })
+```
+
+`<el-table-column>` 的 `#default="{ row }"` 依赖真实表格组件提供行上下文，不能把未注册的 `el-*` 标签当作自定义 HTML 元素，也不能通过给 `row` 添加空值默认值替代组件注册。页面开发需同时验证空列表、有数据列表、筛选和弹窗，确认没有组件或指令解析警告。单选组件通过 `value` 传递选项值，文本标签独立显示。
+
+在 `admin` 目录执行 `npm test` 可运行组件注册与分销接口回归测试：复现未注册表格时的 `row` 解构异常，执行真实入口验证空列表渲染，扫描全部 Vue 模板中的 Element Plus 组件与 `v-loading` 注册，并验证实际请求封装的 URL、分销筛选/分页/更新、订单、提现状态流转和配置读写。普通 CI 与文档演示发布均在构建前执行这些测试，生产构建仍使用 `npm run build`。
 
 ### 7.2 路由注册
 
@@ -1580,6 +1597,8 @@ http.interceptors.response.use(res => {
   return data  // 直接返回 data 字段
 })
 ```
+
+管理端 API 模块只填写相对 `baseURL` 的业务路径。例如分销配置使用 `/distribution/config`，分销商、订单、提现分别使用 `/distribution/distributors`、`/distribution/orders`、`/distribution/withdrawals`，最终请求统一为 `/admin/api/distribution/*`。后端插件收到的管理端路由组已经包含 `/admin/api`，插件只挂载 `/distribution`，不得重复添加公共前缀。分销演示数据与后端保持相同的字段名、字符串状态和列表分页结构。
 
 **编写 API 模块：**
 
@@ -1930,7 +1949,7 @@ export function showDialog(message: string): Promise<boolean> {
 
 - **页面按模块分目录**：`views/announcement/`、`views/product/` 等
 - **路由名称即页面标题**：`name` 字段会显示在 AdminLayout 的顶部栏
-- **使用 TailwindCSS 原子类**：保持样式一致性，无需编写 `<style>` 块
+- **使用 UnoCSS 原子类**：保持样式一致性，复杂交互可使用已注册的 Element Plus 组件
 - **API 模块独立封装**：每个业务模块一个 API 文件，导出类型和函数
 - **请求错误统一处理**：拦截器自动解包响应并抛出错误
 

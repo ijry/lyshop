@@ -7,7 +7,8 @@
     "dev:demo": "cross-env VITE_MOCK=true vite",
     "build": "vue-tsc && vite build",
     "build:demo": "cross-env VITE_MOCK=true vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --test tests/*.test.cjs"
   },
   "dependencies": {
     "@vueuse/core": "^10.10.0",

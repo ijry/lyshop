@@ -18,28 +18,37 @@ describe('mock distribution distributors', () => {
     const r = matchMock('GET', '/admin/api/distribution/distributors', { keyword: '张三', page: 1, size: 20 })
     expect(r.matched).toBe(true)
     expect(r.data.list.length).toBeGreaterThanOrEqual(1)
-    expect(r.data.list[0].nickname).toBe('张三')
+    expect(r.data.list[0].real_name).toBe('张三')
   })
-  it('filters by status', async () => {
+  it.each(['pending', 'active', 'disabled'])('按状态 %s 筛选分销商', async (status) => {
     const { matchMock } = await import('../../../admin/src/mock/index')
-    const r = matchMock('GET', '/admin/api/distribution/distributors', { status: 0, page: 1, size: 20 })
+    const r = matchMock('GET', '/admin/api/distribution/distributors', { status, page: 1, size: 20 })
     expect(r.matched).toBe(true)
-    for (const item of r.data.list) expect(Number(item.status)).toBe(0)
+    expect(r.data.list.length).toBeGreaterThan(0)
+    for (const item of r.data.list) expect(item.status).toBe(status)
   })
   it('GET /distribution/distributors/:id returns detail', async () => {
     const { matchMock } = await import('../../../admin/src/mock/index')
     const r = matchMock('GET', '/admin/api/distribution/distributors/1', {})
     expect(r.matched).toBe(true)
-    expect(r.data.nickname).toBe('张三')
+    expect(r.data).toMatchObject({
+      real_name: '张三', status: 'active', total_earnings: 1280.50,
+      available_amount: 580.50, frozen_amount: 300, withdrawn_amount: 400,
+    })
   })
-  it('PUT /distribution/distributors/:id/status toggles status', async () => {
+  it('PUT /distribution/distributors/:id 更新字符串状态', async () => {
     const { matchMock } = await import('../../../admin/src/mock/index')
-    const r = matchMock('PUT', '/admin/api/distribution/distributors/1/status', { status: 0 })
-    expect(r.matched).toBe(true)
-    const detail = matchMock('GET', '/admin/api/distribution/distributors/1', {})
-    expect(detail.data.status).toBe(0)
-    // restore
-    matchMock('PUT', '/admin/api/distribution/distributors/1/status', { status: 1 })
+    const original = matchMock('GET', '/admin/api/distribution/distributors/1', {}).data
+    try {
+      for (const status of ['disabled', 'active']) {
+        const r = matchMock('PUT', '/admin/api/distribution/distributors/1', { status })
+        expect(r.matched).toBe(true)
+        const detail = matchMock('GET', '/admin/api/distribution/distributors/1', {})
+        expect(detail.data.status).toBe(status)
+      }
+    } finally {
+      matchMock('PUT', '/admin/api/distribution/distributors/1', { status: original.status })
+    }
   })
 })
 
@@ -85,17 +94,20 @@ describe('mock distribution config', () => {
     const { matchMock } = await import('../../../admin/src/mock/index')
     const r = matchMock('GET', '/admin/api/distribution/config', {})
     expect(r.matched).toBe(true)
-    expect(r.data.level1_rate).toBe(0.10)
-    expect(r.data.level2_rate).toBe(0.05)
+    expect(r.data.level1_rate).toBe(10)
+    expect(r.data.level2_rate).toBe(5)
   })
   it('PUT /distribution/config updates config', async () => {
     const { matchMock } = await import('../../../admin/src/mock/index')
-    const r = matchMock('PUT', '/admin/api/distribution/config', { level1_rate: 0.15, level2_rate: 0.08 })
-    expect(r.matched).toBe(true)
-    const after = matchMock('GET', '/admin/api/distribution/config', {})
-    expect(after.data.level1_rate).toBe(0.15)
-    expect(after.data.level2_rate).toBe(0.08)
-    // restore
-    matchMock('PUT', '/admin/api/distribution/config', { level1_rate: 0.10, level2_rate: 0.05 })
+    const original = matchMock('GET', '/admin/api/distribution/config', {}).data
+    try {
+      const r = matchMock('PUT', '/admin/api/distribution/config', { level1_rate: 15, level2_rate: 8 })
+      expect(r.matched).toBe(true)
+      const after = matchMock('GET', '/admin/api/distribution/config', {})
+      expect(after.data.level1_rate).toBe(15)
+      expect(after.data.level2_rate).toBe(8)
+    } finally {
+      matchMock('PUT', '/admin/api/distribution/config', { level1_rate: original.level1_rate, level2_rate: original.level2_rate })
+    }
   })
 })

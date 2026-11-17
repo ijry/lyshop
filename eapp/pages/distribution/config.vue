@@ -12,16 +12,16 @@ async function loadConfig() {
   loading.value = true
   try {
     const res = await getDistributionConfig()
-    form.level1_rate = String(Number(res?.level1_rate || 0) * 100)
-    form.level2_rate = String(Number(res?.level2_rate || 0) * 100)
+    form.level1_rate = String(Number(res?.level1_rate || 0))
+    form.level2_rate = String(Number(res?.level2_rate || 0))
   } finally {
     loading.value = false
   }
 }
 
 async function save() {
-  const level1 = Number(form.level1_rate) / 100
-  const level2 = Number(form.level2_rate) / 100
+  const level1 = Number(form.level1_rate)
+  const level2 = Number(form.level2_rate)
   if (isNaN(level1) || isNaN(level2) || level1 < 0 || level2 < 0) {
     uni.showToast({ title: '请输入有效比例', icon: 'none' })
     return

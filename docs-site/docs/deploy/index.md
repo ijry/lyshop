@@ -91,6 +91,12 @@ cd admin
 npm run build
 ```
 
+管理后台构建同时执行 TypeScript 检查和 Vite 打包，产物位于 `admin/dist`。Element Plus 的组件、中文语言包及样式随前端产物交付，无需新增环境变量或后端配置。替换部署时应同时更新入口 HTML 与带哈希的静态资源；使用内嵌部署时需重新构建后端可执行文件。
+
+分销管理接口统一使用 `/admin/api/distribution/*`，路由前缀由后端应用和前端请求封装各自统一配置；分销用户端为 `/api/v1/distribution/*`。部署需使用对应的前后端构建产物，无需数据迁移。
+
+演示管理后台使用 `npm run build:demo` 生成带 Mock 数据的产物，分销筛选、状态更新、订单、提现和配置读写均在浏览器内演示，不连接真实业务接口。验证可用 `npm run dev:demo`，并检查分销、拼团、砍价表格及首页日期选择器。
+
 ### 商家移动端 eapp（H5）
 
 ```bash

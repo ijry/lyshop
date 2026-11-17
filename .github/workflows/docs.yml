@@ -78,6 +78,10 @@ jobs:
         working-directory: admin
         run: rm -f package-lock.json && npm install
 
+      - name: Test admin components and distribution API
+        working-directory: admin
+        run: npm test
+
       - name: Build admin demo (mock data)
         working-directory: admin
         run: npx cross-env VITE_MOCK=true npx vite build --base /lyshop/admin-demo/ --outDir ../docs-site/docs/public/admin-demo
